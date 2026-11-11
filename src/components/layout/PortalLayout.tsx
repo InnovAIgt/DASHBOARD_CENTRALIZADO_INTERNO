@@ -12,6 +12,7 @@ import { GeneratorView } from '../views/GeneratorView';
 import { HistoryView } from '../views/HistoryView';
 import { UsersView } from '../views/UsersView';
 import { RegionStatusBar } from './RegionStatusBar';
+import { FlujoVentasV2 } from '../../modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx';
 
 interface NavSectionDef {
   id: string;
@@ -141,6 +142,12 @@ export const PortalLayout: React.FC = () => {
           label: 'Flujo de ventas',
           hasData: true,
           archivo: '/dashboards/marketing/flujo-ventas.html'
+        },
+        {
+          // Flujo de ventas v2 en prueba (docs/marketing/README.md). Se muestra con FlujoVentasV2, no con un archivo HTML.
+          id: 'flujo-ventas-v2',
+          label: 'Flujo de ventas v2 (prueba)',
+          hasData: true
         }
       ]
     },
@@ -312,6 +319,11 @@ export const PortalLayout: React.FC = () => {
           </div>
         </div>
       );
+    }
+
+    // Marketing · Flujo de ventas v2 (prueba): componente React del módulo src/modulos/marketing/flujo-ventas-v2
+    if (currentItem.id === 'flujo-ventas-v2') {
+      return <FlujoVentasV2 />;
     }
 
     // If it has an external dashboard file (like mailing-campanas.html)

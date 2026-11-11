@@ -163,3 +163,54 @@ pantalla la usa ni muestra un aviso.
 
 **Qué no se tocó:** el portal (todavía no muestra este módulo), ningún dashboard existente,
 `src/index.css`, `package.json`, `vercel.json` ni Supabase.
+
+---
+
+## Paso 3.4 · Vista 1 dentro del portal — 11/11/2026 ✅ (pendiente revisión visual)
+
+**Qué se hizo:**
+- `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` (nuevo): muestra la Vista 1
+  (KPIs, gráfica por mes, comparativa GT/SV, top por ejecutivo, embudo mensual, resumen por
+  asesor y resumen mensual por país) con su barra de filtros y el botón "Actualizar".
+  Es la misma lógica de `DashboardHome.jsx`, sin la Vista 2, sin modo demo y sin logo.
+  Todo va dentro de un contenedor con la clase `fv2`.
+- `src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css` (nuevo): los estilos de
+  DashboardLeads (`Dashboard-Leds/src/index.css`) **encerrados**:
+  - Todas las reglas aplican solo dentro de `.fv2` y de las 3 ventanas emergentes del
+    módulo (detalle por asesor, por mes y por lead), que se dibujan fuera del contenedor.
+  - `:root` y `body` ya no se usan; sus valores se aplican al contenedor (sin pintar el fondo).
+  - Las 11 animaciones llevan prefijo `fv2-`. Sin esto, la animación "pulse" del original
+    reemplazaba la del portal (el puntito que parpadea en el encabezado).
+  - Los colores de `@theme` (ink, muted, line, accent…) existen **solo dentro de `fv2`**.
+    Tailwind genera únicamente las 22 clases de color que usa el módulo (lista cerrada).
+  - No se importa Tailwind por segunda vez. No se trajo `@property --qualified-angle`
+    (solo lo usaba una dona que ninguna pantalla usa).
+- `src/components/layout/PortalLayout.tsx`: entrada nueva **"Flujo de ventas v2 (prueba)"**
+  en MARKETING, debajo de "Flujo de ventas", que muestra `FlujoVentasV2`. La entrada vieja
+  quedó igual.
+- `docs/marketing/REQUISITOS.md`: nuevo pendiente para el Paso 4 (aviso de calidad de datos).
+
+**¿Chocan los `@theme` con el portal?** No por nombre: el portal usa `--accent`,
+`--text-muted`, etc.; DashboardLeads usa `--color-accent`, `--color-muted`, etc. El único
+efecto global era `--font-sans` (la letra por defecto de Tailwind en todo el portal); no se
+trajo: la letra Inter se aplica solo dentro de `fv2`. Tampoco se tocó `src/index.css`.
+
+**Pruebas hechas:**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` | ✅ |
+| `npm run lint` (revisión de tipos) | ✅ |
+| Comparar la hoja de estilos del portal antes/después: 484 reglas nuevas, todas dentro de `fv2` o de sus ventanas | ✅ |
+| Ninguna regla nueva sobre `:root`, `html`, `body`, `*` o etiquetas sueltas | ✅ |
+| Ninguna regla o valor que ya existía se quitó ni cambió | ✅ |
+| Variables generales nuevas: solo 3 estándar de Tailwind (`--color-slate-950`, `--leading-tight`, `--blur-sm`) por clases que usa el módulo; ninguna de DashboardLeads | ✅ |
+| Revisión en pantalla | ⏳ pendiente (la hace Keily) |
+
+**Nota sobre el login del portal:** al revisar cómo se entra al portal se encontró que el
+login actual **acepta cualquier usuario y contraseña** (`src/context/AuthContext.tsx`, función
+`login`). Como la v2 muestra nombres de clientes, esto refuerza el pendiente de D8 (agregar
+login para proteger los datos de clientes). No se cambió.
+
+**Qué no se tocó:** `flujo-ventas.html` y su entrada del menú, los demás dashboards,
+`src/index.css`, `package.json`, `vercel.json` ni Supabase.

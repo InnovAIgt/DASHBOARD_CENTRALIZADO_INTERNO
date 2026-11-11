@@ -38,3 +38,5 @@ Leyenda: ✅ se puede con los datos actuales · ⚠️ se puede con ajustes · �
 - Días meta por etapa para el semáforo (ej. Reunión = 2 días).
 - Nombre para "venta ganada": DashboardLeads usa "Radicados", que se confunde con las
   radicaciones de Activaciones. Propuesta: **"Ganados"**.
+- **(Paso 4)** Mostrar en pantalla un aviso de calidad de datos (leads perdidos sin motivo y
+  leads abiertos con venta cerrada) y definir a quién se reportan. Ver BITACORA, paso 3.3.
