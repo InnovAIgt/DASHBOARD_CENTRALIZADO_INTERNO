@@ -7,7 +7,7 @@
 // Lo único nuevo es el filtro de Período (reemplaza "Month to day" en pantalla).
 import {
   applyFilters, buildForecast, byAdvisor, byCountry, byMonth, COUNTRIES, FILTER_DEFS,
-  leadComments, leadUnits, monthLabel, PIPELINE_STAGES, stageDistribution, summarize,
+  isQualified, isWon, leadComments, leadUnits, monthLabel, PIPELINE_STAGES, stageDistribution, summarize,
 } from '../utils/analytics.js'
 import { buildStageFunnel, leadReferenceDate, leadReferenceMonth } from '../utils/leads.js'
 import { toDate } from '../utils/dates.js'
@@ -63,14 +63,78 @@ export function conteosDeFiltro(def, leads, filters, periodo) {
   return map
 }
 
+// ---------- Conteos nuevos de la v2 (paso 3.4c) ----------
+// Se arman solo con campos que ya calcula la lógica copiada: `estado` (isWon) y `tipoLead`
+// (isQualified). No cambian ninguna fórmula de ../utils.
+
+/**
+ * Conversión de calificados CORREGIDA (DECISIONES D10) = ganados que eran calificados ÷ calificados.
+ * Diferencia con `qualifiedConversion` de summarize(): esa divide TODOS los ganados (también los
+ * que venían de leads no calificados) entre los calificados, y por eso mezclaba los dos grupos.
+ * Comprobación: ganadosCalificados + ganadosNoCalificados = ganados.
+ */
+export function conversionCalificados(leads) {
+  const calificados = leads.filter(isQualified).length
+  const ganados = leads.filter(isWon).length
+  const ganadosCalificados = leads.filter((lead) => isWon(lead) && isQualified(lead)).length
+  // No calificados = no calificado o sin clasificar (todo lo que no es "calificado").
+  const ganadosNoCalificados = leads.filter((lead) => isWon(lead) && !isQualified(lead)).length
+  return { calificados, ganados, ganadosCalificados, ganadosNoCalificados, ratio: calificados ? ganadosCalificados / calificados : 0 }
+}
+
+/**
+ * Partes de la barra de cada ejecutivo. Algunos ganados vienen de leads no calificados, así que
+ * para que las 3 partes sumen el total sin contar a nadie dos veces:
+ *   ganados (todos) + calificados sin ganar + no calificados sin ganar = total de leads.
+ */
+export function partesEjecutivo(leads) {
+  return {
+    ganados: leads.filter(isWon).length,
+    calificadosSinGanar: leads.filter((lead) => isQualified(lead) && !isWon(lead)).length,
+    noCalificadosSinGanar: leads.filter((lead) => !isQualified(lead) && !isWon(lead)).length,
+  }
+}
+
+/** Todos los ejecutivos, ordenados por ganados y luego por calificados (byAdvisor de la lógica copiada). */
+export function desempenoEjecutivos(leads) {
+  return byAdvisor(leads)
+    .map((row) => ({ ...row, partes: partesEjecutivo(row.leads), conversion: conversionCalificados(row.leads) }))
+    .sort((a, b) => b.won - a.won || b.qualified - a.qualified || a.name.localeCompare(b.name))
+}
+
+// ---------- Ventana "Detalle de leads" (al cliquear un indicador) ----------
+export const INDICADORES = {
+  total: { titulo: 'Total leads', descripcion: 'Todos los leads con los filtros activos.', filtro: () => true },
+  calificados: { titulo: 'Calificados', descripcion: 'Solo los leads calificados.', filtro: isQualified },
+  ganados: { titulo: 'Ganados', descripcion: 'Solo los leads ganados, indicando si cada uno era calificado o no.', filtro: isWon, marca: 'calificacion' },
+  conversion: { titulo: 'Conversión de calificados', descripcion: 'Los leads calificados; se marcan los que ganaron (ganados calificados ÷ calificados).', filtro: isQualified, marca: 'gano' },
+  unidades: { titulo: 'Unidades vendidas', descripcion: 'Los leads ganados con sus unidades.', filtro: isWon },
+  porCierre: { titulo: 'Unidades por cierre', descripcion: 'Los leads ganados con sus unidades (unidades ÷ ganados).', filtro: isWon },
+}
+
+/** Fecha que se muestra en la lista: la de referencia de la lógica copiada (cierre si es ganado; si no, creación). */
+export const fechaReferencia = (lead) => toDate(leadReferenceDate(lead))
+
+export function leadsDeIndicador(clave, leads) {
+  return leads
+    .filter(INDICADORES[clave].filtro)
+    .sort((a, b) => (fechaReferencia(b)?.getTime() ?? 0) - (fechaReferencia(a)?.getTime() ?? 0))
+}
+
 // ---------- Vista general ----------
 // Copiado de views/AnalyticsView.jsx (cuerpo de AnalyticsView, líneas 56-87).
-// Cambios: `topRadicados` se llama `topGanados`; el resumen, los ganados y las unidades de cada
-// grupo del embudo (antes calculados al dibujar, líneas 116-117 y 130) se calculan aquí.
+// Cambios: el resumen, los ganados y las unidades de cada grupo del embudo (antes calculados al
+// dibujar, líneas 116-117 y 130) se calculan aquí. En 3.4c: `topRadicados` (top 10) se reemplazó
+// por `ejecutivos` (todos, ver desempenoEjecutivos) y a meses, países y embudo se les agrega la
+// conversión de calificados corregida; los meses llevan además `noCalificados` = leads − calificados
+// (incluye "sin clasificar"), para que las columnas apiladas sumen los leads del mes.
 export const unitsFor = (rows) => rows.reduce((totalUnits, lead) => totalUnits + leadUnits(lead), 0)
 
 export function datosVistaGeneral(leads, showAllFunnel) {
-  const months = byMonth(leads)
+  const months = byMonth(leads).map((month) => {
+    const monthLeads = leads.filter((lead) => leadReferenceMonth(lead) === month.month)
+    return { ...month, noCalificados: month.total - month.qualified, conversion: conversionCalificados(monthLeads) }
+  })
   const advisors = byAdvisor(leads)
   const advisorsByCountry = COUNTRIES.map((country) => {
     const countryLeads = leads.filter((lead) => lead.pais === country)
@@ -80,7 +144,10 @@ export function datosVistaGeneral(leads, showAllFunnel) {
       advisors: byAdvisor(countryLeads).sort((left, right) => right.total - left.total || left.name.localeCompare(right.name)),
     }
   }).filter((group) => group.advisors.length)
-  const countries = byCountry(leads)
+  const countries = byCountry(leads).map((row) => ({
+    ...row,
+    conversion: conversionCalificados(leads.filter((lead) => lead.pais === row.country)),
+  }))
   const monthlyFunnelGroups = [
     ...(showAllFunnel ? [{ key: 'all', label: 'Todos', leads }] : []),
     ...months.map(({ month }) => ({
@@ -91,7 +158,7 @@ export function datosVistaGeneral(leads, showAllFunnel) {
   ].map((group) => {
     const groupSummary = summarize(group.leads)
     const wonLeads = group.leads.filter((lead) => lead.estado === 'ganado')
-    return { ...group, summary: groupSummary, units: unitsFor(wonLeads) }
+    return { ...group, summary: groupSummary, units: unitsFor(wonLeads), conversion: conversionCalificados(group.leads) }
   })
   const monthlyCountryTables = COUNTRIES.map((country) => {
     const countryLeads = leads.filter((lead) => lead.pais === country)
@@ -102,8 +169,8 @@ export function datosVistaGeneral(leads, showAllFunnel) {
     const countrySummary = summarize(countryLeads)
     return { country, months: countryMonths, summary: countrySummary }
   })
-  const topGanados = [...advisors].sort((a, b) => b.won - a.won || b.total - a.total).slice(0, 10)
-  return { months, advisors, advisorsByCountry, countries, monthlyFunnelGroups, monthlyCountryTables, topGanados }
+  const ejecutivos = desempenoEjecutivos(leads)
+  return { months, advisors, advisorsByCountry, countries, monthlyFunnelGroups, monthlyCountryTables, ejecutivos }
 }
 
 // ---------- Ventana: detalle del ejecutivo ----------
@@ -120,7 +187,8 @@ export function datosAsesor({ name, country, leads, selectedMonth, selectedType 
   const maxStage = Math.max(1, ...stages.map((stage) => stage.count))
   const forecast = buildForecast(own)
   const advisorCountry = country ?? advisorLeads[0]?.pais
-  return { availableMonths, own, summary, stages, maxStage, forecast, advisorCountry }
+  // 3.4c: + conversión de calificados corregida (no viene del original).
+  return { availableMonths, own, summary, stages, maxStage, forecast, advisorCountry, conversion: conversionCalificados(own) }
 }
 
 // ---------- Ventana: detalle del mes ----------
@@ -130,7 +198,8 @@ export function datosMes(leads) {
   const stages = buildStageFunnel(leads)
   const units = leads.filter((lead) => lead.estado === 'ganado')
     .reduce((total, lead) => total + leadUnits(lead), 0)
-  return { summary, stages, units }
+  // 3.4c: + conversión de calificados corregida (no viene del original).
+  return { summary, stages, units, conversion: conversionCalificados(leads) }
 }
 
 // ---------- Ventana: detalle del lead ----------

@@ -1,5 +1,5 @@
 // Flujo de ventas v2 · piezas visuales comunes (diseño basado en el dashboard de Activaciones).
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { qualificationLabel } from '../utils/analytics.js'
 import { stateLabel } from '../utils/leads.js'
 
@@ -63,10 +63,6 @@ export function PildoraConversion({ ganados, total }) {
 
 export function Vacio({ titulo, texto }) {
   return <div className="fv2-vacio"><strong>{titulo}</strong>{texto && <span>{texto}</span>}</div>
-}
-
-export function Cargando() {
-  return <div className="fv2-cargando" role="status"><RefreshCw size={16} className="fv2-girar" /> Cargando leads desde Prospekt IA…</div>
 }
 
 export function AvisoError({ mensaje, onReintentar }) {

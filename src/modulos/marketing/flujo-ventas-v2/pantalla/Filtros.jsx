@@ -2,7 +2,7 @@
 // País (Todos / GT / SV) · Período desde–hasta · panel "Filtros" (Asesor y Tipo de lead) ·
 // volver a filtros por defecto · actualizar.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarDays, ChevronDown, Filter, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Filter, RotateCcw, Search, X } from 'lucide-react'
 import { formatNumber } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS } from './comunes.jsx'
 import { conteosDeFiltro, FILTROS_DEL_PANEL, hayFiltrosActivos, opcionesDeFiltro, PAISES } from './datos.js'
@@ -135,7 +135,7 @@ function PanelFiltros({ leads, filters, periodo }) {
   </div>
 }
 
-export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer, filtrados, cargando, onActualizar }) {
+export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer, filtrados }) {
   const hayFiltros = hayFiltrosActivos(filters, periodo)
   return <section className="fv2-filtros-caja">
     <span className="fv2-filtros-eyebrow">Filtros</span>
@@ -147,9 +147,6 @@ export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer
         <RotateCcw size={13} />Volver a filtros por defecto
       </button>
       <span className="fv2-filtros-total"><b>{formatNumber(filtrados)}</b> de {formatNumber(leads.length)} leads</span>
-      <button type="button" className="fv2-btn-actualizar" onClick={onActualizar} disabled={cargando} title="Actualizar datos">
-        <RefreshCw size={16} className={cargando ? 'fv2-girar' : ''} />
-      </button>
     </div>
   </section>
 }

@@ -292,7 +292,7 @@ La gráfica mensual ahora ocupa todo el ancho.
 | País = GT: la tarjeta de SV queda en 0 y la de GT = indicadores | ✅ |
 | Tipo = calificado y Período 01/10–31/10: GT + SV = indicadores | ✅ |
 
-**Observación para el Paso 4 (no se cambió):** la "Conversión de calificados" de la lógica
+**Observación para el Paso 4 — ✅ RESUELTO en el paso 3.4c (DECISIONES D10):** la "Conversión de calificados" de la lógica
 copiada (`qualifiedConversion` = ganados ÷ calificados) cuenta en "ganados" **todos** los
 ganados, también los que vienen de leads no calificados. Por eso, al filtrar Tipo =
 calificado, el porcentaje baja (por ejemplo, Guatemala pasa de 18.4 % a 12.3 %). Conviene
@@ -301,3 +301,61 @@ confirmar con el ingeniero si debe contar solo los ganados calificados.
 **Qué no se tocó:** `public/dashboards/activaciones/activaciones.html`,
 `public/assets/css/activaciones.css`, `estandar.css`, el Flujo de ventas viejo, los demás
 dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json` ni `vercel.json`.
+
+---
+
+## Paso 3.4c · Ajustes visuales y conversión de calificados — 11/11/2026 ✅ (pendiente revisión visual)
+
+**Qué se hizo:**
+1. **Carga:** se quitó el recuadro "Cargando leads desde Prospekt IA…". El botón de actualizar
+   pasó al encabezado: mientras carga, el ícono gira y al lado dice "Actualizando…". Si hay
+   error, se muestra el aviso.
+2. **Indicadores compactos y que se pueden cliquear:** las 6 tarjetas en una fila (3 o 2 por
+   fila en pantallas más angostas). Cada una abre la ventana **"Detalle de leads"** con los
+   filtros activos: Total leads → todos; Calificados → calificados; Ganados → ganados, con su
+   calificación; Conversión de calificados → calificados, marcando los que ganaron; Unidades
+   vendidas y Unidades por cierre → ganados con sus unidades. Columnas: cliente, ejecutivo,
+   país, etapa, estado, fecha (de cierre si es ganado; si no, de creación) y unidades. Tiene
+   buscador y orden de la fecha más reciente a la más antigua; cada lead abre su ficha.
+   La tarjeta de Ganados dice "X de leads calificados · Y de no calificados".
+3. **Gráfica "Leads por mes":** columnas apiladas Calificados (azul `#4f8fd8`) + No calificados
+   (gris) = leads del mes, y línea de Ganados (verde `#2f8f76`) con su propia escala a la
+   derecha. Al pasar el cursor: leads, calificados, no calificados, ganados, unidades y
+   conversión de calificados del mes. Se mantiene la nota de fechas.
+4. **"Desempeño por ejecutivo"** (con el estilo de las barras del embudo del Flujo de ventas
+   viejo; ese archivo solo se leyó): los 15 ejecutivos, cada uno con nombre y país, una barra
+   de 3 colores — Ganados (verde), Calificados sin ganar (azul), No calificados sin ganar
+   (gris) —, su total de leads y una píldora con su conversión de calificados. Orden: ganados y
+   luego calificados. Clic → ventana del ejecutivo.
+5. **Conversión de calificados corregida** (DECISIONES D10): ganados calificados ÷
+   calificados. Se aplica en la tarjeta de indicadores, las tarjetas por país, el desempeño por
+   ejecutivo, la gráfica por mes, el embudo por mes (el % de "Ganados") y las ventanas del
+   ejecutivo y del mes. En las tablas de resultados, la columna "Conversión" (ganados ÷ total)
+   se renombró **"Conversión general"** para que no se confunda.
+
+**Conteos nuevos en `pantalla/datos.js`** (con comentario de dónde sale cada uno; la lógica
+copiada no cambió): `conversionCalificados` (ganados calificados, ganados no calificados y la
+conversión corregida), `partesEjecutivo` (ganados + calificados sin ganar + no calificados sin
+ganar), `desempenoEjecutivos` (reemplaza al top 10), `noCalificados` por mes (leads −
+calificados) y `leadsDeIndicador` (listas de la ventana "Detalle de leads").
+
+**Pruebas hechas (datos del 11/11/2026: 1,693 leads):**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Ganados calificados + ganados no calificados = ganados | ✅ 43 + 24 = 67 |
+| Conversión de calificados corregida (antes 22.7 %) | ✅ 43 ÷ 295 = 14.6 % |
+| Por país, por mes y por ejecutivo: total, ganados y ganados calificados suman | ✅ |
+| Cada mes: calificados + no calificados = leads del mes | ✅ |
+| Cada ejecutivo: sus 3 partes = sus leads; los 15 suman el total | ✅ |
+| Por tipo de lead: 295 + 1,398 + 0 = 1,693 | ✅ |
+| Ventanas de indicadores: cada lista tiene la cantidad de su tarjeta; en "Conversión", los marcados = ganados calificados; orden por fecha | ✅ |
+| Lo mismo con País = SV, Tipo = no calificado y Período de octubre | ✅ |
+| Hoja de estilos del portal: 262 reglas nuevas, todas dentro de `.fv2` / `.fv2-ventana`; animaciones `fv2-`; ningún valor existente cambió | ✅ |
+| `git status`: solo archivos del módulo y `docs/marketing` | ✅ |
+| Revisión en pantalla | ⏳ pendiente (la hace Keily) |
+
+**Qué no se tocó:** la lógica copiada (`utils/`, `types/`, `hooks/`, `context/`,
+`services/`), Activaciones, el Flujo de ventas viejo, los demás dashboards, `src/index.css`,
+`PortalLayout.tsx`, `package.json` ni `vercel.json`.

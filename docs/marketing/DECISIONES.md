@@ -66,3 +66,14 @@ toca; las pantallas copiadas de DashboardLeads se reemplazaron por pantallas pro
 propios (`fv2-`), encerrados para no afectar al resto del portal.
 **Por qué:** que la v2 se vea como parte del portal (tema oscuro, mismos colores y
 componentes que Activaciones) y que no se confunda con DashboardLeads.
+
+## D10 · 11/11/2026 · Conversión de calificados corregida
+
+**Decisión:** Conversión de calificados = ganados calificados ÷ calificados, porque algunos
+ganados vienen de leads no calificados y la fórmula original los mezclaba.
+**Cómo:** se calcula en `pantalla/datos.js` (`conversionCalificados`) sin modificar la lógica
+copiada. La fórmula original (`qualifiedConversion` de `summarize`, que divide **todos** los
+ganados entre los calificados) sigue en `utils/analytics.js`, pero la pantalla ya no la usa.
+**Ejemplo (11/11/2026, sin filtros):** 67 ganados = 43 de leads calificados + 24 de no
+calificados; 295 calificados. Antes: 67 ÷ 295 = 22.7 %. Ahora: 43 ÷ 295 = 14.6 %.
+**Autorizó:** Keily García.

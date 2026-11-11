@@ -1,17 +1,11 @@
-// Flujo de ventas v2 · vista general: indicadores, gráficas y tablas.
+// Flujo de ventas v2 · vista general: tarjetas por país, indicadores, gráficas y tablas.
 import { useMemo, useState } from 'react'
 import { formatNumber, formatPercent } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
-import { datosVistaGeneral } from './datos.js'
-import { EmbudoMes, Leyenda, TarjetasPais, TendenciaMensual, TopEjecutivos } from './graficas.jsx'
+import { conversionCalificados, datosVistaGeneral } from './datos.js'
+import { DesempenoEjecutivos, EmbudoMes, GraficaMensual, LEYENDA_EJECUTIVOS, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
 import { ResumenAsesores, ResumenMensual } from './Tablas.jsx'
-import { DetalleAsesor, DetalleMes } from './Ventanas.jsx'
-
-const SERIES = [
-  { key: 'total', label: 'Leads', color: COLORES.azul },
-  { key: 'won', label: 'Ganados', color: COLORES.verde },
-  { key: 'units', label: 'Unidades', color: COLORES.amarillo, punteada: true },
-]
+import { DetalleAsesor, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
 function Panel({ titulo, subtitulo, accion, className = '', children }) {
   return <section className={`fv2-panel ${className}`}>
@@ -26,28 +20,36 @@ function Panel({ titulo, subtitulo, accion, className = '', children }) {
   </section>
 }
 
-function Indicador({ etiqueta, valor, nota, color }) {
-  return <article className="fv2-kpi">
-    <div>
-      <div className="fv2-kpi-etiqueta">{etiqueta}</div>
-      <div className="fv2-kpi-numero" style={color ? { color } : undefined}>{valor}</div>
-    </div>
-    <div className="fv2-kpi-nota">{nota}</div>
-  </article>
+function Indicador({ etiqueta, valor, nota, color, onAbrir }) {
+  return <button type="button" className="fv2-kpi" onClick={onAbrir} title={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
+    <span className="fv2-kpi-etiqueta">{etiqueta}</span>
+    <span className="fv2-kpi-numero" style={color ? { color } : undefined}>{valor}</span>
+    <span className="fv2-kpi-nota">{nota}</span>
+  </button>
 }
 
-/** 6 indicadores. Todas las cifras salen de summarize() de la lógica copiada. */
-function Indicadores({ summary }) {
+/**
+ * 6 indicadores. Las cifras salen de summarize() de la lógica copiada, salvo la conversión de
+ * calificados y el desglose de ganados, que salen de conversionCalificados() (corregida, D10).
+ */
+function Indicadores({ summary, conversion, onAbrir }) {
   return <section className="fv2-kpis">
-    <Indicador etiqueta="Total leads" valor={formatNumber(summary.total)} nota={`${formatNumber(summary.open)} abiertos`} />
-    <Indicador etiqueta="Calificados" valor={formatNumber(summary.qualified)} color={COLORES.azul} nota={`${formatNumber(summary.unqualified)} no calificados`} />
-    <Indicador etiqueta="Ganados" valor={formatNumber(summary.won)} color={COLORES.verde} nota={`Conversión general ${formatPercent(summary.won, summary.total)} (ganados ÷ total)`} />
-    <Indicador etiqueta="Conversión de calificados" valor={formatearRatio(summary.qualifiedConversion)} color={COLORES.amarillo} nota="Ganados ÷ calificados" />
-    <Indicador etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} nota="Suma de unidades en leads ganados" />
+    <Indicador etiqueta="Total leads" valor={formatNumber(summary.total)} nota={`${formatNumber(summary.open)} abiertos`} onAbrir={() => onAbrir('total')} />
+    <Indicador etiqueta="Calificados" valor={formatNumber(summary.qualified)} color={COLORES.azul} nota={`${formatNumber(summary.unqualified)} no calificados`} onAbrir={() => onAbrir('calificados')} />
+    <Indicador
+      etiqueta="Ganados"
+      valor={formatNumber(summary.won)}
+      color={COLORES.verde}
+      nota={<>{formatNumber(conversion.ganadosCalificados)} de leads calificados · {formatNumber(conversion.ganadosNoCalificados)} de no calificados<br />Conversión general {formatPercent(summary.won, summary.total)}</>}
+      onAbrir={() => onAbrir('ganados')}
+    />
+    <Indicador etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.amarillo} nota={`${formatNumber(conversion.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conversion.calificados)} calificados`} onAbrir={() => onAbrir('conversion')} />
+    <Indicador etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} nota="En leads ganados" onAbrir={() => onAbrir('unidades')} />
     <Indicador
       etiqueta="Unidades por cierre"
       valor={summary.won ? formatNumber(Math.round(summary.avgUnits)) : '—'}
       nota={summary.won ? `${formatNumber(summary.units)} unidades ÷ ${formatNumber(summary.won)} ganados` : 'Sin ganados en la selección'}
+      onAbrir={() => onAbrir('porCierre')}
     />
   </section>
 }
@@ -55,25 +57,27 @@ function Indicadores({ summary }) {
 export function VistaGeneral({ leads, summary, showAllFunnel }) {
   const [asesorSel, setAsesorSel] = useState(null)
   const [mesSel, setMesSel] = useState(null)
+  const [indicadorSel, setIndicadorSel] = useState(null)
   const datos = useMemo(() => datosVistaGeneral(leads, showAllFunnel), [leads, showAllFunnel])
+  const conversion = useMemo(() => conversionCalificados(leads), [leads])
   const abrirAsesor = (name, country) => setAsesorSel({ name, country, leads, month: null })
 
   return <div className="fv2-vista">
     <TarjetasPais paises={datos.countries} />
 
-    <Indicadores summary={summary} />
+    <Indicadores summary={summary} conversion={conversion} onAbrir={setIndicadorSel} />
 
-    <Panel titulo="Leads, ganados y unidades por mes" subtitulo="Pasa el cursor sobre un mes para ver el detalle. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación." accion={<Leyenda items={SERIES} />}>
-      {datos.months.length ? <TendenciaMensual filas={datos.months} series={SERIES} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
+    <Panel titulo="Leads por mes" subtitulo="Columnas: calificados + no calificados = leads del mes. Línea: ganados, con su escala a la derecha. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación." accion={<Leyenda items={SERIES_MES} />}>
+      {datos.months.length ? <GraficaMensual filas={datos.months} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
     </Panel>
 
-    <Panel titulo="Top 10 ejecutivos por ganados" subtitulo="Ganados / total de leads de cada ejecutivo. Haz clic en un nombre para ver su detalle." accion={<Leyenda items={[{ label: 'Total leads', color: COLORES.azul }, { label: 'Ganados', color: COLORES.verde }]} />}>
-      {datos.topGanados.length
-        ? <TopEjecutivos filas={datos.topGanados} onSeleccionar={(name) => abrirAsesor(name, datos.advisors.find((row) => row.name === name)?.country)} />
-        : <Vacio titulo="Sin datos" />}
+    <Panel titulo="Desempeño por ejecutivo" subtitulo="Todos los ejecutivos, ordenados por ganados y luego por calificados. La barra reparte sus leads por resultado. Haz clic en un ejecutivo para ver su detalle." accion={<Leyenda items={LEYENDA_EJECUTIVOS} />}>
+      {datos.ejecutivos.length
+        ? <DesempenoEjecutivos filas={datos.ejecutivos} onSeleccionar={abrirAsesor} />
+        : <Vacio titulo="Sin ejecutivos con los filtros actuales" />}
     </Panel>
 
-    <Panel titulo="Embudo por mes" subtitulo={showAllFunnel ? 'Leads → calificados → ganados en cada mes, más el total general.' : 'Solo los meses con leads según los filtros activos.'}>
+    <Panel titulo="Embudo por mes" subtitulo={showAllFunnel ? 'Leads → calificados → ganados en cada mes, más el total general. El % de ganados es la conversión de calificados.' : 'Solo los meses con leads según los filtros activos. El % de ganados es la conversión de calificados.'}>
       {datos.months.length
         ? <div className="fv2-embudos">{datos.monthlyFunnelGroups.map((grupo) => <EmbudoMes key={grupo.key} grupo={grupo} />)}</div>
         : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver el embudo mensual." />}
@@ -91,6 +95,7 @@ export function VistaGeneral({ leads, summary, showAllFunnel }) {
       <ResumenMensual grupo={grupo} onMes={(country, fila) => setMesSel({ country, month: fila.month, leads: fila.leads })} />
     </Panel>)}
 
+    {indicadorSel && <DetalleLeads clave={indicadorSel} leads={leads} onClose={() => setIndicadorSel(null)} />}
     {asesorSel && <DetalleAsesor {...asesorSel} onClose={() => setAsesorSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
   </div>

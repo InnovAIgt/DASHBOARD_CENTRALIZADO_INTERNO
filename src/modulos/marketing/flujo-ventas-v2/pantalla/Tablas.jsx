@@ -20,7 +20,7 @@ export function Tabla({ columnas, vacio, children, className = '' }) {
 
 const COLUMNAS_RESUMEN = [
   { label: 'Total leads', num: true }, { label: 'Calificados', num: true }, { label: 'No calificados', num: true },
-  { label: 'Ganados', num: true }, { label: 'Conversión', num: true }, { label: 'Unidades por cierre', num: true }, { label: 'Unidades totales', num: true },
+  { label: 'Ganados', num: true }, { label: 'Conversión general', num: true }, { label: 'Unidades por cierre', num: true }, { label: 'Unidades totales', num: true },
 ]
 
 function CeldasResumen({ fila }) {
@@ -29,7 +29,7 @@ function CeldasResumen({ fila }) {
     <td className="num">{formatNumber(fila.qualified)}</td>
     <td className="num">{formatNumber(fila.unqualified)}</td>
     <td className="num">{formatNumber(fila.won)}</td>
-    <td className="num"><PildoraConversion ganados={fila.won} total={fila.total} /></td>
+    <td className="num" title="Conversión general: ganados ÷ total de leads"><PildoraConversion ganados={fila.won} total={fila.total} /></td>
     <td className="num">{fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'}</td>
     <td className="num fv2-fuerte">{formatNumber(fila.units)}</td>
   </>
