@@ -78,3 +78,34 @@ ignora). La conexión respondió 200 con 50 registros.
 
 **Qué no se tocó:** ningún dashboard existente, `api/marketing/reuniones.js`, `server.ts`,
 `vercel.json`, Supabase ni `package.json`.
+
+---
+
+## Paso 3.2 · Revisión de la paginación — 11/11/2026 ✅ (sin cambios de código)
+
+**Qué se hizo:** se consultó `/api/marketing/reuniones` en local con `offset=0, 50, 100…`
+hasta que una página trajo menos de 50 registros.
+
+**Resultado:**
+
+| Dato | Valor |
+|---|---|
+| Páginas | 34 (33 de 50 registros + la última de 37) |
+| Total de registros | **1,687** |
+| Ids repetidos | **0** (1,687 ids distintos) |
+| Guatemala (GT) | 902 |
+| El Salvador (SV) | 785 |
+| Fechas de creación | del 24/04/2026 al 11/11/2026 |
+
+**Comprobaciones:**
+- `offset=50` trae datos distintos a `offset=0` → la paginación avanza bien.
+- Los campos `country` y `pais` coinciden en todos los registros (solo GT y SV).
+- La suma de `total_por_pais` de todas las páginas da lo mismo que contar los registros
+  (GT 902, SV 785).
+
+**Ojo al leer la API:** `total` y `total_por_pais` cuentan **solo la página actual**, no el
+total general. Por eso el dashboard tiene que recorrer todas las páginas, como ya hace la
+lógica de DashboardLeads (pide páginas hasta que una trae menos de 50 y rechaza ids
+repetidos).
+
+**Qué no se tocó:** ningún archivo de código.
