@@ -1,0 +1,17 @@
+#fondo,
+#fondo-velo {
+  display: none;
+}
+
+.shell {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.panel {
+  background: var(--std-card);
+  border: 1px solid var(--std-border);
+  border-radius: 10px;
+  box-shadow: none;
+}

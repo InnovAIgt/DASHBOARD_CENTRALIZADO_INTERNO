@@ -1,0 +1,1696 @@
+/* ── PALETA (GUIA_DISEÑO_GENERAL.html · override Intelfon) ───────── */
+
+
+/* Colores de superficie, bordes, texto y acento: mismos valores que Ingresos.css */
+:root {
+  --bg:          #0f1117;
+  --bg-card:     #1a1d27;
+  --surface-2:   #151821;
+  --surface-3:   #242837;
+  --border:      rgba(255,255,255,.08);
+  --border-str:  rgba(255,255,255,.16);
+  --text:        #e8eaf0;
+  --text-sec:    #8b909e;
+  --text-muted:  #8b909e;
+  --eyebrow:     #c43c50;
+  --accent:      #c43c50;
+  --accent-2:    #d95f6e;
+  --negative:    #d95f6e;
+  --green:       #2f8f76;   /* guide value */
+  --green-2:     #42b998;   /* guide value */
+  --yellow:      #c59600;   /* guide value */
+  --blue:        #7fb0f0;   /* guide value */
+  --cyan:        #4f8fd8;
+  --font:        'Segoe UI', system-ui, sans-serif;
+  /* Ingresos no usa monoespaciada: las cifras van en Segoe UI con dígitos tabulares */
+  --mono:        'Cascadia Code','Fira Mono',Consolas,monospace;
+}
+
+body { font-family: var(--font); color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ── TIPOGRAFÍA — guia §01 ───────────────────────────────────────── */
+.page-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--eyebrow);
+}
+.page-title   { font-size: 26px; font-weight: 700; }
+/* KPI, tabla y textos con las medidas de Ingresos (.kpi .label/.value/.hint, th, td) */
+.kpi-label    { font-size: 12px; font-weight: 700; color: var(--text-sec); line-height: 1.35; margin: 0; }
+.kpi-value    { font-family: var(--font); font-size: 21px; font-weight: 800; line-height: 1.15; margin: 10px 0 8px; color: var(--text); }
+.kpi-sub      { font-size: 10px; font-weight: 500; color: var(--text-muted); line-height: 1.35; margin: 0; }
+thead th      { font-size: 10px; font-weight: 800; color: var(--text-muted); letter-spacing: .4px; padding: 12px 13px; background: #242837; }
+tbody td      { font-size: 11px; color: var(--text); padding: 12px 13px; }
+.page-sub     { font-size: 12px; color: var(--text-sec); margin: 0; }
+
+/* Estado "consultando la API": resalta el aviso mientras se espera al servidor */
+.page-sub.mso-sync-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 6px;
+  padding: 7px 14px 7px 12px;
+  border: 1px solid rgba(217,95,110, .45);
+  border-radius: 999px;
+  background: rgba(217,95,110, .12);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 0 0 4px rgba(217,95,110, .07);
+  animation: mso-sync-glow 1.6s ease-in-out infinite;
+}
+.page-sub.mso-sync-busy::before {
+  content: '';
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border: 2px solid rgba(217,95,110, .35);
+  border-top-color: var(--accent-2);
+  border-radius: 50%;
+  animation: sims-spin .8s linear infinite;
+}
+@keyframes mso-sync-glow {
+  50% {
+    border-color: rgba(217,95,110, .75);
+    box-shadow: 0 0 0 5px rgba(217,95,110, .12);
+  }
+}
+
+/* ── BARRA DE FILTROS (PAÍS + TIPO) ─────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Contenedores de chips renderizados por JS: mismo espaciado que el grupo */
+.filter-group > span:not(.filter-label) {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Chips de filtro — estilo actual conservado (borde + activo sólido) */
+.filter-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border-str);
+  background: var(--bg-card);
+  color: var(--text-sec);
+  font-family: var(--font);
+  transition: border-color .18s, background .18s, color .18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+}
+.filter-chip .flag { font-size: 10px; opacity: .75; }
+.filter-chip:hover  { border-color: var(--accent); color: var(--text); background: var(--surface-3); }
+.filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-chip.active .flag { opacity: 1; }
+
+/* ── CARDS DE OPERADORA (vista Todas) ──────────────────────────── */
+.op-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.op-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.op-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.op-card-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.op-card-pct   { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.op-card-total { font-family: var(--mono); font-size: 24px; font-weight: 800; margin-bottom: 2px; }
+.op-card-sub   { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+
+/* Pestañas de módulos (.tabs / .tab-btn): en dashboard.css, compartidas con todos */
+
+/* ── TABS DE OPERADORA — estilo actual conservado ────────────────── */
+.operator-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.op-tab {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border-str);
+  background: var(--bg-card);
+  color: var(--text-sec);
+  font-family: var(--font);
+  transition: border-color .18s, background .18s, color .18s;
+  min-height: 38px;
+}
+.op-tab:hover  { border-color: var(--accent); color: var(--text); background: var(--surface-3); }
+.op-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── DOS COLUMNAS ───────────────────────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* ── TARJETA (.card de la plantilla) ────────────────────────────── */
+.card {
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  transition: opacity .55s ease, transform .55s cubic-bezier(.2,.75,.25,1), border-color .3s ease, box-shadow .3s ease;
+}
+.card:hover { border-color: rgba(196,60,80,.42); box-shadow: 0 14px 32px rgba(0,0,0,.2); transform: translateY(-3px); }
+/* Título y descripción de tarjeta como .card h2 / .desc de Ingresos */
+.card-title   { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 6px; color: var(--text); }
+.card-caption { font-size: 12px; color: var(--text-sec); margin: 0 0 16px; }
+
+/* ── DONUT ──────────────────────────────────────────────────────── */
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.donut {
+  width: 152px; height: 152px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.donut::after {
+  content: "";
+  position: absolute;
+  inset: 28px;
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.donut-center {
+  position: absolute;
+  inset: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.donut-center .n { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+.donut-center .t { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── LEYENDA ────────────────────────────────────────────────────── */
+.legend { width: 100%; }
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.legend-item:last-child { border-bottom: none; }
+.legend-item .dot  { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-item .name { color: var(--text); flex: 1; }
+.legend-item .pct  { font-family: var(--mono); color: var(--text-muted); font-size: 11px; }
+
+/* ── BLOQUE PROVEEDOR ───────────────────────────────────────────── */
+.provider-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.provider-block h3 { font-size: 13px; font-weight: 700; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+
+/* ── PILLS LICENCIAS ────────────────────────────────────────────── */
+.pill-activa  { background: rgba(47,143,118,.12);  color: var(--green-2); }
+.pill-vencer  { background: rgba(197,150,0,.12);  color: var(--yellow); }
+.pill-vencida { background: rgba(217,95,110,.12); color: var(--negative); }
+.pill-paused  { background: rgba(255,255,255,.06); color: var(--text-muted); }
+
+/* ── BARRA HORIZONTAL (plan) ────────────────────────────────────── */
+.bar-name { font-size: 12px; color: var(--text); }
+
+/* ── NOTICE / EMPTY ─────────────────────────────────────────────── */
+.notice {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+.notice strong { display: block; margin-bottom: 4px; }
+.empty-box {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.empty-box strong { display: block; color: var(--text); margin-bottom: 6px; font-size: 13px; }
+
+/* ── FOOTNOTE ───────────────────────────────────────────────────── */
+.footnote {
+  margin-top: 16px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  line-height: 1.6;
+}
+.footnote code {
+  font-family: var(--mono);
+  background: rgba(255,255,255,.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--text);
+}
+
+/* ── TABLA CON SCROLL ───────────────────────────────────────────── */
+.table-wrap {
+  max-height: 380px;
+  overflow: auto;
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  /* hover glow lo maneja la .card padre */
+}
+.table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #242837;
+}
+
+/* ── HOVER EN FILAS ─────────────────────────────────────────────── */
+tbody tr { transition: background .14s ease; }
+tbody tr:hover { background: rgba(255,255,255,.04); }
+
+/* ── KPI — hover y transición base (para todos los tabs) ────────── */
+.kpi {
+  padding: 12px 22px;
+  min-height: 96px;
+  transition:
+    opacity .55s ease,
+    transform .55s cubic-bezier(.2,.75,.25,1),
+    border-color .3s ease,
+    box-shadow .3s ease;
+}
+.kpi:hover {
+  border-color: rgba(196,60,80,.42);
+  box-shadow: 0 14px 32px rgba(0,0,0,.2);
+  transform: translateY(-3px);
+}
+
+/* Solo el grid principal empieza oculto y anima (bodega style) */
+#kpiGrid .kpi {
+  opacity: 0;
+  transform: translateY(18px);
+}
+#kpiGrid .kpi.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* KPIs de Licencias — también empiezan ocultos para la animación de entrada */
+#tab-licencias .kpi                { opacity: 0; transform: translateY(18px); }
+#tab-licencias .kpi.reveal-visible { opacity: 1; transform: translateY(0); }
+
+/* KPIs de Conciliación — dinámicos, mismo patrón */
+#concKpiGrid .kpi                { opacity: 0; transform: translateY(18px); }
+#concKpiGrid .kpi.reveal-visible { opacity: 1; transform: translateY(0); }
+
+/* Fila total de la tabla de conciliación */
+.conc-total-row td { border-top: 1px solid var(--border-str); padding-top: 12px; }
+
+/* ── OP-CARD — reveal + hover ────────────────────────────────────── */
+.op-card {
+  transition: opacity .55s ease, transform .55s cubic-bezier(.2,.75,.25,1), border-color .3s ease, box-shadow .3s ease;
+}
+.op-card:hover {
+  border-color: rgba(196,60,80,.42);
+  box-shadow: 0 14px 32px rgba(0,0,0,.2);
+  transform: translateY(-3px);
+}
+
+
+/* ── LOADER ─────────────────────────────────────────────────────── */
+.sims-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.sims-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-str);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: sims-spin .8s linear infinite;
+}
+@keyframes sims-spin { to { transform: rotate(360deg); } }
+
+/* ── REVEAL — solo estado; la transición la define cada elemento ── */
+/* Las clases las pone sims.js (IntersectionObserver). Sin JS todo queda visible.
+   El estado final usa transform:none (no translateY(0)) para no crear un
+   contexto de apilamiento que tape el dropdown de clientes, y con especificidad
+   baja para que el :hover de .kpi / .op-card / .card siga levantando. */
+.reveal-hidden  { opacity: 0; transform: translateY(18px); }
+.reveal-visible { opacity: 1; transform: none; }
+
+.tabs,
+.filter-bar { transition: opacity .55s ease, transform .55s cubic-bezier(.2,.75,.25,1); }
+
+/* La barra que contiene el dropdown queda por encima de los KPIs */
+.filter-bar:has(.mso-drop) { position: relative; z-index: 30; }
+
+/* ── BARRAS crecen desde cero ────────────────────────────────────── */
+.bar-fill { transition: width .65s cubic-bezier(.2,.75,.25,1); }
+
+/* ── FILAS DE TABLA entran en cascada ────────────────────────────── */
+@keyframes sims-row-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.table-wrap tbody tr                  { animation: sims-row-in .35s ease both; }
+.table-wrap tbody tr:nth-child(2)     { animation-delay: .03s; }
+.table-wrap tbody tr:nth-child(3)     { animation-delay: .06s; }
+.table-wrap tbody tr:nth-child(4)     { animation-delay: .09s; }
+.table-wrap tbody tr:nth-child(5)     { animation-delay: .12s; }
+.table-wrap tbody tr:nth-child(6)     { animation-delay: .15s; }
+.table-wrap tbody tr:nth-child(7)     { animation-delay: .18s; }
+
+/* ── TABS MSO — pills de estado y SLA ───────────────────────────── */
+.mso-pill-down  { background: rgba(197,150,0,.15); color: #c59600; }
+.mso-pill-up    { background: rgba(47, 143, 118,.15); color: #2f8f76; }
+.mso-pill-ok    { background: rgba(47, 143, 118,.15); color: var(--green); }
+.mso-pill-esc1  { background: rgba(197,150,0,.15); color: var(--yellow); }
+.mso-pill-esc2  { background: rgba(217,95,110,.15);  color: var(--accent-2); }
+
+/* Barra de paginación */
+.mso-pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+.mso-pagination .filter-chip.disabled {
+  opacity: .35;
+  pointer-events: none;
+}
+
+
+/* Colores semánticos para cifras */
+.mso-green  { color: var(--green-2)  !important; }
+.mso-red    { color: var(--accent-2) !important; }
+.mso-yellow { color: var(--yellow)   !important; }
+.mso-cyan   { color: var(--cyan)     !important; }
+.mso-blue   { color: var(--blue)     !important; }
+.mono       { font-family: var(--mono); }
+
+/* Tabs horizontales con scroll cuando hay muchos */
+.tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+
+/* ── CELDAS DE TABLA CON DETALLE ────────────────────────────────── */
+.cell-main { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.cell-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
+
+/* ── DROPDOWN BUSCABLE DE CLIENTE ───────────────────────────────── */
+.mso-drop { position: relative; display: inline-block; }
+
+.mso-drop-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border-str);
+  background: var(--bg-card);
+  color: var(--text-sec);
+  transition: border-color .18s, background .18s, color .18s;
+  white-space: nowrap;
+  min-width: 200px;
+  justify-content: space-between;
+}
+.mso-drop-trigger:hover { border-color: var(--accent); color: var(--text); }
+.mso-drop-trigger svg   { flex-shrink: 0; opacity: .55; transition: transform .2s; }
+.mso-drop:has(.mso-drop-panel:not([hidden])) .mso-drop-trigger { border-color: var(--accent); color: var(--text); }
+.mso-drop:has(.mso-drop-panel:not([hidden])) .mso-drop-trigger svg { transform: rotate(180deg); }
+
+.mso-drop-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 120;
+  min-width: 260px;
+  max-width: 360px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-str);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.mso-drop-panel[hidden] { display: none !important; }
+.mso-drop-search {
+  font-size: 12px;
+  font-family: var(--font);
+  background: var(--surface-2);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.mso-drop-search::placeholder { color: var(--text-muted); }
+.mso-drop-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.mso-drop-list::-webkit-scrollbar { width: 4px; }
+.mso-drop-list::-webkit-scrollbar-track { background: transparent; }
+.mso-drop-list::-webkit-scrollbar-thumb { background: var(--border-str); border-radius: 4px; }
+
+.mso-drop-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  font-family: var(--font);
+  font-weight: 500;
+  color: var(--text-sec);
+  padding: 9px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mso-drop-opt:hover  { background: var(--surface-3); color: var(--text); }
+.mso-drop-opt.active { background: rgba(217,95,110,.12); color: var(--accent-2); font-weight: 700; }
+
+/* Barra cliente compacta (legacy) */
+.mso-client-bar { padding-top: 0; margin-bottom: 18px; }
+
+/* ── DETALLE EXPANDIDO DE KPI (popover inline) ──────────────────── */
+.mso-kpi-interactive .mso-kpi-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  row-gap: 4px;
+}
+.kpi-pop-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.kpi-pop-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  width: calc(100% + 16px);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  font: 600 10.5px var(--font);
+  color: var(--text-sec);
+  text-align: left;
+  cursor: pointer;
+  transition: background .14s, border-color .14s, color .14s;
+}
+.kpi-pop-row:hover { background: rgba(255,255,255,.05); border-color: var(--border); color: var(--text); }
+.kpi-pop-row b { color: var(--text); font-family: var(--mono); font-size: 11px; }
+.kpi-pop-row.mso-d span { color: var(--yellow); }
+.kpi-pop-row.mso-u span { color: var(--green-2); }
+.kpi-pop-row.mso-r span { color: var(--yellow); }
+.mso-kpi-click { cursor: pointer; }
+
+/* ── ENCABEZADO + HERO PILLS — tipografía del encabezado de Ingresos ── */
+/* Título arriba; debajo, una fila: "Actualizar datos" a la izquierda y la pastilla de actualización a la derecha */
+.mso-header { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.mso-header .page-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 2px; margin-bottom: 6px; }
+.mso-header .page-title   { font-size: 24px; font-weight: 800; line-height: 1.1; letter-spacing: -.5px; color: #fff; }
+.mso-header .page-sub     { margin-top: 8px; }
+.mso-header-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; width: 100%; }
+/* Pastilla de última actualización (.std-sync) en el extremo derecho del encabezado */
+html body .mso-header-actions > .std-sync { margin: 0 0 0 auto; align-self: center; }
+/* Ícono de descarga del botón Excel (Informe detallado) */
+.inf-download { display: inline-flex; align-items: center; gap: 6px; }
+.inf-download-ico { width: 15px; height: 15px; flex: 0 0 auto; display: block; }
+.inf-download.is-loading .inf-download-ico { display: none; }
+/* Botón de acción como los de Ingresos (Imprimir / Guardar PDF) */
+.filter-chip.mso-action {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border-color: var(--border-str);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.filter-chip.mso-action:hover { border-color: var(--accent); background: var(--bg-card); box-shadow: 0 0 0 1px rgba(196,60,80,.18); }
+.filter-chip.mso-ghost { background: transparent; }
+.filter-chip.is-loading { opacity: .6; pointer-events: none; }
+.filter-chip.is-loading::before {
+  content: '';
+  width: 11px; height: 11px;
+  border: 2px solid var(--border-str);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: sims-spin .7s linear infinite;
+}
+.filter-chip.mso-mini  { min-height: 30px; padding: 5px 11px; font-size: 10.5px; }
+.chip-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+  color: inherit;
+}
+.filter-chip.active .chip-count { background: rgba(255,255,255,.22); }
+.mso-chip-wrap { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── OP-CARD métricas (por operador / por país) ─────────────────── */
+.op-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+.op-metrics span {
+  display: block;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.op-metrics b { display: block; margin-top: 2px; font: 700 12px var(--mono); color: var(--text); }
+.op-card[data-op-jump], .op-card[data-pais-jump] { cursor: pointer; }
+.op-card-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 16px; }
+.op-card-row .op-card-total { font-size: 24px; margin: 4px 0 0; }
+.op-card-row .op-metrics { margin-top: 0; }
+.mso-empty { color: var(--text-muted); font-size: 12px; margin: 0; }
+.mso-empty-cell { text-align: center; color: var(--text-muted); padding: 22px 12px !important; font-size: 12px; }
+
+/* ── BARRAS VERTICALES (guía §05) ────────────────────────────────── */
+.bar-chart-panel {
+  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.vertical-bars {
+  display: flex;
+  align-items: end;
+  justify-content: space-around;
+  gap: 12px;
+  height: 230px;
+  padding: 16px 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.vertical-bar {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: end;
+  justify-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 6px;
+  cursor: pointer;
+}
+.vertical-bar .bar-value { font: 700 11px var(--mono); color: var(--text); }
+.vertical-bar .bar-column { display: flex; align-items: end; width: 38px; height: 100%; }
+.vertical-bar .bar-column span {
+  display: block;
+  width: 100%;
+  height: var(--bar-height);
+  min-height: 6px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #4f8fd8, #4f8fd8);
+  transition: height .8s cubic-bezier(.2,.75,.25,1), opacity .18s;
+}
+.vertical-bar:hover .bar-column span { opacity: .85; }
+.vertical-bar label { color: var(--text-muted); font-size: 10px; white-space: nowrap; cursor: pointer; }
+.chart-legend { display: flex; gap: 14px; margin-top: 10px; color: var(--text-muted); font-size: 10.5px; flex-wrap: wrap; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; background: var(--accent); }
+.chart-legend b { font-family: var(--mono); color: var(--text); }
+
+/* ── GRÁFICA DE LÍNEA (guía §05) ─────────────────────────────────── */
+.history-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.history-summary {
+  min-width: 210px;
+  text-align: right;
+  color: var(--text-sec);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+.history-summary b   { display: block; font: 700 16px var(--mono); color: var(--text); margin-bottom: 2px; }
+.history-summary em  { display: block; font-style: normal; font-weight: 700; margin-top: 2px; }
+.history-summary .good    { color: var(--green-2); }
+.history-summary .bad     { color: var(--accent-2); }
+.history-summary .neutral { color: var(--blue); }
+.line-chart { position: relative; height: 240px; padding: 4px 0 0; }
+.line-chart svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.chart-grid  { stroke: rgba(255,255,255,.08); stroke-width: 1; }
+.chart-area  { fill: rgba(196,60,80,.13); }
+.chart-line  { fill: none; stroke: var(--accent-2); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.chart-line.cyan { stroke: var(--cyan); stroke-width: 2.2; }
+.chart-line.blue { stroke: var(--blue); stroke-width: 2.2; }
+.chart-point { fill: var(--accent-2); }
+.chart-axis  { fill: var(--text-sec); font: 10px var(--font); }
+.chart-play .chart-line  { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: draw-chart 1.2s ease forwards; }
+.chart-play .chart-area  { opacity: 0; animation: fade-area .7s .7s ease forwards; }
+.chart-play .chart-point { opacity: 0; animation: fade-area .4s 1s ease forwards; }
+@keyframes draw-chart { to { stroke-dashoffset: 0; } }
+@keyframes fade-area  { to { opacity: 1; } }
+.chart-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+  min-width: 165px;
+  padding: 9px 11px;
+  background: #151821;
+  border: 1px solid var(--border-str);
+  border-radius: 9px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
+  font-size: 10.5px;
+  color: var(--text-sec);
+}
+.chart-tooltip.open  { display: block; }
+.chart-tooltip strong { display: block; margin-bottom: 5px; font-size: 11px; color: var(--text); }
+.chart-tooltip span  { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 3px; }
+.chart-tooltip span i { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; display: inline-block; }
+.chart-tooltip b { font-family: var(--mono); color: var(--text); margin-left: auto; }
+
+/* ── PILLS DE STATUS SIM ─────────────────────────────────────────── */
+.mso-pill-cambios    { background: rgba(217,95,110,.15); color: var(--accent-2); }
+.mso-pill-mantener   { background: rgba(79, 143, 216,.15);  color: var(--cyan); }
+.mso-pill-revision   { background: rgba(197,150,0,.15); color: var(--yellow); }
+.mso-pill-stock      { background: rgba(79,143,216,.15); color: var(--blue); }
+.mso-pill-reemplazos { background: rgba(217,95,110,.15); color: var(--negative); }
+.mso-row-reingreso td:first-child { border-left: 3px solid var(--accent-2); }
+.mso-row-reingreso { background: rgba(217,95,110,.06); }
+.mso-row-esc2 { background: rgba(217,95,110,.04); }
+.mso-row-esc1 { background: rgba(197,150,0,.04); }
+
+/* ── TOOLBAR DE TABLA + SELECT ───────────────────────────────────── */
+.mso-toolbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.mso-toolbar h2 { margin-bottom: 2px; }
+.mso-toolbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mso-select {
+  min-height: 38px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid var(--border-str);
+  border-radius: 8px;
+  background: var(--bg-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238da1bf' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 11px center;
+  color: var(--text-sec);
+  font: 600 11px var(--font);
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+.mso-select:hover, .mso-select:focus { border-color: var(--accent); color: var(--text); }
+.mso-table-tall { max-height: 520px; }
+.mso-pag-info { color: var(--text-muted); font-size: 12px; }
+.mso-pag-info b { font-family: var(--mono); color: var(--text); }
+
+/* ── DROPDOWN: metadatos y conteos ───────────────────────────────── */
+.mso-drop-opt { display: flex; align-items: center; gap: 8px; }
+.mso-drop-opt .mso-drop-name { overflow: hidden; text-overflow: ellipsis; }
+.mso-drop-opt small { color: var(--text-muted); font-size: 10px; white-space: nowrap; }
+.mso-drop-count { margin-left: auto; font: 700 10.5px var(--mono); color: var(--text); padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,.08); }
+.mso-drop-meta { padding: 7px 14px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text-muted); text-align: right; }
+
+/* ── MODAL DETALLE DE RECLAMO ────────────────────────────────────── */
+.mso-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  padding: 36px;
+  background: rgba(15, 17, 23,.78);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+}
+.mso-modal.open { display: flex; }
+.mso-modal-card {
+  width: min(1180px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 22px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-str);
+  border-radius: 12px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
+}
+.mso-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+.mso-modal-head h2 { margin: 4px 0 0; font-size: 16px; }
+.mso-modal-close {
+  width: 34px; height: 34px;
+  border: 1px solid var(--border-str);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-sec);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mso-modal-close:hover { border-color: var(--accent); color: var(--text); }
+.mso-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.mso-stat { padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); }
+.mso-stat span { display: block; font-size: 9.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+.mso-stat b { display: block; margin-top: 5px; font: 700 18px var(--mono); color: var(--text); }
+.mso-alert {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(196,60,80,.08);
+  font-size: 11.5px;
+  color: var(--text-sec);
+  line-height: 1.6;
+}
+.mso-alert strong { color: var(--text); }
+.mso-alert .pill { vertical-align: middle; }
+
+/* ── CONSULTANDO LA API — resaltado sutil de la sección que carga ── */
+.mso-busy {
+  position: relative;
+  border-color: rgba(217,95,110, .35);
+}
+/* Barrido de luz que recorre la sección mientras llegan los datos */
+.mso-busy::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(100deg,
+    transparent 28%,
+    rgba(217,95,110, .09) 45%,
+    rgba(79, 143, 216, .07) 55%,
+    transparent 72%);
+  background-size: 260% 100%;
+  animation: mso-busy-sweep 1.25s linear infinite;
+}
+/* Línea de progreso al borde superior */
+.mso-busy::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
+  background-size: 45% 100%;
+  background-repeat: no-repeat;
+  animation: mso-busy-bar 1.25s ease-in-out infinite;
+}
+/* Los datos viejos se atenúan para que se note cuál se está actualizando */
+.mso-busy .kpi-value,
+.mso-busy .op-card-total,
+.mso-busy tbody,
+.mso-busy .vertical-bars,
+.mso-busy .line-chart { opacity: .45; transition: opacity .25s ease; }
+
+@keyframes mso-busy-sweep { to { background-position: -160% 0; } }
+@keyframes mso-busy-bar   { 0% { background-position: -50% 0; } 100% { background-position: 150% 0; } }
+
+/* ── REDUCED MOTION ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  #kpiGrid .kpi, .reveal-hidden { opacity: 1 !important; transform: none !important; }
+  /* Sin movimiento el estado de carga se indica solo con el borde y la atenuación */
+  .mso-busy::after { background: rgba(217,95,110, .05); }
+  .mso-busy::before { background: var(--accent-2); }
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .two-col { grid-template-columns: 1fr; }
+  .bar-row { grid-template-columns: 110px 1fr 55px; }
+  .op-card-row { grid-template-columns: 1fr; }
+  .history-summary { text-align: left; min-width: 0; }
+  .mso-modal { padding: 12px; }
+  .vertical-bars { height: 190px; }
+}
+@media (max-width: 700px) {
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+
+/* Las barras de filtros conservan los colores de develop: la estandarización
+   de módulos (tokens de Ingresos) no cambia cómo se ven los filtros. */
+.filter-bar {
+  --border:     rgba(255, 255, 255,.2);
+  --border-str: rgba(255, 255, 255,.38);
+  --text:       #e8eaf0;
+  --text-sec:   #8b909e;
+  --text-muted: #8b909e;
+  --accent:     #c43c50;
+  --mono:       'Cascadia Code','Fira Mono',monospace;
+}
+/* Barra de filtros v2: estilos compartidos en filtros-guia.css */
+/* Contenedor que rodea los filtros, igual que la guía (.filter-demo) y los demás dashboards */
+.filter-bar.sims-fbar {
+  position: relative;
+  gap: 10px;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255,.38);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+/* ── INFORME DETALLADO ──────────────────────────────────────────── */
+.inf-datasets { display: flex; flex-wrap: wrap; gap: 14px 28px; margin-top: 16px; }
+.inf-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.inf-group .filter-label { width: 100%; }
+.inf-progress { font-size: 11px; color: var(--text-sec); white-space: nowrap; }
+.inf-search {
+  min-height: 38px; width: min(320px, 100%); padding: 8px 12px;
+  border: 1px solid var(--border-str); border-radius: 8px; background: var(--surface-2);
+  color: var(--text); font: 12px var(--font); outline: 0;
+}
+.inf-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217,95,110,.16); }
+.inf-fbar { margin: 0 0 14px; }
+.inf-fbar .inf-search { min-height: 46px; flex: 0 1 320px; }
+/* Las tablas del informe tienen muchas columnas filtrables: el panel ocupa la barra y se desplaza */
+.inf-fbar .xf-panel { width: 100%; }
+.inf-fbar .xf-columns { max-height: min(60vh, 560px); overflow: auto; scrollbar-color: var(--fg-accent) transparent; }
+.inf-table-wrap { overflow: auto; }
+.inf-table th { white-space: nowrap; cursor: pointer; user-select: none; }
+.inf-table th:hover { color: var(--text); }
+.inf-table td { white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.inf-table td.inf-num { text-align: right; }
+.inf-table tbody tr { animation: none; }
+@media (max-width: 760px) {
+  .inf-search { width: 100%; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BOTÓN "PDF" a la par de Filtros + selección múltiple de módulos.
+   Mismo diseño que en Ingresos (copiado de Ingresos.css).
+   ══════════════════════════════════════════════════════════════════════════ */
+html body .sims-fbar > .pdf-report-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 4px 13px 4px 5px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #d95f6e 0%, #c43c50 46%, #c43c50 100%);
+  color: #fff;
+  font-family: var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: none;
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+  z-index: 3;
+}
+
+html body .sims-fbar > .pdf-report-btn:hover {
+  transform: translateY(-2px);
+}
+
+html body .sims-fbar > .pdf-report-btn:active {
+  transform: translateY(0);
+}
+
+html body .sims-fbar > .pdf-report-btn:focus-visible {
+  outline: 2px solid #d95f6e;
+  outline-offset: 2px;
+}
+
+/* Pastilla blanca con el logo RED Intelfon */
+html body .pdf-report-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 31px;
+  height: 31px;
+  padding: 2px;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}
+
+html body .pdf-report-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Copia: título + subtítulo */
+html body .pdf-report-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+html body .pdf-report-copy strong {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html body .pdf-report-copy small {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  color: rgba(255, 255, 255, .85);
+  white-space: nowrap;
+}
+
+/* Ícono de descarga */
+html body .pdf-report-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-left: 2px;
+}
+
+html body .pdf-report-glyph svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* Estado "Generando…" */
+html body .pdf-report-spinner {
+  display: none;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  border-radius: 50%;
+}
+
+html body .pdf-report-btn.is-loading {
+  cursor: progress;
+  filter: saturate(.8) brightness(.95);
+}
+
+html body .pdf-report-btn.is-loading .pdf-report-glyph { display: none; }
+html body .pdf-report-btn.is-loading .pdf-report-spinner { display: inline-block; animation: pdf-btn-spin .7s linear infinite; }
+html body .pdf-report-btn.is-loading:hover { transform: none; }
+
+@keyframes pdf-btn-spin { to { transform: rotate(360deg); } }
+
+/* Aviso flotante de resultado (descargado / error) */
+html body .pdf-report-toast {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: min(380px, calc(100vw - 44px));
+  padding: 13px 17px;
+  border: 1px solid var(--border-light, rgba(255,255,255,.16));
+  border-radius: 12px;
+  background: #1a1d27;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+  color: var(--text-primary, #e8eaf0);
+  font: 700 12.5px/1.4 var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  animation: pdf-toast-in .28s cubic-bezier(.2, .9, .3, 1.2);
+}
+
+html body .pdf-report-toast small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-secondary, #8b909e);
+}
+
+html body .pdf-report-toast i {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2f8f76;
+  box-shadow: 0 0 0 4px rgba(47, 143, 118, .18);
+}
+
+html body .pdf-report-toast.is-error i {
+  background: #c43c50;
+  box-shadow: 0 0 0 4px rgba(196, 60, 80, .18);
+}
+
+html body .pdf-report-toast.is-out { animation: pdf-toast-out .25s ease-in forwards; }
+
+@keyframes pdf-toast-in {
+  from { opacity: 0; transform: translateY(16px) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pdf-toast-out {
+  to { opacity: 0; transform: translateY(10px); }
+}
+
+/* Pantallas angostas: solo título + logo */
+@media (max-width: 640px) {
+  html body .pdf-report-copy small { display: none; }
+  html body .sims-fbar > .pdf-report-btn { width: 100%; justify-content: center; }
+}
+
+
+html body .pdf-module-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(15, 17, 23, .74);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  animation: pdf-modal-in .18s ease both;
+}
+
+html body .pdf-module-modal[hidden] {
+  display: none;
+}
+
+html body .pdf-module-modal.is-closing {
+  animation: pdf-modal-out .16s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes pdf-modal-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pdf-modal-out {
+  to { opacity: 0; }
+}
+
+html body .pdf-module-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(700px, 100%);
+  max-height: min(86vh, 780px);
+  overflow: hidden;
+  border: 1px solid var(--border-light, rgba(255,255,255,.16));
+  border-radius: 18px;
+  background: linear-gradient(180deg, #1a1d27 0%, var(--bg-card, #1a1d27) 30%);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, .62), 0 0 0 1px rgba(255, 255, 255, .03) inset;
+  animation: pdf-dialog-in .28s cubic-bezier(.2, .9, .3, 1.14) both;
+}
+
+html body .pdf-module-modal.is-closing .pdf-module-dialog {
+  animation: pdf-dialog-out .16s ease forwards;
+}
+
+@keyframes pdf-dialog-in {
+  from { opacity: 0; transform: translateY(20px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pdf-dialog-out {
+  to { opacity: 0; transform: translateY(10px) scale(.98); }
+}
+
+/* ── Encabezado ─────────────────────────────────────────────────────────── */
+
+html body .pdf-module-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 22px 22px 16px;
+  border-bottom: 1px solid rgba(36,40,55, .5);
+}
+
+html body .pdf-module-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(140deg, var(--accent, #c43c50), #c43c50);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(196, 60, 80, .34);
+}
+
+html body .pdf-module-badge svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+html body .pdf-module-headcopy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html body .pdf-module-kicker {
+  display: block;
+  color: var(--accent, #c43c50);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+html body .pdf-module-headcopy h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary, #e8eaf0);
+}
+
+html body .pdf-module-headcopy p {
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary, #8b909e);
+}
+
+html body .pdf-module-close {
+  flex: 0 0 auto;
+  min-width: 34px;
+  padding: 4px 9px;
+  border: 1px solid var(--border-light, rgba(255,255,255,.16));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--text-secondary, #8b909e);
+  font-size: 22px;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+html body .pdf-module-close:hover {
+  background: rgba(196, 60, 80, .14);
+  border-color: rgba(196, 60, 80, .5);
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+html body .pdf-module-close:focus-visible {
+  outline: 2px solid var(--accent, #c43c50);
+  outline-offset: 2px;
+}
+
+/* ── Barra de acciones rápidas ──────────────────────────────────────────── */
+
+/* Filtros aplicados en la ventana del PDF: chip con el resumen y,
+   al pasar el cursor (o con el foco), el detalle de las opciones elegidas.
+   Mismo diseño que la ventana de Activaciones / Facturación (dashboard-pdf.css). */
+html body .pdf-module-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  position: relative;
+  z-index: 2;
+  padding: 13px 22px 13px;
+  border-bottom: 1px solid rgba(36,40,55, .5);
+}
+html body .pdf-module-filters[hidden] { display: none; }
+html body .pdf-filter-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 999px;
+  background: #1a1d27;
+  color: #e8eaf0;
+  font: 500 10px/1.3 var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
+}
+html body .pdf-filter-chip.is-group { border-color: rgba(196, 60, 80, .38); }
+html body .pdf-filter-chip.has-detail { cursor: help; }
+html body .pdf-filter-chip.has-detail:hover,
+html body .pdf-filter-chip.has-detail:focus-visible {
+  z-index: 5;
+  border-color: rgba(255, 255, 255, .16);
+  background: #242837;
+  outline: none;
+  transform: translateY(-1px);
+}
+html body .pdf-filter-chip-label { color: #8b909e; white-space: nowrap; }
+html body .pdf-filter-chip strong {
+  display: block;
+  max-width: 210px;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html body .pdf-filter-detail {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 10px);
+  left: 50%;
+  width: max-content;
+  max-width: min(350px, calc(100vw - 40px));
+  padding: 11px 13px 12px;
+  border: 1px solid rgba(255, 255, 255, .36);
+  border-radius: 11px;
+  background: linear-gradient(145deg, #242837 0%, #151821 100%);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .5);
+  color: #7fb0f0;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, -4px) scale(.97);
+  transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+}
+html body .pdf-filter-chip.has-detail:hover .pdf-filter-detail,
+html body .pdf-filter-chip.has-detail:focus-visible .pdf-filter-detail {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+}
+html body .pdf-filter-detail-title {
+  display: block;
+  margin-bottom: 5px;
+  color: #d95f6e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+html body .pdf-filter-detail-text { display: block; font-size: 11px; line-height: 1.45; }
+
+html body .pdf-module-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 22px 4px;
+}
+
+html body .pdf-module-quick {
+  display: flex;
+  gap: 8px;
+}
+
+html body .pdf-module-quick button {
+  padding: 7px 13px;
+  border: 1px solid var(--border-light, rgba(255,255,255,.16));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--text-secondary, #8b909e);
+  font: 700 11.5px/1 var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  letter-spacing: .3px;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+html body .pdf-module-quick button:hover {
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .3);
+  color: #fff;
+}
+
+html body .pdf-module-quick button:focus-visible {
+  outline: 2px solid var(--accent, #c43c50);
+  outline-offset: 2px;
+}
+
+html body .pdf-module-count {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(196, 60, 80, .12);
+  border: 1px solid rgba(196, 60, 80, .34);
+  color: #d95f6e;
+  font: 800 11.5px/1 var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  letter-spacing: .3px;
+  white-space: nowrap;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+html body .pdf-module-count.is-empty {
+  background: rgba(255, 255, 255, .05);
+  border-color: var(--border-light, rgba(255,255,255,.16));
+  color: var(--text-muted, #8b909e);
+}
+
+/* ── Grilla de módulos ──────────────────────────────────────────────────── */
+
+html body .pdf-module-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+  gap: 11px;
+  padding: 14px 22px 6px;
+  overflow-y: auto;
+}
+
+html body .pdf-module-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 15px;
+  border: 1px solid var(--border-light, rgba(255,255,255,.16));
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .03);
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+html body .pdf-module-option:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .26);
+}
+
+html body .pdf-module-option:has(input:checked) {
+  border-color: rgba(196, 60, 80, .75);
+  background: linear-gradient(140deg, rgba(196, 60, 80, .16), rgba(196, 60, 80, .05));
+  box-shadow: 0 10px 26px rgba(196, 60, 80, .16);
+}
+
+html body .pdf-module-option:has(input:focus-visible) {
+  outline: 2px solid var(--accent, #c43c50);
+  outline-offset: 2px;
+}
+
+html body .pdf-module-option.is-checked {
+  border-color: rgba(196, 60, 80, .75);
+  background: linear-gradient(140deg, rgba(196, 60, 80, .16), rgba(196, 60, 80, .05));
+  box-shadow: 0 10px 26px rgba(196, 60, 80, .16);
+}
+
+html body .pdf-module-option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Casilla personalizada */
+html body .pdf-module-box {
+  position: relative;
+  flex: 0 0 auto;
+  width: 21px;
+  height: 21px;
+  margin-top: 1px;
+  border: 2px solid var(--border-light, rgba(255,255,255,.16));
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .25);
+  transition: border-color .18s ease, background .18s ease;
+}
+
+html body .pdf-module-box::after {
+  content: '';
+  position: absolute;
+  left: 5.5px;
+  top: 1.5px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2.4px 2.4px 0;
+  transform: rotate(45deg) scale(.4);
+  opacity: 0;
+  transition: opacity .16s ease, transform .2s cubic-bezier(.2, .9, .3, 1.5);
+}
+
+html body .pdf-module-option.is-checked .pdf-module-box {
+  border-color: var(--accent, #c43c50);
+  background: linear-gradient(140deg, var(--accent, #c43c50), #c43c50);
+}
+
+html body .pdf-module-option.is-checked .pdf-module-box::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+/* Ícono del módulo */
+html body .pdf-module-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .08);
+  color: var(--text-secondary, #8b909e);
+  transition: background .18s ease, color .18s ease;
+}
+
+html body .pdf-module-icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+html body .pdf-module-option.is-checked .pdf-module-icon {
+  background: rgba(196, 60, 80, .2);
+  border-color: rgba(196, 60, 80, .4);
+  color: #d95f6e;
+}
+
+html body .pdf-module-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html body .pdf-module-copy strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary, #e8eaf0);
+}
+
+html body .pdf-module-copy span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-secondary, #8b909e);
+}
+
+/* Orden / numeración fantasma que se enciende al marcar */
+html body .pdf-module-order {
+  position: absolute;
+  top: 11px;
+  right: 13px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--text-muted, #8b909e);
+  opacity: .55;
+  transition: color .18s ease, opacity .18s ease;
+}
+
+html body .pdf-module-option.is-checked .pdf-module-order {
+  color: #d95f6e;
+  opacity: 1;
+}
+
+/* ── Pie del modal ──────────────────────────────────────────────────────── */
+
+html body .pdf-module-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 16px 22px;
+  border-top: 1px solid rgba(36,40,55, .5);
+  background: rgba(0, 0, 0, .22);
+}
+
+html body .pdf-module-hint {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-muted, #8b909e);
+}
+
+html body .pdf-module-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+html body .pdf-module-cancel,
+html body .pdf-module-generate {
+  padding: 11px 18px;
+  border-radius: 11px;
+  font: 800 12.5px/1 var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  letter-spacing: .4px;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+
+html body .pdf-module-cancel {
+  border: 1px solid var(--border-light, rgba(255,255,255,.16));
+  background: transparent;
+  color: var(--text-secondary, #8b909e);
+}
+
+html body .pdf-module-cancel:hover {
+  background: rgba(255, 255, 255, .07);
+  color: #fff;
+}
+
+html body .pdf-module-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  background: linear-gradient(140deg, var(--accent, #c43c50), #c43c50);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(196, 60, 80, .32);
+}
+
+html body .pdf-module-generate b {
+  min-width: 22px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .28);
+  font-size: 11.5px;
+  text-align: center;
+}
+
+html body .pdf-module-generate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(196, 60, 80, .44);
+}
+
+html body .pdf-module-generate:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: saturate(.4);
+}
+
+html body .pdf-module-cancel:active,
+html body .pdf-module-generate:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+html body .pdf-module-cancel:focus-visible,
+html body .pdf-module-generate:focus-visible {
+  outline: 2px solid #d95f6e;
+  outline-offset: 2px;
+}
+
+/* ── Responsivo y accesibilidad ─────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  html body .pdf-module-modal { padding: 12px; }
+  html body .pdf-module-header { padding: 18px 16px 14px; gap: 11px; }
+  html body .pdf-module-badge { width: 38px; height: 38px; border-radius: 11px; }
+  html body .pdf-module-headcopy h2 { font-size: 17px; }
+  html body .pdf-module-toolbar,
+  html body .pdf-module-options { padding-left: 16px; padding-right: 16px; }
+  html body .pdf-module-footer { padding: 14px 16px; }
+  html body .pdf-module-hint { display: none; }
+  html body .pdf-module-actions { width: 100%; }
+  html body .pdf-module-cancel,
+  html body .pdf-module-generate { flex: 1 1 auto; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .pdf-module-modal,
+  html body .pdf-module-dialog,
+  html body .pdf-module-option,
+  html body .pdf-module-close { animation: none; transition: none; }
+}

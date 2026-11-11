@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MSO Dashboard · RED Intelfon</title>
+<link rel="stylesheet" href="../../assets/css/dashboard.css?v=20261021tokens">
+<link rel="stylesheet" href="../../assets/css/sims.css?v=20261021tokens">
+<link rel="stylesheet" href="../../assets/css/filtros-guia.css?v=20261021tokens">
+<link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
+<script src="../../assets/js/estandar.js?v=20261021barras"></script>
+</head>
+<body>
+
+<!-- ENCABEZADO ───────────────────────────────────────────────────── -->
+<div class="page-header mso-header">
+  <div>
+    <div class="page-eyebrow">SIMs · MSO · Conciliación y optimización</div>
+    <h1 class="page-title">Dashboard MSO</h1>
+    <p class="page-sub" id="pageSync">Cargando datos…</p>
+  </div>
+  <div class="mso-header-actions">
+    <!-- Actualizar datos a la izquierda; la pastilla de última actualización (.std-sync) la mueve sims.js al extremo derecho -->
+    <button class="filter-chip mso-action" id="btnRefresh" type="button">↻ Actualizar datos</button>
+  </div>
+</div>
+
+<div id="globalLoader" class="sims-loader"><div class="sims-spinner"></div></div>
+<div id="globalError" class="error-box" style="display:none"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CONTENIDO PRINCIPAL
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="mainContent" style="display:none">
+
+  <div id="globalSimBlock">
+
+    <!-- FILTROS — Operaciones · Filtros combinados · Restablecer ─────── -->
+    <div class="filter-bar sims-fbar">
+      <div class="op-group" role="group" aria-label="Operaciones" data-op-scope="mso">
+        <span class="op-label">Operaciones</span>
+        <button class="op-btn active" type="button" data-mso-pais="">Todos</button>
+        <button class="op-btn" type="button" data-mso-pais="GT" title="Guatemala"><span class="op-flag op-flag-gt" aria-hidden="true"></span>GT</button>
+        <button class="op-btn" type="button" data-mso-pais="SV" title="El Salvador"><span class="op-flag op-flag-sv" aria-hidden="true"></span>SV</button>
+      </div>
+      <div class="xf" id="msoXf"></div>
+      <!-- Descargar PDF: abre la selección múltiple de módulos (igual que en Ingresos).
+           Va a la par del botón Filtros y respeta los filtros activos. -->
+      <button type="button" class="pdf-report-btn" id="simsPdfBtn"
+        title="Elige los módulos a incluir en el PDF (operaciones y filtros activos)"
+        aria-label="Descargar PDF eligiendo los módulos a incluir">
+        <span class="pdf-report-glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v11" />
+            <path d="m7.5 10 4.5 4.5L16.5 10" />
+            <path d="M4.5 19.5h15" />
+          </svg>
+        </span>
+        <span class="pdf-report-copy">
+          <strong>PDF</strong>
+        </span>
+        <span class="pdf-report-spinner" aria-hidden="true"></span>
+      </button>
+      <div class="xf-chips" id="msoXfChips"></div>
+      <button class="xf-reset" id="btnClearFilters" type="button" title="Volver a filtros por defecto" aria-label="Volver a filtros por defecto"></button>
+    </div>
+
+    <!-- KPI STRIP ─────────────────────────────────────────────────── -->
+    <div class="kpi-grid" id="globalKpiGrid">
+      <div class="kpi">
+        <div class="kpi-label">SIM consolidadas</div><div class="kpi-value" id="mkTotal">—</div><div class="kpi-sub">Base filtrada</div>
+      </div>
+      <div class="kpi mso-kpi-click" data-kpi-status="STOCK">
+        <div class="kpi-label">Stock</div><div class="kpi-value" id="mkStock">—</div><div class="kpi-sub">Disponible · ver detalle</div>
+      </div>
+      <div class="kpi mso-kpi-click" data-kpi-status="MANTENER">
+        <div class="kpi-label">Mantener</div><div class="kpi-value" id="mkMantener">—</div><div class="kpi-sub">Sin modificación · ver detalle</div>
+      </div>
+      <div class="kpi mso-kpi-interactive mso-kpi-click" data-kpi-status="REVISION-MANTENER">
+        <div class="kpi-label">Revisión</div><div class="kpi-value mso-yellow" id="mkRevision">—</div><div class="kpi-sub">Validación manual</div>
+        <div class="mso-kpi-detail" id="mkRevisionPopover"></div>
+      </div>
+      <div class="kpi mso-kpi-click" data-kpi-status="REEMPLAZOS">
+        <div class="kpi-label">Reemplazos</div><div class="kpi-value mso-red" id="mkReemplazos">—</div><div class="kpi-sub">Atención operativa · ver detalle</div>
+      </div>
+      <div class="kpi mso-kpi-interactive mso-kpi-click" data-kpi-status="CAMBIOS">
+        <div class="kpi-label">Cambios</div><div class="kpi-value mso-green" id="mkCambios">—</div><div class="kpi-sub" id="mkCambiosSub">Total sugerido</div>
+        <div class="mso-kpi-detail" id="mkCambiosPopover"></div>
+      </div>
+    </div>
+
+  </div><!-- /globalSimBlock -->
+
+  <!-- TABS ─────────────────────────────────────────────────────── -->
+  <div class="tabs" id="mainTabs">
+    <button class="tab-btn active" data-tab="resumen-mso">Vista general</button>
+    <button class="tab-btn"        data-tab="opt-mso">Optimización</button>
+    <button class="tab-btn"        data-tab="reclamos-mso">Reclamos M2M</button>
+    <button class="tab-btn"        data-tab="informe-mso">Informe detallado</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TAB 1 — VISTA GENERAL
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-resumen-mso">
+
+    <div id="msoResError" class="error-box" style="display:none"></div>
+    <div id="msoResLoader" class="sims-loader" style="display:none"><div class="sims-spinner"></div></div>
+
+    <!-- Por operador -->
+    <div class="card" id="msoOpCardsPanel">
+      <h2 class="card-title">Por operador</h2>
+      <p class="card-caption">Volumen total y acciones sugeridas. Clic en un operador para ver su detalle.</p>
+      <div class="op-cards-grid" id="msoOpCards" style="margin-bottom:0"></div>
+    </div>
+
+    <!-- Distribución por estado + Cambios por país -->
+    <div class="two-col">
+      <div class="card" id="msoStatusPanel">
+        <h2 class="card-title">Distribución por estado</h2>
+        <p class="card-caption">Clasificación oficial de los reportes MSO · clic en una barra para ver el detalle</p>
+        <div class="bar-chart-panel">
+          <div class="vertical-bars" id="msoStatusChart"></div>
+          <div class="chart-legend" id="msoStatusLegend"></div>
+        </div>
+      </div>
+      <div class="card" id="msoPaisPanel">
+        <h2 class="card-title">Cambios por país</h2>
+        <p class="card-caption">Separación SV / GT según información del cliente y operador</p>
+        <div class="op-cards-grid" id="msoPaisCards" style="grid-template-columns:1fr;margin-bottom:0"></div>
+      </div>
+    </div>
+
+    <!-- Evolución -->
+    <div class="card" id="msoEvoPanel">
+      <div class="history-head">
+        <div>
+          <h2 class="card-title">Evolución mensual de SIM Cards en cambios</h2>
+          <p class="card-caption">Fotografía diaria del total pendiente. En bolsa = M2M · fuera de bolsa = Claro SV, Claro GT y TigoCorp</p>
+        </div>
+        <div class="history-summary" id="msoHistorySummary">Sin histórico registrado.</div>
+      </div>
+      <div class="line-chart" id="msoEvoChart"></div>
+      <div class="chart-legend" id="msoEvoLegend"></div>
+    </div>
+
+    <!-- Top clientes -->
+    <div class="card" id="msoTopClientesPanel">
+      <h2 class="card-title">Clientes con más cambios</h2>
+      <p class="card-caption">Acceso rápido al detalle de cada cliente</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>País</th><th style="text-align:right">Cambios</th><th style="text-align:right"></th></tr></thead>
+          <tbody id="msoTopClientes"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-resumen-mso -->
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TAB 2 — OPTIMIZACIÓN
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-opt-mso" style="display:none">
+
+    <div id="msoOptError" class="error-box" style="display:none"></div>
+
+    <div class="filter-bar sims-fbar">
+      <div class="filter-group">
+        <span class="filter-label">Vista</span>
+        <button class="filter-chip active" data-opt-view="bajar">↓ Bajar plan <b class="chip-count" id="optCountBajar">—</b></button>
+        <button class="filter-chip"        data-opt-view="subir">↑ Subir plan <b class="chip-count" id="optCountSubir">—</b></button>
+        <button class="filter-chip"        data-opt-view="todas">≡ Todas las SIM</button>
+      </div>
+      <!-- Bajar / Subir: filtro por cliente · Todas: Status, Acción y Sub-status -->
+      <div class="xf" id="optXf"></div>
+      <div class="xf-chips" id="optXfChips"></div>
+      <button class="xf-reset" id="btnClearOptFilters" type="button" title="Volver a filtros por defecto" aria-label="Volver a filtros por defecto"></button>
+    </div>
+
+    <!-- KPIs Bajar / Subir -->
+    <div class="kpi-grid" id="optKpis"></div>
+
+    <!-- Tabla -->
+    <div class="card" id="optTableCard">
+      <div class="mso-toolbar">
+        <div>
+          <h2 class="card-title" id="optTableTitle">SIM Cards</h2>
+          <p class="card-caption" id="optTableCaption" style="margin:0"></p>
+        </div>
+        <div class="mso-toolbar-actions">
+          <select class="mso-select" id="optSort">
+            <option value="client">Ordenar por cliente</option>
+            <option value="operator">Ordenar por operador</option>
+            <option value="consumption">Mayor consumo primero</option>
+          </select>
+          <button class="filter-chip mso-ghost" id="btnExportCsv" type="button">⬇ Descargar CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap mso-table-tall">
+        <table>
+          <thead><tr id="optTableHead"></tr></thead>
+          <tbody id="optTableBody"></tbody>
+        </table>
+      </div>
+      <div class="mso-pagination" id="optPagination"></div>
+    </div>
+
+  </div><!-- /tab-opt-mso -->
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TAB 3 — RECLAMOS M2M → 1 GB
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-reclamos-mso" style="display:none">
+
+    <div id="msoRecError" class="error-box" style="display:none"></div>
+    <div id="msoRecLoader" class="sims-loader" style="display:none"><div class="sims-spinner"></div></div>
+
+    <div class="filter-bar sims-fbar">
+      <div class="op-group" role="group" aria-label="Operaciones" data-op-scope="rec">
+        <span class="op-label">Operaciones</span>
+        <button class="op-btn active" type="button" data-rec-pais="">Todos</button>
+        <button class="op-btn" type="button" data-rec-pais="GT" title="Guatemala"><span class="op-flag op-flag-gt" aria-hidden="true"></span>GT</button>
+        <button class="op-btn" type="button" data-rec-pais="SV" title="El Salvador"><span class="op-flag op-flag-sv" aria-hidden="true"></span>SV</button>
+      </div>
+      <!-- La API de reclamos filtra por mes (periodo=AAAA-MM) -->
+      <div class="period-control">
+        <span class="period-icon" aria-hidden="true"></span>
+        <label class="period-label" for="recPeriodo">Período</label>
+        <select class="period-input" id="recPeriodo" aria-label="Período">
+          <option value="">Todos los meses</option>
+        </select>
+        <button class="period-reset" id="recPeriodoReset" type="button" title="Restablecer período" aria-label="Restablecer período"></button>
+      </div>
+      <div class="xf" id="recXf"></div>
+      <div class="xf-chips" id="recXfChips"></div>
+      <button class="xf-reset" id="btnClearRecFilters" type="button" title="Volver a filtros por defecto" aria-label="Volver a filtros por defecto"></button>
+    </div>
+
+    <!-- KPIs SIM candidatas -->
+    <div class="kpi-grid" id="recKpisPanel">
+      <div class="kpi"><div class="kpi-label">Candidatas M2M → 1 GB</div><div class="kpi-value" id="rkCandidatas">—</div><div class="kpi-sub">Fuente: reporte_m2m</div></div>
+      <div class="kpi"><div class="kpi-label">Excluidas</div><div class="kpi-value mso-yellow" id="rkExcluidas">—</div><div class="kpi-sub">No entran en reclamos futuros</div></div>
+      <div class="kpi"><div class="kpi-label">Pendientes</div><div class="kpi-value mso-green" id="rkPendientes">—</div><div class="kpi-sub">Listas para ingreso</div></div>
+      <div class="kpi"><div class="kpi-label">Reingresos</div><div class="kpi-value mso-red" id="rkReingresos">—</div><div class="kpi-sub">Máxima prioridad operativa</div></div>
+      <div class="kpi"><div class="kpi-label">Clientes</div><div class="kpi-value" id="rkClientes">—</div><div class="kpi-sub">1 reclamo por cliente</div></div>
+    </div>
+
+    <!-- SLA -->
+    <div class="card" id="recSlaPanel">
+      <h2 class="card-title">SLA de reclamos M2M → 1 GB</h2>
+      <p class="card-caption">Día 0 al 15: en plazo · Día 16: Escalamiento 1 · Día 21: Escalamiento 2 · El seguimiento se detiene cuando SAC marca Finalizado</p>
+      <div class="kpi-grid" style="margin-bottom:0">
+        <div class="kpi"><div class="kpi-label">Total reclamos</div><div class="kpi-value" id="slaTotal">—</div><div class="kpi-sub">Productivos</div></div>
+        <div class="kpi"><div class="kpi-label">Abiertos</div><div class="kpi-value" id="slaAbiertos">—</div><div class="kpi-sub">Estado SAC ≠ Finalizado</div></div>
+        <div class="kpi"><div class="kpi-label">En plazo</div><div class="kpi-value mso-green" id="slaEnPlazo">—</div><div class="kpi-sub">Día 0 al 15</div></div>
+        <div class="kpi"><div class="kpi-label">Escalamiento 1</div><div class="kpi-value mso-yellow" id="slaEsc1">—</div><div class="kpi-sub">Día 16 al 20</div></div>
+        <div class="kpi"><div class="kpi-label">Escalamiento 2</div><div class="kpi-value mso-red" id="slaEsc2">—</div><div class="kpi-sub">Día 21 en adelante</div></div>
+        <div class="kpi"><div class="kpi-label">Finalizados</div><div class="kpi-value" id="slaFinalizados">—</div><div class="kpi-sub">Cerrados en SAC</div></div>
+      </div>
+    </div>
+
+    <!-- Indicadores -->
+    <div class="kpi-grid" id="recIndicadoresPanel">
+      <div class="kpi"><div class="kpi-label">Cambios realizados</div><div class="kpi-value mso-green" id="rkCambiosRealizados">—</div><div class="kpi-sub">Validación post-cierre</div></div>
+      <div class="kpi"><div class="kpi-label">Cambios no realizados</div><div class="kpi-value mso-red" id="rkCambiosNoRealizados">—</div><div class="kpi-sub">Requieren reingreso</div></div>
+      <div class="kpi"><div class="kpi-label">Cumplimiento SLA</div><div class="kpi-value" id="rkSLAPct">—</div><div class="kpi-sub">Reclamos evaluados</div></div>
+      <div class="kpi"><div class="kpi-label">Efectividad post-cierre</div><div class="kpi-value" id="rkEfectPct">—</div><div class="kpi-sub">Realizadas / validadas</div></div>
+    </div>
+
+    <!-- Clientes -->
+    <div class="card" id="recClientesPanel">
+      <h2 class="card-title">Reclamos por cliente</h2>
+      <p class="card-caption" id="recClientesCaption">SIM candidatas, excluidas y pendientes de ingreso</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th><th>País</th>
+              <th style="text-align:right">Candidatas</th>
+              <th style="text-align:right">Excluidas</th>
+              <th style="text-align:right">Pendientes</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="recClientesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Casos -->
+    <div class="card" id="recCasosPanel">
+      <h2 class="card-title">Seguimiento de reclamos creados</h2>
+      <p class="card-caption">Reclamos, SIM asociadas, estado SAC, SLA y resultados automáticos · los casos que requieren mayor atención aparecen primero</p>
+      <div class="table-wrap mso-table-tall">
+        <table>
+          <thead>
+            <tr>
+              <th>Reclamo</th><th>Cliente</th><th>País</th>
+              <th>Estado SAC</th><th>Responsable</th><th>SLA</th>
+              <th style="text-align:right">Días</th>
+              <th style="text-align:right">SIM</th>
+              <th style="text-align:right">Realiz. / No</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="recCasosTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Responsables -->
+    <div class="card" id="recResponsablesCard" style="display:none">
+      <h2 class="card-title">Carga por responsable</h2>
+      <p class="card-caption">Estado actual de los reclamos según el agente asignado en SAC</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Responsable</th>
+              <th style="text-align:right">Reclamos</th>
+              <th style="text-align:right">Abiertos</th>
+              <th style="text-align:right">Esc. 1</th>
+              <th style="text-align:right">Esc. 2</th>
+              <th style="text-align:right">Finalizados</th>
+              <th style="text-align:right">SIM</th>
+            </tr>
+          </thead>
+          <tbody id="recResponsablesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-reclamos-mso -->
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TAB 4 — INFORME DETALLADO
+       Toda la información de las APIs de SIMs, consultable y descargable
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-informe-mso" style="display:none">
+
+    <div id="infError" class="error-box" style="display:none"></div>
+
+    <div class="card" id="infHeadPanel">
+      <div class="mso-toolbar">
+        <div>
+          <h2 class="card-title">Informe detallado</h2>
+          <p class="card-caption" id="infScope" style="margin:0">Información completa de las APIs de SIM Cards y Reclamos M2M.</p>
+        </div>
+        <div class="mso-toolbar-actions">
+          <span class="inf-progress" id="infProgress" hidden></span>
+          <button class="filter-chip active inf-download" id="btnInfExcel" type="button" title="Consulta la API en este momento y descarga toda la información (puede tardar alrededor de un minuto)"><svg class="inf-download-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11" /><path d="m7.5 10 4.5 4.5L16.5 10" /><path d="M4.5 19.5h15" /></svg>Excel</button>
+        </div>
+      </div>
+      <div class="inf-datasets" id="infDatasets" role="tablist" aria-label="Conjuntos de datos"></div>
+    </div>
+
+    <div class="card" id="infTablePanel">
+      <div class="mso-toolbar">
+        <div>
+          <h2 class="card-title" id="infTitle">—</h2>
+          <p class="card-caption" id="infCaption" style="margin:0"></p>
+        </div>
+      </div>
+      <!-- Filtros combinados tipo Excel sobre las columnas de la tabla elegida -->
+      <div class="filter-bar sims-fbar inf-fbar">
+        <div class="op-group" role="group" aria-label="Operaciones" data-op-scope="inf">
+          <span class="op-label">Operaciones</span>
+          <button class="op-btn active" type="button" data-inf-pais="">Todos</button>
+          <button class="op-btn" type="button" data-inf-pais="GT" title="Guatemala"><span class="op-flag op-flag-gt" aria-hidden="true"></span>GT</button>
+          <button class="op-btn" type="button" data-inf-pais="SV" title="El Salvador"><span class="op-flag op-flag-sv" aria-hidden="true"></span>SV</button>
+        </div>
+        <input class="inf-search" id="infSearch" type="search" placeholder="Buscar en esta tabla…" aria-label="Buscar en la tabla">
+        <div class="xf" id="infXf"></div>
+        <div class="xf-chips" id="infXfChips"></div>
+        <button class="xf-reset" id="btnClearInfFilters" type="button" title="Volver a filtros por defecto" aria-label="Volver a filtros por defecto"></button>
+      </div>
+      <div class="table-wrap mso-table-tall inf-table-wrap">
+        <table class="inf-table">
+          <thead><tr id="infHead"></tr></thead>
+          <tbody id="infBody"><tr><td class="mso-empty-cell">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="mso-pagination" id="infPagination"></div>
+    </div>
+
+  </div><!-- /tab-informe-mso -->
+
+</div><!-- /mainContent -->
+
+<div class="footnote">
+  Dashboard MSO · API kpi.red.com.sv vía proxy local &nbsp;·&nbsp;
+  Última sincronización: <code id="footerTime">—</code>
+</div>
+
+<!-- MODAL — detalle de reclamo ────────────────────────────────────── -->
+<div class="mso-modal" id="recCaseModal" aria-hidden="true">
+  <div class="mso-modal-card">
+    <div class="mso-modal-head">
+      <div>
+        <div class="page-eyebrow">Seguimiento por SIM</div>
+        <h2 id="recCaseTitle">Detalle del reclamo</h2>
+        <p class="caption" id="recCaseMeta" style="margin:4px 0 0"></p>
+      </div>
+      <button class="mso-modal-close" id="recCaseClose" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <div id="recCaseBody"></div>
+  </div>
+</div>
+
+<!-- Selección múltiple de módulos para el PDF: define qué secciones viajan al documento -->
+<div class="pdf-module-modal" id="pdfModuleModal" hidden>
+  <div class="pdf-module-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfModuleTitle"
+    aria-describedby="pdfModuleDesc">
+    <header class="pdf-module-header">
+      <span class="pdf-module-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+          <path d="M14 3v5h5" />
+          <path d="M9 13h6" />
+          <path d="M9 17h4" />
+        </svg>
+      </span>
+      <div class="pdf-module-headcopy">
+        <span class="pdf-module-kicker">Exportar reporte</span>
+        <h2 id="pdfModuleTitle">¿Qué módulos deseas imprimir?</h2>
+        <p id="pdfModuleDesc">Marca las secciones que quieres incluir en el PDF. Las que no marques no aparecerán
+          en el documento.</p>
+      </div>
+      <button type="button" class="pdf-module-close" id="closePdfModules"
+        aria-label="Cerrar selección de módulos">×</button>
+    </header>
+
+    <!-- Filtros que viajan al PDF: resumen en cada chip y detalle al pasar el cursor -->
+    <div class="pdf-module-filters" id="pdfModuleFilters" aria-label="Filtros aplicados" hidden></div>
+
+    <div class="pdf-module-toolbar">
+      <div class="pdf-module-quick">
+        <button type="button" data-pdf-quick="all">Seleccionar todo</button>
+        <button type="button" data-pdf-quick="none">Limpiar</button>
+      </div>
+      <span class="pdf-module-count" id="pdfModuleCount" role="status">0 de 0 módulos</span>
+    </div>
+
+    <div class="pdf-module-options" id="pdfModuleOptions"></div>
+
+    <footer class="pdf-module-footer">
+      <span class="pdf-module-hint">Se descarga un solo archivo con los módulos marcados.</span>
+      <div class="pdf-module-actions">
+        <button type="button" class="pdf-module-cancel" id="cancelPdfModules">Cancelar</button>
+        <button type="button" class="pdf-module-generate" id="generatePdfModules">
+          Generar PDF <b id="pdfModuleGenerateCount">0</b>
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script>
+const COLORS = (window.GuiaGraficas && window.GuiaGraficas.SERIES) || ['#c43c50','#4f8fd8','#2f8f76','#c59600','#d95f6e','#7fb0f0','#8b909e'];
+let activeTab = 'resumen-mso';
+const fmt = n => Number(n||0).toLocaleString('es-GT');
+
+function initDashboard() {
+  document.getElementById('globalLoader').style.display = 'none';
+  document.getElementById('mainContent').style.display  = '';
+}
+function switchTab(tabKey) {
+  activeTab = tabKey;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
+  ['resumen-mso','opt-mso','reclamos-mso','informe-mso'].forEach(id => {
+    const e = document.getElementById('tab-' + id);
+    if (e) e.style.display = id === tabKey ? '' : 'none';
+  });
+}
+document.getElementById('mainTabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab-btn');
+  if (b) switchTab(b.dataset.tab);
+});
+initDashboard();
+</script>
+<script>
+// URL del proxy MSO desplegado (repo mso-api-proxy-sims en Render).
+window.MSO_API_BASE = 'https://mso-api-proxy-sims.onrender.com/api/mso';
+</script>
+<script src="../../assets/js/filtros-guia.js?v=20261021tokens"></script>
+<script src="../../assets/js/ultima-actualizacion.js?v=20261021tokens"></script>
+<script src="../../assets/js/sims/sims.js?v=20261021tokens"></script>
+<!-- Botón "PDF" de la barra: selección de módulos + reporte (jsPDF + autotable bajo demanda) -->
+<script src="../../assets/js/ingreso/income-pdf-logo.js?v=20261021tokens"></script>
+<script src="../../assets/js/sims/sims-pdf.js?v=20261021tokens"></script>
+<!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+<link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+</body>
+</html>

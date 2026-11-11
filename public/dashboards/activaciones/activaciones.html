@@ -1,0 +1,3382 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RED Intelfon - Control de Radicaciones y Activaciones</title>
+  <meta name="description" content="Dashboard analítico y operativo de SLAs, radicaciones y etapas de activación - RED INTELFON.">
+  <link rel="icon" type="image/png" href="../../assets/img/fondo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/activaciones.css?v=20261021tokens">
+<link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
+<link rel="stylesheet" href="../../assets/css/dashboard-pdf.css?v=20261021tokens">
+<script src="../../assets/js/estandar.js?v=20261021barras"></script>
+<script src="../../assets/js/dashboard-pdf-logo.js?v=20261021tokens"></script>
+<script src="../../assets/js/dashboard-pdf.js?v=20261021tokens"></script>
+</head>
+<body>
+<main class="app-main">
+  <!-- ENCABEZADO -->
+  <header class="hero-top">
+    <div>
+      <div class="hero-eyebrow">RED INTELFON · GESTIÓN OPERATIVA</div>
+      <h1 class="hero-title">Control de Radicaciones y Activaciones</h1>
+      <p class="hero-sub">Monitoreo en tiempo real de SLAs operativos, radicaciones por país y etapas de cumplimiento.</p>
+      <div class="bill-status-row">
+        <div class="bill-status-pill">
+          Actualizado: <b id="apiUpdatedAt" aria-live="polite">—</b>
+        </div>
+      </div>
+    </div>
+    <div class="hero-actions"></div>
+  </header>
+
+  <!-- 03 - BARRA DE FILTROS FIJADA (.filters-bar) -->
+  <section class="filters-bar-wrapper">
+    <div class="filters-box-card">
+      <span class="filters-box-eyebrow">FILTROS DEL EJEMPLO</span>
+      
+      <div class="filters-bar">
+        <!-- GRUPO OPERACIONES -->
+        <div class="op-control-group">
+          <span class="op-label">OPERACIONES</span>
+          <div class="op-btn-group">
+            <button type="button" class="op-btn active" data-op="todos" id="btnOpTodos">Todos</button>
+            <button type="button" class="op-btn" data-op="GT" id="btnOpGT">
+              <svg class="flag-icon" viewBox="0 0 24 18">
+                <rect width="8" height="18" fill="#4997D0"/>
+                <rect x="8" width="8" height="18" fill="#FFFFFF"/>
+                <rect x="16" width="8" height="18" fill="#4997D0"/>
+                <circle cx="12" cy="9" r="2.2" fill="#88B04B" opacity="0.85"/>
+              </svg>
+              GT
+            </button>
+            <button type="button" class="op-btn" data-op="SV" id="btnOpSV">
+              <svg class="flag-icon" viewBox="0 0 24 18">
+                <rect width="24" height="6" fill="#003893"/>
+                <rect y="6" width="24" height="6" fill="#FFFFFF"/>
+                <rect y="12" width="24" height="6" fill="#003893"/>
+                <circle cx="12" cy="9" r="2" fill="#EAAA00" opacity="0.85"/>
+              </svg>
+              SV
+            </button>
+          </div>
+        </div>
+
+        <!-- CONTROL DE PERÍODO -->
+        <div class="period-control">
+          <span class="period-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Período
+          </span>
+          <input type="date" class="period-input" id="dateFrom" />
+          <span class="period-dash">—</span>
+          <input type="date" class="period-input" id="dateTo" />
+          <button type="button" class="period-reset-btn" id="btnResetPeriod" title="Restablecer período">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- BOTÓN DISPARADOR DE FILTROS (.xf-panel) -->
+        <div class="filter-dropdown-anchor">
+          <button type="button" class="filters-btn" id="btnToggleFilters">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filtros</span>
+            <span class="filters-badge" id="filterCountBadge" style="display:none;">0</span>
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- PANEL DESPLEGABLE CON CHECKLIST TIPO EXCEL (Screenshot 4) -->
+          <div class="xf-panel hidden" id="xfPanel">
+            <div class="xf-grid-4">
+              <!-- COLUMNA 1: ESTADO -->
+              <div class="xf-col" id="xfColEstado"></div>
+
+              <!-- COLUMNA 2: NEGOCIO -->
+              <div class="xf-col" id="xfColNegocio"></div>
+
+              <!-- COLUMNA 3: ETAPAS -->
+              <div class="xf-col" id="xfColEtapas"></div>
+
+              <!-- COLUMNA 4: SLA -->
+              <div class="xf-col" id="xfColSla"></div>
+            </div>
+
+            <div class="xf-footer">
+              <button type="button" class="xf-btn-clean" id="btnCleanAllFilters">Limpiar todo</button>
+              <button type="button" class="xf-btn-apply" id="btnApplyFilters">Aplicar</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="dashboard-pdf-trigger" id="btnDashboardPdf" title="Descargar módulos del dashboard en PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          PDF
+        </button>
+        <!-- BOTÓN REFRESH CIRCULAR -->
+        <button type="button" class="refresh-circle-btn" id="btnGlobalRefresh" title="Actualizar datos">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+  <!-- MODULOS / BOTONES DE NAVEGACIÓN (Resumen | Radicaciones por etapa | Categorías | Informe detallado) -->
+  <nav class="act-module-nav" id="mainTabs">
+    <button type="button" class="act-mod-btn active" data-tab="resumen" id="btnTabResumen">
+      Resumen
+    </button>
+    <button type="button" class="act-mod-btn" data-tab="etapas" id="btnTabEtapas">
+      Radicaciones por etapa
+    </button>
+    <button type="button" class="act-mod-btn" data-tab="categorias" id="btnTabCategorias">
+      Categorías
+    </button>
+    <button type="button" class="act-mod-btn" data-tab="informe" id="btnTabInforme">
+      Informe detallado
+    </button>
+  </nav>
+
+
+  
+
+    <!-- ================= TAB 1: RESUMEN (ONLY RESUMEN HAS KPIS & CHARTS) ================= -->
+    <div id="tabContentResumen">
+      <!-- ACTIVE FILTER ALERT BANNER (Visible whenever a sub-filter is active) -->
+      <div id="activeFilterAlertBanner" style="display: none; background: rgba(79,143,216, 0.12); border: 1px solid rgba(79,143,216, 0.3); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7fb0f0;">
+          <span style="font-size: 15px;">🔍</span>
+          <span>Filtro activo: <strong id="activeFilterAlertText" style="color: #fff;">Línea de Negocio: ADICIÓN</strong> (<span id="activeFilterAlertCount">19 de 44</span> radicaciones)</span>
+        </div>
+        <button type="button" onclick="resetAllFilters()" style="background: rgba(196,60,80, 0.15); border: 1px solid rgba(196,60,80, 0.3); color: #d95f6e; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Restablecer todos los filtros y ver las 44 radicaciones">
+          ✕ Mostrar todas las radicaciones
+        </button>
+      </div>
+
+      <!-- TWO COUNTRY SLA COMPLIANCE KPIS (SV & GT) - RIGHT ABOVE THE 4 KPIS -->
+      <section class="country-kpis-wrapper" style="margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+          <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
+            CUMPLIMIENTO DE SLA GLOBAL POR PAÍS (L-V 8AM-6PM &lt; 104H)
+          </div>
+          <span style="font-size: 11px; color: #7fb0f0; font-weight: 600;">Haz clic en un país para ver su auditoría por 5 etapas ↗</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+          <!-- SV CARD -->
+          <div class="country-sla-card is-clickable" onclick="openCountrySlaModal('SV')" id="kpiCardSV" title="Clic para ver desglose por las 5 etapas de El Salvador" style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 22px;">🇸🇻</span>
+                  <span style="font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 0.02em;">EL SALVADOR (SV)</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">SLA Global de Activación (&lt; 104h)</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 28px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono); line-height: 1;" id="svGlobalSlaPct">96%</div>
+                <span id="svGlobalBadge" style="font-size: 10px; font-weight: 800; color: #2f8f76; background: rgba(47, 143, 118, 0.15); border: 1px solid rgba(47, 143, 118, 0.3); padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">CUMPLIDO</span>
+              </div>
+            </div>
+            <!-- Progress bar -->
+            <div style="background: rgba(255,255,255,0.06); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
+              <div id="svGlobalProgressBar" style="width: 96%; height: 100%; background: linear-gradient(90deg, #2f8f76, #2f8f76); border-radius: 3px; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+              <span><strong id="svGlobalOkCount" style="color: #fff;">—</strong> radicaciones en SLA</span>
+              <span style="color: #7fb0f0; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">Ver 5 etapas ↗</span>
+            </div>
+          </div>
+
+          <!-- GT CARD -->
+          <div class="country-sla-card is-clickable" onclick="openCountrySlaModal('GT')" id="kpiCardGT" title="Clic para ver desglose por las 5 etapas de Guatemala" style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 22px;">🇬🇹</span>
+                  <span style="font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 0.02em;">GUATEMALA (GT)</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">SLA Global de Activación (&lt; 104h)</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 28px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono); line-height: 1;" id="gtGlobalSlaPct">100%</div>
+                <span id="gtGlobalBadge" style="font-size: 10px; font-weight: 800; color: #2f8f76; background: rgba(47, 143, 118, 0.15); border: 1px solid rgba(47, 143, 118, 0.3); padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">ÓPTIMO 100%</span>
+              </div>
+            </div>
+            <!-- Progress bar -->
+            <div style="background: rgba(255,255,255,0.06); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
+              <div id="gtGlobalProgressBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #2f8f76, #2f8f76); border-radius: 3px; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+              <span><strong id="gtGlobalOkCount" style="color: #fff;">—</strong> radicaciones en SLA</span>
+              <span style="color: #7fb0f0; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">Ver 5 etapas ↗</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXACT 4 KPI ROW (CLICKABLE -> GO TO ETAPAS TABLE) -->
+      <section class="kpi-row-exact">
+        <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'todos', sla: 'todos' })" title="Clic para ver todas las radicaciones en la tabla">
+          <div>
+            <div class="kpi-label">Total de radicaciones</div>
+            <div class="kpi-number" id="kpiTotalExact">—</div>
+          </div>
+          <div class="kpi-footnote" id="kpiTotalFootnote">Cargando datos en vivo de API...</div>
+        </div>
+
+        <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'en_proceso', sla: 'todos' })" title="Clic para ver las radicaciones en proceso">
+          <div>
+            <div class="kpi-label">En proceso</div>
+            <div class="kpi-number" style="color: #4f8fd8;" id="kpiActiveExact">—</div>
+          </div>
+          <div class="kpi-footnote" id="kpiActiveFootnote">Requieren seguimiento · Clic para ver ↗</div>
+        </div>
+
+        <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'finalizada', sla: 'todos' })" title="Clic para ver las radicaciones finalizadas">
+          <div>
+            <div class="kpi-label">Finalizadas</div>
+            <div class="kpi-number" style="color: #2f8f76;" id="kpiDoneExact">—</div>
+          </div>
+          <div class="kpi-footnote" id="kpiDoneFootnote">Procesos completados · Clic para ver ↗</div>
+        </div>
+
+        <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'cancelada', sla: 'todos' })" title="Clic para ver las radicaciones canceladas">
+          <div>
+            <div class="kpi-label">Canceladas</div>
+            <div class="kpi-number" style="color: #c43c50;" id="kpiCancelledExact">—</div>
+          </div>
+          <div class="kpi-footnote" id="kpiCancelledFootnote">Procesos cancelados · Clic para ver ↗</div>
+        </div>
+      </section>
+
+      <!-- SLA ROW (CLICKABLE -> GO TO ETAPAS TABLE FILTERED) -->
+      <section class="sla-summary-row">
+        <!-- 1: En Tiempo -->
+        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'en_tiempo' })" title="Clic para ver radicaciones En Tiempo en la tabla">
+          <div>
+            <span style="font-size: 11px; color: #2f8f76; font-weight: 800; text-transform: uppercase;">En Tiempo</span>
+            <div style="font-size: 10px; color: var(--text-muted);">&lt; 104h y etapas en regla · Clic para ver ↗</div>
+          </div>
+          <div style="font-size: 24px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono);" id="slaEnTiempoCount">—</div>
+        </div>
+
+        <!-- 2: Por Vencer -->
+        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'por_vencer' })" title="Clic para ver radicaciones Por Vencer en la tabla">
+          <div>
+            <span style="font-size: 11px; color: #c59600; font-weight: 800; text-transform: uppercase;">Por Vencer / En Riesgo</span>
+            <div style="font-size: 10px; color: var(--text-muted);">75% a 100% de SLA · Clic para ver ↗</div>
+          </div>
+          <div style="font-size: 24px; font-weight: 900; color: #c59600; font-family: var(--font-mono);" id="slaPorVencerCount">—</div>
+        </div>
+
+        <!-- 3: Vencidas por Etapa -->
+        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" title="Clic para ver radicaciones Vencidas por Etapa en la tabla">
+          <div>
+            <span style="font-size: 11px; color: #c59600; font-weight: 800; text-transform: uppercase;">Vencidas por Etapa</span>
+            <div style="font-size: 10px; color: var(--text-muted);">Al menos una etapa vencida · Clic para ver ↗</div>
+          </div>
+          <div style="font-size: 24px; font-weight: 900; color: #c59600; font-family: var(--font-mono);" id="slaVencidasEtapaCount">—</div>
+        </div>
+
+        <!-- 4: Vencidas SLA Global (>104h) -->
+        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'vencidas_global' })" title="Clic para ver radicaciones con SLA Global Vencido (>104h)">
+          <div>
+            <span style="font-size: 11px; color: #d95f6e; font-weight: 800; text-transform: uppercase;">Vencidas SLA Global</span>
+            <div style="font-size: 10px; color: var(--text-muted);">&gt; 104h laborables (L-V 8am-6pm) · Clic para ver ↗</div>
+          </div>
+          <div style="font-size: 24px; font-weight: 900; color: #d95f6e; font-family: var(--font-mono);" id="slaVencidasGlobalCount">—</div>
+        </div>
+      </section>
+
+      <!-- CHARTS -->
+      <div class="charts-row">
+        <!-- Chart 1: Tendencia Semanal con Traza y Tooltip Completo -->
+        <div class="chart-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Tendencia Semanal de Carga & Resolución</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Coloca el cursor sobre cualquier semana para trazar la línea y ver el desglose
+              </div>
+            </div>
+            <div style="font-size: 11px; font-weight: 700; display: flex; flex-wrap: wrap; gap: 10px;">
+              <span style="color: #4f8fd8;">● Ingresaron</span>
+              <span style="color: #7fb0f0;">● En proceso</span>
+              <span style="color: #2f8f76;">● Finalizadas</span>
+              <span style="color: #d95f6e;">● Canceladas</span>
+              <span style="color: #c59600;">● Vencidas Etapa</span>
+              <span style="color: #c43c50;">● Vencidas SLA Global</span>
+            </div>
+          </div>
+
+          <div class="weekly-chart-wrapper" id="weeklyChartWrapper">
+            <svg id="weeklySvg" width="100%" height="100%" viewBox="0 0 600 240" preserveAspectRatio="none">
+              <!-- Rendered dynamically -->
+            </svg>
+            <div class="chart-tooltip-hover" id="weeklyHoverTooltip">
+              <!-- Dynamically positioned -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart 2: Situación Actual con colores vibrantes y legibles -->
+        <div class="chart-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Situación Actual de las Radicaciones</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Distribución operativa por condición de SLA</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: center; height: 180px; position: relative;">
+            <svg id="donutSvg" class="gx-donut" width="180" height="180" viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
+              <!-- Rendered by JS -->
+            </svg>
+            <div style="position: absolute; text-align: center;">
+              <div style="font-size: 26px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutTotalCount">44</div>
+              <div style="font-size: 10px; font-weight: 800; color: #8b909e; text-transform: uppercase;">Total Radicaciones</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px;">
+            <div onclick="navigateToEtapasFilter({ sla: 'en_tiempo' })" style="cursor: pointer; background: rgba(47, 143, 118, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(47, 143, 118, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones En Tiempo">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #2f8f76; display: inline-block;"></span>
+                <span style="font-size: 11px; color: #3f9c85; font-weight: 700;">En Tiempo</span>
+              </div>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutEnTiempoCount">19</span>
+            </div>
+
+            <div onclick="navigateToEtapasFilter({ sla: 'por_vencer' })" style="cursor: pointer; background: rgba(197,150,0, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(197,150,0, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Por Vencer">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #c59600; display: inline-block;"></span>
+                <span style="font-size: 11px; color: #c59600; font-weight: 700;">Por Vencer</span>
+              </div>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutPorVencerCount">7</span>
+            </div>
+
+            <div onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" style="cursor: pointer; background: rgba(197, 150, 0, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(197, 150, 0, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas por Etapa">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #c59600; display: inline-block;"></span>
+                <span style="font-size: 11px; color: #e0b52e; font-weight: 700;">Venc. Etapa</span>
+              </div>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasEtapaCount">18</span>
+            </div>
+
+            <div onclick="navigateToEtapasFilter({ sla: 'vencidas_global' })" style="cursor: pointer; background: rgba(217,95,110, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(217,95,110, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas SLA Global">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #c43c50; display: inline-block;"></span>
+                <span style="font-size: 11px; color: #d95f6e; font-weight: 700;">Venc. Global</span>
+              </div>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasGlobalCount">1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 2: RADICACIONES POR ETAPA ================= -->
+    <div id="tabContentEtapas" style="display: none; margin-top: 18px;">
+      <!-- 1. ETAPAS DEL FLUJO (5 FASES EXACTAS MATCHING IMAGE - HAZ CLIC PARA ABRIR SUS 3 TABLAS) -->
+      <div class="chart-panel" style="margin-bottom: 20px;">
+        <div class="panel-header" style="margin-bottom: 14px;">
+          <div>
+            <div class="hero-eyebrow" style="color: var(--red-primary);">MONITOREO DE FLUJO OPERATIVO</div>
+            <div class="panel-title">Etapas del Flujo (Haz clic en una etapa para abrir sus 3 tablas)</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Supervisión de SLAs por fase con desglose en ventana modal de radicaciones vencidas, en riesgo y en tiempo normal (aplica a todas las radicaciones).
+            </div>
+          </div>
+        </div>
+
+        <div class="phases-vertical-list" id="etapasPhasesList">
+          <!-- Dynamically generated with 5 phase cards matching user's image -->
+        </div>
+      </div>
+
+      <!-- 2. TABLA GENERAL DE TODAS LAS RADICACIONES (ABAJO DE LAS 5 ETAPAS, CON SCROLL) -->
+      <div class="chart-panel" id="generalTableSection">
+        <div class="panel-header" style="flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <div class="hero-eyebrow" style="color: var(--red-primary);">DETALLE OPERATIVO GENERAL</div>
+            <div class="panel-title" id="generalTableTitleText">Listado General de Detalle de Radicaciones</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Monitoreo exhaustivo de todas las radicaciones con indicador de país, negocio, radios, etapa actual y condición de SLA.
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="generalTableCountBadge" style="background: rgba(196,60,80, 0.15); color: #d95f6e; border: 1px solid rgba(196,60,80, 0.3); padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 12px; font-family: var(--font-mono);">
+              Mostrando 44 radicaciones
+            </span>
+            <button type="button" id="btnResetTableFilters" class="pill-btn" style="background: rgba(255,255,255,0.08); color: #fff; font-size: 11px; display: none;" onclick="navigateToEtapasFilter({ estado: 'todos', sla: 'todos', etapa: 'todos' })">
+              ✕ Mostrar todas las radicaciones
+            </button>
+          </div>
+        </div>
+
+                <!-- BARRA BUSCADORA POR PRE-OFERTA, CLIENTE, CÓDIGO O VENDEDOR -->
+        <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; width: 100%;">
+          <div style="position: relative; flex: 1;">
+            <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #8b909e; pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="etapasTableSearch" 
+              class="etapas-table-search-input" 
+              placeholder="Buscar por número de pre-oferta (ej: 7763), cliente, código, vendedor o negocio..." 
+              style="width: 100%; background: rgba(15,17,23, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); color: #ffffff; font-size: 12px; padding: 9px 14px 9px 38px; border-radius: 10px; outline: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);"
+            />
+          </div>
+          <button 
+            type="button" 
+            id="btnClearEtapasSearch" 
+            class="pill-btn" 
+            style="display: none; padding: 7px 12px; font-size: 11px;"
+          >
+            ✕ Limpiar
+          </button>
+        </div>
+
+        <!-- Quick filter by Stage inside Etapas tab -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px;" id="etapasTabFilterButtons">
+          <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); white-space: nowrap;">FILTRAR ETAPA:</span>
+          <button class="pill-btn is-active" data-etapa="todos">Todas las Etapas</button>
+          <button class="pill-btn" data-etapa="1">1. Gestión Inicial</button>
+          <button class="pill-btn" data-etapa="2">2. Petición Recursos</button>
+          <button class="pill-btn" data-etapa="3">3. Registro Central</button>
+          <button class="pill-btn" data-etapa="4">4. Prep. Técnica</button>
+          <button class="pill-btn" data-etapa="5">5. Despliegue</button>
+        </div>
+
+        <!-- Scrollable Table Container (max-height: 520px with internal scroll) -->
+        <div class="table-scroll-container" style="max-height: 480px; overflow-y: auto; overflow-x: hidden; width: 100%; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px;">
+          <table class="custom-table" id="radicacionesTable">
+            <thead style="position: sticky; top: 0; background: #151821; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+              <tr>
+                <th style="width: 11%;">Pre-Oferta</th>
+                <th style="width: 25%;">Cliente / Razón Social</th>
+                <th style="width: 6%; text-align: center;">País</th>
+                <th style="width: 11%; text-align: center;">Negocio</th>
+                <th style="width: 6%; text-align: center;">Radios</th>
+                <th style="width: 16%;">Etapa Actual</th>
+                <th style="width: 8%; text-align: center;">Estado</th>
+                <th style="width: 8%; text-align: center;">Condición SLA</th>
+                <th style="width: 9%; text-align: right;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="radicacionesTbody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: CATEGORÍAS ================= -->
+    <div id="tabContentCategorias" style="display: none; margin-top: 18px;">
+      <div class="chart-panel">
+        <div class="panel-header">
+          <div>
+            <div class="hero-eyebrow">ANÁLISIS POR LÍNEA DE NEGOCIO</div>
+            <div class="panel-title">Venta Nueva, Renovación y Adición</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Volumen de equipos (radios), comparativa por país y ranking de clientes con mayor demanda.
+            </div>
+          </div>
+          <div class="pill-group" id="catQuickFilter">
+            <button class="pill-btn is-active" data-cat="ALL">Todas</button>
+            <button class="pill-btn" data-cat="ADICION">Adición</button>
+            <button class="pill-btn" data-cat="VENTA NUEVA">Venta Nueva</button>
+            <button class="pill-btn" data-cat="RENOVACION">Renovación</button>
+          </div>
+        </div>
+
+        <!-- 3 Category Cards -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" id="categoryCardsGrid">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- TOP 10 CLIENTES CON MÁS RADIOS Y VENDEDOR ENCARGADO -->
+        <div style="margin-top: 24px;">
+          <div class="panel-header" style="margin-bottom: 12px;">
+            <div>
+              <div class="hero-eyebrow" style="color: #c59600;">RANKING COMERCIAL</div>
+              <div class="panel-title">Top 10 Clientes con Mayor Compra / Contratación de Radios</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Filtrado dinámicamente según el rango de fechas y filtros seleccionados
+              </div>
+            </div>
+          </div>
+
+          <div class="table-scroll-container" style="max-height: 380px;">
+            <table class="custom-table" id="topClientsTable">
+              <thead>
+                <tr>
+                  <th style="text-align: center; width: 70px;"># Rank</th>
+                  <th>Cliente / Razón Social</th>
+                  <th>Vendedor Encargado</th>
+                  <th style="text-align: center;">País</th>
+                  <th style="text-align: center;">Línea Negocio</th>
+                  <th style="text-align: center;">Radios</th>
+                  <th style="text-align: center;">Radicaciones</th>
+                </tr>
+              </thead>
+              <tbody id="topClientsTbody">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+
+    <!-- ================= TAB 4: INFORME DETALLADO (SOLO BARRA BUSCADORA Y EXPORTAR) ================= -->
+    <div id="tabContentInforme" style="display: none; margin-top: 18px; width: 100%;">
+      <div class="chart-panel" style="background: var(--panel-bg, #151821); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); border-radius: 16px; padding: 22px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Encabezado del Informe con Botones de Exportar -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <div class="hero-eyebrow" style="color: var(--red-primary, #c43c50); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">AUDITORÍA Y EXPORTACIÓN OPERATIVA</div>
+            <div class="panel-title" style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 2px;">Informe Detallado de Radicaciones</div>
+            <div style="font-size: 12px; color: var(--text-muted, #8b909e); margin-top: 4px;">
+              Consulta operativa completa. Se aplican automáticamente los filtros seleccionados en el encabezado general (País, Período, Negocio, Estados y SLAs).
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span id="actInformeSummaryBadge" style="background: rgba(196, 60, 80, 0.14); color: #d95f6e; border: 1px solid rgba(196, 60, 80, 0.32); padding: 6px 14px; border-radius: 9999px; font-weight: 800; font-size: 12px; font-family: var(--font-mono, monospace);">
+              Mostrando radicaciones
+            </span>
+            <!-- Botón Exportar Excel -->
+            <button type="button" class="export-btn export-excel" id="btnActExportExcel" title="Exportar informe en formato Excel (.csv compatible)" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; background: rgba(255, 255, 255, .16); color: #3f9c85; border: 1px solid rgba(47, 143, 118, 0.3); cursor: pointer;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13l3 4 3-4"></path>
+                <path d="M11 17v-8"></path>
+              </svg>
+              Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- ÚNICA BARRA DE BÚSQUEDA (Sin ningún otro filtro al lado) -->
+        <div style="width: 100%; margin: 4px 0 6px 0;">
+          <div style="position: relative; width: 100%;">
+            <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #8b909e; pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="actInformeSearchInput" 
+              placeholder="Buscar dentro de las radicaciones filtradas por pre-oferta (ej: 7831), cliente, código o vendedor..." 
+              style="width: 100%; box-sizing: border-box; background: rgba(15,17,23, 0.85); border: 1px solid rgba(255, 255, 255, 0.16); color: #ffffff; font-size: 13px; padding: 11px 16px 11px 42px; border-radius: 10px; outline: none; transition: border-color 0.2s;"
+            />
+          </div>
+        </div>
+
+        <!-- Tabla dinámica de radicaciones detalladas -->
+        <div class="table-scroll-container" style="max-height: 540px; overflow-y: auto; overflow-x: auto; width: 100%; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; background: #151821;">
+          <table class="custom-table" id="tableActInforme" style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; background: #151821; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+              <tr>
+                <th style="width: 11%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Pre-Oferta</th>
+                <th style="width: 25%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Cliente / Razón Social</th>
+                <th style="width: 6%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">País</th>
+                <th style="width: 11%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Negocio</th>
+                <th style="width: 6%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Radios</th>
+                <th style="width: 16%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Etapa Actual</th>
+                <th style="width: 8%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Estado</th>
+                <th style="width: 8%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Condición SLA</th>
+                <th style="width: 9%; padding: 10px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: #8b909e;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="rowsActInforme">
+              <!-- Filas generadas dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totales del Informe Detallado -->
+        <div class="informe-totals-bar" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px;">
+          <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
+            <span style="color: #8b909e;">Total Radicaciones:</span>
+            <strong id="actInformeTotalRadicaciones" style="color: #7fb0f0; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
+            <span style="color: #8b909e;">Total Radios:</span>
+            <strong id="actInformeTotalRadios" style="color: #3f9c85; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
+            <span style="color: #8b909e;">En Tiempo SLA:</span>
+            <strong id="actInformeTotalEnTiempo" style="color: #3f9c85; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
+            <span style="color: #8b909e;">Vencidas SLA:</span>
+            <strong id="actInformeTotalVencidas" style="color: #d95f6e; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ================= MODAL: DETALLE DE ETAPA CON 3 TABLAS EN VENTANA ENCIMA ================= -->
+  <div class="modal-backdrop" id="stageModalBackdrop">
+    <div class="modal-content" style="max-width: 1220px; width: 96%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; background: #151821; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; box-shadow: 0 25px 70px rgba(0,0,0,0.85);">
+      <div class="modal-header" style="background: rgba(15, 17, 23, 0.98); padding: 18px 26px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <span style="font-size: 11px; font-weight: 900; color: #7fb0f0; background: rgba(79,143,216, 0.15); padding: 3px 12px; border-radius: 6px; border: 1px solid rgba(79,143,216, 0.3); text-transform: uppercase; font-family: var(--font-mono);" id="stageModalBadge">FASE 1</span>
+            <span style="font-size: 12px; font-weight: 800; color: #e8eaf0; background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 6px;" id="stageModalSlaText">SLA Límite Oficial: 8h laborables</span>
+          </div>
+          <div style="font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.02em;" id="stageModalTitle">1. Gestión Inicial y Validación</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
+            Auditoría de radicaciones que transitaron o están activas en esta etapa (en proceso, finalizadas y canceladas).
+          </div>
+        </div>
+        <button type="button" class="close-btn" id="btnCloseStageModal" title="Cerrar ventana" onclick="closeStageModal()">✕</button>
+      </div>
+
+      <!-- Top Summary Metrics inside Stage Modal -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px 24px; background: rgba(15, 17, 23, 0.85); border-bottom: 1px solid var(--border-color);">
+        <div style="background: rgba(196,60,80, 0.1); border: 1px solid rgba(196,60,80, 0.25); border-radius: 10px; padding: 8px 12px;">
+          <div style="font-size: 10px; font-weight: 800; color: #d95f6e; text-transform: uppercase;">1. Vencidas en Etapa</div>
+          <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="stageModalVencCount">0</div>
+        </div>
+        <div style="background: rgba(197,150,0, 0.1); border: 1px solid rgba(197,150,0, 0.25); border-radius: 10px; padding: 8px 12px;">
+          <div style="font-size: 10px; font-weight: 800; color: #c59600; text-transform: uppercase;">2. Por Vencer / En Riesgo</div>
+          <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="stageModalNearCount">0</div>
+        </div>
+        <div style="background: rgba(47, 143, 118, 0.1); border: 1px solid rgba(47, 143, 118, 0.25); border-radius: 10px; padding: 8px 12px;">
+          <div style="font-size: 10px; font-weight: 800; color: #3f9c85; text-transform: uppercase;">3. En Tiempo Normal</div>
+          <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="stageModalOkCount">0</div>
+        </div>
+        <div style="background: rgba(79,143,216, 0.1); border: 1px solid rgba(79,143,216, 0.25); border-radius: 10px; padding: 8px 12px;">
+          <div style="font-size: 10px; font-weight: 800; color: #7fb0f0; text-transform: uppercase;">Total Evaluadas</div>
+          <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="stageModalTotalCount">0</div>
+        </div>
+      </div>
+
+      <!-- Pill View Filter inside Stage Modal -->
+      <div style="padding: 10px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 17, 23, 0.7);">
+        <div class="pill-group" id="stageModalFilterPills">
+          <button class="pill-btn is-active" data-smview="all">Mostrar las 3 Tablas</button>
+          <button class="pill-btn" data-smview="vencidas" style="color: #c43c50;">1. Solo Vencidas</button>
+          <button class="pill-btn" data-smview="near" style="color: #c59600;">2. Solo Por Vencer</button>
+          <button class="pill-btn" data-smview="ok" style="color: #2f8f76;">3. Solo En Tiempo</button>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);">
+          Horario laboral computado: Lunes a Viernes 8:00 AM - 6:00 PM
+        </div>
+      </div>
+
+      <!-- Container with the 3 tables (display: block prevents flex-shrink collapse) -->
+      <div id="stageModalTablesContainer" style="padding: 24px 26px 36px; overflow-y: auto; flex: 1 1 auto; min-height: 0; display: block;">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="detailModalBackdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <div class="hero-eyebrow">FICHA TÉCNICA Y AUDITORÍA CRONOLÓGICA</div>
+          <div style="font-size: 18px; font-weight: 900; color: #fff;" id="detClientName">Cliente</div>
+          <div style="font-size: 12px; color: var(--text-muted);" id="detSubheader">Pre-Oferta #0000</div>
+        </div>
+        <button class="close-btn" id="btnCloseDetailModal">✕</button>
+      </div>
+
+      <div style="padding: 24px;">
+        <!-- Specs Grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; background: rgba(255, 255, 255,0.7); padding: 14px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <div>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">País:</span>
+            <strong style="display: block; font-size: 13px;" id="detPais">-</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Línea de Negocio:</span>
+            <strong style="display: block; font-size: 13px; color: #7fb0f0;" id="detNegocio">-</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Cantidad de Radios:</span>
+            <strong style="display: block; font-size: 13px; color: #fff;" id="detRadios">-</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Vendedor Encargado:</span>
+            <strong style="display: block; font-size: 12px;" id="detVendedor">-</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Contratación / Plazo:</span>
+            <strong style="display: block; font-size: 12px;" id="detContrato">-</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Horas Laborales Globales (8am-6pm):</span>
+            <strong style="display: block; font-size: 13px;" id="detHoursText">-</strong>
+          </div>
+        </div>
+
+        <!-- 5 Stages Timeline With Exact Timestamp & Hours -->
+        <div style="font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 12px;">Auditoría Cronológica por Etapa (Fechas y Horas Exactas)</div>
+        <div id="detStagesTimeline" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+    
+
+<script>
+  // Constantes de SLA por etapa
+  const STAGE_NAMES = [
+    "Gestión Inicial y Validación",
+    "Petición de Recursos",
+    "Registro en el Sistema Central",
+    "Preparación Técnica",
+    "Despliegue y Entrega"
+  ];
+
+  const STAGE_SLAS = {
+    1: 8,
+    2: 24,
+    3: 24,
+    4: 24,
+    5: 24
+  };
+
+  let rawData = [];
+
+  // Opciones de Filtros
+  const ESTADO_OPTIONS = [
+    { label: 'En proceso', value: 'en_proceso' },
+    { label: 'Finalizadas', value: 'finalizada' },
+    { label: 'Canceladas', value: 'cancelada' }
+  ];
+
+  const NEGOCIO_OPTIONS = [
+    { label: 'Adición', value: 'ADICION' },
+    { label: 'Venta nueva', value: 'VENTA NUEVA' },
+    { label: 'Renovación', value: 'RENOVACION' }
+  ];
+
+  const ETAPA_OPTIONS = [
+    { label: '1. Gestión Inicial', value: '1' },
+    { label: '2. Petición Recursos', value: '2' },
+    { label: '3. Registro Central', value: '3' },
+    { label: '4. Prep. Técnica', value: '4' },
+    { label: '5. Despliegue', value: '5' }
+  ];
+
+  const SLA_OPTIONS = [
+    { label: 'En tiempo', value: 'en_tiempo' },
+    { label: 'Por vencer en etapa', value: 'por_vencer' },
+    { label: 'Por vencer en SLA global', value: 'por_vencer_global' },
+    { label: 'Vencida en etapa', value: 'vencidas_etapa' },
+    { label: 'Vencida en SLA global', value: 'vencidas_global' }
+  ];
+
+  function getCurrentMonthPeriod() {
+    const dateParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Guatemala",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
+    const year = dateParts.find(part => part.type === "year").value;
+    const month = dateParts.find(part => part.type === "month").value;
+    const day = dateParts.find(part => part.type === "day").value;
+    return { from: `${year}-${month}-01`, to: `${year}-${month}-${day}` };
+  }
+
+  function hasCustomDateFilter() {
+    const period = getCurrentMonthPeriod();
+    return (currentFilter.dateFrom || currentFilter.dateTo) &&
+      (currentFilter.dateFrom !== period.from || currentFilter.dateTo !== period.to);
+  }
+
+  // Estado Global de Datos y Filtros
+  let allData = [];
+  let filteredData = [...allData];
+  let currentTab = "resumen";
+  const initialPeriod = getCurrentMonthPeriod();
+
+  // El período inicial se calcula dinámicamente al cargar el dashboard.
+  let currentFilter = {
+    pais: "todos",
+    estados: ['en_proceso', 'finalizada', 'cancelada'],
+    negocios: ['ADICION', 'VENTA NUEVA', 'RENOVACION'],
+    etapas: ['1', '2', '3', '4', '5'],
+    slas: ['en_tiempo', 'por_vencer', 'por_vencer_global', 'vencidas_etapa', 'vencidas_global'],
+    dateFrom: initialPeriod.from,
+    dateTo: initialPeriod.to,
+    search: "",
+    stageQuickFilter: "todos",
+    catQuickFilter: "ALL"
+  };
+
+  let searchEstadoText = "";
+  let searchNegocioText = "";
+  let searchEtapaText = "";
+  let searchSlaText = "";
+
+  let currentStageModalNum = 1;
+  let currentStageModalFilter = "all";
+
+  function calculateBusinessHours(startIso, endIso) {
+      if (!startIso) return 0;
+      const start = new Date(startIso);
+      const end = endIso ? new Date(endIso) : new Date("2026-09-24T00:00:00Z");
+      if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 0;
+
+      let current = new Date(start.getTime());
+      let totalMs = 0;
+
+      while (current < end) {
+        const day = current.getUTCDay();
+        if (day !== 0 && day !== 6) { // Lunes a Viernes
+          const curH = current.getUTCHours() + current.getUTCMinutes() / 60;
+          if (curH >= 8 && curH < 18) {
+            const nextHour = new Date(current.getTime());
+            nextHour.setUTCMinutes(0, 0, 0);
+            nextHour.setUTCHours(current.getUTCHours() + 1);
+
+            const sliceEnd = (nextHour < end) ? nextHour : end;
+            totalMs += (sliceEnd.getTime() - current.getTime());
+            current = sliceEnd;
+            continue;
+          }
+        }
+        current.setUTCMinutes(current.getUTCMinutes() + 30);
+      }
+      return Math.max(0, +(totalMs / (1000 * 60 * 60)).toFixed(1));
+    }
+
+    function formatHours(h) {
+      if (h == null || isNaN(h)) return "0h";
+      const hours = Math.floor(h);
+      const mins = Math.round((h - hours) * 60);
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+
+    function formatDateDisplay(isoStr) {
+      if (!isoStr) return "-";
+      try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        return d.toLocaleDateString("es-GT", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      } catch (e) {
+        return isoStr;
+      }
+    }
+
+    function getProcessTotalHours(item) {
+      if (!item.proceso || !item.proceso.etapas) return 0;
+      let sum = 0;
+      item.proceso.etapas.forEach(et => {
+        if (et.fechaInicio) {
+          sum += calculateBusinessHours(et.fechaInicio, et.fechaFin);
+        }
+      });
+      return +sum.toFixed(1);
+    }
+
+    function getStageStatus(etapa, slaHours) {
+      if (!etapa || !etapa.fechaInicio) return { status: "pending", hours: 0, pct: 0, text: "Pendiente" };
+      const hours = calculateBusinessHours(etapa.fechaInicio, etapa.fechaFin);
+      const limit = etapa.slaHoras || slaHours || 24;
+      const pct = Math.round((hours / limit) * 100);
+
+      if (etapa.estado === "completada") {
+        if (hours > limit) return { status: "vencida", hours, pct, text: `Vencida (${formatHours(hours)} / SLA ${limit}h)` };
+        return { status: "ok", hours, pct, text: `En tiempo (${formatHours(hours)})` };
+      }
+      if (etapa.estado === "activa") {
+        if (hours > limit) return { status: "vencida", hours, pct, text: `Vencida (${formatHours(hours)} / SLA ${limit}h)` };
+        if (hours >= limit * 0.75) return { status: "near", hours, pct, text: `Por vencer (${formatHours(hours)} / SLA ${limit}h)` };
+        return { status: "ok", hours, pct, text: `En tiempo (${formatHours(hours)} / ${limit}h)` };
+      }
+      return { status: "pending", hours: 0, pct: 0, text: "Pendiente" };
+    }
+
+    function getItemSlaCondition(item) {
+      const totalH = getProcessTotalHours(item);
+      if (totalH > 104) return "vencidas_global";
+
+      if (item.proceso && item.proceso.etapas) {
+        let hasVencida = false;
+        let hasNear = false;
+        for (const st of item.proceso.etapas) {
+          const evalSt = getStageStatus(st, STAGE_SLAS[st.numero]);
+          if (evalSt.status === "vencida") hasVencida = true;
+          else if (evalSt.status === "near") hasNear = true;
+        }
+        if (hasVencida) return "vencidas_etapa";
+        if (hasNear) return "por_vencer";
+      }
+      return "en_tiempo";
+    }
+
+  function getItemFilterDate(item) {
+    const value = String(item.fecha || item.fechaIngreso || "");
+    const isoDate = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoDate) return isoDate[1];
+
+    const localizedDate = value.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    return localizedDate ? `${localizedDate[3]}-${localizedDate[2]}-${localizedDate[1]}` : "";
+  }
+
+    // -------------------------------------------------------------
+    
+
+  const WORKFLOW_API_KEY = "b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b";
+  const CLIENT_NAMES_API_URL = "https://innovaigt.github.io/Dashboard---flash-altas/datos.json";
+  const CLIENT_NAME_OVERRIDES = {
+    CL000584: "ALVARO DE JESUS PORTILLO"
+  };
+  const estimatedApiUpdatedAt = new Date(Date.now() - 5 * 60 * 1000);
+
+  function getNameValue(value) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (!value || typeof value !== "object") return "";
+    const nestedName = value.nombre || value.name || value.nombreCompleto || value.fullName
+      || value.contacto || value.cliente || value.nombre_contacto || value.contactName
+      || value.contact_name;
+    return typeof nestedName === "string" ? nestedName.trim() : "";
+  }
+
+  function getCompanyName(item) {
+    if (!item || typeof item !== "object") return "";
+    const candidates = [
+      item.empresa, item.empresaRad, item.nombreEmpresa, item.nombre_empresa,
+      item.razonSocial, item.razon_social, item.clienteNombre, item.cliente_nombre,
+      item.nombreCliente, item.nombre_cliente, item.clinam, item.cliente,
+      item.contacto, item.nombreContacto, item.nombre_contacto, item.contactoNombre,
+      item.contactName, item.contact_name, item.personaContacto, item.persona_contacto,
+      item.nombreCompleto, item.fullName, item.nombre, item.name
+    ];
+    for (const candidate of candidates) {
+      const name = getNameValue(candidate);
+      if (name) return name;
+    }
+    return "";
+  }
+
+  function getClientCode(item) {
+    if (!item || typeof item !== "object") return "";
+    return String(item.codigo || item.codCliente || item.cod_cliente || item.clicod || "")
+      .trim()
+      .toUpperCase();
+  }
+
+  async function completeMissingCompanyNames(items) {
+    items.forEach(item => {
+      const existingName = getCompanyName(item);
+      if (existingName) item.empresa = existingName;
+    });
+    const missingNames = items.filter(item => !getCompanyName(item));
+    if (!missingNames.length) return;
+
+    try {
+      const response = await fetch(CLIENT_NAMES_API_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error("la fuente de altas respondió " + response.status);
+
+      const json = await response.json();
+      const rows = Array.isArray(json) ? json : (json.data || json.items || json.results);
+      if (!Array.isArray(rows)) throw new Error("la fuente de altas no devolvió una lista");
+
+      const companyByCode = new Map();
+      rows.forEach(row => {
+        if (!row || typeof row !== "object") return;
+        const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
+        const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
+        if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
+      });
+
+      items.forEach(item => {
+        const existingName = getCompanyName(item);
+        const company = existingName || companyByCode.get(getClientCode(item)) || "";
+        if (company) item.empresa = company;
+      });
+    } catch (error) {
+      console.warn("No se pudieron completar los nombres de empresa desde la fuente de altas:", error.message);
+    }
+
+    items.forEach(item => {
+      if (!getCompanyName(item)) {
+        const override = CLIENT_NAME_OVERRIDES[getClientCode(item)];
+        if (override) item.empresa = override;
+      }
+    });
+  }
+
+  function renderApiUpdateTimestamp() {
+    const updatedAtEl = document.getElementById("apiUpdatedAt");
+    if (!updatedAtEl) return;
+
+    const formattedDate = new Intl.DateTimeFormat("es-GT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/Guatemala"
+    }).format(estimatedApiUpdatedAt);
+    updatedAtEl.textContent = formattedDate;
+  }
+
+  async function loadDataFromApi(silent = false) {
+    const badge = document.getElementById("apiStatusBadge");
+    const textEl = document.getElementById("apiStatusText");
+    const dotEl = document.getElementById("apiStatusDot");
+    const errBanner = document.getElementById("apiErrorBanner");
+
+    if (!silent && textEl) {
+      textEl.innerText = "Consultando API en vivo...";
+      if (dotEl) dotEl.style.background = "#c59600";
+    }
+    if (errBanner) errBanner.style.display = "none";
+
+    const endpoints = [
+      "https://workflow.red.com.gt/api/integraciones/dashboard/preofertas",
+      "/integraciones/dashboard/preofertas"
+    ];
+
+    let fetchedData = null;
+    let usedEndpoint = "";
+
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(ep, {
+          headers: {
+            "Authorization": "Bearer " + WORKFLOW_API_KEY,
+            "DASHBOARD_API_KEY": WORKFLOW_API_KEY,
+            "X-API-KEY": WORKFLOW_API_KEY,
+            "Accept": "application/json"
+          },
+          cache: "no-store"
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const items = Array.isArray(json) ? json : (json.data || []);
+          if (items && items.length > 0) {
+            fetchedData = items;
+            usedEndpoint = ep;
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn("Fallo al consultar endpoint:", ep, err.message);
+      }
+    }
+
+    if (fetchedData && fetchedData.length > 0) {
+      // Filtrar preofertas: las no iniciadas no interesan según indicación expresa
+      allData = fetchedData.filter(item => item && item.iniciada !== false && item.estado !== "no_iniciada");
+      await completeMissingCompanyNames(allData);
+      filteredData = [...allData];
+      if (textEl) textEl.innerText = "Conectado a API Workflow (" + allData.length + " activas)";
+      if (dotEl) dotEl.style.background = "#2f8f76";
+    } else {
+      console.error("No se pudo obtener datos de la API de Workflow.");
+      if (textEl) textEl.innerText = "Error de conexión con API Workflow";
+      if (dotEl) dotEl.style.background = "#c43c50";
+      if (errBanner) {
+        errBanner.style.display = "block";
+        errBanner.innerText = "No se pudieron obtener las preofertas desde la API en vivo de Workflow (https://workflow.red.com.gt/api/integraciones/dashboard/preofertas). Verifica tu conexión o credenciales.";
+      }
+    }
+
+    renderApp();
+    if (typeof renderActInformeDetallado === "function") {
+      renderActInformeDetallado();
+    }
+  }
+
+  function switchTab(tabId) {
+    if (!["resumen", "etapas", "categorias", "informe"].includes(tabId)) {
+      tabId = tabId === "stages" ? "etapas" : "resumen";
+    }
+    currentTab = tabId;
+
+    const tabBtns = document.querySelectorAll("#mainTabs .act-mod-btn, #mainTabs .hero-tab-btn");
+    tabBtns.forEach(btn => {
+      const match = btn.getAttribute("data-tab") === tabId;
+      btn.classList.toggle("active", match);
+      btn.classList.toggle("is-active", match);
+    });
+
+    const panels = {
+      resumen: document.getElementById("tabContentResumen"),
+      etapas: document.getElementById("tabContentEtapas"),
+      categorias: document.getElementById("tabContentCategorias"),
+      informe: document.getElementById("tabContentInforme")
+    };
+
+    Object.keys(panels).forEach(k => {
+      if (panels[k]) {
+        panels[k].style.display = (k === tabId) ? "block" : "none";
+        panels[k].classList.toggle("active", k === tabId);
+      }
+    });
+
+    if (tabId === "informe" && typeof renderActInformeDetallado === "function") {
+      renderActInformeDetallado();
+    }
+
+    if (window.location.hash !== "#" + tabId) {
+      if (window.history && window.history.replaceState) window.history.replaceState(null, "", "#" + tabId);
+    }
+    renderApp();
+  }
+
+  function navigateToEtapasFilter(filterOverrides = {}) {
+    if (filterOverrides.estado) {
+      if (filterOverrides.estado === "todos") {
+        currentFilter.estados = ESTADO_OPTIONS.map(o => o.value);
+      } else {
+        currentFilter.estados = [filterOverrides.estado];
+      }
+    }
+    if (filterOverrides.sla) {
+      if (filterOverrides.sla === "todos") {
+        currentFilter.slas = SLA_OPTIONS.map(o => o.value);
+      } else {
+        currentFilter.slas = [filterOverrides.sla];
+      }
+    }
+    if (filterOverrides.pais) {
+      currentFilter.pais = filterOverrides.pais;
+      document.querySelectorAll(".op-btn").forEach(b => {
+        b.classList.toggle("active", b.getAttribute("data-op") === filterOverrides.pais);
+      });
+    }
+    if (filterOverrides.etapa != null) {
+      const stageStr = String(filterOverrides.etapa);
+      if (stageStr === "todos") {
+        currentFilter.etapas = ETAPA_OPTIONS.map(o => o.value);
+        currentFilter.stageQuickFilter = "todos";
+      } else {
+        currentFilter.etapas = [stageStr];
+        currentFilter.stageQuickFilter = stageStr;
+      }
+      document.querySelectorAll("#etapasTabFilterButtons .pill-btn").forEach(b => {
+        b.classList.toggle("is-active", b.getAttribute("data-etapa") === stageStr);
+      });
+    }
+    renderChecklistCols();
+    switchTab("etapas");
+    renderApp();
+    const tableEl = document.getElementById("radicacionesTableWrap");
+    if (tableEl) {
+      setTimeout(() => {
+        tableEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+  }
+
+  // RENDER PRINCIPAL Y FILTRADO
+  function renderApp() {
+    filteredData = allData.filter(item => {
+      // 0. Excluir no iniciadas (todo menos las no iniciadas)
+      if (item.iniciada === false || item.estado === "no_iniciada" || item.estado === "no iniciada") return false;
+      // 1. País
+      if (currentFilter.pais !== "todos" && item.pais !== currentFilter.pais) return false;
+
+      // 2. Estado
+      if (!currentFilter.estados.includes(item.estado)) return false;
+
+      // 3. Negocio
+      if (!currentFilter.negocios.includes(item.negocio)) return false;
+
+      // 4. Etapas
+      const activeStageNum = item.proceso && item.proceso.etapaActual 
+        ? String(item.proceso.etapaActual.numero) 
+        : (item.estado === "finalizada" ? "5" : "1");
+      if (!currentFilter.etapas.includes(activeStageNum)) return false;
+      if (currentFilter.stageQuickFilter !== "todos" && activeStageNum !== currentFilter.stageQuickFilter) return false;
+
+      // 5. SLA
+      const itemCond = getItemSlaCondition(item);
+      if (!currentFilter.slas.includes(itemCond)) return false;
+
+      // 6. Categoría Quick Filter
+      if (currentFilter.catQuickFilter !== "ALL" && item.negocio !== currentFilter.catQuickFilter) return false;
+
+      // 7. Rango de fechas
+      const itemDate = getItemFilterDate(item);
+      if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+      if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+      if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+
+      // 8. Búsqueda de texto
+      if (currentFilter.search) {
+        const q = currentFilter.search.toLowerCase().trim();
+        const matchClient = getCompanyName(item).toLowerCase().includes(q);
+        const matchPre = String(item.preOferta || "").toLowerCase().includes(q);
+        const matchCode = String(item.codigo || "").toLowerCase().includes(q);
+        const matchVend = String(item.vendedor || "").toLowerCase().includes(q);
+        if (!matchClient && !matchPre && !matchCode && !matchVend) return false;
+      }
+
+      return true;
+    });
+
+    updateFilterBanner();
+    renderResumenKPIs();
+
+    if (currentTab === "etapas") {
+      renderStagePhases();
+      renderRadicacionesTable();
+      renderActInformeDetallado();
+    } else if (currentTab === "categorias") {
+      renderCategoriasTab();
+    } else if (currentTab === "informe") {
+      renderActInformeDetallado();
+    }
+  }
+
+  function updateFilterBanner() {
+    const banner = document.getElementById("activeFilterAlertBanner");
+    const textEl = document.getElementById("activeFilterAlertText");
+    const countBtn = document.getElementById("btnResetActiveFilterCount");
+    if (!banner || !textEl) return;
+
+    const customDateFilter = hasCustomDateFilter();
+    const hasFilter = 
+      currentFilter.pais !== "todos" ||
+      currentFilter.estados.length < ESTADO_OPTIONS.length ||
+      currentFilter.negocios.length < NEGOCIO_OPTIONS.length ||
+      currentFilter.etapas.length < ETAPA_OPTIONS.length ||
+      currentFilter.slas.length < SLA_OPTIONS.length ||
+      currentFilter.stageQuickFilter !== "todos" ||
+      currentFilter.catQuickFilter !== "ALL" ||
+      customDateFilter ||
+      currentFilter.search !== "";
+
+    if (hasFilter) {
+      banner.style.display = "flex";
+      textEl.innerHTML = `Filtros Personalizados (${filteredData.length} radicaciones)`;
+      if (countBtn) countBtn.innerText = "✕ Mostrar todas las radicaciones";
+    } else {
+      banner.style.display = "none";
+    }
+
+    const badge = document.getElementById("filterCountBadge");
+    if (badge) {
+      let count = (currentFilter.pais !== "todos" ? 1 : 0) +
+        (currentFilter.estados.length < ESTADO_OPTIONS.length ? 1 : 0) +
+        (currentFilter.negocios.length < NEGOCIO_OPTIONS.length ? 1 : 0) +
+        (currentFilter.etapas.length < ETAPA_OPTIONS.length ? 1 : 0) +
+        (currentFilter.slas.length < SLA_OPTIONS.length ? 1 : 0) +
+        (currentFilter.stageQuickFilter !== "todos" ? 1 : 0) +
+        (currentFilter.catQuickFilter !== "ALL" ? 1 : 0) +
+        (customDateFilter ? 1 : 0) +
+        (currentFilter.search ? 1 : 0);
+      if (count > 0) {
+        badge.textContent = count.toString();
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+    }
+  }
+
+  function resetAllFilters() {
+    currentFilter.pais = "todos";
+    currentFilter.estados = ESTADO_OPTIONS.map(o => o.value);
+    currentFilter.negocios = NEGOCIO_OPTIONS.map(o => o.value);
+    currentFilter.etapas = ETAPA_OPTIONS.map(o => o.value);
+    currentFilter.slas = SLA_OPTIONS.map(o => o.value);
+    const period = getCurrentMonthPeriod();
+    currentFilter.dateFrom = period.from;
+    currentFilter.dateTo = period.to;
+    currentFilter.search = "";
+    currentFilter.stageQuickFilter = "todos";
+    currentFilter.catQuickFilter = "ALL";
+
+    const dFrom = document.getElementById("dateFrom");
+    const dTo = document.getElementById("dateTo");
+    if (dFrom) dFrom.value = period.from;
+    if (dTo) dTo.value = period.to;
+
+    document.querySelectorAll(".op-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("data-op") === "todos");
+    });
+
+    renderChecklistCols();
+    renderApp();
+  }
+
+  // RENDER DE CHECKLISTS EN .xf-panel (4 COLUMNAS)
+  function renderChecklistCols() {
+    renderColEstado();
+    renderColNegocio();
+    renderColEtapas();
+    renderColSla();
+  }
+
+  function renderColEstado() {
+    const col = document.getElementById("xfColEstado");
+    if (!col) return;
+    const allowed = ESTADO_OPTIONS;
+    const filtered = allowed.filter(o => o.label.toLowerCase().includes(searchEstadoText.toLowerCase()));
+    const allChecked = allowed.every(o => currentFilter.estados.includes(o.value));
+    const someChecked = allowed.some(o => currentFilter.estados.includes(o.value));
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">Estado</span>
+        <span class="xf-col-count">${currentFilter.estados.length}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" width="14" height="14" style="max-width:14px;max-height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchEstadoInput" placeholder="Buscar..." value="${searchEstadoText}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllEstado" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(opt => `
+          <label class="xf-item">
+            <input type="checkbox" class="xf-checkbox chk-estado" data-val="${opt.value}" ${currentFilter.estados.includes(opt.value) ? 'checked' : ''}>
+            <span>${opt.label}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+
+    const chkAll = document.getElementById("chkAllEstado");
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        currentFilter.estados = e.target.checked ? allowed.map(o => o.value) : [];
+        renderColEstado();
+      });
+    }
+
+    const inp = document.getElementById("searchEstadoInput");
+    if (inp) {
+      inp.addEventListener('input', (e) => {
+        searchEstadoText = e.target.value;
+        renderColEstado();
+        const r = document.getElementById("searchEstadoInput");
+        if (r) { r.focus(); r.setSelectionRange(r.value.length, r.value.length); }
+      });
+    }
+
+    col.querySelectorAll(".chk-estado").forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute("data-val");
+        if (e.target.checked) {
+          if (!currentFilter.estados.includes(val)) currentFilter.estados.push(val);
+        } else {
+          currentFilter.estados = currentFilter.estados.filter(x => x !== val);
+        }
+        renderColEstado();
+      });
+    });
+  }
+
+  function renderColNegocio() {
+    const col = document.getElementById("xfColNegocio");
+    if (!col) return;
+    const allowed = NEGOCIO_OPTIONS;
+    const filtered = allowed.filter(o => o.label.toLowerCase().includes(searchNegocioText.toLowerCase()));
+    const allChecked = allowed.every(o => currentFilter.negocios.includes(o.value));
+    const someChecked = allowed.some(o => currentFilter.negocios.includes(o.value));
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">Negocio</span>
+        <span class="xf-col-count">${currentFilter.negocios.length}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" width="14" height="14" style="max-width:14px;max-height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchNegocioInput" placeholder="Buscar..." value="${searchNegocioText}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllNegocio" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(opt => `
+          <label class="xf-item">
+            <input type="checkbox" class="xf-checkbox chk-negocio" data-val="${opt.value}" ${currentFilter.negocios.includes(opt.value) ? 'checked' : ''}>
+            <span>${opt.label}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+
+    const chkAll = document.getElementById("chkAllNegocio");
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        currentFilter.negocios = e.target.checked ? allowed.map(o => o.value) : [];
+        renderColNegocio();
+      });
+    }
+
+    const inp = document.getElementById("searchNegocioInput");
+    if (inp) {
+      inp.addEventListener('input', (e) => {
+        searchNegocioText = e.target.value;
+        renderColNegocio();
+        const r = document.getElementById("searchNegocioInput");
+        if (r) { r.focus(); r.setSelectionRange(r.value.length, r.value.length); }
+      });
+    }
+
+    col.querySelectorAll(".chk-negocio").forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute("data-val");
+        if (e.target.checked) {
+          if (!currentFilter.negocios.includes(val)) currentFilter.negocios.push(val);
+        } else {
+          currentFilter.negocios = currentFilter.negocios.filter(x => x !== val);
+        }
+        renderColNegocio();
+      });
+    });
+  }
+
+  function renderColEtapas() {
+    const col = document.getElementById("xfColEtapas");
+    if (!col) return;
+    const allowed = ETAPA_OPTIONS;
+    const filtered = allowed.filter(o => o.label.toLowerCase().includes(searchEtapaText.toLowerCase()));
+    const allChecked = allowed.every(o => currentFilter.etapas.includes(o.value));
+    const someChecked = allowed.some(o => currentFilter.etapas.includes(o.value));
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">Etapas</span>
+        <span class="xf-col-count">${currentFilter.etapas.length}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" width="14" height="14" style="max-width:14px;max-height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchEtapaInput" placeholder="Buscar..." value="${searchEtapaText}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllEtapas" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(opt => `
+          <label class="xf-item">
+            <input type="checkbox" class="xf-checkbox chk-etapa" data-val="${opt.value}" ${currentFilter.etapas.includes(opt.value) ? 'checked' : ''}>
+            <span>${opt.label}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+
+    const chkAll = document.getElementById("chkAllEtapas");
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        currentFilter.etapas = e.target.checked ? allowed.map(o => o.value) : [];
+        renderColEtapas();
+      });
+    }
+
+    const inp = document.getElementById("searchEtapaInput");
+    if (inp) {
+      inp.addEventListener('input', (e) => {
+        searchEtapaText = e.target.value;
+        renderColEtapas();
+        const r = document.getElementById("searchEtapaInput");
+        if (r) { r.focus(); r.setSelectionRange(r.value.length, r.value.length); }
+      });
+    }
+
+    col.querySelectorAll(".chk-etapa").forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute("data-val");
+        if (e.target.checked) {
+          if (!currentFilter.etapas.includes(val)) currentFilter.etapas.push(val);
+        } else {
+          currentFilter.etapas = currentFilter.etapas.filter(x => x !== val);
+        }
+        renderColEtapas();
+      });
+    });
+  }
+
+  function renderColSla() {
+    const col = document.getElementById("xfColSla");
+    if (!col) return;
+    const allowed = SLA_OPTIONS;
+    const filtered = allowed.filter(o => o.label.toLowerCase().includes(searchSlaText.toLowerCase()));
+    const allChecked = allowed.every(o => currentFilter.slas.includes(o.value));
+    const someChecked = allowed.some(o => currentFilter.slas.includes(o.value));
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">SLA</span>
+        <span class="xf-col-count">${currentFilter.slas.length}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" width="14" height="14" style="max-width:14px;max-height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchSlaInput" placeholder="Buscar..." value="${searchSlaText}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllSla" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(opt => `
+          <label class="xf-item">
+            <input type="checkbox" class="xf-checkbox chk-sla" data-val="${opt.value}" ${currentFilter.slas.includes(opt.value) ? 'checked' : ''}>
+            <span>${opt.label}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+
+    const chkAll = document.getElementById("chkAllSla");
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        currentFilter.slas = e.target.checked ? allowed.map(o => o.value) : [];
+        renderColSla();
+      });
+    }
+
+    const inp = document.getElementById("searchSlaInput");
+    if (inp) {
+      inp.addEventListener('input', (e) => {
+        searchSlaText = e.target.value;
+        renderColSla();
+        const r = document.getElementById("searchSlaInput");
+        if (r) { r.focus(); r.setSelectionRange(r.value.length, r.value.length); }
+      });
+    }
+
+    col.querySelectorAll(".chk-sla").forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute("data-val");
+        if (e.target.checked) {
+          if (!currentFilter.slas.includes(val)) currentFilter.slas.push(val);
+        } else {
+          currentFilter.slas = currentFilter.slas.filter(x => x !== val);
+        }
+        renderColSla();
+      });
+    });
+  }
+
+  function renderResumenKPIs() {
+      // SV & GT SLAs calculados dinámicamente sobre el período activo
+      const periodList = allData.filter(i => {
+        const itemDate = getItemFilterDate(i);
+        if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+        if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+        if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+        return true;
+      });
+
+      const svItems = periodList.filter(i => i.pais === "SV");
+      const gtItems = periodList.filter(i => i.pais === "GT");
+
+      // Procesos sin etapas vencidas (cumplen SLA de proceso según workflow.red.com.gt)
+      const svOk = svItems.filter(i => getItemSlaCondition(i) === "en_tiempo").length;
+      const gtOk = gtItems.filter(i => getItemSlaCondition(i) === "en_tiempo").length;
+
+      const svPct = svItems.length ? Math.round((svOk / svItems.length) * 100) : 100;
+      const gtPct = gtItems.length ? Math.round((gtOk / gtItems.length) * 100) : 100;
+
+      const svPctEl = document.getElementById("svGlobalSlaPct");
+      if (svPctEl) svPctEl.innerText = `${svPct}%`;
+      const svBarEl = document.getElementById("svGlobalProgressBar");
+      if (svBarEl) svBarEl.style.width = `${svPct}%`;
+      const svCountEl = document.getElementById("svGlobalOkCount");
+      if (svCountEl) svCountEl.innerText = `${svOk} de ${svItems.length}`;
+
+      const gtPctEl = document.getElementById("gtGlobalSlaPct");
+      if (gtPctEl) gtPctEl.innerText = `${gtPct}%`;
+      const gtBarEl = document.getElementById("gtGlobalProgressBar");
+      if (gtBarEl) gtBarEl.style.width = `${gtPct}%`;
+      const gtCountEl = document.getElementById("gtGlobalOkCount");
+      if (gtCountEl) gtCountEl.innerText = `${gtOk} de ${gtItems.length}`;
+
+      // 4 KPIs Principales
+      const total = filteredData.length;
+      const enProceso = filteredData.filter(i => i.estado === "en_proceso").length;
+      const finalizadas = filteredData.filter(i => i.estado === "finalizada").length;
+      const canceladas = filteredData.filter(i => i.estado === "cancelada").length;
+
+      const setElText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val;
+      };
+
+      setElText("kpiTotalExact", total);
+      setElText("kpiTotalFootnote", `${total} radicaciones encontradas · Clic para ver ↗`);
+      setElText("kpiActiveExact", enProceso);
+      setElText("kpiDoneExact", finalizadas);
+      setElText("kpiCancelledExact", canceladas);
+
+      // 4 SLAs
+      let enTiempo = 0;
+      let porVencer = 0;
+      let vencEtapa = 0;
+      let vencGlobal = 0;
+
+      filteredData.forEach(item => {
+        const cond = getItemSlaCondition(item);
+        if (cond === "vencidas_global") vencGlobal++;
+        else if (cond === "vencidas_etapa") vencEtapa++;
+        else if (cond === "por_vencer") porVencer++;
+        else enTiempo++;
+      });
+
+      setElText("slaEnTiempoCount", enTiempo);
+      setElText("slaPorVencerCount", porVencer);
+      setElText("slaVencidasEtapaCount", vencEtapa);
+      setElText("slaVencidasGlobalCount", vencGlobal);
+
+      setElText("donutTotalCount", total);
+      setElText("donutEnTiempoCount", enTiempo);
+      setElText("donutPorVencerCount", porVencer);
+      setElText("donutVencidasEtapaCount", vencEtapa);
+      setElText("donutVencidasGlobalCount", vencGlobal);
+
+      // Render Donut SVG
+      renderDonutSvg(enTiempo, porVencer, vencEtapa, vencGlobal, total);
+
+      // Render Weekly SVG
+      renderWeeklySvg();
+    }
+
+    function renderDonutSvg(ok, near, vencE, vencG, total) {
+      const svg = document.getElementById("donutSvg");
+      if (!svg) return;
+      // Pista sobria de la guía (rgba(255,255,255,.07)); la rotación -90° va dentro del SVG
+      // porque la animación general .gx-donut usa transform sobre el <svg>.
+      const track = `<circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="13" />`;
+      if (total === 0) {
+        svg.innerHTML = track;
+        return;
+      }
+
+      const circumference = 2 * Math.PI * 38; // ~238.76
+      // Colores con significado (SLA) en tonos de la guía: verde ok, amarillo advertencia,
+      // naranja vencida por etapa, rojo vencida global
+      const segments = [
+        { count: ok, color: "#2f8f76" },
+        { count: near, color: "#c59600" },
+        { count: vencE, color: "#c59600" },
+        { count: vencG, color: "#c43c50" }
+      ];
+
+      let offset = 0;
+      let paths = "";
+      segments.forEach(seg => {
+        if (seg.count > 0) {
+          const dash = (seg.count / total) * circumference;
+          paths += `<circle cx="50" cy="50" r="38" fill="none" stroke="${seg.color}" stroke-width="13"
+                    stroke-dasharray="${dash} ${circumference}" stroke-dashoffset="-${offset}" />`;
+          offset += dash;
+        }
+      });
+      svg.innerHTML = `${track}<g transform="rotate(-90 50 50)">${paths}</g>`;
+    }
+
+    // Función auxiliar para obtener el número de semana ISO de una fecha
+    function getWeekNumber(dateStr) {
+      if (!dateStr) return null;
+      const d = new Date(dateStr.length === 10 ? dateStr + "T00:00:00" : dateStr);
+      if (isNaN(d.getTime())) return null;
+      const target = new Date(d.valueOf());
+      const dayNr = (d.getDay() + 6) % 7;
+      target.setDate(target.getDate() - dayNr + 3);
+      const firstThursday = target.valueOf();
+      target.setMonth(0, 1);
+      if (target.getDay() !== 4) target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+      return 1 + Math.ceil((firstThursday - target) / 604800000);
+    }
+
+    // Calcula las métricas reales por semana (no acumuladas irreales) según el dataset filtrado
+    function computeWeeklySeries(dataset) {
+      if (!dataset || dataset.length === 0) return [];
+      
+      const sorted = [...dataset].sort((a, b) => {
+        const fA = a.fecha || (a.fechaIngreso ? a.fechaIngreso.slice(0, 10) : "");
+        const fB = b.fecha || (b.fechaIngreso ? b.fechaIngreso.slice(0, 10) : "");
+        return fA.localeCompare(fB);
+      });
+
+      const weekSet = new Set();
+      sorted.forEach(item => {
+        const f = item.fecha || (item.fechaIngreso ? item.fechaIngreso.slice(0, 10) : "");
+        const w = getWeekNumber(f);
+        if (w != null) weekSet.add(w);
+      });
+
+      let weekNums = Array.from(weekSet).sort((a, b) => a - b);
+      if (weekNums.length > 0 && weekNums.length < 5) {
+        const minW = weekNums[0];
+        const expanded = [];
+        if (minW > 1 && !weekNums.includes(minW - 1)) {
+          expanded.push(minW - 1);
+        }
+        weekNums.forEach(w => expanded.push(w));
+        weekNums = expanded;
+      }
+
+      return weekNums.map(w => {
+        const weekItems = sorted.filter(item => {
+          const f = item.fecha || (item.fechaIngreso ? item.fechaIngreso.slice(0, 10) : "");
+          return getWeekNumber(f) === w;
+        });
+
+        const entraron = weekItems.length;
+        const proc = weekItems.filter(i => i.estado === "en_proceso").length;
+        const fin = weekItems.filter(i => i.estado === "finalizada").length;
+        const canc = weekItems.filter(i => i.estado === "cancelada").length;
+        const vencEtapa = weekItems.filter(i => getItemSlaCondition(i) === "vencidas_etapa").length;
+        const vencGlobal = weekItems.filter(i => getItemSlaCondition(i) === "vencidas_global").length;
+
+        return {
+          label: `Sem ${w}`,
+          ing: entraron,
+          proc: proc,
+          fin: fin,
+          canc: canc,
+          vencEtapa: vencEtapa,
+          vencGlobal: vencGlobal
+        };
+      });
+    }
+
+    function renderWeeklySvg() {
+      const svg = document.getElementById("weeklySvg");
+      const wrapper = document.getElementById("weeklyChartWrapper");
+      const tooltip = document.getElementById("weeklyHoverTooltip");
+      if (!svg || !wrapper) return;
+
+      const weeks = computeWeeklySeries(filteredData);
+      if (!weeks || weeks.length === 0) {
+        svg.innerHTML = `
+          <text x="300" y="120" fill="#8b909e" font-size="12" text-anchor="middle" font-weight="700">
+            Sin radicaciones en el período seleccionado
+          </text>
+        `;
+        if (tooltip) tooltip.style.display = "none";
+        return;
+      }
+
+      const maxDataVal = Math.max(...weeks.flatMap(w => [w.ing, w.proc, w.fin, w.canc, w.vencEtapa, w.vencGlobal]), 1);
+      const maxVal = Math.max(10, Math.ceil(maxDataVal * 1.25 / 5) * 5);
+      const w = 600;
+      const h = 240;
+      const padX = 50;
+      const padY = 30;
+      const stepX = weeks.length > 1 ? (w - padX * 2) / (weeks.length - 1) : 0;
+
+      let gridLines = "";
+      for (let i = 0; i <= 4; i++) {
+        const yVal = padY + (h - padY * 2) * (i / 4);
+        const valText = Math.round(maxVal * (1 - i / 4));
+        gridLines += `<line x1="${padX}" y1="${yVal}" x2="${w - padX}" y2="${yVal}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                      <text x="${padX - 8}" y="${yVal + 4}" fill="#8b909e" font-size="10" text-anchor="end">${valText}</text>`;
+      }
+
+      const coords = weeks.map((item, idx) => {
+        const x = weeks.length > 1 ? (padX + idx * stepX) : (w / 2);
+        const getY = (val) => h - padY - (val / maxVal) * (h - padY * 2);
+        return {
+          x,
+          yIng: getY(item.ing),
+          yProc: getY(item.proc),
+          yFin: getY(item.fin),
+          yCanc: getY(item.canc),
+          yVencEtapa: getY(item.vencEtapa),
+          yVencGlobal: getY(item.vencGlobal),
+          item
+        };
+      });
+
+      const pathIng = coords.map(c => `${c.x},${c.yIng}`).join(" ");
+      const pathProc = coords.map(c => `${c.x},${c.yProc}`).join(" ");
+      const pathFin = coords.map(c => `${c.x},${c.yFin}`).join(" ");
+      const pathCanc = coords.map(c => `${c.x},${c.yCanc}`).join(" ");
+      const pathVencEtapa = coords.map(c => `${c.x},${c.yVencEtapa}`).join(" ");
+      const pathVencGlobal = coords.map(c => `${c.x},${c.yVencGlobal}`).join(" ");
+      // Área tenue bajo la serie principal (Ingresaron) que se desvanece hacia la base
+      const baseY = h - padY;
+      const areaIng = coords.length > 1
+        ? `<path class="gx-area" d="M${coords[0].x},${baseY} L${coords.map(c => `${c.x},${c.yIng}`).join(" L")} L${coords[coords.length - 1].x},${baseY} Z" fill="url(#weeklyAreaGrad)" stroke="none" />`
+        : "";
+
+      let staticDots = "";
+      coords.forEach((c, idx) => {
+        staticDots += `
+          <g class="gx-dot" style="--gx-i: ${idx}">
+            <circle cx="${c.x}" cy="${c.yIng}" r="3.5" fill="#4f8fd8" stroke="#151821" stroke-width="1.5" />
+            <circle cx="${c.x}" cy="${c.yProc}" r="3.5" fill="#7fb0f0" stroke="#151821" stroke-width="1.5" />
+            <circle cx="${c.x}" cy="${c.yFin}" r="3.5" fill="#2f8f76" stroke="#151821" stroke-width="1.5" />
+            <circle cx="${c.x}" cy="${c.yCanc}" r="3" fill="#d95f6e" stroke="#151821" stroke-width="1.5" />
+            <circle cx="${c.x}" cy="${c.yVencEtapa}" r="3" fill="#c59600" stroke="#151821" stroke-width="1.5" />
+            <circle cx="${c.x}" cy="${c.yVencGlobal}" r="3" fill="#c43c50" stroke="#151821" stroke-width="1.5" />
+          </g>
+        `;
+      });
+
+      let xLabels = "";
+      coords.forEach(c => {
+        xLabels += `<text x="${c.x}" y="${h - 8}" fill="#8b909e" font-size="11" text-anchor="middle" font-weight="700">${c.item.label}</text>`;
+      });
+
+      const trackerLine = `<line id="weeklyGuideLine" x1="0" y1="${padY}" x2="0" y2="${h - padY}" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-dasharray="4 3" style="display:none; pointer-events:none;" />`;
+      const highlightDots = `<g id="weeklyHighlightDots" style="display:none; pointer-events:none;"></g>`;
+
+      let hitAreas = "";
+      const hitW = weeks.length > 1 ? stepX : (w - padX * 2);
+      coords.forEach((c, idx) => {
+        const hitX = weeks.length > 1 ? (c.x - hitW / 2) : padX;
+        hitAreas += `<rect x="${hitX}" y="0" width="${hitW}" height="${h}" fill="transparent" style="cursor: pointer;" data-widx="${idx}" />`;
+      });
+
+      // Líneas según la guía: serie principal 3px con área tenue, grilla ligera y animación
+      // general (.gx-line se dibuja; requiere pathLength="1"). La serie punteada (SLA Global)
+      // conserva su trazo discontinuo y entra con fundido (.gx-area) para no perder el patrón.
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="weeklyAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4f8fd8" stop-opacity="0.22" />
+            <stop offset="100%" stop-color="#4f8fd8" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        ${gridLines}
+        ${areaIng}
+        <polyline class="gx-line" pathLength="1" style="--gx-i: 0" points="${pathIng}" fill="none" stroke="#4f8fd8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline class="gx-line" pathLength="1" style="--gx-i: 1" points="${pathProc}" fill="none" stroke="#7fb0f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline class="gx-line" pathLength="1" style="--gx-i: 2" points="${pathFin}" fill="none" stroke="#2f8f76" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline class="gx-line" pathLength="1" style="--gx-i: 3" points="${pathCanc}" fill="none" stroke="#d95f6e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline class="gx-line" pathLength="1" style="--gx-i: 4" points="${pathVencEtapa}" fill="none" stroke="#c59600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline class="gx-area" points="${pathVencGlobal}" fill="none" stroke="#c43c50" stroke-width="2" stroke-dasharray="3 2" stroke-linecap="round" stroke-linejoin="round" />
+        ${staticDots}
+        ${xLabels}
+        ${trackerLine}
+        ${highlightDots}
+        ${hitAreas}
+      `;
+
+      const guideLine = svg.querySelector("#weeklyGuideLine");
+      const gHighlight = svg.querySelector("#weeklyHighlightDots");
+      const hitRects = svg.querySelectorAll("rect[data-widx]");
+
+      hitRects.forEach(rect => {
+        rect.addEventListener("mouseenter", () => {
+          const idx = parseInt(rect.getAttribute("data-widx"), 10);
+          const c = coords[idx];
+          if (!c) return;
+
+          if (guideLine) {
+            guideLine.setAttribute("x1", c.x);
+            guideLine.setAttribute("x2", c.x);
+            guideLine.style.display = "block";
+          }
+
+          if (gHighlight) {
+            gHighlight.innerHTML = `
+              <circle cx="${c.x}" cy="${c.yIng}" r="6" fill="#4f8fd8" stroke="#fff" stroke-width="2" />
+              <circle cx="${c.x}" cy="${c.yProc}" r="6" fill="#7fb0f0" stroke="#fff" stroke-width="2" />
+              <circle cx="${c.x}" cy="${c.yFin}" r="6" fill="#2f8f76" stroke="#fff" stroke-width="2" />
+              <circle cx="${c.x}" cy="${c.yCanc}" r="5.5" fill="#d95f6e" stroke="#fff" stroke-width="2" />
+              <circle cx="${c.x}" cy="${c.yVencEtapa}" r="5.5" fill="#c59600" stroke="#fff" stroke-width="2" />
+              <circle cx="${c.x}" cy="${c.yVencGlobal}" r="5.5" fill="#c43c50" stroke="#fff" stroke-width="2" />
+            `;
+            gHighlight.style.display = "block";
+          }
+
+          if (tooltip) {
+            tooltip.innerHTML = `
+              <div class="chart-tooltip-title">${c.item.label} · Resumen Semanal</div>
+              <div class="tooltip-item">
+                <span style="color: #4f8fd8;">● Ingresaron</span>
+                <strong style="color: #fff; font-family: var(--font-mono);">${c.item.ing}</strong>
+              </div>
+              <div class="tooltip-item">
+                <span style="color: #7fb0f0;">● En proceso</span>
+                <strong style="color: #fff; font-family: var(--font-mono);">${c.item.proc}</strong>
+              </div>
+              <div class="tooltip-item">
+                <span style="color: #2f8f76;">● Finalizadas</span>
+                <strong style="color: #fff; font-family: var(--font-mono);">${c.item.fin}</strong>
+              </div>
+              <div class="tooltip-item">
+                <span style="color: #d95f6e;">● Canceladas</span>
+                <strong style="color: #fff; font-family: var(--font-mono);">${c.item.canc}</strong>
+              </div>
+              <div class="tooltip-item">
+                <span style="color: #c59600;">● Vencidas Etapa</span>
+                <strong style="color: #e0b52e; font-family: var(--font-mono);">${c.item.vencEtapa}</strong>
+              </div>
+              <div class="tooltip-item">
+                <span style="color: #c43c50;">● Vencidas SLA Global</span>
+                <strong style="color: #d95f6e; font-family: var(--font-mono);">${c.item.vencGlobal}</strong>
+              </div>
+            `;
+            const pctX = (c.x / w) * 100;
+            if (pctX > 65) {
+              tooltip.style.left = `calc(${pctX}% - 210px)`;
+            } else if (pctX < 35) {
+              tooltip.style.left = `calc(${pctX}% + 20px)`;
+            } else {
+              tooltip.style.left = `calc(${pctX}% - 100px)`;
+            }
+            tooltip.style.top = "15px";
+            tooltip.style.display = "block";
+          }
+        });
+      });
+
+      wrapper.onmouseleave = () => {
+        if (guideLine) guideLine.style.display = "none";
+        if (gHighlight) gHighlight.style.display = "none";
+        if (tooltip) tooltip.style.display = "none";
+      };
+    }
+
+    // -------------------------------------------------------------
+    // RENDER PESTAÑA 2: 5 ETAPAS INTERACTIVAS Y TABLA GENERAL
+    // -------------------------------------------------------------
+    function renderStagePhases() {
+      const container = document.getElementById("etapasPhasesList");
+      if (!container) return;
+
+      let html = "";
+      STAGE_NAMES.forEach((name, idx) => {
+        const stageNum = idx + 1;
+        const slaLimit = STAGE_SLAS[stageNum];
+
+        // Calcular casos en esta etapa usando filteredData
+        let activeNow = 0;
+        let vencidas = 0;
+        let porVencer = 0;
+        let enTiempo = 0;
+
+        filteredData.forEach(item => {
+          if (!item.proceso || !item.proceso.etapas) return;
+          const st = item.proceso.etapas.find(e => e.numero === stageNum);
+          if (!st || !st.fechaInicio) return;
+
+          const evalSt = getStageStatus(st, slaLimit);
+          if (st.estado === "activa") activeNow++;
+
+          if (evalSt.status === "vencida") vencidas++;
+          else if (evalSt.status === "near") porVencer++;
+          else if (evalSt.status === "ok") enTiempo++;
+        });
+
+        html += `
+          <div class="phase-card is-clickable" onclick="openStageModal(${stageNum})" title="Clic para ver las 3 tablas de la Fase ${stageNum}">
+            <div class="phase-card-top">
+              <div class="phase-left">
+                <span class="phase-badge">FASE ${stageNum} · SLA ${slaLimit}H</span>
+                <span class="phase-title">${stageNum}. ${name}</span>
+              </div>
+              <div class="phase-right">
+                <span class="phase-active-tag">${activeNow} Activas ahora</span>
+                <span style="color: #7fb0f0; font-size: 11px; font-weight: 700;">Ver 3 Tablas ↗</span>
+              </div>
+            </div>
+
+            <div class="phase-stats-row">
+              <div class="phase-stat-box" style="border-left: 3px solid #c43c50;">
+                <span class="phase-stat-label">1. Vencidas</span>
+                <span class="phase-stat-val" style="color: #d95f6e;">${vencidas}</span>
+              </div>
+              <div class="phase-stat-box" style="border-left: 3px solid #c59600;">
+                <span class="phase-stat-label">2. Por Vencer</span>
+                <span class="phase-stat-val" style="color: #c59600;">${porVencer}</span>
+              </div>
+              <div class="phase-stat-box" style="border-left: 3px solid #2f8f76;">
+                <span class="phase-stat-label">3. En Tiempo</span>
+                <span class="phase-stat-val" style="color: #3f9c85;">${enTiempo}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    let tableSearchText = "";
+
+  function renderRadicacionesTable() {
+    const tbody = document.getElementById("radicacionesTbody");
+    const countBadge = document.getElementById("generalTableCountBadge");
+    const btnResetTable = document.getElementById("btnResetTableFilters");
+    if (!tbody) return;
+
+    let displayList = filteredData;
+    if (tableSearchText) {
+      const q = tableSearchText.toLowerCase();
+      displayList = filteredData.filter(item => {
+        const pre = String(item.preOferta || "").toLowerCase();
+        const emp = getCompanyName(item).toLowerCase();
+        const cod = String(item.codigo || "").toLowerCase();
+        const vend = String(item.vendedor || "").toLowerCase();
+        const neg = String(item.negocio || "").toLowerCase();
+        const pais = String(item.pais || "").toLowerCase();
+        const stName = (item.proceso && item.proceso.etapaActual && item.proceso.etapaActual.nombre)
+          ? item.proceso.etapaActual.nombre.toLowerCase() : "";
+        return pre.includes(q) ||
+               ("#" + pre).includes(q) ||
+               emp.includes(q) ||
+               cod.includes(q) ||
+               vend.includes(q) ||
+               neg.includes(q) ||
+               pais === q ||
+               stName.includes(q);
+      });
+    }
+
+    if (countBadge) {
+      if (tableSearchText) {
+        countBadge.innerText = `Mostrando ${displayList.length} radicaciones`;
+      } else {
+        countBadge.innerText = `Mostrando ${displayList.length} radicaciones`;
+      }
+    }
+
+    if (btnResetTable) {
+      btnResetTable.style.display = (filteredData.length !== allData.length || tableSearchText) ? "inline-flex" : "none";
+    }
+
+    if (displayList.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+            <div style="font-size: 14px; font-weight: 700; color: #fff;">No se encontraron radicaciones</div>
+            <div style="font-size: 11px; margin-top: 4px;">Intenta ajustar la búsqueda o los filtros aplicados.</div>
+            <button class="action-btn" onclick="resetAllFilters(); if (document.getElementById('etapasTableSearch')) { document.getElementById('etapasTableSearch').value = ''; tableSearchText = ''; }" style="margin-top: 12px;">Restablecer todos los filtros</button>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let rows = "";
+    displayList.forEach(item => {
+      const slaCond = getItemSlaCondition(item);
+      let slaBadgeHtml = "";
+      if (slaCond === "vencidas_global") {
+        slaBadgeHtml = `<span class="badge-sla badge-sla-vencida-global">Vencida Global (&gt;104h)</span>`;
+      } else if (slaCond === "vencidas_etapa") {
+        slaBadgeHtml = `<span class="badge-sla badge-sla-vencida-etapa">Vencida Etapa</span>`;
+      } else if (slaCond === "por_vencer") {
+        slaBadgeHtml = `<span class="badge-sla badge-sla-por-vencer">Por Vencer</span>`;
+      } else {
+        slaBadgeHtml = `<span class="badge-sla badge-sla-en-tiempo">En Tiempo</span>`;
+      }
+
+      let stageDesc = "-";
+      if (item.proceso && item.proceso.etapaActual) {
+        const num = item.proceso.etapaActual.numero;
+        const nom = item.proceso.etapaActual.nombre;
+        stageDesc = `<span style="font-weight: 800; color: #7fb0f0;">Fase ${num}:</span> ${nom}`;
+      } else if (item.estado === "finalizada") {
+        stageDesc = `<span style="color: #3f9c85; font-weight: 800;">✓ Finalizada (5/5)</span>`;
+      } else if (item.estado === "cancelada") {
+        stageDesc = `<span style="color: #d95f6e; font-weight: 800;">✕ Cancelada</span>`;
+      }
+
+      const clientName = getCompanyName(item);
+      const preOfertaStr = item.preOferta || "S/N";
+      const radiosCount = item.cantidad || 0;
+      const vendedor = item.vendedor || "-";
+      const codigo = item.codigo || "-";
+
+      rows += `
+        <tr>
+          <td>
+            <strong style="color: #fff; font-family: var(--font-mono); font-size: 12px;">#${preOfertaStr}</strong>
+            <div style="font-size: 10px; color: var(--text-muted);">${formatDateDisplay(item.fecha)}</div>
+          </td>
+          <td>
+            <div style="font-weight: 700; color: #fff; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientName}">
+              ${clientName}
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${codigo} · Vend: ${vendedor}</div>
+          </td>
+          <td style="text-align: center;">
+            <span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span>
+          </td>
+          <td style="text-align: center;">
+            <span style="font-size: 10px; font-weight: 800; color: #e8eaf0; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; display: inline-block;">
+              ${item.negocio || '-'}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <strong style="font-family: var(--font-mono); font-size: 13px; color: #fff;">${radiosCount}</strong>
+          </td>
+          <td>
+            <div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stageDesc}</div>
+          </td>
+          <td style="text-align: center;">
+            <span class="badge-status status-${item.estado || 'en_proceso'}">
+              ${item.estado === 'finalizada' ? 'Finalizada' : item.estado === 'cancelada' ? 'Cancelada' : 'En proceso'}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            ${slaBadgeHtml}
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="action-btn" onclick="openDetailModal('\')" title="Ver ficha técnica y auditoría" style="padding: 4px 8px; font-size: 11px;">
+              Ver Auditoría ↗
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = rows;
+  }
+
+  function renderCategoriasTab() {
+      const grid = document.getElementById("categoryCardsGrid");
+      const tbody = document.getElementById("topClientsTbody");
+      if (!grid) return;
+
+      const categories = ["ADICION", "VENTA NUEVA", "RENOVACION"];
+      let cardsHtml = "";
+
+      categories.forEach(cat => {
+        const catItems = filteredData.filter(i => i.negocio === cat);
+        const totalRadicaciones = catItems.length;
+        const totalRadios = catItems.reduce((acc, i) => acc + (i.cantidad || 0), 0);
+        const enProc = catItems.filter(i => i.estado === "en_proceso").length;
+        const fin = catItems.filter(i => i.estado === "finalizada").length;
+
+        const isSelected = currentFilter.catQuickFilter === cat;
+
+        cardsHtml += `
+          <div class="phase-card is-clickable ${isSelected ? 'is-active-cat' : ''}" 
+               onclick="selectCategoryFilter('${cat}')" 
+               style="background: ${isSelected ? 'rgba(196,60,80, 0.12)' : 'rgba(26, 29, 39, 0.85)'}; border: 1px solid ${isSelected ? 'var(--red-primary)' : 'var(--border-color)'}; border-radius: 16px; padding: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 11px; font-weight: 900; color: #d95f6e; letter-spacing: 0.05em; text-transform: uppercase;">
+                LÍNEA DE NEGOCIO
+              </span>
+              <span style="font-size: 10px; color: #7fb0f0; font-weight: 700;">Filtrar ↗</span>
+            </div>
+            <div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 8px;">${cat}</div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px;">
+              <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Total Radios</div>
+                <div style="font-size: 22px; font-weight: 900; color: #fff; font-family: var(--font-mono);">${totalRadios}</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Radicaciones</div>
+                <div style="font-size: 22px; font-weight: 900; color: #7fb0f0; font-family: var(--font-mono);">${totalRadicaciones}</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+              <span>En proceso: <strong style="color: #7fb0f0;">${enProc}</strong></span>
+              <span>Finalizadas: <strong style="color: #3f9c85;">${fin}</strong></span>
+            </div>
+          </div>
+        `;
+      });
+
+      grid.innerHTML = cardsHtml;
+
+      // Top 10 Clientes usando filteredData
+      if (tbody) {
+        const clientMap = {};
+        filteredData.forEach(item => {
+          const client = getCompanyName(item);
+          if (!clientMap[client]) {
+            clientMap[client] = {
+              cliente: client,
+              vendedor: item.vendedor || "-",
+              pais: item.pais || "GT",
+              negocio: item.negocio || "-",
+              radios: 0,
+              radicaciones: 0
+            };
+          }
+          clientMap[client].radios += (item.cantidad || 0);
+          clientMap[client].radicaciones += 1;
+        });
+
+        const top10 = Object.values(clientMap)
+          .sort((a, b) => b.radios - a.radios)
+          .slice(0, 10);
+
+        if (top10.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                No se registraron radicaciones en el período o filtros seleccionados.
+              </td>
+            </tr>
+          `;
+        } else {
+          let topRows = "";
+          top10.forEach((c, idx) => {
+            const rank = idx + 1;
+            const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+            topRows += `
+              <tr>
+                <td style="text-align: center; font-weight: 800; font-size: 13px;">${medal}</td>
+                <td><strong style="color: #fff;">${c.cliente}</strong></td>
+                <td><span style="color: #8b909e; font-size: 11px;">${c.vendedor}</span></td>
+                <td style="text-align: center;"><span class="badge badge-${c.pais.toLowerCase()}">${c.pais}</span></td>
+                <td style="text-align: center;"><span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${c.negocio}</span></td>
+                <td style="text-align: center;"><strong style="color: #c59600; font-family: var(--font-mono); font-size: 14px;">${c.radios}</strong></td>
+                <td style="text-align: center;"><span style="font-family: var(--font-mono);">${c.radicaciones}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = topRows;
+        }
+      }
+    }
+
+    function updatePillActive(selector, value, attributeName) {
+      document.querySelectorAll(`${selector} [${attributeName}]`).forEach(button => {
+        button.classList.toggle("is-active", button.getAttribute(attributeName) === value);
+      });
+    }
+
+    function selectCategoryFilter(cat) {
+      if (currentFilter.catQuickFilter === cat) {
+        currentFilter.catQuickFilter = "ALL";
+      } else {
+        currentFilter.catQuickFilter = cat;
+      }
+      updatePillActive("#catQuickFilter", currentFilter.catQuickFilter, "data-cat");
+      renderApp();
+    }
+
+    // -------------------------------------------------------------
+    
+
+  function openStageModal(stageNum) {
+      currentStageModalNum = stageNum;
+      currentStageModalFilter = "all";
+
+      const modal = document.getElementById("stageModalBackdrop");
+      if (!modal) return;
+
+      const badge = document.getElementById("stageModalBadge");
+      const title = document.getElementById("stageModalTitle");
+      const slaText = document.getElementById("stageModalSlaText");
+
+      const slaLimit = STAGE_SLAS[stageNum];
+      if (badge) badge.innerText = `FASE ${stageNum}`;
+      if (title) title.innerText = `${stageNum}. ${STAGE_NAMES[stageNum - 1]}`;
+      if (slaText) slaText.innerText = `SLA Límite Oficial: ${slaLimit}h laborables`;
+
+      renderStageModalTables();
+      modal.classList.add("is-open");
+    }
+
+    function closeStageModal() {
+      const modal = document.getElementById("stageModalBackdrop");
+      if (modal) modal.classList.remove("is-open");
+    }
+
+    function filterStageModalTables(viewType) {
+      currentStageModalFilter = viewType;
+      updatePillActive("#stageModalFilterPills", viewType, "data-smview");
+      renderStageModalTables();
+    }
+
+    function renderStageModalTables() {
+      const container = document.getElementById("stageModalTablesContainer");
+      if (!container) return;
+
+      const stageNum = currentStageModalNum;
+      const slaLimit = STAGE_SLAS[stageNum];
+
+      const vencidasList = [];
+      const nearList = [];
+      const okList = [];
+
+      filteredData.forEach(item => {
+        if (!item.proceso || !item.proceso.etapas) return;
+        const st = item.proceso.etapas.find(e => e.numero === stageNum);
+        if (!st || !st.fechaInicio) return;
+
+        const evalSt = getStageStatus(st, slaLimit);
+        const rowData = { item, stage: st, eval: evalSt };
+
+        if (evalSt.status === "vencida") vencidasList.push(rowData);
+        else if (evalSt.status === "near") nearList.push(rowData);
+        else if (evalSt.status === "ok") okList.push(rowData);
+      });
+
+      const setEl = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val;
+      };
+
+      setEl("stageModalVencCount", vencidasList.length);
+      setEl("stageModalNearCount", nearList.length);
+      setEl("stageModalOkCount", okList.length);
+      setEl("stageModalTotalCount", vencidasList.length + nearList.length + okList.length);
+
+      const renderSubTable = (list, title, colorHex, borderHex) => {
+        if (list.length === 0) {
+          return `
+            <div class="stage-subtable-card" style="border: 1px solid ${borderHex}; margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(15, 17, 23, 0.7);">
+              <div style="font-size: 13px; font-weight: 800; color: ${colorHex}; margin-bottom: 6px;">${title} (0)</div>
+              <div style="font-size: 11px; color: var(--text-muted);">No hay radicaciones en este grupo para la Fase ${stageNum}.</div>
+            </div>
+          `;
+        }
+
+        let tableRows = "";
+        list.forEach(({ item, stage, eval: ev }) => {
+          const clientName = getCompanyName(item);
+          const pre = item.preOferta || "S/N";
+          const hStr = formatHours(ev.hours);
+          const startStr = formatDateDisplay(stage.fechaInicio);
+          const endStr = stage.fechaFin ? formatDateDisplay(stage.fechaFin) : "En curso...";
+
+          tableRows += `
+            <tr>
+              <td><strong style="color: #fff; font-family: var(--font-mono);">#${pre}</strong></td>
+              <td>
+                <div style="font-weight: 700; color: #fff;">${clientName}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${item.vendedor || '-'}</div>
+              </td>
+              <td style="text-align: center;"><span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span></td>
+              <td style="text-align: center;">${item.cantidad || 0}</td>
+              <td style="font-size: 10px;">${startStr}</td>
+              <td style="font-size: 10px;">${endStr}</td>
+              <td style="text-align: center;"><strong style="color: ${colorHex}; font-family: var(--font-mono);">${hStr}</strong></td>
+              <td style="text-align: center;"><span class="badge-status status-${item.estado || 'en_proceso'}">${stage.estado}</span></td>
+              <td style="text-align: right;">
+                <button type="button" class="action-btn" onclick="openDetailModal('${pre}')">Ver Ficha</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        return `
+          <div class="stage-subtable-card" style="border: 1px solid ${borderHex}; margin-bottom: 24px; border-radius: 12px; overflow: hidden;">
+            <div style="background: rgba(15, 17, 23, 0.95); padding: 12px 18px; border-bottom: 1px solid ${borderHex}; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 13px; font-weight: 900; color: ${colorHex};">${title} (${list.length})</span>
+              <span style="font-size: 11px; color: var(--text-muted);">Límite SLA: ${slaLimit}h</span>
+            </div>
+            <div class="stage-table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pre-Oferta</th>
+                    <th>Cliente / Vendedor</th>
+                    <th style="text-align: center;">País</th>
+                    <th style="text-align: center;">Radios</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th style="text-align: center;">Horas Laborales</th>
+                    <th style="text-align: center;">Estado Fase</th>
+                    <th style="text-align: right;">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      };
+
+      let html = "";
+      if (currentStageModalFilter === "all" || currentStageModalFilter === "vencidas") {
+        html += renderSubTable(vencidasList, "1. Radicaciones Vencidas en Etapa", "#d95f6e", "rgba(196,60,80, 0.35)");
+      }
+      if (currentStageModalFilter === "all" || currentStageModalFilter === "near") {
+        html += renderSubTable(nearList, "2. Radicaciones Por Vencer / En Riesgo (75%-100% SLA)", "#c59600", "rgba(197,150,0, 0.35)");
+      }
+      if (currentStageModalFilter === "all" || currentStageModalFilter === "ok") {
+        html += renderSubTable(okList, "3. Radicaciones En Tiempo Normal", "#3f9c85", "rgba(47, 143, 118, 0.35)");
+      }
+
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------------
+    // MODAL DE DETALLE / AUDITORÍA CRONOLÓGICA (FICHA TÉCNICA)
+    // -------------------------------------------------------------
+    function openDetailModal(preOferta) {
+      const item = allData.find(i => String(i.preOferta) === String(preOferta));
+      if (!item) return;
+
+      const modal = document.getElementById("detailModalBackdrop");
+      if (!modal) return;
+
+      const setEl = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val;
+      };
+
+      setEl("detModalTitle", `Radicación Pre-Oferta #${item.preOferta}`);
+      setEl("detClientName", getCompanyName(item));
+      setEl("detVendedor", item.vendedor || "-");
+      setEl("detCodigo", item.codigo || "-");
+      setEl("detNegocio", item.negocio || "-");
+      setEl("detCantidad", item.cantidad || 0);
+      setEl("detPlazo", item.plazo ? `${item.plazo} meses` : "-");
+      setEl("detTipoContrato", item.tipoContratacion || "-");
+
+      const badgeCountry = document.getElementById("detBadgeCountry");
+      if (badgeCountry) {
+        badgeCountry.className = `badge badge-${(item.pais || 'GT').toLowerCase()}`;
+        badgeCountry.innerText = item.pais || 'GT';
+      }
+
+      const totalH = getProcessTotalHours(item);
+      setEl("detHoursText", `${formatHours(totalH)} computadas (Lunes a Viernes 8am-6pm)`);
+
+      // 5 Stages Chronological Timeline
+      const timeline = document.getElementById("detStagesTimeline");
+      if (timeline) {
+        let stagesHtml = "";
+        const etapas = (item.proceso && item.proceso.etapas) ? item.proceso.etapas : [];
+
+        STAGE_NAMES.forEach((name, idx) => {
+          const num = idx + 1;
+          const st = etapas.find(e => e.numero === num);
+          const limit = STAGE_SLAS[num];
+          const evalSt = getStageStatus(st, limit);
+
+          let color = "#8b909e";
+          let badgeText = "Pendiente";
+          if (st) {
+            if (evalSt.status === "vencida") {
+              color = "#c43c50";
+              badgeText = `Vencida (${formatHours(evalSt.hours)} / ${limit}h)`;
+            } else if (evalSt.status === "near") {
+              color = "#c59600";
+              badgeText = `Por Vencer (${formatHours(evalSt.hours)} / ${limit}h)`;
+            } else if (evalSt.status === "ok") {
+              color = "#2f8f76";
+              badgeText = `En Tiempo (${formatHours(evalSt.hours)})`;
+            }
+          }
+
+          const start = st && st.fechaInicio ? formatDateDisplay(st.fechaInicio) : "Sin iniciar";
+          const fin = st && st.fechaFin ? formatDateDisplay(st.fechaFin) : (st && st.estado === "activa" ? "Activa actualmente..." : "Pendiente");
+
+          stagesHtml += `
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+              <div>
+                <div style="font-weight: 800; font-size: 12px; color: #fff;">Fase ${num}: ${name}</div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+                  Inicio: <strong style="color: #e8eaf0;">${start}</strong> · Fin: <strong style="color: #e8eaf0;">${fin}</strong>
+                </div>
+              </div>
+              <span style="font-size: 11px; font-weight: 800; color: ${color}; background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 6px;">
+                ${badgeText}
+              </span>
+            </div>
+          `;
+        });
+
+        timeline.innerHTML = stagesHtml;
+      }
+
+      modal.classList.add("is-open");
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById("detailModalBackdrop");
+      if (modal) modal.classList.remove("is-open");
+    }
+
+    function openCountrySlaModal(country) {
+      navigateToEtapasFilter({ pais: country, estado: "todos", sla: "todos" });
+    }
+
+    // -------------------------------------------------------------
+    
+
+  // EVENT BINDINGS
+  // ==========================================================================
+  // INFORME DETALLADO ACTIVACIONES: ESTADO, FILTRADO, RENDER Y EXPORTACIÓN
+  // ==========================================================================
+  let actInformeSearchText = '';
+  let actInformeFilterEstado = 'ALL';
+  let actInformeFilterSla = 'ALL';
+  let actInformeFilterNegocio = 'ALL';
+  let actInformeFilterPais = 'ALL';
+
+  function getActInformeData() {
+    // Hereda directamente el dataset con todos los filtros generales aplicados en el header
+    const baseList = filteredData;
+    if (!actInformeSearchText) return baseList;
+    const q = actInformeSearchText.toLowerCase().trim();
+    return baseList.filter(item => {
+      const pre = String(item.preOferta || "").toLowerCase();
+      const cli = getCompanyName(item).toLowerCase();
+      const cod = String(item.codigo || "").toLowerCase();
+      const ven = String(item.vendedor || "").toLowerCase();
+      const neg = String(item.negocio || "").toLowerCase();
+      return pre.includes(q) || cli.includes(q) || cod.includes(q) || ven.includes(q) || neg.includes(q);
+    });
+  }
+
+  function renderActInformeDetallado() {
+    const list = getActInformeData();
+    const rowsEl = document.getElementById("rowsActInforme");
+    const badge = document.getElementById("actInformeSummaryBadge");
+
+    if (badge) {
+      badge.textContent = `Mostrando ${list.length} radicaciones`;
+    }
+
+    const totalRadios = list.reduce((sum, r) => sum + (Number(r.cantidad) || 0), 0);
+    const totalEnTiempo = list.filter(r => getItemSlaCondition(r) === 'en_tiempo').length;
+    const totalVencidas = list.filter(r => ['vencidas_etapa', 'vencidas_global'].includes(getItemSlaCondition(r))).length;
+
+    const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setT("actInformeTotalRadicaciones", list.length);
+    setT("actInformeTotalRadios", totalRadios);
+    setT("actInformeTotalEnTiempo", totalEnTiempo);
+    setT("actInformeTotalVencidas", totalVencidas);
+
+    if (!rowsEl) return;
+
+    if (list.length === 0) {
+      rowsEl.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+            <div style="font-weight: 700; color: #fff;">No se encontraron radicaciones con los filtros seleccionados</div>
+            <div style="font-size: 11px; margin-top: 4px;">Intenta ajustar la búsqueda o los criterios de filtrado.</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let rows = "";
+    list.forEach(item => {
+      const slaCond = getItemSlaCondition(item);
+      let slaBadgeHtml = "";
+      if (slaCond === "vencidas_global") {
+        slaBadgeHtml = '<span class="badge-sla badge-sla-vencida-global">Vencida Global (>104h)</span>';
+      } else if (slaCond === "vencidas_etapa") {
+        slaBadgeHtml = '<span class="badge-sla badge-sla-vencida-etapa">Vencida Etapa</span>';
+      } else if (slaCond === "por_vencer") {
+        slaBadgeHtml = '<span class="badge-sla badge-sla-por-vencer">Por Vencer</span>';
+      } else {
+        slaBadgeHtml = '<span class="badge-sla badge-sla-en-tiempo">En Tiempo</span>';
+      }
+
+      let stageDesc = "-";
+      if (item.proceso && item.proceso.etapaActual) {
+        const num = item.proceso.etapaActual.numero;
+        const nom = item.proceso.etapaActual.nombre;
+        stageDesc = `<span style="font-weight: 800; color: #7fb0f0;">Fase ${num}:</span> ${nom}`;
+      } else if (item.estado === "finalizada") {
+        stageDesc = '<span style="color: #3f9c85; font-weight: 800;">✓ Finalizada (5/5)</span>';
+      } else if (item.estado === "cancelada") {
+        stageDesc = '<span style="color: #d95f6e; font-weight: 800;">✕ Cancelada</span>';
+      }
+
+      const clientName = getCompanyName(item);
+      const preOfertaStr = item.preOferta || "S/N";
+      const radiosCount = item.cantidad || 0;
+      const vendedor = item.vendedor || "-";
+      const codigo = item.codigo || "-";
+
+      rows += `
+        <tr>
+          <td>
+            <strong style="color: #fff; font-family: var(--font-mono); font-size: 12px;">#${preOfertaStr}</strong>
+            <div style="font-size: 10px; color: var(--text-muted);">${formatDateDisplay(item.fecha)}</div>
+          </td>
+          <td>
+            <div style="font-weight: 700; color: #fff; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientName}">
+              ${clientName}
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${codigo} · Vend: ${vendedor}</div>
+          </td>
+          <td style="text-align: center;">
+            <span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span>
+          </td>
+          <td style="text-align: center;">
+            <span style="font-size: 10px; font-weight: 800; color: #e8eaf0; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; display: inline-block;">
+              ${item.negocio || '-'}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <strong style="font-family: var(--font-mono); font-size: 13px; color: #fff;">${radiosCount}</strong>
+          </td>
+          <td>
+            <div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stageDesc}</div>
+          </td>
+          <td style="text-align: center;">
+            <span class="badge-status status-${item.estado || 'en_proceso'}">
+              ${item.estado === 'finalizada' ? 'Finalizada' : item.estado === 'cancelada' ? 'Cancelada' : 'En proceso'}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            ${slaBadgeHtml}
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="action-btn" onclick="openDetailModal('${preOfertaStr}')" title="Ver ficha técnica y auditoría" style="padding: 4px 8px; font-size: 11px;">
+              Ver Auditoría ↗
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    rowsEl.innerHTML = rows;
+  }
+
+  function loadExcelJsLib() {
+    return new Promise((resolve, reject) => {
+      if (window.ExcelJS) return resolve(window.ExcelJS);
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+      s.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error('ExcelJS no disponible'));
+      s.onerror = () => reject(new Error('No se pudo cargar ExcelJS'));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function exportActToExcel() {
+    const list = getActInformeData();
+    if (list.length === 0) {
+      alert('No hay radicaciones disponibles para exportar con los filtros seleccionados.');
+      return;
+    }
+
+    let ExcelJS;
+    try {
+      ExcelJS = await loadExcelJsLib();
+    } catch (err) {
+      console.warn('ExcelJS no cargó, se usa exportación CSV de respaldo:', err.message);
+      exportActToExcelCsv();
+      return;
+    }
+
+    const NAVY = 'FF0F172A';
+    const WHITE = 'FFFFFFFF';
+    const fmtIso = (iso) => iso ? iso.split('-').reverse().join('/') : '';
+    const desde = fmtIso(currentFilter.dateFrom) || 'inicio';
+    const hasta = fmtIso(currentFilter.dateTo) || 'hoy';
+    const regionLabel = currentFilter.pais === 'GT' ? 'Guatemala'
+      : currentFilter.pais === 'SV' ? 'El Salvador' : 'Consolidado Regional';
+    const paisCode = currentFilter.pais === 'todos' ? 'GT-SV' : currentFilter.pais;
+    const now = new Date();
+    const generado = now.toLocaleDateString('es-SV') + ' a las ' +
+      now.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
+
+    const toDate = (item) => {
+      const f = item.fecha || (item.fechaIngreso ? item.fechaIngreso.slice(0, 10) : '');
+      if (!f) return '';
+      const d = new Date(f.length === 10 ? f + 'T00:00:00' : f);
+      return isNaN(d.getTime()) ? f : d;
+    };
+    const estadoTxt = (e) => e === 'finalizada' ? 'Finalizada' : e === 'cancelada' ? 'Cancelada' : 'En proceso';
+    const slaTxt = (c) => c === 'vencidas_global' ? 'Vencida Global (>104h)'
+      : c === 'vencidas_etapa' ? 'Vencida Etapa' : c === 'por_vencer' ? 'Por Vencer' : 'En Tiempo';
+    const slaColor = (c) => c === 'en_tiempo' ? 'FF15803D' : c === 'por_vencer' ? 'FFB45309' : 'FFB91C1C';
+    const estadoColor = (e) => e === 'finalizada' ? 'FF15803D' : e === 'cancelada' ? 'FFB91C1C' : 'FF1D4ED8';
+
+    const thin = { style: 'thin', color: { argb: 'FFE2E8F0' } };
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'RED Intelfon';
+    wb.created = now;
+
+    const ws = wb.addWorksheet('Informe detallado', {
+      views: [{ state: 'frozen', ySplit: 4, showGridLines: false }]
+    });
+    const cols = [
+      { header: '#', width: 6 }, { header: 'Fecha', width: 13 }, { header: 'País', width: 13 },
+      { header: 'Pre-Oferta', width: 12 }, { header: 'Cliente / Razón Social', width: 44 },
+      { header: 'Código', width: 14 }, { header: 'Vendedor', width: 26 },
+      { header: 'Línea de Negocio', width: 17 }, { header: 'Radios', width: 10 },
+      { header: 'Etapa Actual', width: 34 }, { header: 'Estado', width: 14 },
+      { header: 'Condición SLA', width: 22 }
+    ];
+    ws.columns = cols.map(c => ({ width: c.width }));
+    const lastCol = cols.length;
+    ws.mergeCells(1, 1, 1, lastCol);
+    const t = ws.getCell(1, 1);
+    t.value = 'INFORME DETALLADO DE RADICACIONES';
+    t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: WHITE } };
+    t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+    t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws.getRow(1).height = 32;
+    ws.mergeCells(2, 1, 2, lastCol);
+    const st = ws.getCell(2, 1);
+    st.value = `${regionLabel} · Período ${desde} al ${hasta} · ${list.length} radicaciones`;
+    st.font = { name: 'Calibri', size: 11, italic: true, color: { argb: 'FF475569' } };
+    st.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF0F8' } };
+    st.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws.getRow(2).height = 20;
+    ws.mergeCells(3, 1, 3, lastCol);
+    const gt = ws.getCell(3, 1);
+    gt.value = `Generado el ${generado} · Dashboard de Activaciones · Intelfon`;
+    gt.font = { name: 'Calibri', size: 9, color: { argb: 'FF64748B' } };
+    gt.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+    gt.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws.getRow(3).height = 16;
+    const hr = ws.getRow(4);
+    cols.forEach((c, i) => {
+      const cell = hr.getCell(i + 1);
+      cell.value = c.header;
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+      const center = ['#', 'Fecha', 'País', 'Pre-Oferta', 'Radios', 'Estado', 'Condición SLA'].includes(c.header);
+      cell.alignment = { vertical: 'middle', horizontal: center ? 'center' : 'left', indent: center ? 0 : 1 };
+    });
+    hr.height = 26;
+    ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4, column: lastCol } };
+
+    list.forEach((item, idx) => {
+      const cond = getItemSlaCondition(item);
+      const etapa = (item.proceso && item.proceso.etapaActual)
+        ? `Fase ${item.proceso.etapaActual.numero}: ${item.proceso.etapaActual.nombre}`
+        : (item.estado === 'finalizada' ? 'Finalizada (5/5)' : item.estado === 'cancelada' ? 'Cancelada' : '-');
+      const row = ws.getRow(5 + idx);
+      row.values = [
+        idx + 1,
+        toDate(item),
+        item.pais === 'SV' ? 'El Salvador' : item.pais === 'GT' ? 'Guatemala' : (item.pais || ''),
+        item.preOferta ? Number(item.preOferta) || String(item.preOferta) : '',
+        getCompanyName(item), item.codigo || '', item.vendedor || '', item.negocio || '',
+        Number(item.cantidad) || 0, etapa, estadoTxt(item.estado), slaTxt(cond)
+      ];
+      row.height = 20;
+      const zebra = idx % 2 === 1;
+      for (let c = 1; c <= lastCol; c++) {
+        const cell = row.getCell(c);
+        cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF1E293B' } };
+        cell.border = { bottom: thin };
+        cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+        if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+      }
+      [1, 2, 3, 4, 9, 11, 12].forEach(c => { row.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' }; });
+      row.getCell(1).font = { name: 'Calibri', size: 11, color: { argb: 'FF64748B' } };
+      row.getCell(2).numFmt = 'dd/mm/yyyy';
+      row.getCell(2).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(3).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF047857' } };
+      row.getCell(4).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(9).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(11).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor(item.estado) } };
+      row.getCell(12).font = { name: 'Calibri', size: 11, bold: true, color: { argb: slaColor(cond) } };
+    });
+
+    const ws2 = wb.addWorksheet('Resumen por negocio', {
+      views: [{ state: 'frozen', ySplit: 4, showGridLines: false }]
+    });
+    const cols2 = [
+      { header: 'Línea de Negocio', width: 22 }, { header: 'Radicaciones', width: 15 },
+      { header: 'Radios', width: 12 }, { header: 'En proceso', width: 13 },
+      { header: 'Finalizadas', width: 13 }, { header: 'Canceladas', width: 13 },
+      { header: 'En tiempo SLA', width: 15 }, { header: 'Vencidas SLA', width: 15 }
+    ];
+    ws2.columns = cols2.map(c => ({ width: c.width }));
+    const last2 = cols2.length;
+    ws2.mergeCells(1, 1, 1, last2);
+    const t2 = ws2.getCell(1, 1);
+    t2.value = 'RESUMEN POR LÍNEA DE NEGOCIO';
+    t2.font = { name: 'Calibri', size: 16, bold: true, color: { argb: WHITE } };
+    t2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+    t2.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws2.getRow(1).height = 32;
+    ws2.mergeCells(2, 1, 2, last2);
+    const s2 = ws2.getCell(2, 1);
+    s2.value = `${regionLabel} · Período ${desde} al ${hasta} · ${list.length} radicaciones`;
+    s2.font = { name: 'Calibri', size: 11, italic: true, color: { argb: 'FF475569' } };
+    s2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF0F8' } };
+    s2.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws2.getRow(2).height = 20;
+    ws2.mergeCells(3, 1, 3, last2);
+    const g2 = ws2.getCell(3, 1);
+    g2.value = `Generado el ${generado} · Dashboard de Activaciones · Intelfon`;
+    g2.font = { name: 'Calibri', size: 9, color: { argb: 'FF64748B' } };
+    g2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+    g2.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    ws2.getRow(3).height = 16;
+    const hr2 = ws2.getRow(4);
+    cols2.forEach((c, i) => {
+      const cell = hr2.getCell(i + 1);
+      cell.value = c.header;
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+      cell.alignment = { vertical: 'middle', horizontal: i === 0 ? 'left' : 'center', indent: i === 0 ? 1 : 0 };
+    });
+    hr2.height = 26;
+    ws2.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4, column: last2 } };
+
+    const negociosList = ['ADICION', 'VENTA NUEVA', 'RENOVACION'];
+    const extra = Array.from(new Set(list.map(i => i.negocio).filter(n => n && !negociosList.includes(n))));
+    const sumTotals = new Array(last2 - 1).fill(0);
+    [...negociosList, ...extra].forEach((neg, idx) => {
+      const items = list.filter(i => i.negocio === neg);
+      const vals = [
+        items.length,
+        items.reduce((s, i) => s + (Number(i.cantidad) || 0), 0),
+        items.filter(i => i.estado === 'en_proceso').length,
+        items.filter(i => i.estado === 'finalizada').length,
+        items.filter(i => i.estado === 'cancelada').length,
+        items.filter(i => getItemSlaCondition(i) === 'en_tiempo').length,
+        items.filter(i => ['vencidas_etapa', 'vencidas_global'].includes(getItemSlaCondition(i))).length
+      ];
+      vals.forEach((v, k) => { sumTotals[k] += v; });
+      const row = ws2.getRow(5 + idx);
+      row.values = [neg, ...vals];
+      row.height = 20;
+      for (let c = 1; c <= last2; c++) {
+        const cell = row.getCell(c);
+        cell.font = { name: 'Calibri', size: 11, bold: c === 1, color: { argb: 'FF1E293B' } };
+        cell.border = { bottom: thin };
+        cell.alignment = { vertical: 'middle', horizontal: c === 1 ? 'left' : 'center', indent: c === 1 ? 1 : 0 };
+        if (idx % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+      }
+    });
+    const totalRowIdx = 5 + negociosList.length + extra.length;
+    const tr = ws2.getRow(totalRowIdx);
+    tr.values = ['TOTAL', ...sumTotals];
+    tr.height = 22;
+    for (let c = 1; c <= last2; c++) {
+      const cell = tr.getCell(c);
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+      cell.alignment = { vertical: 'middle', horizontal: c === 1 ? 'left' : 'center', indent: c === 1 ? 1 : 0 };
+    }
+
+    try {
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dIso = currentFilter.dateFrom || 'inicio';
+      const hIso = currentFilter.dateTo || new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `Informe_detallado_${paisCode}_${dIso}_${hIso}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error generando el Excel:', err);
+      exportActToExcelCsv();
+    }
+  }
+
+  function exportActToExcelCsv() {
+    const list = getActInformeData();
+    if (list.length === 0) {
+      alert('No hay radicaciones disponibles para exportar con los filtros seleccionados.');
+      return;
+    }
+
+    let csv = '\uFEFF';
+    csv += 'Pre-Oferta;Fecha Radicación;Cliente / Razón Social;Código Cliente;Vendedor;País;Línea Negocio;Cantidad Radios;Etapa Actual;Fase Número;Estado;Condición SLA\r\n';
+    list.forEach(item => {
+      const slaCond = getItemSlaCondition(item);
+      const slaDesc = slaCond === 'vencidas_global' ? 'Vencida Global (>104h)' : (slaCond === 'vencidas_etapa' ? 'Vencida Etapa' : (slaCond === 'por_vencer' ? 'Por Vencer' : 'En Tiempo'));
+      const stageName = (item.proceso && item.proceso.etapaActual) ? item.proceso.etapaActual.nombre : item.estado;
+      const stageNum = (item.proceso && item.proceso.etapaActual) ? item.proceso.etapaActual.numero : '-';
+      const row = [
+        `"#${item.preOferta || ''}"`, `"${formatDateDisplay(item.fecha)}"`,
+        `"${getCompanyName(item).replace(/"/g, '""')}"`, `"${item.codigo || ''}"`,
+        `"${(item.vendedor || '').replace(/"/g, '""')}"`, `"${item.pais || 'GT'}"`,
+        `"${item.negocio || ''}"`, `"${item.cantidad || 0}"`, `"${stageName}"`,
+        `"${stageNum}"`, `"${item.estado || ''}"`, `"${slaDesc}"`
+      ];
+      csv += row.join(';') + '\r\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Informe_Radicaciones_RED_Intelfon_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportActToPDF(selectedModules) {
+    const list = getActInformeData();
+    if (list.length === 0) throw new Error('No hay radicaciones disponibles para exportar con los filtros seleccionados.');
+    const esc = (s) => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const baseHref = document.baseURI;
+    const logoUrl = new URL('../../assets/img/logo-intelfon.png', baseHref).href;
+
+    const total = list.length;
+    const totalRadios = list.reduce((s, r) => s + (Number(r.cantidad) || 0), 0);
+    const enProceso = list.filter(r => r.estado === 'en_proceso').length;
+    const finalizadas = list.filter(r => r.estado === 'finalizada').length;
+    const canceladas = list.filter(r => r.estado === 'cancelada').length;
+    let cOk = 0, cNear = 0, cVencE = 0, cVencG = 0;
+    list.forEach(r => {
+      const c = getItemSlaCondition(r);
+      if (c === 'vencidas_global') cVencG++;
+      else if (c === 'vencidas_etapa') cVencE++;
+      else if (c === 'por_vencer') cNear++;
+      else cOk++;
+    });
+    const slaRate = total ? Math.round((cOk / total) * 100) : 0;
+    const countryStats = (code) => {
+      const items = list.filter(r => r.pais === code);
+      const ok = items.filter(r => getItemSlaCondition(r) === 'en_tiempo').length;
+      const pct = items.length ? Math.round((ok / items.length) * 100) : 100;
+      return { n: items.length, ok, pct };
+    };
+    const sv = countryStats('SV');
+    const gt = countryStats('GT');
+    const pctColor = (p) => p >= 90 ? '#2f8f76' : '#c59600';
+    const pctLabel = (p) => p >= 100 ? 'ÓPTIMO' : (p >= 90 ? 'CUMPLIDO' : 'POR MEJORAR');
+    const negocios = ['ADICION', 'VENTA NUEVA', 'RENOVACION'];
+    const negocioRows = negocios.map(n => {
+      const items = list.filter(r => r.negocio === n);
+      const radios = items.reduce((s, r) => s + (Number(r.cantidad) || 0), 0);
+      return `<div><b>${n}:</b> ${items.length} radicaciones | <b>${radios}</b> radios</div>`;
+    }).join('');
+    const categoryRows = negocios.map(negocio => {
+      const items = list.filter(item => item.negocio === negocio);
+      if (!items.length) return '';
+      const radios = items.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
+      const gt = items.filter(item => item.pais === 'GT').length;
+      const sv = items.filter(item => item.pais === 'SV').length;
+      return `<tr><td><b>${esc(negocio)}</b></td><td class="c">${items.length}</td><td class="c">${radios}</td><td class="c">${gt}</td><td class="c">${sv}</td></tr>`;
+    }).join('');
+    const circ = 2 * Math.PI * 38;
+    let off = 0;
+    let donut = '';
+    [[cOk, '#2f8f76'], [cNear, '#d95f6e'], [cVencE, '#c43c50'], [cVencG, '#c43c50']].forEach(([cnt, col]) => {
+      if (cnt > 0 && total > 0) {
+        const dash = (cnt / total) * circ;
+        donut += `<circle cx="50" cy="50" r="38" fill="none" stroke="${col}" stroke-width="13" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="-${off}" />`;
+        off += dash;
+      }
+    });
+    if (!donut) donut = '<circle cx="50" cy="50" r="38" fill="none" stroke="#e8eaf0" stroke-width="13" />';
+
+    let fasesRows = '';
+    STAGE_NAMES.forEach((name, idx) => {
+      const num = idx + 1;
+      const limit = STAGE_SLAS[num];
+      let activas = 0, ok = 0, near = 0, venc = 0;
+      list.forEach(item => {
+        if (!item.proceso || !item.proceso.etapas) return;
+        const st = item.proceso.etapas.find(e => e.numero === num);
+        if (!st || !st.fechaInicio) return;
+        const ev = getStageStatus(st, limit);
+        if (st.estado === 'activa') activas++;
+        if (ev.status === 'vencida') venc++;
+        else if (ev.status === 'near') near++;
+        else if (ev.status === 'ok') ok++;
+      });
+      fasesRows += `
+        <tr><td><b>Fase ${num}</b></td><td>${esc(name)}</td><td class="c">${limit}h laborables</td>
+          <td class="c"><b>${activas}</b></td><td class="c" style="color:#2f8f76;"><b>${ok}</b></td>
+          <td class="c" style="color:#c59600;"><b>${near}</b></td><td class="c" style="color:#c43c50;"><b>${venc}</b></td></tr>`;
+    });
+    const detalleRows = list.map(item => {
+      const cond = getItemSlaCondition(item);
+      const bClass = cond === 'en_tiempo' ? 'b-ok' : (cond === 'por_vencer' ? 'b-near' : 'b-venc');
+      const bText = cond === 'en_tiempo' ? 'En Tiempo' : cond === 'por_vencer' ? 'Por Vencer'
+        : cond === 'vencidas_etapa' ? 'Vencida Etapa' : 'Vencida Global';
+      let stage = esc(item.estado || '');
+      if (item.proceso && item.proceso.etapaActual) {
+        stage = `Fase ${item.proceso.etapaActual.numero}: ${esc(item.proceso.etapaActual.nombre)}`;
+      }
+      return `<tr><td><b>#${esc(item.preOferta || 'S/N')}</b></td><td><b>${esc(getCompanyName(item))}</b></td>
+        <td class="c">${esc(item.pais || 'GT')}</td><td class="c">${esc(item.negocio || '-')}</td>
+        <td class="c">${esc(item.cantidad || 0)}</td><td>${stage}</td><td class="c">${esc(item.estado || '')}</td>
+        <td class="c"><span class="badge ${bClass}">${bText}</span></td></tr>`;
+    }).join('');
+    const periodo = `${currentFilter.dateFrom || 'inicio'} al ${currentFilter.dateTo || 'hoy'}`;
+    const operacion = currentFilter.pais === 'todos' ? 'Todos (Guatemala & El Salvador)'
+      : (currentFilter.pais === 'GT' ? 'Guatemala (GT)' : 'El Salvador (SV)');
+    const filtrosDetalle = [
+      `Estados: ${currentFilter.estados.join(', ') || 'Ninguno'}`,
+      `Negocios: ${currentFilter.negocios.join(', ') || 'Ninguno'}`,
+      `Etapas: ${currentFilter.etapas.join(', ') || 'Ninguna'}`,
+      `SLA: ${currentFilter.slas.join(', ') || 'Ninguno'}`
+    ];
+    if (currentFilter.stageQuickFilter !== 'todos') filtrosDetalle.push(`Etapa rápida: ${currentFilter.stageQuickFilter}`);
+    if (currentFilter.catQuickFilter !== 'ALL') filtrosDetalle.push(`Categoría: ${currentFilter.catQuickFilter}`);
+    const mainSearch = String(currentFilter.search || '').trim();
+    if (mainSearch) filtrosDetalle.push(`Búsqueda: ${mainSearch}`);
+    if (actInformeSearchText) filtrosDetalle.push(`Búsqueda del informe: ${actInformeSearchText}`);
+    const moduleNames = {
+      resumen: 'Resumen',
+      etapas: 'Radicaciones por etapa',
+      categorias: 'Categorías',
+      informe: 'Informe detallado'
+    };
+    const modulesLabel = (selectedModules || []).map(id => moduleNames[id]).filter(Boolean).join(' · ');
+    const fechaEmision = new Date().toLocaleDateString('es-SV', { year: 'numeric', month: 'long', day: 'numeric' })
+      + ' a las ' + new Date().toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <base href="${esc(baseHref)}">
+  <title>Reporte de Control de Radicaciones y Activaciones - RED Intelfon</title>
+  <style>
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; background: #e8eaf0; color: #242837; font-size: 12px; }
+    .report-shell { width: 100%; max-width: 100%; margin: 0 auto; padding: 12px; overflow: hidden; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 4px solid #c43c50; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; background: #151821; color: #fff; }
+    .head-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+    .head-left > div { min-width: 0; }
+    .logo { height: 54px; width: auto; max-width: 150px; object-fit: contain; }
+    .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #c43c50; text-transform: uppercase; }
+    .title { font-size: 20px; font-weight: 800; color: #fff; margin: 2px 0; }
+    .filtro { font-size: 11px; color: #cbd5e1; overflow-wrap: anywhere; }
+    .head-right { flex: 0 0 160px; text-align: right; font-size: 11px; color: #cbd5e1; }
+    .pill { display: inline-block; margin-top: 6px; background: #c43c50; color: #fff; font-weight: 800; padding: 6px 14px; border-radius: 8px; font-size: 12px; }
+    .module-summary { margin: 10px 0 12px; padding: 8px 12px; background: #e8eaf0; border-left: 4px solid #c43c50; border-radius: 4px; color: #8b909e; font-size: 10px; }
+    h2 { font-size: 13px; text-transform: uppercase; margin: 16px 0 8px; color: #151821; border-bottom: 1px solid #e8eaf0; padding-bottom: 4px; }
+    .period-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .period-kpi { min-width: 0; overflow: hidden; border: 1px solid #e8eaf0; border-top: 6px solid #151821; border-radius: 8px; padding: 11px 10px; background: #fff; page-break-inside: avoid; }
+    .period-kpi .lbl { font-size: 9px; font-weight: 800; letter-spacing: .1em; color: #8b909e; text-transform: uppercase; }
+    .period-kpi .num { font-size: 18px; font-weight: 900; margin-top: 8px; white-space: nowrap; }
+    .period-kpi .sub { font-size: 9px; color: #8b909e; margin-top: 6px; line-height: 1.35; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .box { border: 1px solid #e8eaf0; border-radius: 8px; padding: 12px 14px; }
+    .country { display: flex; justify-content: space-between; align-items: center; }
+    .country .name { font-size: 13px; font-weight: 800; }
+    .country .sub { font-size: 11px; color: #8b909e; margin-top: 2px; }
+    .country .pct { font-size: 24px; font-weight: 900; text-align: right; line-height: 1; }
+    .country .tag { font-size: 10px; font-weight: 800; text-align: right; margin-top: 3px; }
+    .box h3 { font-size: 13px; margin: 0 0 8px; }
+    .sit { display: flex; align-items: center; gap: 18px; }
+    .sit ul { list-style: none; margin: 0; padding: 0; line-height: 1.8; font-size: 12px; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .neg div { line-height: 1.9; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { background: #151821; color: #fff; text-align: left; padding: 8px 10px; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+    td { padding: 7px 10px; border-bottom: 1px solid #e8eaf0; }
+    tr:nth-child(even) td { background: #e8eaf0; }
+    .c { text-align: center; } th.c { text-align: center; }
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .b-ok { background: #dcfce7; color: #15803d; }
+    .b-near { background: #fef3c7; color: #b45309; }
+    .b-venc { background: #fee2e2; color: #c43c50; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    @media print { body { margin: 10mm; } }
+  </style>
+</head>
+<body>
+  <div class="report-shell">
+  <div class="header"><div class="head-left">
+    <img class="logo" id="logoImg" src="${esc(logoUrl)}" alt="RED Intelfon" />
+    <div><div class="eyebrow">RED INTELFON · GESTIÓN OPERATIVA</div>
+      <div class="title">Reporte de Control de Radicaciones y Activaciones</div>
+      <div class="filtro">Filtros aplicados: <b>${esc(periodo)}</b> | País: <b>${esc(operacion)}</b><br>${esc(filtrosDetalle.join(' · '))}</div>
+    </div>
+  </div><div class="head-right"><div>Fecha de Emisión: <b>${esc(fechaEmision)}</b></div>
+    <div class="pill">Cumplimiento SLA: ${slaRate}%</div></div></div>
+  <div class="module-summary"><b>Módulos incluidos:</b> ${esc(modulesLabel)}</div>
+  <section data-pdf-module="resumen">
+  <h2>1. Indicadores del período (Período: ${esc(periodo)})</h2>
+  <div class="period-kpis">
+    <div class="period-kpi" style="border-top-color:#151821;"><div class="lbl">Total radicaciones</div><div class="num">${total}</div><div class="sub">Registros en el período</div></div>
+    <div class="period-kpi" style="border-top-color:#4f8fd8;"><div class="lbl">Total radios</div><div class="num" style="color:#4f8fd8;">${totalRadios}</div><div class="sub">Unidades solicitadas</div></div>
+    <div class="period-kpi" style="border-top-color:#b45309;"><div class="lbl">En proceso</div><div class="num" style="color:#b45309;">${enProceso}</div><div class="sub">Radicaciones activas</div></div>
+    <div class="period-kpi" style="border-top-color:#2f8f76;"><div class="lbl">Finalizadas</div><div class="num" style="color:#2f8f76;">${finalizadas}</div><div class="sub">Procesos completados</div></div>
+    <div class="period-kpi" style="border-top-color:#c43c50;"><div class="lbl">Canceladas</div><div class="num" style="color:#c43c50;">${canceladas}</div><div class="sub">Procesos cancelados</div></div>
+    <div class="period-kpi" style="border-top-color:#4f8fd8;"><div class="lbl">Cumplimiento SLA</div><div class="num" style="color:#4f8fd8;">${slaRate}%</div><div class="sub">${cOk} radicaciones dentro de SLA</div></div>
+  </div>
+  <h2>2. Cumplimiento de SLA global (&lt; 104h laborables L-V 8am-6pm)</h2>
+  <div class="grid2">
+    <div class="box country"><div><div class="name">SV El Salvador (SV)</div><div class="sub">${sv.ok} de ${sv.n} radicaciones dentro de SLA</div></div>
+      <div><div class="pct" style="color:${pctColor(sv.pct)};">${sv.pct}%</div><div class="tag" style="color:${pctColor(sv.pct)};">${pctLabel(sv.pct)}</div></div></div>
+    <div class="box country"><div><div class="name">GT Guatemala (GT)</div><div class="sub">${gt.ok} de ${gt.n} radicaciones dentro de SLA</div></div>
+      <div><div class="pct" style="color:${pctColor(gt.pct)};">${gt.pct}%</div><div class="tag" style="color:${pctColor(gt.pct)};">${pctLabel(gt.pct)}</div></div></div>
+  </div>
+  <div class="grid2"><div class="box"><h3>Situación Operativa de SLA</h3><div class="sit">
+    <svg width="95" height="95" viewBox="0 0 100 100" style="transform: rotate(-90deg);">${donut}</svg>
+    <ul><li><span class="dot" style="background:#087f50;"></span>En Tiempo: <b>${cOk}</b> (${slaRate}%)</li>
+      <li><span class="dot" style="background:#ff667f;"></span>Por Vencer: <b>${cNear}</b></li>
+      <li><span class="dot" style="background:#c43c50;"></span>Vencida Etapa: <b>${cVencE}</b></li>
+      <li><span class="dot" style="background:#bd123b;"></span>Vencida Global: <b>${cVencG}</b></li></ul>
+  </div></div><div class="box neg"><h3>Volumen por Línea de Negocio</h3>${negocioRows}</div></div>
+  </section>
+  <section data-pdf-module="etapas">
+  <h2>3. Monitoreo por fases operativas (SLA específico)</h2>
+  <table><thead><tr><th>Fase</th><th>Nombre de Etapa</th><th class="c">Límite SLA</th><th class="c">Activas</th><th class="c">En Tiempo</th><th class="c">Por Vencer</th><th class="c">Vencidas</th></tr></thead><tbody>${fasesRows}</tbody></table>
+  </section>
+  <section data-pdf-module="categorias">
+  <h2>4. Categorías por línea de negocio</h2>
+  <table><thead><tr><th>Negocio</th><th class="c">Radicaciones</th><th class="c">Radios</th><th class="c">GT</th><th class="c">SV</th></tr></thead><tbody>${categoryRows}</tbody></table>
+  </section>
+  <section data-pdf-module="informe">
+  <h2>5. Detalle completo de radicaciones (${total} registros)</h2>
+  <table><thead><tr><th>Pre-Oferta</th><th>Cliente / Razón Social</th><th class="c">País</th><th class="c">Línea Negocio</th><th class="c">Radios</th><th>Etapa Actual</th><th class="c">Estado</th><th class="c">Condición SLA</th></tr></thead><tbody>${detalleRows}</tbody></table>
+  </section>
+  </div>
+</body>
+</html>`;
+    return html;
+  }
+
+  
+  function bindEventHandlers() {
+    // 1. Módulos / Pestañas principales (Resumen, Etapas, Categorías, Informe Detallado)
+    document.querySelectorAll(".act-mod-btn, #mainTabs .hero-tab-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const tab = e.currentTarget.getAttribute("data-tab");
+        if (tab) switchTab(tab);
+      });
+    });
+
+    document.querySelectorAll("#etapasTabFilterButtons [data-etapa]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        navigateToEtapasFilter({ etapa: btn.getAttribute("data-etapa") });
+      });
+    });
+
+    document.querySelectorAll("#catQuickFilter [data-cat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectCategoryFilter(btn.getAttribute("data-cat"));
+      });
+    });
+
+    document.querySelectorAll("#stageModalFilterPills [data-smview]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        filterStageModalTables(btn.getAttribute("data-smview"));
+      });
+    });
+
+    // 2. Operaciones / País (Todos, GT, SV)
+    document.querySelectorAll(".op-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        document.querySelectorAll(".op-btn").forEach(b => b.classList.remove("active"));
+        const target = e.currentTarget;
+        target.classList.add("active");
+        currentFilter.pais = target.getAttribute("data-op");
+        renderApp();
+      });
+    });
+
+    // 3. Rango de Período (dateFrom, dateTo, btnResetPeriod)
+    const dFrom = document.getElementById("dateFrom");
+    const dTo = document.getElementById("dateTo");
+    const btnResetP = document.getElementById("btnResetPeriod");
+    if (dFrom) dFrom.addEventListener("change", (e) => { currentFilter.dateFrom = e.target.value; renderApp(); });
+    if (dTo) dTo.addEventListener("change", (e) => { currentFilter.dateTo = e.target.value; renderApp(); });
+    if (btnResetP) {
+      btnResetP.addEventListener("click", () => {
+        const period = getCurrentMonthPeriod();
+        currentFilter.dateFrom = period.from;
+        currentFilter.dateTo = period.to;
+        if (dFrom) dFrom.value = currentFilter.dateFrom;
+        if (dTo) dTo.value = currentFilter.dateTo;
+        renderApp();
+      });
+    }
+
+    // 4. Panel Desplegable (.xf-panel)
+    const btnToggle = document.getElementById("btnToggleFilters");
+    const xfPanel = document.getElementById("xfPanel");
+    if (btnToggle && xfPanel) {
+      btnToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = !xfPanel.classList.contains("hidden");
+        if (isOpen) {
+          xfPanel.classList.add("hidden");
+          btnToggle.classList.remove("open");
+        } else {
+          xfPanel.classList.remove("hidden");
+          btnToggle.classList.add("open");
+          renderChecklistCols();
+        }
+      });
+      document.addEventListener("click", (e) => {
+        if (!xfPanel.contains(e.target) && !btnToggle.contains(e.target)) {
+          xfPanel.classList.add("hidden");
+          btnToggle.classList.remove("open");
+        }
+      });
+    }
+
+    // 5. Botones Limpiar y Aplicar en panel de filtros
+    const btnClean = document.getElementById("btnCleanAllFilters");
+    const btnApply = document.getElementById("btnApplyFilters");
+    if (btnClean) {
+      btnClean.addEventListener("click", resetAllFilters);
+    }
+    if (btnApply) {
+      btnApply.addEventListener("click", () => {
+        if (xfPanel) xfPanel.classList.add("hidden");
+        if (btnToggle) btnToggle.classList.remove("open");
+        renderApp();
+      });
+    }
+
+    // 6. Buscador principal
+    const globSearch = document.getElementById("globalSearchInput");
+    if (globSearch) {
+      globSearch.addEventListener("input", (e) => {
+        currentFilter.search = e.target.value || "";
+        renderApp();
+      });
+    }
+
+    // 7. Botón circular reload
+    const btnRefresh = document.getElementById("btnGlobalRefresh");
+    if (btnRefresh) {
+      btnRefresh.addEventListener("click", () => {
+        btnRefresh.style.transform = "rotate(360deg)";
+        setTimeout(() => { btnRefresh.style.transform = ""; }, 350);
+        loadDataFromApi();
+      });
+    }
+
+    // 8. Buscador en Informe Detallado de Activaciones
+    const actInfSearch = document.getElementById("actInformeSearchInput");
+    if (actInfSearch) {
+      actInfSearch.addEventListener("input", (e) => {
+        actInformeSearchText = (e.target.value || "").trim();
+        renderActInformeDetallado();
+      });
+    }
+
+    // 9. Botones Exportar en Activaciones
+    const btnActExExcel = document.getElementById("btnActExportExcel");
+    if (btnActExExcel) btnActExExcel.addEventListener("click", exportActToExcel);
+
+    window.DashboardPdf.openModulePicker({
+      buttonId: 'btnDashboardPdf',
+      modules: [
+        { id: 'resumen', name: 'Resumen', description: 'Indicadores generales y situación de SLA.' },
+        { id: 'etapas', name: 'Radicaciones por etapa', description: 'Avance y cumplimiento de SLA por fase operativa.' },
+        { id: 'categorias', name: 'Categorías', description: 'Radicaciones y radios agrupados por línea de negocio y país.' },
+        { id: 'informe', name: 'Informe detallado', description: 'Detalle de radicaciones con su estado y condición SLA.' }
+      ],
+      getFilterChips: () => {
+        const labelsFor = (options, values) => options
+          .filter(option => values.includes(option.value))
+          .map(option => option.label);
+        const summaryFor = labels => labels.length === 0
+          ? 'Ninguna'
+          : labels.length === 1
+            ? labels[0]
+            : `${labels.length} seleccionadas`;
+        const dateLabel = value => value
+          ? new Date(`${value}T00:00:00`).toLocaleDateString('es-SV')
+          : 'Sin límite';
+        const country = currentFilter.pais === 'todos'
+          ? 'Todos los países'
+          : currentFilter.pais === 'GT' ? 'Guatemala (GT)' : 'El Salvador (SV)';
+        const statusLabels = labelsFor(ESTADO_OPTIONS, currentFilter.estados);
+        const businessLabels = labelsFor(NEGOCIO_OPTIONS, currentFilter.negocios);
+        const stageLabels = labelsFor(ETAPA_OPTIONS, currentFilter.etapas);
+        const slaLabels = labelsFor(SLA_OPTIONS, currentFilter.slas);
+        const from = currentFilter.dateFrom;
+        const to = currentFilter.dateTo;
+        const chips = [
+          { label: 'País', value: country },
+          { label: 'Período', value: `${dateLabel(from)} – ${dateLabel(to)}` },
+          { label: 'Estado', value: summaryFor(statusLabels), tooltip: `Estados: ${statusLabels.join(', ') || 'Ninguno'}` },
+          { label: 'Categorías', value: summaryFor(businessLabels), tooltip: `Categorías: ${businessLabels.join(', ') || 'Ninguna'}` },
+          { label: 'Etapas', value: summaryFor(stageLabels), tooltip: `Etapas: ${stageLabels.join(', ') || 'Ninguna'}` },
+          { label: 'SLA', value: summaryFor(slaLabels), tooltip: `SLA: ${slaLabels.join(', ') || 'Ninguno'}` }
+        ];
+        if (currentFilter.stageQuickFilter !== 'todos') {
+          const stage = ETAPA_OPTIONS.find(option => option.value === String(currentFilter.stageQuickFilter));
+          chips.push({ label: 'Etapa rápida', value: stage ? stage.label : String(currentFilter.stageQuickFilter) });
+        }
+        if (currentFilter.catQuickFilter !== 'ALL') {
+          const category = NEGOCIO_OPTIONS.find(option => option.value === currentFilter.catQuickFilter);
+          chips.push({
+            label: 'Categoría rápida',
+            value: category ? category.label : currentFilter.catQuickFilter,
+            tooltip: `Categoría: ${category ? category.label : currentFilter.catQuickFilter}`
+          });
+        }
+        if (currentFilter.search) chips.push({ label: 'Búsqueda', value: currentFilter.search });
+        chips.push({ label: 'Radicaciones', value: `${getActInformeData().length}` });
+        return chips;
+      },
+      buildReport: exportActToPDF,
+      filename: () => {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).formatToParts(new Date());
+        const date = `${parts.find(part => part.type === 'year').value}-${parts.find(part => part.type === 'month').value}-${parts.find(part => part.type === 'day').value}`;
+        return `Activaciones_${date}.pdf`;
+      }
+    });
+  }
+
+  // INICIALIZACIÓN ACTIVACIONES
+  document.addEventListener("DOMContentLoaded", () => {
+    const period = getCurrentMonthPeriod();
+    currentFilter.dateFrom = period.from;
+    currentFilter.dateTo = period.to;
+    const dateFrom = document.getElementById("dateFrom");
+    const dateTo = document.getElementById("dateTo");
+    if (dateFrom) dateFrom.value = period.from;
+    if (dateTo) dateTo.value = period.to;
+    bindEventHandlers();
+    renderChecklistCols();
+    renderApiUpdateTimestamp();
+    loadDataFromApi();
+  });
+</script>
+<!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+<link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+</body>
+</html>

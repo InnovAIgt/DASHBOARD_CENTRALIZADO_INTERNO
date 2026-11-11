@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Store clientes · RED Intelfon</title>
+<link rel="stylesheet" href="../../assets/css/dashboard.css">
+<link rel="stylesheet" href="../../assets/css/sims.css?v=20261014filtros">
+<link rel="stylesheet" href="../../assets/css/filtros-guia.css?v=20261006banderas">
+<link rel="stylesheet" href="../../assets/css/clientes.css?v=20261021f">
+<link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261019graficas">
+<script src="../../assets/js/estandar.js?v=20261019graficas"></script>
+</head>
+<body>
+
+<!-- ENCABEZADO ───────────────────────────────────────────────────── -->
+<div class="page-header mso-header">
+  <div>
+    <div class="page-eyebrow">Ventas · Store de Contactos Clientes</div>
+    <h1 class="page-title">Store clientes</h1>
+    <p class="page-sub" id="pageSync">Cargando datos…</p>
+  </div>
+  <div class="mso-header-actions">
+    <button class="filter-chip mso-action" id="btnRefresh" type="button">↻ Actualizar datos</button>
+  </div>
+</div>
+
+<div id="globalLoader" class="sims-loader"><div class="sims-spinner"></div></div>
+<div id="globalError" class="error-box" style="display:none"></div>
+
+<div id="mainContent" style="display:none">
+
+  <!-- FILTRO DE OPERACIÓN: aplica a todas las pestañas ─────────────── -->
+  <div class="filter-bar sims-fbar">
+    <div class="op-group" role="group" aria-label="Operaciones">
+      <span class="op-label">Operaciones</span>
+      <button class="op-btn active" type="button" data-pais="">Todos</button>
+      <button class="op-btn" type="button" data-pais="GT" title="Guatemala"><span class="op-flag op-flag-gt" aria-hidden="true"></span>GT</button>
+      <button class="op-btn" type="button" data-pais="SV" title="El Salvador"><span class="op-flag op-flag-sv" aria-hidden="true"></span>SV</button>
+    </div>
+  </div>
+
+  <!-- TABS ─────────────────────────────────────────────────────────── -->
+  <div class="tabs" id="mainTabs">
+    <button class="tab-btn active" data-tab="general">Vista general</button>
+    <button class="tab-btn" data-tab="carteras">Carteras</button>
+    <button class="tab-btn" data-tab="clientes">Clientes</button>
+    <button class="tab-btn" data-tab="avance">Avance</button>
+    <button class="tab-btn" data-tab="historial">Historial</button>
+    <button class="tab-btn" data-tab="na">N/A por aprobar</button>
+    <button class="tab-btn" data-tab="usuarios">Usuarios</button>
+    <button class="tab-btn" data-tab="invalidos">Datos no válidos</button>
+  </div>
+
+  <!-- KPI ──────────────────────────────────────────────────────────── -->
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Cumplimiento</div><div class="kpi-value" id="kCumpl">—</div><div class="kpi-sub" id="kCumplSub">Datos válidos / requeridos</div></div>
+    <div class="kpi"><div class="kpi-label">Datos válidos</div><div class="kpi-value" id="kValidos">—</div><div class="kpi-sub" id="kValidosSub">—</div></div>
+    <div class="kpi"><div class="kpi-label">Por corregir</div><div class="kpi-value cc-rojo" id="kCorregir">—</div><div class="kpi-sub" id="kCorregirSub">—</div></div>
+    <div class="kpi"><div class="kpi-label">Fichas completadas</div><div class="kpi-value" id="kCompletas">—</div><div class="kpi-sub" id="kCompletasSub">—</div></div>
+    <div class="kpi"><div class="kpi-label">Avance 7 días</div><div class="kpi-value cc-verde" id="kAvance">—</div><div class="kpi-sub" id="kAvanceSub">—</div></div>
+  </div>
+
+  <!-- VISTA GENERAL ────────────────────────────────────────────────── -->
+  <div id="tab-general">
+    <div class="two-col">
+      <div class="card">
+        <h2 class="card-title">Estado de los datos por cargo</h2>
+        <p class="card-caption">Las 12 variables de cada cliente: 4 datos por cada cargo. Qué parte está válida, por corregir o pendiente.</p>
+        <div id="ccCampos"></div>
+        <div class="chart-legend">
+          <span><i style="background:#2f8f76"></i>Válido</span>
+          <span><i style="background:#d95f6e"></i>Por corregir</span>
+          <span><i style="background:rgba(255,255,255,.18)"></i>Pendiente</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Clientes por nivel</h2>
+        <p class="card-caption">Escala de la empresa: menos de 50 %, 50 a 99 % y 100 % de datos válidos.</p>
+        <div class="bar-chart-panel">
+          <div class="vertical-bars" id="ccNiveles"></div>
+          <div class="chart-legend" id="ccNivelesLeyenda"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Cumplimiento por cartera</h2>
+      <p class="card-caption">De menor a mayor: por donde conviene empezar.</p>
+      <div id="ccRanking"></div>
+    </div>
+  </div>
+
+  <!-- CARTERAS ─────────────────────────────────────────────────────── -->
+  <div id="tab-carteras" style="display:none">
+    <div class="card">
+      <h2 class="card-title">Cumplimiento por cartera</h2>
+      <p class="card-caption">Una fila por ejecutivo y jefe, de menor a mayor cumplimiento. Clic en una cartera para ver sus clientes y sus 12 variables.</p>
+      <div class="table-wrap cc-alto">
+        <table>
+          <thead><tr>
+            <th>Cartera</th><th>Jefe</th><th class="cc-num">Clientes</th><th class="cc-num">Cumplimiento</th>
+            <th class="cc-num">Válidos</th><th class="cc-num">Por corregir</th><th class="cc-num">Pendientes</th>
+            <th class="cc-num">Completas</th><th class="cc-num">Escribió (7 días)</th>
+          </tr></thead>
+          <tbody id="ccCarteras"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENTES ─────────────────────────────────────────────────────── -->
+  <div id="tab-clientes" style="display:none">
+    <div class="card">
+      <div class="cc-cab">
+        <div>
+          <h2 class="card-title">Clientes</h2>
+          <p class="card-caption" id="ccClientesTxt">Todos los clientes, con el estado de sus 12 variables.</p>
+        </div>
+        <input type="search" class="cc-buscar" id="ccBuscar" placeholder="Buscar cliente, código o ejecutivo…" aria-label="Buscar cliente">
+      </div>
+      <div class="cc-filtros" id="ccEstados" role="group" aria-label="Estado"></div>
+      <div class="table-wrap cc-alto">
+        <table>
+          <thead><tr>
+            <th>Código</th><th>Cliente</th><th>País</th><th>Cartera</th><th>Variables <span class="cc-gris">(GG · GF · GO)</span></th>
+            <th class="cc-num">Válidos</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="ccClientes"></tbody>
+        </table>
+      </div>
+      <div class="cc-pie"><button class="filter-chip" type="button" id="ccMas" style="display:none">Mostrar más</button></div>
+    </div>
+  </div>
+
+  <!-- AVANCE ───────────────────────────────────────────────────────── -->
+  <div id="tab-avance" style="display:none">
+    <div class="card">
+      <h2 class="card-title">Datos escritos por día</h2>
+      <p class="card-caption">Últimos 14 días: cada dato de contacto que alguien escribió en la plataforma.</p>
+      <div class="bar-chart-panel">
+        <div class="vertical-bars cc-dias" id="ccActividad"></div>
+        <div class="chart-legend" id="ccActividadLeyenda"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cc-cab">
+        <div>
+          <h2 class="card-title">Antes y ahora por persona</h2>
+          <p class="card-caption" id="ccPeriodoTxt">Quien más avanzó, primero.</p>
+        </div>
+        <div class="op-group" role="group" aria-label="Periodo">
+          <button class="op-btn" type="button" data-periodo="hoy">Hoy</button>
+          <button class="op-btn active" type="button" data-periodo="semana">7 días</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Persona</th><th class="cc-num">Cumplimiento</th><th class="cc-num">Datos válidos</th>
+            <th class="cc-num">Por corregir</th><th class="cc-num">Fichas completas</th>
+            <th class="cc-num">En su cartera</th><th class="cc-num">Escribió</th>
+          </tr></thead>
+          <tbody id="ccAvance"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL ────────────────────────────────────────────────────── -->
+  <div id="tab-historial" style="display:none">
+    <div class="card">
+      <div class="cc-cab">
+        <div>
+          <h2 class="card-title">Historial</h2>
+          <p class="card-caption">Los últimos 400 cambios, con quién los hizo. Lo más reciente primero. No muestra los datos de contacto, solo qué se hizo.</p>
+        </div>
+        <input type="search" class="cc-buscar" id="ccBuscarHist" placeholder="Buscar persona o cliente…" aria-label="Buscar en el historial">
+      </div>
+      <div class="table-wrap cc-alto">
+        <table>
+          <thead><tr><th>Fecha</th><th>Quién</th><th>Qué hizo</th><th>Cliente</th><th>País</th></tr></thead>
+          <tbody id="ccHistorial"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- N/A POR APROBAR ──────────────────────────────────────────────── -->
+  <div id="tab-na" style="display:none">
+    <div class="card">
+      <h2 class="card-title">Teléfonos fijos N/A por aprobar</h2>
+      <p class="card-caption" id="ccNaTxt">Solicitudes de ejecutivos para marcar un teléfono fijo como «no aplica». Las confirma el jefe o el administrador en la campana de la plataforma.</p>
+      <div class="table-wrap cc-alto">
+        <table>
+          <thead><tr><th>Solicitada</th><th>Cliente</th><th>País</th><th>Cargo</th><th>Solicitó</th><th>Le toca aprobar</th><th class="cc-num">Esperando</th></tr></thead>
+          <tbody id="ccNa"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- USUARIOS ─────────────────────────────────────────────────────── -->
+  <div id="tab-usuarios" style="display:none">
+    <div class="card">
+      <h2 class="card-title">Usuarios</h2>
+      <p class="card-caption" id="ccUsuariosTxt">Cuentas de la plataforma. Las altas, bajas y contraseñas se manejan en la plataforma.</p>
+      <div class="table-wrap cc-alto">
+        <table>
+          <thead><tr><th>Nombre</th><th>Rol</th><th>País</th><th>Jefe</th><th>Estado</th><th>Acceso</th><th>Correo de aviso</th><th class="cc-num">Clientes</th></tr></thead>
+          <tbody id="ccUsuarios"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Resumen diario por correo</h2>
+      <p class="card-caption">Correo de las 7:00 a.m., de lunes a viernes, a quien tiene pendientes o tuvo avance. Últimas corridas.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Corrida</th><th class="cc-num">Correos enviados</th></tr></thead>
+          <tbody id="ccResumen"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATOS NO VÁLIDOS ─────────────────────────────────────────────── -->
+  <div id="tab-invalidos" style="display:none">
+    <div class="kpi-grid cc-kpi4">
+      <div class="kpi"><div class="kpi-label">Datos marcados</div><div class="kpi-value" id="ivMarcados">—</div><div class="kpi-sub" id="ivMarcadosSub">—</div></div>
+      <div class="kpi"><div class="kpi-label">Siguen en fichas</div><div class="kpi-value cc-rojo" id="ivUso">—</div><div class="kpi-sub" id="ivUsoSub">—</div></div>
+      <div class="kpi"><div class="kpi-label">Clientes afectados</div><div class="kpi-value" id="ivClientes">—</div><div class="kpi-sub" id="ivClientesSub">—</div></div>
+      <div class="kpi"><div class="kpi-label">Ya corregidos</div><div class="kpi-value cc-verde" id="ivCorregidos">—</div><div class="kpi-sub">Marcados que ya no están en ninguna ficha</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h2 class="card-title">Por cartera</h2>
+        <p class="card-caption">Quién tiene que corregir: datos marcados que siguen escritos en sus fichas.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cartera</th><th class="cc-num">Correos</th><th class="cc-num">Celulares</th><th class="cc-num">Clientes</th></tr></thead>
+            <tbody id="ivCarteras"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Por motivo</h2>
+        <p class="card-caption">Por qué se marcaron (lo indica el administrador al cargar la lista).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Motivo</th><th class="cc-num">Marcados</th><th class="cc-num">En fichas</th></tr></thead>
+            <tbody id="ivMotivos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cc-cab">
+        <div>
+          <h2 class="card-title">Detalle: dónde sigue cada dato</h2>
+          <p class="card-caption" id="ivTxt">Una fila por ficha que tiene escrito un correo o celular marcado. El dato sale parcialmente oculto.</p>
+        </div>
+        <input type="search" class="cc-buscar" id="ivBuscar" placeholder="Buscar cliente, cartera o dominio…" aria-label="Buscar en datos no válidos">
+      </div>
+      <div class="cc-filtros" id="ivTipos" role="group" aria-label="Tipo de dato"></div>
+      <div class="table-wrap cc-alto">
+        <table>
+          <thead><tr><th>Tipo</th><th>Dato</th><th>Cliente</th><th>País</th><th>Cartera</th><th>Cargo</th><th>Motivo</th><th>Marcado</th></tr></thead>
+          <tbody id="ccInvalidos"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../../assets/js/clientes/clientes.js?v=20261021f"></script>
+<!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+<link rel="stylesheet" href="../../assets/css/estandar.css?v=20261019graficas">
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "Dashboard RED INTELFON - Consolidación Bancaria",
+  "description": "Sistema empresarial de análisis y consolidación financiera bancaria para Guatemala y El Salvador con procesamiento en Make.com y Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

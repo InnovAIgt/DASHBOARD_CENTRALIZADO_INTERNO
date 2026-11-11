@@ -1,0 +1,2253 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acciones de personal · RED Intelfon</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="../../assets/css/dashboard.css">
+<link rel="stylesheet" href="../../assets/css/recursosHumanos.css">
+<link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261019graficas">
+<script src="../../assets/js/estandar.js?v=20261019graficas"></script>
+<script src="../../assets/js/reporte-pdf.js"></script>
+<script src="../../assets/js/ultima-actualizacion.js"></script>
+<link rel="stylesheet" href="../../assets/css/pdfx-modal.css?v=20261021tokens">
+<style>
+
+@media (max-width:620px){
+  .pdfx-rejilla{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .pdfx-cab{gap:11px;padding:18px 16px 14px}
+  .pdfx-insignia{width:38px;height:38px;border-radius:11px}
+  .pdfx-cab h3{font-size:17px}
+  .pdfx-barra,.pdfx-rejilla{padding-left:16px;padding-right:16px}
+  .pdfx-aviso{margin-left:16px;margin-right:16px}
+  .pdfx-pie{padding:14px 16px}
+  .pdfx-pista{display:none}
+  .pdfx-acciones{width:100%}
+  .pdfx-cancelar,.pdfx-generar{flex:1 1 auto;justify-content:center}
+}
+
+/* Botón PDF de la barra de filtros: el único con relleno (botón principal).
+   Clase propia: .inf-btn y .btn-pdf traen estilos con !important del CSS
+   compartido. El hover solo aclara el fondo, sin sombra de color. */
+#filterBar .fx-pdf{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 16px;border:1px solid var(--std-red,var(--red));border-radius:8px;background:var(--std-red,var(--red));color:#fff;font:700 12px var(--std-font,'Segoe UI',system-ui,sans-serif);letter-spacing:.02em;cursor:pointer;transition:background .18s ease,border-color .18s ease}
+#filterBar .fx-pdf svg{width:16px;height:16px;color:#fff;stroke-width:2.4}
+#filterBar .fx-pdf:hover:not(:disabled){background:var(--std-red-2,var(--red-2));border-color:var(--std-red-2,var(--red-2))}
+#filterBar .fx-pdf:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#filterBar .fx-pdf:disabled{border-color:rgba(128,164,207,.38);background:transparent;color:#8b909e;cursor:not-allowed}
+#filterBar .fx-pdf:disabled svg{color:#8b909e}
+@media(max-width:760px){
+  #filterBar .fx-pdf{width:100%}
+}
+
+.apx-chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:152px;
+  padding:6px 12px;
+  border:1px solid currentColor;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  line-height:1;
+}
+
+/* Duración dentro del Informe detallado: columnas Horas/Días, pastillas y línea de resumen */
+table.apx-table .apx-num{text-align:right;font-variant-numeric:tabular-nums}
+.apx-dur-resumen{padding:10px 16px 0}
+.apx-dur-resumen[hidden]{display:none}
+.apx-dur-linea{margin:0;font-size:13px;color:var(--muted)}
+.apx-dur-linea strong{color:var(--ink);font-weight:700}
+.apx-dur-nota{margin:4px 0 0;font-size:11px;color:var(--muted)}
+.apx-dur-nota[hidden]{display:none}
+.apx-chip.apx-chip-sm{min-width:0;margin-left:8px;padding:3px 8px;font-size:9px}
+.apx-pill-dur{margin-left:8px;white-space:nowrap}
+.apx-solo-dur{white-space:nowrap}
+/* Pastilla «Actualizado: …» (assets/js/ultima-actualizacion.js) arriba a la derecha del
+   encabezado, como en Flujo de ventas. Solo la ubicación: el estilo lo trae el componente. */
+.page-header{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:20px;align-items:center}
+.page-header>.page-eyebrow,.page-header>.page-title,.page-header>.page-sub,.page-header>.std-sync{grid-column:1}
+.page-header>.apx-update-slot{grid-column:2;grid-row:1 / 4;justify-self:end;text-align:right;max-width:420px}
+@media(max-width:760px){.page-header{grid-template-columns:minmax(0,1fr)}.page-header>.apx-update-slot{grid-column:1;grid-row:auto;justify-self:end;margin-top:10px;max-width:100%}}
+/* El «Actualizado HH:MM» suelto de estandar.js repetiría la pastilla: se deja solo
+   mientras consulta («Consultando la API…»). */
+html body .page-header>.std-sync:not(.std-sync-busy){display:none}
+/* Panel de filtros: siete columnas con «Duración» (en angosto se acomodan solas) */
+@media (min-width:1100px){ .xf-columns{grid-template-columns:repeat(7,minmax(0,1fr))} }
+</style>
+</head>
+<body class="apx-rh-page">
+<div class="apx-root">
+  <!-- ENCABEZADO -->
+  <div class="page-header">
+    <div class="page-eyebrow">Recursos Humanos · Expediente</div>
+    <h1 class="page-title">Acciones de personal</h1>
+    <p class="page-sub" id="subtitleLine">El Salvador &amp; Guatemala</p>
+    <div class="apx-update-slot"><span id="ultimaAct"></span></div>
+  </div>
+  <div id="loadStatus" class="error-box" role="alert" hidden></div>
+  <div class="apx-filters" id="filterBar">
+    <div class="apx-filter-row">
+      <div class="op-group" role="group" aria-label="Operaciones">
+        <span class="op-label">Operaciones</span>
+        <button type="button" class="op-btn" data-op="all">Todas</button>
+        <button type="button" class="op-btn" data-op="Guatemala" aria-label="Guatemala"><span class="op-flag op-flag-gt" aria-hidden="true"></span>GT</button>
+        <button type="button" class="op-btn" data-op="El Salvador" aria-label="El Salvador"><span class="op-flag op-flag-sv" aria-hidden="true"></span>SV</button>
+      </div>
+      <div class="period-control" id="periodControl">
+        <span class="period-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+        <span class="period-label">Período</span>
+        <span class="apx-period-field">
+          <input type="text" id="fDesde" class="period-input" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" spellcheck="false" aria-label="Desde (dd/mm/aaaa)">
+          <button type="button" class="apx-period-cal" data-which="desde" title="Abrir calendario" aria-label="Abrir calendario de la fecha Desde"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button>
+          <input type="date" id="fDesdeNative" class="apx-period-native" tabindex="-1" aria-hidden="true">
+        </span>
+        <span class="period-sep">—</span>
+        <span class="apx-period-field">
+          <input type="text" id="fHasta" class="period-input" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" spellcheck="false" aria-label="Hasta (dd/mm/aaaa)">
+          <button type="button" class="apx-period-cal" data-which="hasta" title="Abrir calendario" aria-label="Abrir calendario de la fecha Hasta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button>
+          <input type="date" id="fHastaNative" class="apx-period-native" tabindex="-1" aria-hidden="true">
+        </span>
+        <button type="button" class="period-reset" id="periodReset" title="Restablecer período (fechas de los datos)" aria-label="Restablecer período a las fechas de los datos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+        <span class="apx-period-msg" id="periodMsg" role="status" hidden></span>
+      </div>
+      <div class="xf" id="xf">
+        <button type="button" class="xf-toggle" id="xfToggle" aria-expanded="false" aria-controls="xfPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+          Filtros <b class="xf-count" id="xfCount" hidden>0</b>
+          <svg class="xf-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+      <input id="fSearch" class="apx-search" type="search" placeholder="Buscar: usuario, jefe, ID…" aria-label="Buscar (texto libre)">
+      <!-- Exportar va junto a lo que exporta: el PDF lleva estos mismos filtros. -->
+      <button type="button" class="fx-pdf" id="fxPdf" disabled aria-haspopup="dialog" aria-controls="pdfModalBg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>PDF</button>
+      <button id="btnReset" class="apx-reset" type="button">Limpiar</button>
+    </div>
+    <div class="xf-panel" id="xfPanel" role="dialog" aria-label="Filtros" hidden>
+      <div class="xf-columns" id="xfColumns"></div>
+      <div class="xf-footer">
+        <label class="apx-inactive">
+          <input type="checkbox" id="fIncludeInactive">
+          <span>Incluir líderes que ya no están en la organización</span>
+        </label>
+        <span class="xf-hint" id="xfHint" hidden></span>
+        <button type="button" class="apx-ghost" id="xfClear">Limpiar todo</button>
+        <button type="button" class="apx-ghost xf-apply" id="xfApply">Aplicar</button>
+      </div>
+    </div>
+  </div>
+  <div class="apx-filter-summary" id="filterSummary" aria-live="polite"></div>
+  <div class="tabs" id="rrhhTabs" role="tablist" aria-label="Vistas del dashboard">
+    <button type="button" class="tab-btn active" role="tab" id="tabResumen" aria-selected="true" aria-controls="panelResumen">Resumen</button>
+    <button type="button" class="tab-btn" role="tab" id="tabInforme" aria-selected="false" aria-controls="panelInforme" tabindex="-1">Informe detallado</button>
+  </div>
+     <div class="apx-tabpanel" role="tabpanel" id="panelResumen" aria-labelledby="tabResumen">
+  <div class="kpi-grid apx-kpirow" id="kpiRow"></div>
+  <div class="apx-summaryrow" id="summaryRow"></div>
+  <div class="apx-charts">
+    <div class="card apx-card card-state">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Por estado</h2><p class="card-caption">Distribución actual de solicitudes.</p></div>
+        <span class="apx-insight" id="insightEstado">—</span>
+      </div>
+      <div id="chartEstado"></div>
+    </div>
+    <div class="card apx-card card-rank">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Segundo aprobador</h2><p class="card-caption">Ranking de los aprobadores con más solicitudes.</p></div>
+        <span class="apx-insight" id="insightAprobador">Top 8</span>
+      </div>
+      <div id="chartAprobador"></div>
+    </div>
+    <div class="card apx-card card-area">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Por área</h2><p class="card-caption">Peso relativo de las áreas dentro del período filtrado.</p></div>
+        <span class="apx-insight" id="insightArea">Treemap</span>
+      </div>
+      <div id="chartArea"></div>
+    </div>
+    <div class="card apx-card card-jefe">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Por jefe inmediato</h2><p class="card-caption">Primer aprobador · comparación tipo lollipop.</p></div>
+        <span class="apx-insight" id="insightJefe">Top 10</span>
+      </div>
+      <div id="chartJefe"></div>
+    </div>
+    <div class="card apx-card card-type">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Por tipo de acción</h2><p class="card-caption">Volumen de solicitudes por categoría.</p></div>
+        <span class="apx-insight" id="insightTipo">Comparativo</span>
+      </div>
+      <div id="chartTipo"></div>
+    </div>
+    <div class="card apx-card card-top">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Top solicitantes</h2><p class="card-caption">Ranking expandible con permisos y vacaciones.</p></div>
+        <span class="apx-insight">Top 8</span>
+      </div>
+      <div id="chartSolicitantes"></div>
+    </div>
+    <div class="card apx-card card-month">
+      <div class="apx-card-head">
+        <div><h2 class="card-title">Acciones por mes</h2><p class="card-caption">Evolución temporal de las solicitudes del período.</p></div>
+        <span class="apx-insight" id="insightMes">Tendencia</span>
+      </div>
+      <div id="chartMes"></div>
+    </div>
+  </div>
+  </div>
+  <div class="apx-tabpanel" role="tabpanel" id="panelInforme" aria-labelledby="tabInforme" hidden>
+  <div class="card apx-table-wrap">
+    <div class="apx-table-header">
+      <h2 class="card-title">Detalle de solicitudes</h2>
+      <span class="apx-mono apx-table-count" id="tableCount"></span>
+    </div>
+    <div class="apx-table-tools">
+      <input id="fTableSearch" class="apx-search apx-table-search" type="search" placeholder="Buscar dentro de estos resultados" aria-label="Buscar dentro de los resultados filtrados">
+      <!-- Como el buscador: filtra las filas de esta tabla (y lo que se exporta), no las tarjetas. -->
+      <label class="apx-inactive apx-solo-dur" title="Solo las solicitudes que traen horas o días">
+        <input type="checkbox" id="fSoloDuracion">
+        <span>Solo con duración</span>
+      </label>
+      <button type="button" class="apx-ghost apx-export" id="btnExportXlsx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Excel</button>
+      <!-- El PDF salió de aquí: está en la barra de filtros (#fxPdf). -->
+      <!-- CSV oculto: aparece si ExcelJS no logra cargarse (no necesita librería). -->
+      <button type="button" class="apx-ghost apx-export" id="btnExportCsv" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>CSV</button>
+    </div>
+    <p class="apx-export-aviso" id="exportAviso" role="alert" hidden></p>
+    <!-- Con «Solo con duración»: totales de las filas que se ven y la nota de pre-aprobados -->
+    <div class="apx-dur-resumen" id="durResumen" hidden>
+      <p class="apx-dur-linea" id="durLinea"></p>
+      <p class="apx-dur-nota" id="durNotaTipo" hidden></p>
+    </div>
+    <div id="tableBody"></div>
+  </div>
+  </div>
+</div>
+
+<!-- Ventana «Exportar PDF» (botón PDF de la barra de filtros). Las tarjetas
+     de los módulos las arma armarPdfxModulos(). -->
+<div class="pdfx-bg" id="pdfModalBg">
+  <div class="modal pdfx" role="dialog" aria-modal="true" aria-labelledby="pdfxTitulo" aria-describedby="pdfxBajada">
+    <div class="pdfx-cab">
+      <span class="pdfx-insignia" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></span>
+      <div class="pdfx-cab-texto">
+        <span class="pdfx-cejilla">Exportar reporte</span>
+        <h3 id="pdfxTitulo">¿Qué módulos deseas imprimir?</h3>
+        <p id="pdfxBajada">Marca las secciones que quieres incluir en el PDF. Las que no marques no aparecerán en el documento.</p>
+        <!-- Solo lectura: lo que tienes filtrado en el dashboard, que es lo que lleva el PDF. -->
+        <div class="pdfx-resumen" id="pdfxResumen" aria-label="Lo que se va a descargar"></div>
+      </div>
+      <button type="button" class="pdfx-cerrar" id="pdfxCerrar" aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="pdfx-barra">
+      <div class="pdfx-rapidos">
+        <button type="button" id="pdfxTodo">Seleccionar todo</button>
+        <button type="button" id="pdfxLimpiar">Limpiar</button>
+      </div>
+      <span class="pdfx-contador" id="pdfxContador" role="status"></span>
+    </div>
+
+    <div class="pdfx-rejilla" id="pdfxModulos" role="group" aria-label="Módulos del reporte"></div>
+
+    <div class="pdfx-aviso" id="pdfxAviso" role="alert" hidden></div>
+
+    <div class="pdfx-pie">
+      <span class="pdfx-pista">Se descarga un solo archivo con los módulos marcados.</span>
+      <div class="pdfx-acciones">
+        <button type="button" class="pdfx-cancelar" id="pdfxCancelar">Cancelar</button>
+        <button type="button" class="pdfx-generar" id="pdfxGenerar">Descargar PDF <b id="pdfxGenerarN" aria-hidden="true">0</b></button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const AREA_MAP = {
+  'Carlos Abrego': 'Comercial',
+  'Raúl Ramirez': 'Comercial',
+  'Ana María Manzano': 'Legal',
+  'Kevin Escobar': 'Bodega',
+  'Eduardo Méndez': 'Operaciones GT (Guatemala)',
+  'Camilo Santos': 'IT',
+  'Alexandra Londoño': 'Gerencia de País',
+  'Juan Carlos Jiménez': 'Dirección General',
+  'Daniel Magaña': 'Recursos Humanos'
+};
+// Reasignacion individual dentro del antiguo equipo de Luis Farela (Operaciones El Salvador),
+// que ahora queda dividido en Contabilidad / Activaciones / Cobros / Bodega. Tiene prioridad
+// sobre el mapeo por jefe_inmediato.
+// Correccion puntual por ID: solicitud propia de Luis Farela capturada con el mismo
+// como su jefe_inmediato (dato inconsistente). Por organigrama, su jefe real es
+// Juan Carlos Jimenez (Direccion General). Tiene prioridad maxima.
+const AREA_OVERRIDE_BY_ID = { '4346': 'Dirección General' };
+const SOLICITANTE_AREA_OVERRIDE = {
+  'atejada@red.com.sv': 'Contabilidad',
+  'tcastillo@red.com.sv': 'Contabilidad',
+  'ifranco@red.com.sv': 'Contabilidad',
+  'finanzas@intelfon.onmicrosoft.com': 'Contabilidad',
+  'cemartinez@red.com.sv': 'Activaciones',
+  'lcanas@red.com.sv': 'Cobros',
+  'mdcastillo@red.com.sv': 'Cobros',
+  'kaescobar@red.com.sv': 'Bodega',
+  'edlopez@red.com.sv': 'Bodega',
+  'rballadares@red.com.sv': 'Bodega',
+};
+const CARGO_MAP = {
+  'Daniel Magaña': 'Recursos Humanos'
+};
+const AREA_SIN_DATOS = 'Sin datos (jefe no identificado)';
+function areaFor(jefeInmediato) {
+  if (!jefeInmediato) return AREA_SIN_DATOS;
+  return AREA_MAP[jefeInmediato] || (jefeInmediato + ' — área pendiente por asignar');
+}
+let ALL_RECORDS = [];
+let RECORDS = [];
+const INACTIVE_LEADERS = ['Elmer Miranda', 'César Guerrero', 'Eduardo Ortiz'];
+  const INACTIVE_SOLICITANTES = ['gmolina@red.com.sv'];
+function isInactiveRecord(r) {
+  var solicitante = String(r.solicitante || '').toLowerCase();
+  return (
+    INACTIVE_LEADERS.indexOf(r.jefeInmediato) !== -1 ||
+    INACTIVE_SOLICITANTES.indexOf(solicitante) !== -1
+  );
+}
+function applyActiveScope() {
+  var includeInactive = document.getElementById('fIncludeInactive').checked;
+  RECORDS = includeInactive
+    ? ALL_RECORDS
+    : ALL_RECORDS.filter(function(r) {
+        return !isInactiveRecord(r);
+      });
+}
+const SUPABASE_URL = 'https://alkaqpxcrmbzhgcwpynj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_q5jDfgo48CvWHYoztIyC3w_XIB5KIaW';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Correcciones manuales conocidas (no reflejadas aun en el origen)
+const PAIS_OVERRIDES = { '4457': 'El Salvador', '4463': 'El Salvador' };
+var KNOWN_ESTADOS = ['Ingresada', 'Aval Jefe', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH'];
+function normalizeEstado(raw) {
+  if (!raw) return 'Sin estado';
+  if (KNOWN_ESTADOS.indexOf(raw) !== -1) return raw;
+  var match = KNOWN_ESTADOS.find(function(e) { return raw.indexOf(e) === 0; });
+  return match || 'Sin estado';
+}
+function textOrNull(v) {
+  if (v === null || v === undefined) return null;
+  var s = String(v).trim();
+  return s ? s : null;
+}
+function buildRecordsFromSupabaseRows(dataRows) {
+  var seen = {};
+  var out = [];
+  dataRows.forEach(function(row) {
+    var idStr = String(row.id || '').trim();
+    if (!idStr || seen[row.id]) return;
+    seen[row.id] = true;
+    var jefeInmediato = textOrNull(row.jefe_inmediato);
+    var pais = PAIS_OVERRIDES[idStr] || textOrNull(row.pais) || 'No especificado';
+    var horas = textOrNull(row.horas_detectadas);
+    var diasVac = textOrNull(row.dias_vacaciones);
+    var diasComp = textOrNull(row.dias_compensatorios);
+    var diasIncap = textOrNull(row.dias_incapacidad);
+    var diasPerm = textOrNull(row.dias_permiso);
+    var duracion = null;
+    var horasNum = null;
+    var diasNum = null;
+    if (horas && parseFloat(horas) !== 0) {
+      duracion = horas + ' h';
+      horasNum = parseFloat(horas);
+    } else if (diasVac) {
+      duracion = diasVac + (diasVac === '1' ? ' día' : ' días');
+      diasNum = parseFloat(diasVac);
+    } else if (diasComp) {
+      duracion = diasComp + (diasComp === '1' ? ' día' : ' días');
+      diasNum = parseFloat(diasComp);
+    } else if (diasIncap) {
+      duracion = diasIncap + (diasIncap === '1' ? ' día' : ' días');
+      diasNum = parseFloat(diasIncap);
+    }
+    if (horasNum !== null && isNaN(horasNum)) horasNum = null;
+    if (diasNum !== null && isNaN(diasNum)) diasNum = null;
+    // Vista «Duración»: horas y días por separado, tal como vienen de la base
+    // (duracion/horas/dias de arriba guardan uno solo y los usan las otras vistas).
+    // 0 horas = no se midió: cuenta como sin dato. Los días van en una sola columna.
+    var horasDbNum = horas === null ? NaN : parseFloat(horas);
+    var diasTxt = diasVac || diasComp || diasIncap || diasPerm;
+    var diasDbNum = diasTxt === null ? NaN : parseFloat(diasTxt);
+    var solicitante = textOrNull(row.solicitante) || 'No especificado';
+    out.push({
+      id: row.id,
+      tipo: textOrNull(row.tipo) || 'No especificado',
+      pais: pais,
+      solicitante: solicitante,
+      jefeInmediato: jefeInmediato,
+      aprobador: textOrNull(row.aprobador) || 'Sin asignar',
+      estado: normalizeEstado(textOrNull(row.estado)),
+      fechaSolicitud: (textOrNull(row.fecha_solicitud) || '').slice(0, 10) || null,
+      justificacion: textOrNull(row.justificacion),
+      area: AREA_OVERRIDE_BY_ID[idStr] || SOLICITANTE_AREA_OVERRIDE[solicitante] || areaFor(jefeInmediato),
+      duracion: duracion,
+      horas: horasNum,
+      dias: diasNum,
+      horasRegistradas: horas !== null,
+      horasDb: horasDbNum > 0 || horasDbNum < 0 ? horasDbNum : null,
+      diasDb: isNaN(diasDbNum) ? null : diasDbNum,
+      diasTxt: isNaN(diasDbNum) ? null : diasTxt
+    });
+  });
+  return out;
+}
+function fmtNowLabel() {
+  var d = new Date();
+  var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var hh = String(d.getHours()).padStart(2,'0');
+  var mm = String(d.getMinutes()).padStart(2,'0');
+  return d.getDate() + ' ' + meses[d.getMonth()] + ' ' + d.getFullYear() + ', ' + hh + ':' + mm;
+}
+// La consulta se muestra con el estándar (estandar.js); aquí solo se avisa si falla.
+function setLoadStatus(text, mode) {
+  var el = document.getElementById('loadStatus');
+  el.textContent = text;
+  el.hidden = mode !== 'error';
+}
+// Fuente principal: Edge Function que lee SharePoint en vivo y devuelve los registros
+// con los mismos campos que la RPC. Si falla o tarda más de VIVO_ESPERA_MS, se usa
+// el último corte guardado en Supabase (RPC dashboard_rrhh_publico) como respaldo.
+const VIVO_URL = 'https://alkaqpxcrmbzhgcwpynj.supabase.co/functions/v1/rrhh-vivo-publico';
+const VIVO_ESPERA_MS = 20000;
+const AVISO_RESPALDO = 'No se pudo consultar en vivo. Mostrando el último corte guardado.';
+var DATOS_FECHA = null;   // generated_at (ISO) de la Edge Function; null si vienen del respaldo
+async function loadFromVivo() {
+  var ctrl = new AbortController();
+  var espera = setTimeout(function() { ctrl.abort(); }, VIVO_ESPERA_MS);
+  try {
+    var res = await fetch(VIVO_URL, { cache: 'no-store', signal: ctrl.signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var json = await res.json();
+    if (!json || !Array.isArray(json.registros)) throw new Error('la respuesta no trae «registros»');
+    return { rows: json.registros, fecha: textOrNull(json.generated_at) };
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('sin respuesta en ' + (VIVO_ESPERA_MS / 1000) + ' s');
+    throw e;
+  } finally {
+    clearTimeout(espera);
+  }
+}
+// Respaldo: el último corte guardado en Supabase, paginado como siempre.
+async function loadFromRpc() {
+  var pageSize = 1000;
+  var all = [];
+  var from = 0;
+  while (true) {
+    var res = await sb.rpc('dashboard_rrhh_publico', {
+      p_limit: pageSize,
+      p_offset: from
+    });
+    if (res.error) throw res.error;
+    all = all.concat(res.data);
+    if (res.data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+async function loadFromSupabase() {
+  var aviso = '';
+  var rows;
+  try {
+    var vivo = await loadFromVivo();
+    rows = vivo.rows;
+    DATOS_FECHA = vivo.fecha;
+  } catch (eVivo) {
+    console.error('No se pudo consultar RRHH en vivo (' + VIVO_URL + '); se usa el corte guardado en Supabase.', eVivo);
+    try {
+      rows = await loadFromRpc();
+      DATOS_FECHA = null;
+      aviso = AVISO_RESPALDO;
+    } catch (eRpc) {
+      console.error('Tampoco se pudo leer el corte guardado (RPC dashboard_rrhh_publico).', eRpc);
+      setLoadStatus('No se pudieron cargar los datos: la consulta en vivo a SharePoint falló (' + (eVivo.message || eVivo) +
+        ') y el respaldo en Supabase también (' + (eRpc.message || eRpc) + ').', 'error');
+      return;
+    }
+  }
+  try {
+    ALL_RECORDS = buildRecordsFromSupabaseRows(rows);
+    applyActiveScope();
+    // Con los datos ya cargados, el período toma las fechas que trae la API
+    PERIODO = defaultPeriodo();
+    syncPeriodInputs();
+    setLoadStatus(aviso, aviso ? 'error' : 'hidden');
+    // Pastilla «Actualizado: …» solo con datos en vivo. Con el respaldo no hay fecha del
+    // corte guardado y una pastilla gris diría «sin información»: queda solo el aviso.
+    if (DATOS_FECHA) {
+      pintarUltimaActualizacion('ultimaAct', { fecha: DATOS_FECHA, estado: 'exitoso', registros: ALL_RECORDS.length });
+    }
+    initFilters();
+    render();
+    document.getElementById('fxPdf').disabled = false;   // ya hay datos: se puede exportar
+  } catch (e) {
+    console.error('No se pudieron procesar los datos de RRHH', e);
+    setLoadStatus('Los datos llegaron (' + (aviso ? 'corte guardado en Supabase' : 'en vivo desde SharePoint') +
+      ') pero no se pudieron mostrar: ' + (e.message || e), 'error');
+  }
+}
+loadFromSupabase();
+const STATUS_META = {
+  'Ingresada': { label: 'Ingresada', color: '#c59600' },
+  'Aval Jefe': { label: 'Pendiente 1.er aprobador', color: '#2f8f76' },
+  'Aprobacion RRHH': { label: 'Aprobada 2.º aprobador', color: '#4f8fd8' },
+  'Pendiente Segundo': { label: 'Pendiente 2.º aprobador', color: '#8b909e' },
+  'Rechazo Jefe': { label: 'Rechazada 1.er aprobador', color: '#c43c50' },
+  'Rechazo RRHH': { label: 'Rechazada 2.º aprobador', color: '#d95f6e' },
+  'Sin estado': { label: 'Sin estado', color: '#8b909e' }
+};
+const STATUS_ORDER = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
+function statusMeta(estado) { return STATUS_META[estado] || STATUS_META['Sin estado']; }
+function shortUser(email) {
+  if (!email || email === 'Sin asignar' || email === 'No especificado') return email || '—';
+  return email.split('@')[0];
+}
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function yearMonth(dateStr) {
+  if (!dateStr) return null;
+  return dateStr.slice(0, 7);
+}
+function fmtMonthLabel(ym) {
+  var parts = ym.split('-');
+  var y = parts[0], m = parseInt(parts[1], 10);
+  return MESES[m - 1] + ' ' + y;
+}
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return '—';
+  var y = parseInt(parts[0],10), m = parseInt(parts[1],10), day = parseInt(parts[2],10);
+  return String(day).padStart(2,'0') + ' ' + MESES[m-1] + ' ' + y;
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function uniqueCounts(records, key) {
+  var map = new Map();
+  records.forEach(function(r) {
+    var v = r[key];
+    map.set(v, (map.get(v) || 0) + 1);
+  });
+  return Array.from(map.entries()).map(function(e) { return { value: e[0], count: e[1] }; })
+    .sort(function(a,b) { return b.count - a.count; });
+}
+var ALL_SOLICITANTE_OPTS, ALL_APROBADOR_OPTS, ALL_TIPO_OPTS, ALL_AREA_OPTS, ALL_JEFE_OPTS, ALL_ESTADO_OPTS;
+
+// ---------- Estado de los filtros ----------
+// Operación: países marcados (nunca vacío). Con los dos marcados no se filtra por país.
+var OP_PAISES = ['Guatemala', 'El Salvador'];
+var opSel = new Set(OP_PAISES);
+// Período sobre fecha_solicitud, en formato aaaa-mm-dd. Las dos vacías = todo el histórico.
+var PERIODO = defaultPeriodo();
+// Desplegables tipo Excel: sel = null significa "Todas"; si no, un Set con lo marcado.
+var XF_DEFS = [
+  { key: 'solicitante', field: 'solicitante', label: 'Solicitante' },
+  { key: 'aprobador', field: 'aprobador', label: 'Aprobador' },
+  { key: 'jefe', field: 'jefeInmediato', label: 'Jefe inmediato', title: 'Jefe inmediato (primer aprobador)' },
+  { key: 'area', field: 'area', label: 'Área' },
+  { key: 'tipo', field: 'tipo', label: 'Tipo de acción' },
+  { key: 'estado', field: 'estado', label: 'Estado' },
+  // Categorías que se superponen (como Estado): una solicitud con horas y días está en las tres primeras.
+  { key: 'duracion', field: null, label: 'Duración', cats: durCategorias }
+];
+var DUR_FILTRO_OPCIONES = ['Con duración', 'Solo con horas', 'Solo con días', 'Sin duración'];
+function durCategorias(r) {
+  if (!durTiene(r)) return ['Sin duración'];
+  var c = ['Con duración'];
+  if (r.horasDb !== null) c.push('Solo con horas');
+  if (r.diasDb !== null) c.push('Solo con días');
+  return c;
+}
+var XF_STATE = {};
+XF_DEFS.forEach(function(def) { XF_STATE[def.key] = { sel: null, avail: [] }; });
+var XF_OPTS = {};
+
+function normTxt(s) {
+  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+var OP_CACHE = {};
+function opDe(pais) {
+  var k = String(pais);
+  if (!(k in OP_CACHE)) {
+    var n = normTxt(k).trim();
+    OP_CACHE[k] = OP_PAISES.find(function(p) { return normTxt(p) === n; }) || null;
+  }
+  return OP_CACHE[k];
+}
+function pad2(n) { return String(n).padStart(2, '0'); }
+function isoFromDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function todayIso() { return isoFromDate(new Date()); }
+function isoToDmy(iso) {
+  if (!iso) return '';
+  var p = iso.split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+function parseDmy(txt) {
+  var m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(String(txt).trim());
+  if (!m) return null;
+  var d = +m[1], mo = +m[2], y = +m[3];
+  var dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return isoFromDate(dt);
+}
+// Período por defecto = fechas de las solicitudes que trae la API (de la más antigua
+// a la más reciente). Antes eran los últimos 30 días desde hoy.
+function defaultPeriodo() {
+  var fechas = ALL_RECORDS.map(function(r) { return r.fechaSolicitud; }).filter(Boolean).sort();
+  return { desde: fechas[0] || '', hasta: fechas[fechas.length - 1] || '' };
+}
+function xfLabel(key, value) {
+  if (key === 'estado') return value;
+  if (key === 'jefe' && CARGO_MAP[value]) return value + ' — ' + CARGO_MAP[value];
+  return value;
+}
+
+// Un estado del filtro representa un indicador, no necesariamente el valor crudo de SharePoint.
+// La primera aprobación es acumulativa y puede coincidir con una decisión posterior del segundo nivel.
+var APS_ESTADOS_FILTRO = [
+  'Ingresadas',
+  'Pendientes 1.er aprobador',
+  'Aprobadas 1.er aprobador',
+  'Rechazadas 1.er aprobador',
+  'Pendientes 2.º aprobador',
+  'Aprobadas 2.º aprobador',
+  'Rechazadas 2.º aprobador'
+];
+function estadosIndicadoresAPS(r) {
+  var e = r.estado, lista = [];
+  if (e === 'Ingresada') lista.push('Ingresadas');
+  if (e === 'Ingresada' || e === 'Aval Jefe') lista.push('Pendientes 1.er aprobador');
+  if (e === 'Aprobacion RRHH' || e === 'Rechazo RRHH') lista.push('Aprobadas 1.er aprobador');
+  if (e === 'Rechazo Jefe') lista.push('Rechazadas 1.er aprobador');
+  if (esPendienteSegundo(r)) lista.push('Pendientes 2.º aprobador');
+  if (e === 'Aprobacion RRHH' && !esPendienteSegundo(r)) lista.push('Aprobadas 2.º aprobador');
+  if (e === 'Rechazo RRHH') lista.push('Rechazadas 2.º aprobador');
+  return lista;
+}
+function coincideEstadoAPS(r, seleccionados) {
+  return estadosIndicadoresAPS(r).some(function(e) { return seleccionados.has(e); });
+}
+function getFilterValues() {
+  var f = {
+    ops: opSel.size === OP_PAISES.length ? null : Array.from(opSel),
+    desde: PERIODO.desde,
+    hasta: PERIODO.hasta,
+    q: document.getElementById('fSearch').value.trim().toLowerCase()
+  };
+  XF_DEFS.forEach(function(def) { f[def.key] = XF_STATE[def.key].sel; });
+  return f;
+}
+function applyFilters(records, filters, exclude) {
+  return records.filter(function(r) {
+    if (exclude !== 'pais' && filters.ops && filters.ops.indexOf(opDe(r.pais)) === -1) return false;
+    for (var i = 0; i < XF_DEFS.length; i++) {
+      var def = XF_DEFS[i];
+      var sel = filters[def.key];
+      if (exclude !== def.key && sel && !(def.key === 'estado' ? coincideEstadoAPS(r, sel)
+        : def.cats ? def.cats(r).some(function(v) { return sel.has(v); }) : sel.has(r[def.field]))) return false;
+    }
+    if (exclude !== 'periodo' && (filters.desde || filters.hasta)) {
+      if (!r.fechaSolicitud) return false;
+      if (filters.desde && r.fechaSolicitud < filters.desde) return false;
+      if (filters.hasta && r.fechaSolicitud > filters.hasta) return false;
+    }
+    if (filters.q) {
+      var hay = (r.solicitante + ' ' + (r.jefeInmediato||'') + ' ' + r.aprobador + ' ' + r.tipo + ' ' + r.pais + ' ' + r.id + ' ' + (r.justificacion||'')).toLowerCase();
+      if (hay.indexOf(filters.q) === -1) return false;
+    }
+    return true;
+  });
+}
+// Cascada: cada desplegable solo ofrece opciones compatibles con los demás filtros
+// (se calcula con todos los filtros menos el propio). Lo marcado que deja de estar
+// disponible se desmarca solo; si no queda nada marcado, vuelve a "Todas".
+function updateXfOptions(def, filters) {
+  var st = XF_STATE[def.key];
+  var countMap = new Map();
+  applyFilters(RECORDS, filters, def.key).forEach(function(r) {
+    var opciones = def.key === 'estado' ? estadosIndicadoresAPS(r) : def.cats ? def.cats(r) : [r[def.field]];
+    opciones.forEach(function(v) { if (v) countMap.set(v, (countMap.get(v) || 0) + 1); });
+  });
+  st.avail = (XF_OPTS[def.key] || []).filter(function(o) { return countMap.get(o.value); }).map(function(o) {
+    return { value: o.value, label: xfLabel(def.key, o.value), count: countMap.get(o.value) };
+  });
+  if (!st.sel) return false;
+  var kept = new Set(Array.from(st.sel).filter(function(v) { return countMap.get(v); }));
+  if (kept.size === st.sel.size) return false;
+  st.sel = kept.size ? kept : null;
+  return !kept.size;
+}
+function initFilters() {
+  ALL_SOLICITANTE_OPTS = uniqueCounts(RECORDS, 'solicitante').sort(function(a,b) { return a.value.localeCompare(b.value); });
+  ALL_APROBADOR_OPTS = uniqueCounts(RECORDS, 'aprobador');
+  ALL_TIPO_OPTS = uniqueCounts(RECORDS, 'tipo');
+  ALL_ESTADO_OPTS = APS_ESTADOS_FILTRO.map(function(s) { return { value: s, label: s }; });
+  ALL_AREA_OPTS = uniqueCounts(RECORDS, 'area');
+  ALL_JEFE_OPTS = uniqueCounts(RECORDS.filter(function(r) { return r.jefeInmediato; }), 'jefeInmediato')
+    .sort(function(a, b) { return a.value.localeCompare(b.value); });
+  XF_OPTS = {
+    solicitante: ALL_SOLICITANTE_OPTS,
+    aprobador: ALL_APROBADOR_OPTS,
+    jefe: ALL_JEFE_OPTS,
+    area: ALL_AREA_OPTS,
+    tipo: ALL_TIPO_OPTS,
+    estado: ALL_ESTADO_OPTS,
+    duracion: DUR_FILTRO_OPCIONES.map(function(s) { return { value: s, label: s }; })
+  };
+  document.getElementById('subtitleLine').textContent = 'El Salvador & Guatemala · ' + RECORDS.length + ' solicitudes registradas';
+}
+// Recalcula opciones y conteos de los seis desplegables. Si alguno vuelve a "Todas"
+// porque se le vaciaron las opciones, repite para que los demás reflejen el cambio.
+function refreshFilterCounts(filters) {
+  for (var pass = 0; pass < 4; pass++) {
+    var changed = false;
+    XF_DEFS.forEach(function(def) {
+      if (updateXfOptions(def, filters)) changed = true;
+    });
+    filters = getFilterValues();
+    if (!changed) break;
+  }
+  return filters;
+}
+function getFiltered() {
+  return applyFilters(RECORDS, getFilterValues(), null);
+}
+function justifCell(text) {
+  if (!text) return '—';
+  var short = text.length > 90 ? text.slice(0, 88) + '…' : text;
+  return '<span title="' + escapeHtml(text) + '">' + escapeHtml(short) + '</span>';
+}
+function stampBadge(estado) {
+  var meta = statusMeta(estado);
+  return '<span class="apx-chip" style="color:' + meta.color + ';border-color:' + meta.color +
+    ';background:' + meta.color + '14">' + meta.label + '</span>';
+}
+function fmtNum(n) {
+  return (Math.round(n * 10) / 10).toFixed(1);
+}
+function horasDeSolicitante(records, solicitante) {
+  var subset = records.filter(function(r) { return r.solicitante === solicitante; });
+  var permisos = subset.filter(function(r) { return r.tipo === 'Permiso'; });
+  var vacaciones = subset.filter(function(r) { return r.tipo === 'Vacaciones anuales'; });
+  return {
+    permisosCount: permisos.length,
+    horas: permisos.reduce(function(s, r) { return s + (r.horas || 0); }, 0),
+    vacacionesCount: vacaciones.length,
+    dias: vacaciones.reduce(function(s, r) { return s + (r.dias || 0); }, 0)
+  };
+}
+// Cuántas solicitudes hay en cada estado. La usan las tarjetas, la dona «Por estado» y el PDF.
+function conteoEstados(rows) {
+  var c = {};
+  rows.forEach(function(r) { c[r.estado] = (c[r.estado] || 0) + 1; });
+  return c;
+}
+// Los números de las tarjetas de arriba. Los pintan renderKpis() y el PDF.
+// Regla operativa confirmada: TODA APS cuyo campo aprobador esté sin asignar
+// entra al indicador y filtro «Pendientes 2.º aprobador», sin importar estado.
+// Es una clasificación de asignación, no una afirmación de que el jefe aprobó.
+function segundoSinAsignar(r) {
+  var a = String(r.aprobador == null ? '' : r.aprobador).trim().toLowerCase();
+  return !a || a === 'sin asignar' || a === 'sin asignación' || a === 'sin asignacion' || a === 'null';
+}
+function esPendienteSegundo(r) {
+  return segundoSinAsignar(r);
+}
+function etiquetaEstadoAPS(r) {
+  // Mostrar el estado real del proceso; el filtro de segundo aprobador
+  // sigue siendo una clasificación independiente, no un reemplazo del estado.
+  if (r.estado === 'Aprobacion RRHH') {
+    return segundoSinAsignar(r) ? 'Aprobada 1.er aprobador; 2.º sin asignar' : 'Aprobada 2.º aprobador';
+  }
+  if (r.estado === 'Rechazo RRHH') return 'Rechazada 2.º aprobador';
+  if (r.estado === 'Rechazo Jefe') return 'Rechazada 1.er aprobador';
+  if (r.estado === 'Aval Jefe') return 'Pendiente 1.er aprobador';
+  return statusMeta(r.estado).label;
+}
+function indicadoresRrhh(filtered) {
+  var c = conteoEstados(filtered);
+  var nuevas = c['Ingresada'] || 0;
+  var enAval = c['Aval Jefe'] || 0;
+  var rechazadasPrimero = c['Rechazo Jefe'] || 0;
+  var rechazadasSegundo = c['Rechazo RRHH'] || 0;
+  var pendientesSegundo = filtered.filter(esPendienteSegundo).length;
+  var aprobadasSegundo = filtered.filter(function(r) { return r.estado === 'Aprobacion RRHH' && !segundoSinAsignar(r); }).length;
+  return {
+    total: filtered.length,
+    pendientesPrimero: nuevas + enAval,
+    aprobadasPrimero: filtered.filter(function(r) { return r.estado === 'Aprobacion RRHH' || r.estado === 'Rechazo RRHH'; }).length,
+    rechazadasPrimero: rechazadasPrimero,
+    pendientesSegundo: pendientesSegundo,
+    aprobadasSegundo: aprobadasSegundo,
+    rechazadasSegundo: rechazadasSegundo,
+    ingresadas: nuevas,
+    avalJefe: enAval,
+    enRRHH: aprobadasSegundo,
+    rechazadas: rechazadasPrimero + rechazadasSegundo,
+    solicitantes: new Set(filtered.map(function(r){ return r.solicitante; }).filter(Boolean)).size,
+    areas: new Set(filtered.map(function(r){ return r.area; }).filter(Boolean)).size
+  };
+}
+// «Permisos y vacaciones»: solicitudes de cada tipo con sus horas y sus días. La usan la tarjeta y el PDF.
+function permisosVacaciones(filtered) {
+  var permisos = filtered.filter(function(r) { return r.tipo === 'Permiso'; });
+  var vacaciones = filtered.filter(function(r) { return r.tipo === 'Vacaciones anuales'; });
+  return {
+    permisos: permisos,
+    vacaciones: vacaciones,
+    horas: permisos.reduce(function(s, r) { return s + (r.horas || 0); }, 0),
+    dias: vacaciones.reduce(function(s, r) { return s + (r.dias || 0); }, 0)
+  };
+}
+function renderKpis(filtered) {
+  var I = indicadoresRrhh(filtered);
+  function kpi(number, label, foot) {
+    var mostrable = number === null ? '—' : Number(number).toLocaleString('es-GT');
+    return '<div class="kpi">' +
+      '<div class="kpi-label">' + label + '</div>' +
+      '<div class="kpi-value">' + mostrable + '</div>' +
+      '<div class="kpi-sub">' + foot + '</div>' +
+    '</div>';
+  }
+  var html = '';
+  html += kpi(I.total, 'Total solicitudes', 'APS en el filtro actual');
+  html += kpi(I.pendientesPrimero, 'Pendientes 1.er aprobador', 'Ingresadas y en aval');
+  html += kpi(I.aprobadasPrimero, 'Aprobadas 1.er aprobador', 'Avanzaron al segundo nivel');
+  html += kpi(I.rechazadasPrimero, 'Rechazadas 1.er aprobador', 'Rechazadas por el jefe');
+  html += kpi(I.pendientesSegundo, 'Pendientes 2.º aprobador', 'Segundo aprobador sin asignar');
+  html += kpi(I.aprobadasSegundo, 'Aprobadas 2.º aprobador', 'Aprobadas por segundo nivel');
+  html += kpi(I.rechazadasSegundo, 'Rechazadas 2.º aprobador', 'Rechazadas por segundo nivel');
+  document.getElementById('kpiRow').innerHTML = html;
+}
+
+function renderSummaryCards(filtered) {
+  var el = document.getElementById('summaryRow');
+  if (!el) return;
+
+  var pv = permisosVacaciones(filtered);
+  var permisos = pv.permisos, vacaciones = pv.vacaciones, totalHoras = pv.horas, totalDias = pv.dias;
+
+  el.style.gridTemplateColumns = 'minmax(0, 1fr)';
+  el.innerHTML =
+    '<div class="card apx-summary-card">' +
+      '<h2 class="card-title">Permisos y vacaciones</h2>' +
+      '<div class="apx-leave-grid">' +
+        '<div class="apx-leave-item">' +
+          '<div class="apx-leave-label">Permisos (horas)</div>' +
+          '<div class="apx-leave-main"><span class="apx-leave-count">' + permisos.length + '</span><span class="apx-leave-word">solicitudes</span></div>' +
+          '<div class="apx-leave-total"><strong>' + fmtNum(totalHoras) + ' horas</strong> en total</div>' +
+        '</div>' +
+        '<div class="apx-leave-item">' +
+          '<div class="apx-leave-label">Vacaciones (días)</div>' +
+          '<div class="apx-leave-main"><span class="apx-leave-count">' + vacaciones.length + '</span><span class="apx-leave-word">solicitudes</span></div>' +
+          '<div class="apx-leave-total"><strong>' + fmtNum(totalDias) + ' días</strong> en total</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+// Por estado: la guía limita la dona a 3 segmentos y aquí hay hasta 7 estados,
+// así que el reparto se muestra como barras horizontales (una por estado, en el
+// orden del flujo), con el color de cada estado ajustado a los tonos de la guía.
+var ESTADO_COLOR_GRAFICA = {
+  'Ingresada': '#c59600', 'Aval Jefe': '#4f8fd8', 'Pendiente Segundo': '#8b909e', 'Aprobacion RRHH': '#7fb0f0',
+  'Rechazo Jefe': '#c43c50', 'Rechazo RRHH': '#d95f6e', 'Sin estado': '#8b909e'
+};
+function renderDonut(filtered) {
+  var counts = conteoEstados(filtered);
+  var data = STATUS_ORDER.filter(function(s) { return counts[s]; }).map(function(s) {
+    return { name: statusMeta(s).label, value: counts[s], color: ESTADO_COLOR_GRAFICA[s] || statusMeta(s).color };
+  });
+  var total = filtered.length;
+  var el = document.getElementById('chartEstado');
+  if (data.length === 0) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var max = Math.max.apply(null, data.map(function(d){ return d.value; }).concat([1]));
+  var rows = data.map(function(d, i) {
+    var pct = total ? (d.value / total * 100).toFixed(1) : '0.0';
+    return '<div class="apx-estado-row" title="' + escapeHtml(d.name) + ': ' + d.value + '">' +
+      '<span class="apx-estado-name"><span class="apx-dot" style="background:' + d.color + '"></span>' + escapeHtml(d.name) + ' · ' + pct + '%</span>' +
+      '<div class="apx-rank-track"><div class="apx-rank-fill gx-bar-h" style="width:' + (d.value / max * 100).toFixed(1) + '%;background:linear-gradient(90deg,' + d.color + ',' + d.color + '8c);--gx-i:' + i + '"></div></div>' +
+      '<span class="apx-legend-count">' + d.value + '</span></div>';
+  }).join('');
+  var top = data.slice().sort(function(a,b){return b.value-a.value;})[0];
+  document.getElementById('insightEstado').textContent = top ? top.name + ': ' + top.value : '—';
+  el.innerHTML = '<div class="apx-estado"><div class="apx-estado-total"><span class="apx-donut-center-num">' + total + '</span><span class="apx-donut-center-lbl">total de solicitudes</span></div>' +
+    rows + '</div>';
+}
+
+function renderRanking(containerId, data, limit) {
+  var el = document.getElementById(containerId);
+  var rows = data.slice(0, limit || 8);
+  if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
+  el.innerHTML = '<div class="apx-ranking">' + rows.map(function(d, i){
+    var pct = (d.count / max * 100).toFixed(1);
+    return '<div class="apx-rank-row">' +
+      '<span class="apx-rank-no">' + (i+1) + '</span>' +
+      '<span class="apx-rank-name" title="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</span>' +
+      '<div class="apx-rank-track"><div class="apx-rank-fill gx-bar-h" style="width:' + pct + '%;--gx-i:' + i + '"></div></div>' +
+      '<span class="apx-rank-value">' + d.count + '</span>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderTreemap(containerId, data) {
+  var el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var rows = data.slice(0, 8);
+  if (data.length > 8) {
+    var otros = data.slice(8).reduce(function(s,d){return s+d.count;},0);
+    if (otros) rows.push({name:'Otras áreas', count:otros});
+  }
+  var total = rows.reduce(function(s,d){return s+d.count;},0) || 1;
+  el.innerHTML = '<div class="apx-treemap">' + rows.map(function(d){
+    var pct = d.count/total*100;
+    var grow = Math.max(1, Math.round(pct));
+    return '<div class="apx-tree-cell" style="flex-grow:' + grow + '" title="' + escapeHtml(d.name) + ': ' + d.count + '">' +
+      '<span class="apx-tree-pct">' + pct.toFixed(1) + '%</span>' +
+      '<span class="apx-tree-name">' + escapeHtml(d.name) + '</span><span class="apx-tree-value">' + d.count + '</span></div>';
+  }).join('') + '</div>';
+}
+
+function renderLollipop(containerId, data, limit) {
+  var el = document.getElementById(containerId);
+  var rows = data.slice(0, limit || 10);
+  if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
+  el.innerHTML = '<div class="apx-lollipop">' + rows.map(function(d, i){
+    var pct = d.count/max*100;
+    return '<div class="apx-lolli-row"><span class="apx-lolli-name" title="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</span>' +
+      '<div class="apx-lolli-line"><span class="apx-lolli-progress gx-bar-h" style="width:' + pct.toFixed(1) + '%;--gx-i:' + i + '"></span>' +
+      '<span class="apx-lolli-dot" style="left:' + pct.toFixed(1) + '%"><i class="gx-dot" style="--gx-i:' + i + '"></i></span></div><span class="apx-lolli-value">' + d.count + '</span></div>';
+  }).join('') + '</div>';
+}
+
+function renderVerticalBars(containerId, data) {
+  var el = document.getElementById(containerId);
+  var rows = data.slice(0, 8);
+  if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
+  el.innerHTML = '<div class="apx-vbars">' + rows.map(function(d, i){
+    var h = Math.max(4, d.count/max*190);
+    var short = d.name.length > 18 ? d.name.slice(0,16) + '…' : d.name;
+    return '<div class="apx-vcol" title="' + escapeHtml(d.name) + '"><span class="apx-vvalue gx-dot" style="--gx-i:' + i + '">' + d.count + '</span>' +
+      '<div class="apx-vbar gx-bar-v" style="height:' + h.toFixed(0) + 'px;--gx-i:' + i + '"></div><span class="apx-vlabel">' + escapeHtml(short) + '</span></div>';
+  }).join('') + '</div>';
+}
+
+function toggleSolicitanteDetail(el) {
+  var detail = el.nextElementSibling;
+  detail.classList.toggle('open');
+  el.querySelector('.apx-solic-arrow').classList.toggle('open');
+}
+function renderSolicitantesChart(filtered) {
+  var el = document.getElementById('chartSolicitantes');
+  var top = uniqueCounts(filtered, 'solicitante').slice(0, 8);
+  if (!top.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var max = Math.max.apply(null, top.map(function(d){return d.count;}).concat([1]));
+  el.innerHTML = top.map(function(d, idx) {
+    var pct = (d.count/max*100).toFixed(1);
+    var name = shortUser(d.value);
+    var info = horasDeSolicitante(filtered, d.value);
+    var permisoLine = info.permisosCount > 0 ? fmtNum(info.horas) + ' horas (' + info.permisosCount + ' solicitudes)' : 'sin registro';
+    var vacacionLine = info.vacacionesCount > 0 ? fmtNum(info.dias) + ' días (' + info.vacacionesCount + ' solicitudes)' : 'sin registro';
+    return '<div class="apx-solic-item"><div class="apx-solic-row" onclick="toggleSolicitanteDetail(this)">' +
+      '<span class="apx-solic-arrow">&#9656;</span><span class="apx-barlabel" title="' + escapeHtml(name) + '">' + (idx+1) + '. ' + escapeHtml(name) + '</span>' +
+      '<div class="apx-bartrack"><div class="apx-barfill gx-bar-h" style="width:' + pct + '%;--gx-i:' + idx + '"></div></div><span class="apx-barcount">' + d.count + '</span></div>' +
+      '<div class="apx-solic-detail"><div>Permisos: <strong>' + permisoLine + '</strong></div><div>Vacaciones: <strong>' + vacacionLine + '</strong></div></div></div>';
+  }).join('');
+}
+
+function renderMonthChart(filtered) {
+  var el = document.getElementById('chartMes');
+  if (!filtered.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var counts = {};
+  filtered.forEach(function(r){ var ym=yearMonth(r.fechaSolicitud); if(ym) counts[ym]=(counts[ym]||0)+1; });
+  var keys = Object.keys(counts).sort();
+  var data = keys.map(function(k){ return {name:fmtMonthLabel(k), count:counts[k]}; });
+  if (!data.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  var W=1100, H=260, padL=42, padR=24, padT=28, padB=42;
+  var max = Math.max.apply(null, data.map(function(d){return d.count;}).concat([1]));
+  var x = function(i){ return data.length===1 ? (W/2) : padL + i*((W-padL-padR)/(data.length-1)); };
+  var y = function(v){ return padT + (max-v)/max*(H-padT-padB); };
+  var pts = data.map(function(d,i){return x(i).toFixed(1)+','+y(d.count).toFixed(1);});
+  var path = 'M ' + pts.join(' L ');
+  var area = path + ' L ' + x(data.length-1).toFixed(1) + ',' + (H-padB) + ' L ' + x(0).toFixed(1) + ',' + (H-padB) + ' Z';
+  var grid='';
+  for(var g=0;g<=4;g++) { var gy=padT+g*(H-padT-padB)/4; grid += '<line class="apx-line-grid" x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'"/>'; }
+  var dots = data.map(function(d,i){ return '<circle class="apx-line-dot gx-dot" style="--gx-i:'+i+'" cx="'+x(i)+'" cy="'+y(d.count)+'" r="4.5"/><text class="apx-line-value gx-dot" style="--gx-i:'+i+'" x="'+x(i)+'" y="'+(y(d.count)-12)+'" text-anchor="middle">'+d.count+'</text><text class="apx-line-label" x="'+x(i)+'" y="'+(H-15)+'" text-anchor="middle">'+escapeHtml(d.name)+'</text>'; }).join('');
+  var peak = data.slice().sort(function(a,b){return b.count-a.count;})[0];
+  document.getElementById('insightMes').textContent = peak ? 'Pico: ' + peak.name + ' · ' + peak.count : 'Tendencia';
+  el.innerHTML = '<div class="apx-linechart-wrap"><svg class="apx-linechart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Acciones por mes"><defs><linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c43c50" stop-opacity=".26"/><stop offset="100%" stop-color="#c43c50" stop-opacity="0"/></linearGradient></defs>'+grid+'<path class="apx-line-area gx-area" d="'+area+'"/><path class="apx-line-path gx-line" pathLength="1" d="'+path+'"/>'+dots+'</svg></div>';
+}
+
+// ---------- Informe detallado: tabla, buscador propio y exportación ----------
+// El buscador de la tabla solo busca dentro de lo que ya dejaron pasar los filtros
+// de la barra; no cambia tarjetas ni gráficas. Se exporta exactamente lo que se ve.
+var LAST_FILTERED = [];
+var TABLE_ROWS = [];
+// Horas a dos decimales, solo al mostrar (las sumas usan el valor completo).
+function fmtHoras(n) { return Number(n).toLocaleString('es-GT', { maximumFractionDigits: 2 }); }
+// Horas y Días como se muestran: sin dato = «—», nunca 0.
+function horasPantalla(r) { return r.horasDb !== null ? fmtHoras(r.horasDb) : '—'; }
+function diasPantalla(r) { return r.diasTxt !== null ? r.diasTxt : '—'; }
+function tableHaystack(r) {
+  return normTxt([
+    r.id, r.tipo, r.pais, r.solicitante, r.jefeInmediato || '', shortUser(r.aprobador),
+    etiquetaEstadoAPS(r), fmtDate(r.fechaSolicitud), isoToDmy(r.fechaSolicitud),
+    r.justificacion || '', r.horasDb !== null ? horasPantalla(r) + ' h' : '', r.diasTxt !== null ? r.diasTxt + ' días' : ''
+  ].join(' '));
+}
+function renderTable(filtered) {
+  LAST_FILTERED = filtered;
+  // «Solo con duración», como el buscador, recorta las filas de esta tabla (y lo que se exporta).
+  var soloDur = soloConDuracion();
+  var base = soloDur ? filtered.filter(durTiene) : filtered;
+  var input = document.getElementById('fTableSearch');
+  input.placeholder = base.length === 1 ? 'Buscar dentro de este resultado' : 'Buscar dentro de estos ' + base.length + ' resultados';
+  var qRaw = input.value.trim();
+  var q = normTxt(qRaw);
+  var visibles = q ? base.filter(function(r) { return tableHaystack(r).indexOf(q) !== -1; }) : base;
+  TABLE_ROWS = visibles;
+  document.getElementById('tableCount').textContent = (q || soloDur)
+    ? visibles.length + ' de ' + filtered.length + ' filtradas · ' + RECORDS.length + ' en total'
+    : filtered.length + ' de ' + RECORDS.length;
+  pintarDurResumen(visibles, soloDur);
+  // Mientras un botón dice "Generando…" no se reactiva desde aquí.
+  ['btnExportXlsx', 'btnExportCsv'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (!b.dataset.generando) b.disabled = !visibles.length;
+  });
+  var wrap = document.getElementById('tableBody');
+  if (visibles.length === 0) {
+    wrap.innerHTML = q && base.length
+      ? '<div class="apx-empty"><div class="apx-empty-title">Sin coincidencias</div>' +
+        'Ninguna de las ' + base.length + ' solicitudes ' + (soloDur ? 'con duración' : 'filtradas') + ' contiene «' + escapeHtml(qRaw) + '».</div>'
+      : soloDur && filtered.length
+        ? '<div class="apx-empty"><div class="apx-empty-title">Sin duración</div>' +
+          'Ninguna de las ' + filtered.length + ' solicitudes filtradas tiene horas ni días. Desmarca «Solo con duración» para verlas.</div>'
+        : '<div class="apx-empty"><div class="apx-empty-title">Sin coincidencias</div>' +
+          'No hay expedientes que coincidan con estos filtros. Ajusta los filtros o límpialos para ver resultados.</div>';
+    return;
+  }
+  var rows = visibles.map(function(r) {
+    return '<tr><td class="apx-mono">' + r.id + '</td><td>' + escapeHtml(r.tipo) + durMarcas(r) + '</td>' +
+      '<td class="apx-num">' + horasPantalla(r) + '</td><td class="apx-num">' + escapeHtml(diasPantalla(r)) + '</td>' +
+      '<td>' + escapeHtml(r.pais) + '</td>' +
+      '<td class="apx-mono">' + escapeHtml(r.solicitante) + '</td><td>' + escapeHtml(r.jefeInmediato || '—') + '</td>' +
+      '<td class="apx-mono">' + escapeHtml(shortUser(r.aprobador)) + '</td><td>' + stampBadge(r.estado) + '</td>' +
+      '<td class="apx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
+      '<td class="apx-justif">' + justifCell(r.justificacion) + '</td></tr>';
+  }).join('');
+  var html = '<div class="apx-table-scroll"><table class="apx-table"><thead><tr>' +
+    '<th>ID</th><th>Tipo</th><th class="apx-num">Horas</th><th class="apx-num">Días</th><th>País</th><th>Solicitante</th><th>Jefe inmediato</th><th>Aprobador</th><th>Estado</th><th>Fecha solicitud</th><th>Justificación</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
+
+// ---------- Duración (dentro del Informe detallado) ----------
+// Una solicitud tiene duración si trae horas o días (horasDb / diasDb); 0 horas = sin dato.
+// Con las dos llenas cuenta una sola vez. No recalcula nada: muestra lo que trae la base.
+var DUR_TIPOS_EN_DIAS = ['Vacaciones anuales', 'Incapacidad medica'];   // no deberían traer horas
+var DUR_HORAS_ATIPICAS = 40;                                            // más de una semana
+var DUR_TIPO_NO_AUSENCIA = 'Ingreso de pre-aprobados';
+function durTiene(r) { return r.horasDb !== null || r.diasDb !== null; }
+// Error conocido del proceso de carga: horas en tipos que se miden en días (aún sin resolver).
+function durErrorCarga(r) { return DUR_TIPOS_EN_DIAS.indexOf(r.tipo) !== -1 && r.horasRegistradas; }
+function durAtipica(r) { return r.horasDb !== null && r.horasDb > DUR_HORAS_ATIPICAS; }
+// Caso a revisar: vacaciones con 0 días (fechas mal capturadas o todo en fin de semana).
+function durVacacionesSinDias(r) { return r.tipo === 'Vacaciones anuales' && r.diasDb === 0; }
+function durNum(n) { return Number(n).toLocaleString('es-GT', { maximumFractionDigits: 1 }); }
+function durMarca(texto, color, titulo) {
+  return '<span class="apx-chip apx-chip-sm" style="color:' + color + '" title="' + escapeHtml(titulo) + '">' + texto + '</span>';
+}
+// Pastilla «Con duración» y marcas de calidad de una fila. Las marcas van solo en filas
+// con duración (como en la antigua vista): una con 0 horas no lleva «Error de carga».
+function durMarcas(r) {
+  if (!durTiene(r)) return '';
+  return '<span class="pill pill-muted apx-pill-dur">Con duración</span>' +
+    (durErrorCarga(r) ? durMarca('Error de carga', '#c59600', 'Horas en un tipo que se mide en días: error conocido del proceso de carga') : '') +
+    (durAtipica(r) ? durMarca('Atípico', '#c43c50', 'Más de ' + DUR_HORAS_ATIPICAS + ' horas') : '') +
+    (durVacacionesSinDias(r) ? durMarca('0 días', '#4f8fd8', 'Vacaciones con 0 días: revisar las fechas') : '');
+}
+// Totales de duración de unas filas (los de la antigua vista Duración, sin cambios).
+function durTotales(rows) {
+  var con = rows.filter(durTiene);
+  var horas = 0, dias = 0, horasPre = 0;
+  con.forEach(function(r) {
+    if (r.horasDb !== null) { horas += r.horasDb; if (r.tipo === DUR_TIPO_NO_AUSENCIA) horasPre += r.horasDb; }
+    if (r.diasDb !== null) dias += r.diasDb;
+  });
+  return { n: con.length, horas: horas, dias: dias, horasPre: horasPre };
+}
+// Línea de resumen sobre la tabla: solo con «Solo con duración» activo, y con las filas que se ven.
+function pintarDurResumen(rows, activo) {
+  var caja = document.getElementById('durResumen');
+  caja.hidden = !activo;
+  if (!activo) return;
+  var t = durTotales(rows);
+  document.getElementById('durLinea').innerHTML =
+    '<strong>' + t.n.toLocaleString('es-GT') + '</strong> ' + (t.n === 1 ? 'solicitud' : 'solicitudes') + ' con duración · ' +
+    '<strong>' + durNum(t.horas) + '</strong> horas · <strong>' + durNum(t.dias) + '</strong> días';
+  // Nota: «Ingreso de pre-aprobados» no es una ausencia y pesa mucho en el total de horas.
+  var nota = document.getElementById('durNotaTipo');
+  nota.hidden = !(t.horasPre && t.horas);
+  if (!nota.hidden) {
+    nota.textContent = '«' + DUR_TIPO_NO_AUSENCIA + '» aporta ' + durNum(t.horasPre) + ' de las ' + durNum(t.horas) + ' horas (' +
+      Math.round(t.horasPre / t.horas * 100) + ' %) y no es una ausencia: el total de horas no son horas de falta.';
+  }
+}
+function soloConDuracion() { return document.getElementById('fSoloDuracion').checked; }
+
+// Mismas columnas que la tabla. Justificación completa; Aprobador sin dominio, como se ve.
+// La fecha va en aaaa-mm-dd y cada formato la escribe a su manera.
+// Horas y Días con el valor completo (son archivos para trabajar); sin dato, la celda va vacía.
+var EXPORT_COLS = ['ID', 'Tipo', 'Horas', 'Días', 'País', 'Solicitante', 'Jefe inmediato', 'Aprobador', 'Estado', 'Fecha solicitud', 'Justificación'];
+var EXPORT_DATE_COL = 9;
+var EXPORT_NUM_COLS = ['Horas', 'Días'];
+function exportValues(r) {
+  return [
+    r.id, r.tipo, r.horasDb !== null ? r.horasDb : '', r.diasDb !== null ? r.diasDb : '',
+    r.pais, r.solicitante, r.jefeInmediato || '', shortUser(r.aprobador),
+    statusMeta(r.estado).label, r.fechaSolicitud || '', r.justificacion || ''
+  ];
+}
+function exportFileName(ext) { return 'acciones-personal_' + todayIso() + '.' + ext; }
+function downloadBlob(blob, name) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+// CSV: UTF-8 con BOM para que Excel lea bien las tildes; fecha dd/mm/aaaa.
+// Un texto que empiece con = + - @ se antepone con ' para que Excel no lo tome como fórmula.
+function csvCell(v) {
+  var s = v == null ? '' : String(v);
+  if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function buildCsv(rows) {
+  var lines = [EXPORT_COLS.map(csvCell).join(',')];
+  rows.forEach(function(r) {
+    var vals = exportValues(r);
+    vals[EXPORT_DATE_COL] = isoToDmy(vals[EXPORT_DATE_COL]);
+    lines.push(vals.map(csvCell).join(','));
+  });
+  return new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+}
+
+/* ============================================================
+   EXPORTACIÓN EXCEL · FORMATO ESTÁNDAR INTELFON
+   Mismo formato en los seis tableros (referencia: «Informe detallado SAC -
+   formato propuesto.xlsx»). Usa ExcelJS porque SheetJS gratis no escribe
+   colores, negritas ni bordes.
+
+   PARA COPIARLO A OTRO TABLERO: copiar desde aquí hasta «FIN FORMATO
+   ESTÁNDAR» tal cual. Lo propio de cada tablero va aparte, en la config
+   que se le pasa a exportarExcelEstandar() (ver «Config de RRHH»).
+
+   cfg = {
+     titulo:    "RED INTELFON · Flujo de Ventas · Informe detallado",
+     hoja:      nombre de la pestaña,
+     filtros:   "Filtros: …"   (estado real de la barra al exportar),
+     mostrando: "Mostrando X de Y …",
+     nota:      texto al pie,
+     archivo:   nombre del .xlsx,
+     columnas:  [{t:"Título", tipo, estado}] — tipo: "num" | "dinero" |
+                "fecha" | "fechaHora" | "link" | (nada = texto);
+                estado: v => "positivo" | "proceso" | "negativo" | "sinDato"
+                (opcional: pinta la celda en negrita con su color),
+     filas:     [[valor, …], …] en el mismo orden que columnas.
+                Fechas: Date o texto "AAAA-MM-DD" / "AAAA-MM-DD HH:MM".
+   }
+   ============================================================ */
+/* ---------------------------------------------------------
+   Carga de ExcelJS bajo demanda.
+   La URL se pide una sola vez; si falla, se puede reintentar.
+   Si el CDN no responde en 20 s se da por fallida, para que el
+   botón no se quede en "Generando…" para siempre.
+   El error lleva libreria:true para ofrecer el CSV.
+--------------------------------------------------------- */
+const SCRIPT_ESPERA_MS = 20000;
+const scriptCargas = {};
+
+function loadScriptOnce(url,global){
+  const listo = ()=>global.split(".").reduce((o,k)=>o && o[k],window);
+  if(listo()) return Promise.resolve(listo());
+  if(!scriptCargas[url]){
+    scriptCargas[url] = new Promise((resolve,reject)=>{
+      const fallo = ()=>{
+        clearTimeout(espera);
+        delete scriptCargas[url];
+        s.remove();
+        const err = new Error(`No se pudo cargar ${url}`);
+        err.libreria = true;
+        reject(err);
+      };
+      const s = document.createElement("script");
+      const espera = setTimeout(fallo,SCRIPT_ESPERA_MS);
+      s.src = url;
+      s.onload = ()=>{ clearTimeout(espera); listo() ? resolve(listo()) : fallo(); };
+      s.onerror = fallo;
+      document.head.appendChild(s);
+    });
+  }
+  return scriptCargas[url];
+}
+
+const EXCELJS_URL = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+
+/* Carga ExcelJS la primera vez que se exporta (pesa ~1 MB); después ya queda. */
+const cargarExcelJS = ()=>loadScriptOnce(EXCELJS_URL,"ExcelJS");
+
+const XL_ESTILO = {
+  fuente:"Arial",
+  fondoTitulo:"FF0F1623", fondoEncabezado:"FF151E31", fondoAlterno:"FFF4F6FA",
+  lineaEncabezado:"FFEF3E4D", lineaFila:"FFD4DBE6", gris:"FF6B7A90", blanco:"FFFFFFFF",
+  estados:{positivo:"FF0F9D6A", proceso:"FFB4790A", negativo:"FFEF3E4D", sinDato:"FF6B7A90"},
+  formatos:{num:"#,##0", numDecimal:"#,##0.0#", dinero:"#,##0.00", fecha:"dd/mm/yyyy", fechaHora:"dd/mm/yyyy hh:mm"},
+};
+const XL_NUMERICOS = ["num","dinero"];
+
+/* "AAAA-MM-DD" o "AAAA-MM-DD HH:MM" → fecha de Excel (sin zona horaria: se ve tal cual) */
+function xlFecha(v){
+  if(v instanceof Date) return isNaN(v) ? null : v;
+  const m = String(v ?? "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  return m ? new Date(Date.UTC(+m[1], m[2]-1, +m[3], +(m[4]||0), +(m[5]||0))) : null;
+}
+
+/* Texto que se ve en la celda: solo para calcular el ancho de la columna. */
+function xlTextoAncho(c, v){
+  if(v === null || v === undefined || v === "") return "";
+  if(c.tipo === "fecha") return "00/00/0000";
+  if(c.tipo === "fechaHora") return "00/00/0000 00:00";
+  if(c.tipo === "dinero") return Number(v).toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+  if(c.tipo === "num") return Number(v).toLocaleString("en-US");
+  return String(v);
+}
+
+function xlGeneradoGT(){
+  const p = {};
+  new Intl.DateTimeFormat("en-GB",{timeZone:"America/Guatemala", day:"2-digit", month:"2-digit", year:"numeric",
+    hour:"2-digit", minute:"2-digit", hourCycle:"h23"}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);
+  return `Generado: ${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute} · hora de Guatemala`;
+}
+
+async function exportarExcelEstandar(cfg){
+  const ExcelJS = await cargarExcelJS();
+  const E = XL_ESTILO, cols = cfg.columnas, nCols = cols.length;
+  const fuente = (o={}) => ({name:E.fuente, size:10, ...o});
+  const relleno = argb => ({type:"pattern", pattern:"solid", fgColor:{argb}});
+  const alinear = (horizontal, o={}) => ({vertical:"middle", indent:1, ...(horizontal ? {horizontal} : {}), ...o});
+
+  const libro = new ExcelJS.Workbook();
+  const ws = libro.addWorksheet(cfg.hoja);
+
+  /* Filas 1-4 (y la nota al pie): una banda combinada a lo ancho */
+  const banda = (n, texto, alto, estilo) => {
+    const fila = ws.getRow(n);
+    fila.height = alto;
+    for(let c = 1; c <= nCols; c++) Object.assign(fila.getCell(c), estilo);
+    fila.getCell(1).value = texto;
+    if(nCols > 1) ws.mergeCells(n, 1, n, nCols);
+  };
+  const contexto = (o={}) => ({font:fuente({size:9, color:{argb:E.gris}, ...o}), alignment:alinear()});
+  banda(1, cfg.titulo, 30, {font:fuente({size:14, bold:true, color:{argb:E.blanco}}), fill:relleno(E.fondoTitulo), alignment:alinear()});
+  banda(2, xlGeneradoGT(), 15, contexto());
+  banda(3, cfg.filtros, 15, contexto());
+  banda(4, cfg.mostrando, 15, contexto({bold:true}));
+  ws.getRow(5).height = 6;
+
+  /* Fila 6: encabezados */
+  const enc = ws.getRow(6);
+  enc.height = 28;
+  cols.forEach((c, i)=>{
+    const celda = enc.getCell(i+1);
+    celda.value = c.t.toUpperCase();
+    celda.font = fuente({size:9, bold:true, color:{argb:E.blanco}});
+    celda.fill = relleno(E.fondoEncabezado);
+    celda.border = {bottom:{style:"medium", color:{argb:E.lineaEncabezado}}};
+    celda.alignment = alinear(XL_NUMERICOS.includes(c.tipo) ? "right" : "left", {wrapText:true});
+  });
+
+  /* Filas de datos */
+  cfg.filas.forEach((valores, r)=>{
+    const fila = ws.getRow(7 + r);
+    fila.height = 18;
+    cols.forEach((c, i)=>{
+      const celda = fila.getCell(i+1);
+      let v = valores[i];
+      if(v === "" || v === undefined) v = null;
+      celda.font = fuente(i === 0 ? {bold:true} : {});
+      celda.border = {bottom:{style:"thin", color:{argb:E.lineaFila}}};
+      if(r % 2 === 1) celda.fill = relleno(E.fondoAlterno);
+
+      if(c.tipo === "fecha" || c.tipo === "fechaHora"){
+        const f = v === null ? null : xlFecha(v);
+        celda.value = f ?? v;               // si no se reconoce la fecha, queda el texto original
+        if(f) celda.numFmt = E.formatos[c.tipo];
+        celda.alignment = alinear("left");
+      }else if(XL_NUMERICOS.includes(c.tipo) && v !== null && Number.isFinite(Number(v))){
+        celda.value = Number(v);
+        celda.numFmt = c.tipo === "dinero" ? E.formatos.dinero
+          : Number.isInteger(Number(v)) ? E.formatos.num : E.formatos.numDecimal;
+        celda.alignment = alinear("right");
+      }else if(c.tipo === "link" && v !== null){
+        celda.value = {text:String(v), hyperlink:String(v)};
+        celda.alignment = alinear();
+      }else{
+        celda.value = v === null ? null : String(v);   // ids y códigos siempre como texto
+        celda.alignment = alinear(XL_NUMERICOS.includes(c.tipo) ? "right" : undefined);   // texto: alineación general (izquierda)
+      }
+
+      const est = c.estado && v !== null ? c.estado(v) : null;
+      if(est && E.estados[est]) celda.font = fuente({bold:true, color:{argb:E.estados[est]}});
+    });
+  });
+
+  /* Anchos según el contenido (las de texto largo, anchas; tope para no desbordar) */
+  cols.forEach((c, i)=>{
+    const muestra = cfg.filas.slice(0, 1000).map(f=>xlTextoAncho(c, f[i]).length);
+    const largo = Math.max(Math.min(c.t.length, 18), ...muestra, 6);
+    ws.getColumn(i+1).width = Math.min(60, Math.max(10, largo + 3));
+  });
+
+  const ultimaFila = 6 + cfg.filas.length;
+  ws.views = [{state:"frozen", ySplit:6, topLeftCell:"A7", activeCell:"A7"}];
+  ws.autoFilter = {from:{row:6, column:1}, to:{row:ultimaFila, column:nCols}};
+
+  banda(ultimaFila + 2, cfg.nota, 15, {font:fuente({size:8, italic:true, color:{argb:E.gris}}), alignment:alinear()});
+
+  ws.pageSetup = {paperSize:1, orientation:"landscape", fitToPage:true, fitToWidth:1, fitToHeight:0,
+    margins:{left:.75, right:.75, top:1, bottom:1, header:.511811023622047, footer:.511811023622047}};
+  ws.pageSetup.printTitlesRow = "6:6";
+
+  const buffer = await libro.xlsx.writeBuffer();
+  return new Blob([buffer], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+/* ============================ FIN FORMATO ESTÁNDAR ============================ */
+
+/* ---- Config de RRHH para el formato estándar ----
+   Lo único que cambia de un tablero a otro: título, filtros, columnas y filas. */
+// Color del Estado en el Excel. Aprobacion RRHH es aprobación del 2.º nivel.
+var XL_ESTADO_RRHH = {
+  'Aprobacion RRHH': 'positivo',
+  'Ingresada': 'proceso', 'Aval Jefe': 'proceso',
+  'Rechazo Jefe': 'negativo', 'Rechazo RRHH': 'negativo'
+};
+var XL_ESTADO_POR_ETIQUETA = {};
+Object.keys(STATUS_META).forEach(function(k) {
+  XL_ESTADO_POR_ETIQUETA[STATUS_META[k].label] = XL_ESTADO_RRHH[k] || 'sinDato';
+});
+function xlEstadoRrhh(v) { return XL_ESTADO_POR_ETIQUETA[v] || 'sinDato'; }
+
+// Fila 3: lo que de verdad filtra el tablero (filtrosLista, la misma del PDF) más el
+// buscador propio de la tabla, porque el Excel sale de esa tabla.
+function xlFiltrosTexto() {
+  var parts = filtrosLista().map(function(f) { return f.etiqueta + ': ' + f.valor; });
+  var qTabla = document.getElementById('fTableSearch').value.trim();
+  if (qTabla) parts.push('Búsqueda en la tabla: «' + qTabla + '»');
+  return 'Filtros: ' + parts.join(' · ');
+}
+
+// Título, «Mostrando X de Y» y nota: los mismos en el Excel y en el PDF.
+var INF_TITULO = 'RED INTELFON · Acciones de Personal · Informe detallado';
+var INF_NOTA = 'Las filas corresponden únicamente a los registros filtrados en el dashboard al momento de la exportación.';
+function infMostrandoTexto(filas) {
+  return 'Mostrando ' + filas.length.toLocaleString('en-US') + ' de ' + RECORDS.length.toLocaleString('en-US') + ' solicitudes';
+}
+
+async function exportXlsx() {
+  var boton = document.getElementById('btnExportXlsx');
+  if (boton.disabled || !TABLE_ROWS.length) return;
+  var filas = TABLE_ROWS.slice();
+  var cfg = {
+    titulo: INF_TITULO,
+    hoja: 'Solicitudes',
+    filtros: xlFiltrosTexto(),
+    mostrando: infMostrandoTexto(filas),
+    nota: INF_NOTA,
+    columnas: EXPORT_COLS.map(function(t, i) {
+      return { t: t, tipo: i === EXPORT_DATE_COL ? 'fecha' : EXPORT_NUM_COLS.indexOf(t) !== -1 ? 'num' : undefined, estado: t === 'Estado' ? xlEstadoRrhh : null };
+    }),
+    filas: filas.map(exportValues)
+  };
+  var nombre = exportFileName('xlsx');
+
+  try {
+    await infGenerando(boton, async function() { downloadBlob(await exportarExcelEstandar(cfg), nombre); });
+    infDescargaOk();
+  } catch (err) {
+    infFalloDescarga(err, 'Excel');
+  }
+}
+
+/* Botón en "Generando…" y deshabilitado mientras corre la tarea. */
+async function infGenerando(btn, tarea){
+  const html = btn.innerHTML;
+  btn.dataset.generando = "1";
+  btn.disabled = true;
+  btn.textContent = "Generando…";
+  document.getElementById("exportAviso").hidden = true;
+  try{
+    await tarea();
+  }finally{
+    delete btn.dataset.generando;
+    btn.innerHTML = html;
+    btn.disabled = !TABLE_ROWS.length;
+  }
+}
+
+/* Si lo que falló es la librería (sin internet, CDN bloqueado o colgado),
+   se ofrece el CSV, que se genera sin librería. */
+function infFalloDescarga(err, formato){
+  console.error(`No se pudo generar el ${formato} del informe`, err);
+  const aviso = document.getElementById("exportAviso");
+  if(err && err.libreria){
+    document.getElementById("btnExportCsv").hidden = false;
+    aviso.textContent = `No se pudo cargar la herramienta para generar el ${formato} (revisa tu conexión a internet). Puedes descargar el informe en CSV.`;
+  }else{
+    aviso.textContent = `No se pudo generar el ${formato}. Intenta de nuevo.`;
+  }
+  aviso.hidden = false;
+}
+function infDescargaOk(){
+  document.getElementById("exportAviso").hidden = true;
+  document.getElementById("btnExportCsv").hidden = true;
+}
+
+/* ============================================================
+   PDF POR MÓDULOS · FORMATO ESTÁNDAR RED INTELFON
+   Botón PDF de la barra de filtros, con la ventana de módulos de Flash de
+   altas, Flujo de ventas y Servicio al Cliente. Usa assets/js/reporte-pdf.js.
+   Cada módulo se arma con las MISMAS filas ya filtradas que la pantalla
+   (getFiltered(): operación, período, panel «Filtros», búsqueda de la barra
+   y la casilla de líderes) y con las mismas funciones de cálculo. El buscador
+   propio de la tabla del Informe no entra: vive en otra pestaña.
+   ============================================================ */
+
+function rrhhPdfNum(n){
+  return Number(n || 0).toLocaleString('es-GT');
+}
+
+function rrhhPdfPct(n, total){
+  return total ? ((n / total) * 100).toFixed(1) + '%' : '0.0%';
+}
+
+// Estados del PDF: los dos rechazos van juntos, como en la tarjeta «Rechazadas».
+function rrhhPdfEstadoCounts(rows){
+  var c = conteoEstados(rows);
+  return {
+    ingresadas:c['Ingresada'] || 0, aval:c['Aval Jefe'] || 0, rrhh:c['Aprobacion RRHH'] || 0,
+    rechazadas:(c['Rechazo Jefe'] || 0) + (c['Rechazo RRHH'] || 0), sinEstado:c['Sin estado'] || 0
+  };
+}
+
+function rrhhPdfResumenArea(rows){
+  var grupos = new Map();
+  rows.forEach(function(r){
+    var area = r.area || 'Sin área';
+    var pais = r.pais || 'No especificado';
+    var key = area + '\u0000' + pais;
+    if(!grupos.has(key)) grupos.set(key, []);
+    grupos.get(key).push(r);
+  });
+
+  return Array.from(grupos.entries())
+    .map(function(entry){
+      var partes = entry[0].split('\u0000');
+      var rs = entry[1];
+      var e = rrhhPdfEstadoCounts(rs);
+      return {
+        area:partes[0], pais:partes[1], total:rs.length,
+        ingresadas:e.ingresadas, aval:e.aval, rrhh:e.rrhh, rechazadas:e.rechazadas
+      };
+    })
+    .sort(function(a,b){ return b.total - a.total || a.area.localeCompare(b.area); });
+}
+
+function rrhhPdfDetalle(rows){
+  return rows.map(function(r){
+    return [
+      { texto:String(r.id == null ? '' : r.id), bold:true },
+      r.pais || '',
+      r.fechaSolicitud ? isoToDmy(r.fechaSolicitud) : '',
+      r.solicitante || '',
+      r.area || '',
+      r.jefeInmediato || '',
+      r.tipo || '',
+      { texto:horasPantalla(r), align:'r' },   // como en pantalla: dos decimales y «—» sin dato (Excel/CSV llevan el valor completo)
+      { texto:diasPantalla(r), align:'r' },
+      { texto:etiquetaEstadoAPS(r), color:statusMeta(r.estado).color, bold:true },
+      r.justificacion || ''
+    ];
+  });
+}
+
+/* Los módulos = las secciones de la vista principal que ya tienen bloque en
+   el PDF, con el nombre que se ve en pantalla y en el orden de la pantalla.
+   Sin bloque todavía (pendientes): Segundo aprobador, Por jefe inmediato,
+   Por tipo de acción, Top solicitantes y Acciones por mes. */
+var PDFX_ICONOS = {
+  indicadores:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  pais:'<path d="M4 21V7l6-4 6 4v14"/><path d="M4 21h16"/><path d="M16 11h4v10"/>',
+  permisos:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="m9 15 2 2 4-4"/>',
+  estado:'<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/>',
+  area:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/>',
+  informe:'<path d="M4 6h16M4 12h16M4 18h10"/><path d="M19 15v6M16 18l3 3 3-3"/>'
+};
+var PDF_MODULOS = [
+  { k:'indicadores', t:'Indicadores', d:'Siete KPIs de decisiones del primer y segundo aprobador.' },
+  { k:'permisos', t:'Permisos y vacaciones', d:'Solicitudes de permiso con sus horas y de vacaciones con sus días.' },
+  { k:'estado', t:'Por estado', d:'Cuántas solicitudes hay en cada estado, en una dona.' },
+  { k:'area', t:'Por área', d:'Cada área por operación, con su desglose por estado y la fila TOTAL.' },
+  { k:'informe', t:'Informe detallado', detalle:true, d:'La tabla solicitud por solicitud, {filas}. Decide si el PDF tiene 3 páginas o 60.' }
+];
+/* Con una sola operación marcada, «Distribución por país» sería una barra sola
+   al 100 %: no se ofrece en la ventana ni va al PDF (mismo criterio que SAC con
+   «Cumplimiento por operación»). La numeración de los demás no cambia. */
+var unSoloPais = function(){ return opSel.size === 1; };
+function pdfxDisponibles(){
+  return PDF_MODULOS.map(function(m){ return m.k; });
+}
+
+/* Lo que filtra la barra en este momento, como lista {etiqueta, valor}. Sale del
+   estado de los filtros (getFilterValues, XF_STATE, la casilla de líderes),
+   nunca del DOM de la ventana. Alimenta el encabezado del PDF, las pastillas
+   de la ventana y la fila de filtros del Excel. */
+// Texto de un filtro activo: «N de M»; en «Duración» con una sola opción, su nombre
+// (el PDF tiene que decir con qué se filtró).
+function xfSelTexto(def){
+  var st = XF_STATE[def.key];
+  if(def.key === 'duracion' && st.sel.size === 1) return Array.from(st.sel)[0];
+  return st.sel.size + ' de ' + st.avail.length;
+}
+function filtrosLista(){
+  var f = getFilterValues();
+  var lista = [
+    { etiqueta:'Operaciones', valor:f.ops ? f.ops.join(' y ') : 'las dos' },
+    { etiqueta:'Período', valor:periodoTexto(f) }
+  ];
+  XF_DEFS.forEach(function(def){
+    var st = XF_STATE[def.key];
+    if(st.sel) lista.push({ etiqueta:def.label, valor:xfSelTexto(def) });
+  });
+  var q = document.getElementById('fSearch').value.trim();
+  if(q) lista.push({ etiqueta:'Búsqueda', valor:'«' + q + '»' });
+  if(document.getElementById('fIncludeInactive').checked) lista.push({ etiqueta:'Líderes que ya no están', valor:'incluidos' });
+  if(soloConDuracion()) lista.push({ etiqueta:'Informe detallado', valor:'solo con duración' });
+  return lista;
+}
+
+function pdfConfig(marcados){
+  var rows = getFiltered();
+  var total = rows.length;
+  var disponibles = pdfxDisponibles();
+  var M = function(k){ return marcados.has(k) && disponibles.indexOf(k) !== -1; };
+  var conDetalle = M('informe');
+  var titulo = 'Reporte de Solicitudes RRHH';
+  var I = indicadoresRrhh(rows);
+  var e = rrhhPdfEstadoCounts(rows);
+
+  var partesEstado = [
+    { etiqueta:'Ingresadas', valor:e.ingresadas, color:'#c59600' },
+    { etiqueta:'Pendientes 1.er aprobador (en aval)', valor:e.aval, color:'#2f8f76' },
+    { etiqueta:'Aprobadas 2.º aprobador', valor:e.rrhh, color:'#4f8fd8' },
+    { etiqueta:'Rechazadas 1.er y 2.º aprobador', valor:e.rechazadas, color:'#c43c50' }
+  ];
+  if(e.sinEstado) partesEstado.push({ etiqueta:'Sin estado', valor:e.sinEstado, color:'#8b909e' });
+
+  var graficas = M('estado') ? {
+    tipo:'graficas',
+    titulo:'Estado de solicitudes',
+    dona:{
+      titulo:'Estado actual de solicitudes',
+      centro:{ valor:rrhhPdfNum(total), etiqueta:'solicitudes' },
+      partes:partesEstado,
+      pie:['Áreas activas: ' + rrhhPdfNum(I.areas)]
+    },
+    barras:null
+  } : null;
+
+  var pv = permisosVacaciones(rows);
+  var permisos = M('permisos') ? {
+    tipo:'resumen',
+    titulo:'Permisos y vacaciones',
+    columnas:[ {titulo:'Tipo'}, {titulo:'Solicitudes', align:'r'}, {titulo:'Acumulado', align:'r'} ],
+    filas:[
+      [{texto:'Permisos (horas)', bold:true}, {texto:rrhhPdfNum(pv.permisos.length), align:'r'}, {texto:fmtNum(pv.horas) + ' horas', align:'r'}],
+      [{texto:'Vacaciones (días)', bold:true}, {texto:rrhhPdfNum(pv.vacaciones.length), align:'r'}, {texto:fmtNum(pv.dias) + ' días', align:'r'}]
+    ],
+    total:['TOTAL', {texto:rrhhPdfNum(pv.permisos.length + pv.vacaciones.length), align:'r'}, '—']
+  } : null;
+
+  var area = M('area') ? {
+    tipo:'resumen',
+    titulo:'Resumen por área',
+    nota:rrhhPdfNum(I.areas) + ' áreas activas en la selección actual.',
+    columnas:[
+      {titulo:'Área'}, {titulo:'Operación'}, {titulo:'Solicitudes', align:'r'},
+      {titulo:'Ingresadas', align:'r'}, {titulo:'Pendientes 1.º (aval)', align:'r'},
+      {titulo:'Aprobadas 2.º', align:'r'}, {titulo:'Rechazadas (ambos)', align:'r'}
+    ],
+    filas:rrhhPdfResumenArea(rows).map(function(x){
+      return [
+        { texto:x.area, bold:true }, x.pais,
+        { texto:rrhhPdfNum(x.total), align:'r' },
+        { texto:rrhhPdfNum(x.ingresadas), align:'r', color:'#b4790a' },
+        { texto:rrhhPdfNum(x.aval), align:'r', color:'#0f766e' },
+        { texto:rrhhPdfNum(x.rrhh), align:'r', color:'#4f8fd8' },
+        { texto:rrhhPdfNum(x.rechazadas), align:'r', color:'#c43c50' }
+      ];
+    }),
+    total:[
+      'TOTAL','', {texto:rrhhPdfNum(total), align:'r'},
+      {texto:rrhhPdfNum(e.ingresadas), align:'r'}, {texto:rrhhPdfNum(e.aval), align:'r'},
+      {texto:rrhhPdfNum(e.rrhh), align:'r'}, {texto:rrhhPdfNum(e.rechazadas), align:'r'}
+    ]
+  } : null;
+
+  // Con una sola operación, la columna País sería igual en todas las filas y la
+  // librería la pasaría al encabezado como «País: …», repitiendo «Operaciones: …».
+  var columnasDetalle = [
+    {titulo:'ID'}, {titulo:'País'}, {titulo:'Fecha'}, {titulo:'Solicitante'}, {titulo:'Área'},
+    {titulo:'Jefe inmediato'}, {titulo:'Tipo'}, {titulo:'Horas', align:'r'}, {titulo:'Días', align:'r'}, {titulo:'Estado'},
+    {titulo:'Justificación', clase:'com'}
+  ];
+  var sinPais = function(lista){ return unSoloPais() ? lista.filter(function(x, i){ return i !== 1; }) : lista; };
+  // El detalle respeta «Solo con duración», igual que la tabla del Informe.
+  var filasDetalle = soloConDuracion() ? rows.filter(durTiene) : rows;
+  var detalle = conDetalle ? {
+    titulo:'Detalle de solicitudes' + (soloConDuracion() ? ' con duración' : '') + ' — ' + rrhhPdfNum(filasDetalle.length) +
+      (filasDetalle.length === RECORDS.length ? '' : ' de ' + rrhhPdfNum(RECORDS.length)),
+    nota:INF_NOTA,
+    columnas:sinPais(columnasDetalle),
+    filas:rrhhPdfDetalle(filasDetalle).map(sinPais)
+  } : null;
+
+  return {
+    area:'RRHH',
+    subarea:'ACCIONES DE PERSONAL',
+    titulo:'Reporte de Solicitudes de Recursos Humanos',
+    archivo:titulo + ' - RED Intelfon - ' + (conDetalle ? '' : 'sin detalle - ') + todayIso(),
+    // Si el navegador bloquea la ventana no se imprime nada: lo dice la ventana del PDF.
+    onBloqueado:function(){ pdfxAvisar('El navegador bloqueó la ventana del reporte. Permite las ventanas emergentes para este sitio (ícono a la derecha de la barra de direcciones) y vuelve a intentarlo.'); },
+    filtros:filtrosLista(),
+    pill:{ etiqueta:'Solicitudes', valor:rrhhPdfNum(total) },
+    tarjetas:M('indicadores') ? [
+      { lbl:'Total solicitudes', num:rrhhPdfNum(I.total), acento:'#c43c50', sub:'Registros visibles en el período' },
+      { lbl:'Pendientes 1.er aprobador', num:rrhhPdfNum(I.pendientesPrimero), acento:'#2f8f76', sub:'Ingresadas + en aval' },
+      { lbl:'Aprobadas 1.er aprobador', num:rrhhPdfNum(I.aprobadasPrimero), acento:'#0891b2', sub:'Ya avanzaron al segundo nivel' },
+      { lbl:'Rechazadas 1.er aprobador', num:rrhhPdfNum(I.rechazadasPrimero), acento:'#c43c50', sub:'Rechazo jefe' },
+      { lbl:'Pendientes 2.º aprobador', num:rrhhPdfNum(I.pendientesSegundo), acento:'#8b909e', sub:'Campo aprobador sin asignar' },
+      { lbl:'Aprobadas 2.º aprobador', num:rrhhPdfNum(I.aprobadasSegundo), acento:'#4f8fd8', sub:'Aprobación RRHH' },
+      { lbl:'Rechazadas 2.º aprobador', num:rrhhPdfNum(I.rechazadasSegundo), acento:'#be3651', sub:'Rechazo RRHH' }
+    ] : [],
+    secciones:[graficas, permisos, area, detalle].filter(Boolean)
+  };
+}
+
+/* ---- Retoques de impresión, sin tocar reporte-pdf.js (como en Flujo de ventas) ----
+   La librería escribe el reporte en una ventana nueva y recién imprime cuando
+   carga el logo. pdfGenerar() captura esa ventana y, antes de que se imprima,
+   pdfRetocar() le agrega CSS propio y reacomoda las tablas:
+   · ningún título (ni su nota gris) queda solo al pie de una página: se va
+     a la siguiente junto con su contenido;
+   · las primeras filas de cada tabla no se separan de su título, y la fila
+     TOTAL siempre va con las últimas filas: si la tabla parte, parte arriba;
+   · si del bloque dona + barras va solo la mitad de las barras, se quita la
+     caja vacía de la dona. */
+var PDF_CSS_EXTRA =
+  'h2, .filtro.nota { break-after: avoid; page-break-after: avoid; }\n' +
+  'tbody.pdf-cabeza, tbody.pdf-cola { break-inside: avoid; page-break-inside: avoid; }\n' +
+  /* Las filas se reparten en varios <tbody>: el cebreado va por clase, no por posición */
+  'table tr:nth-child(even) td { background: none; }\n' +
+  'table tr.pdf-par td { background: #e8eaf0; }\n';
+var PDF_FILAS_JUNTAS = 2;   // filas que viajan con el título y con el TOTAL
+function pdfRetocar(doc){
+  var estilo = doc.createElement('style');
+  estilo.textContent = PDF_CSS_EXTRA;
+  doc.head.appendChild(estilo);
+  doc.querySelectorAll('table').forEach(function(t){
+    var cuerpo = t.tBodies[0]; if(!cuerpo) return;
+    var filas = Array.from(cuerpo.rows).filter(function(r){ return !r.classList.contains('tot'); });
+    filas.forEach(function(r, i){ if(i % 2) r.classList.add('pdf-par'); });
+    var tot = cuerpo.querySelector('tr.tot');
+    var nCola = tot ? Math.min(PDF_FILAS_JUNTAS, filas.length) : 0;
+    var nCabeza = Math.min(PDF_FILAS_JUNTAS, filas.length - nCola);
+    var grupo = function(clase, rows){ var tb = doc.createElement('tbody'); tb.className = clase; rows.forEach(function(r){ tb.appendChild(r); }); return tb; };
+    if(nCabeza) t.insertBefore(grupo('pdf-cabeza', filas.slice(0, nCabeza)), cuerpo);
+    if(tot) t.appendChild(grupo('pdf-cola', filas.slice(filas.length - nCola).concat([tot])));
+    if(!cuerpo.rows.length) cuerpo.remove();
+  });
+  doc.querySelectorAll('.grid2 > .box').forEach(function(box){
+    var h3 = box.querySelector('h3');
+    if(!(h3 && h3.textContent.trim()) && !box.querySelector('.bar')) box.remove();
+  });
+}
+/* generarReportePDF() de la librería, con los retoques de arriba. */
+function pdfGenerar(cfg){
+  var abrirOriginal = window.open;
+  var ventanaReporte = null;
+  window.open = function(){ ventanaReporte = abrirOriginal.apply(window, arguments); return ventanaReporte; };
+  try{
+    var ok = generarReportePDF(cfg);
+    if(ok && ventanaReporte) pdfRetocar(ventanaReporte.document);
+    return ok;
+  }finally{
+    window.open = abrirOriginal;
+  }
+}
+
+/* ---------------------------------------------------------
+   Ventana «Exportar PDF» (botón PDF de la barra de filtros).
+   Copia de la de Flash de altas, Flujo de ventas y SAC. Los filtros
+   del dashboard deciden QUÉ DATOS van; la ventana, QUÉ MÓDULOS van.
+--------------------------------------------------------- */
+var pdfxMarcados = new Set();
+var PDFX_ICONO = {
+  pais:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>',
+  periodo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>',
+  filtro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 12h10M10 19h4"/></svg>',
+  casos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'
+};
+
+// Pastillas de solo lectura: misma fuente que el encabezado del PDF.
+function pintarPdfxResumen(){
+  var icono = function(e){ return e === 'Operaciones' ? PDFX_ICONO.pais : e === 'Período' ? PDFX_ICONO.periodo : PDFX_ICONO.filtro; };
+  var n = getFiltered().length;
+  document.getElementById('pdfxResumen').innerHTML = filtrosLista().map(function(f){
+    return '<span>' + icono(f.etiqueta) + escapeHtml(f.etiqueta) + ' <b>' + escapeHtml(f.valor) + '</b></span>';
+  }).join('') + '<span>' + PDFX_ICONO.casos + '<b>' + rrhhPdfNum(n) + ' ' + (n === 1 ? 'solicitud' : 'solicitudes') + '</b></span>';
+}
+
+function armarPdfxModulos(){
+  var cont = document.getElementById('pdfxModulos');
+  cont.innerHTML = PDF_MODULOS.map(function(m, i){
+    return '\n        <label class="pdfx-op" data-mod="' + m.k + '">' +
+      '\n          <input type="checkbox" value="' + m.k + '"><span class="pdfx-caja" aria-hidden="true"></span>' +
+      '\n          <span class="pdfx-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + PDFX_ICONOS[m.k] + '</svg></span>' +
+      '\n          <span class="pdfx-texto"><strong>' + escapeHtml(m.t) + '</strong><span>' + escapeHtml(m.d).replace('{filas}', '<span class="pdfx-filas" id="pdfxFilas">0 filas</span>') + '</span></span>' +
+      '\n          <span class="pdfx-num" aria-hidden="true">' + String(i + 1).padStart(2, '0') + '</span>' +
+      '\n        </label>';
+  }).join('');
+  cont.querySelectorAll('input').forEach(function(inp){
+    inp.onchange = function(){
+      if(inp.checked) pdfxMarcados.add(inp.value); else pdfxMarcados.delete(inp.value);
+      pintarPdfx();
+    };
+  });
+}
+
+function pintarPdfx(){
+  var disponibles = pdfxDisponibles();
+  pdfxMarcados.forEach(function(k){ if(disponibles.indexOf(k) === -1) pdfxMarcados.delete(k); });
+  document.querySelectorAll('#pdfxModulos .pdfx-op').forEach(function(op){
+    var k = op.dataset.mod, on = pdfxMarcados.has(k);
+    op.hidden = disponibles.indexOf(k) === -1;
+    op.querySelector('input').checked = on;
+    op.classList.toggle('on', on);
+  });
+  var n = pdfxMarcados.size, filas = getFiltered().length;
+  document.getElementById('pdfxContador').textContent = n + ' de ' + disponibles.length + ' módulos seleccionados';
+  document.getElementById('pdfxContador').classList.toggle('vacio', !n);
+  document.getElementById('pdfxGenerarN').textContent = n;
+  var celda = document.getElementById('pdfxFilas');
+  var filasDet = soloConDuracion() ? getFiltered().filter(durTiene).length : filas;   // el detalle respeta «Solo con duración»
+  if(celda) celda.textContent = rrhhPdfNum(filasDet) + ' ' + (filasDet === 1 ? 'fila' : 'filas');
+  pintarPdfxResumen();
+
+  // Nunca se genera un PDF vacío sin decir por qué.
+  var aviso = !filas
+    ? 'No hay solicitudes con los filtros del dashboard. Cambia los filtros para generar el PDF.'
+    : !n
+      ? 'No marcaste ningún módulo: el PDF saldría vacío. Marca al menos uno para generarlo.'
+      : '';
+  pdfxAvisar(aviso);
+  document.getElementById('pdfxGenerar').disabled = !!aviso;
+}
+function pdfxAvisar(texto){
+  document.getElementById('pdfxAviso').textContent = texto;
+  document.getElementById('pdfxAviso').hidden = !texto;
+}
+
+function abrirPdfx(){
+  if(document.getElementById('fxPdf').disabled) return;
+  closeXf();   // si el panel «Filtros» estaba abierto, se descarta su borrador
+  pdfxMarcados = new Set(pdfxDisponibles());   // todos los disponibles, tildados
+  armarPdfxModulos();
+  pintarPdfx();
+  document.getElementById('pdfModalBg').classList.add('open');
+  document.querySelector('#pdfxModulos .pdfx-op:not([hidden]) input').focus();
+}
+function cerrarPdfx(){
+  if(!document.getElementById('pdfModalBg').classList.contains('open')) return;
+  document.getElementById('pdfModalBg').classList.remove('open');
+  document.getElementById('fxPdf').focus();   // el único que abre la ventana
+}
+function generarPdfx(){
+  if(document.getElementById('pdfxGenerar').disabled) return;
+  try{
+    // Si el navegador bloquea la ventana, la de módulos queda abierta con el aviso.
+    if(pdfGenerar(pdfConfig(pdfxMarcados))) cerrarPdfx();
+  }catch(err){
+    console.error('No se pudo generar el PDF', err);
+    pdfxAvisar('No se pudo generar el PDF. Intenta de nuevo.');
+  }
+}
+
+document.getElementById('fxPdf').addEventListener('click', abrirPdfx);
+document.getElementById('pdfxCerrar').addEventListener('click', cerrarPdfx);
+document.getElementById('pdfxCancelar').addEventListener('click', cerrarPdfx);
+document.getElementById('pdfxGenerar').addEventListener('click', generarPdfx);
+document.getElementById('pdfModalBg').addEventListener('click', function(e){ if(e.target === document.getElementById('pdfModalBg')) cerrarPdfx(); });
+document.getElementById('pdfxTodo').addEventListener('click', function(){ pdfxMarcados = new Set(pdfxDisponibles()); pintarPdfx(); });
+document.getElementById('pdfxLimpiar').addEventListener('click', function(){ pdfxMarcados.clear(); pintarPdfx(); });
+
+// Esc cierra; Tab no se escapa de la ventana mientras está abierta.
+document.addEventListener('keydown', function(e){
+  var bg = document.getElementById('pdfModalBg');
+  if(!bg.classList.contains('open')) return;
+  if(e.key === 'Escape'){ e.preventDefault(); cerrarPdfx(); return; }
+  if(e.key !== 'Tab') return;
+  var focos = Array.from(bg.querySelectorAll('button,input')).filter(function(el){ return !el.disabled && el.offsetParent !== null; });
+  if(!focos.length) return;
+  var primero = focos[0], ultimo = focos[focos.length - 1];
+  if(e.shiftKey && document.activeElement === primero){ e.preventDefault(); ultimo.focus(); }
+  else if(!e.shiftKey && document.activeElement === ultimo){ e.preventDefault(); primero.focus(); }
+});
+
+// ---------- Pestañas ----------
+var TABS = ['Resumen', 'Informe'];
+function setTab(which) {
+  TABS.forEach(function(n) {
+    var on = n === which;
+    var tab = document.getElementById('tab' + n);
+    tab.classList.toggle('active', on);
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+    tab.tabIndex = on ? 0 : -1;
+    document.getElementById('panel' + n).hidden = !on;
+  });
+}
+// "Activo" = distinto de los valores por defecto (las dos operaciones, período de los datos,
+// todo en "Todas" y sin búsqueda). Limpiar vuelve a ese estado.
+function hasActiveFilters() {
+  var def = defaultPeriodo();
+  if (opSel.size !== OP_PAISES.length) return true;
+  if (PERIODO.desde !== def.desde || PERIODO.hasta !== def.hasta) return true;
+  if (XF_DEFS.some(function(d) { return XF_STATE[d.key].sel; })) return true;
+  return document.getElementById('fSearch').value !== '' || document.getElementById('fTableSearch').value !== '' || soloConDuracion();
+}
+function resetFilterState() {
+  closeXf();
+  opSel = new Set(OP_PAISES);
+  PERIODO = defaultPeriodo();
+  XF_DEFS.forEach(function(d) { XF_STATE[d.key].sel = null; });
+  document.getElementById('fSearch').value = '';
+  document.getElementById('fTableSearch').value = '';
+  document.getElementById('fSoloDuracion').checked = false;
+  syncPeriodInputs();
+}
+function renderFilterControls() {
+  var todas = opSel.size === OP_PAISES.length;
+  document.querySelectorAll('.op-btn').forEach(function(b) {
+    var v = b.getAttribute('data-op');
+    // Uno solo activo, como en Flujo de ventas y Flash: «Todas» o el país elegido.
+    var on = v === 'all' ? todas : !todas && opSel.has(v);
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (v !== 'all') b.title = v;
+  });
+  var activos = XF_DEFS.filter(function(def) { return XF_STATE[def.key].sel; }).length;
+  var count = document.getElementById('xfCount');
+  count.hidden = !activos;
+  count.textContent = activos;
+  document.getElementById('xf').classList.toggle('is-active', activos > 0);
+  var active = document.activeElement;
+  if (!active || !active.classList.contains('period-input')) syncPeriodInputs();
+}
+function periodoTexto(f) {
+  if (!f.desde && !f.hasta) return 'todo el histórico';
+  if (f.desde && f.hasta) return isoToDmy(f.desde) + ' — ' + isoToDmy(f.hasta);
+  if (f.desde) return 'desde ' + isoToDmy(f.desde);
+  return 'hasta ' + isoToDmy(f.hasta);
+}
+function renderFilterSummary(filtered, filters) {
+  var parts = [];
+  parts.push('Mostrando <strong>' + filtered.length + '</strong> de ' + RECORDS.length + ' solicitudes');
+  parts.push('Operaciones: <strong>' + (filters.ops ? escapeHtml(filters.ops.join(' y ')) : 'las dos') + '</strong>');
+  parts.push('Período: <strong>' + periodoTexto(filters) + '</strong>');
+  XF_DEFS.forEach(function(def) {
+    var st = XF_STATE[def.key];
+    if (st.sel) parts.push(escapeHtml(def.label) + ': <strong>' + escapeHtml(xfSelTexto(def)) + '</strong>');
+  });
+  var q = document.getElementById('fSearch').value.trim();
+  if (q) parts.push('Búsqueda: <strong>«' + escapeHtml(q) + '»</strong>');
+  if (filters.ops) {
+    var sinPais = applyFilters(RECORDS, filters, 'pais').filter(function(r) { return !opDe(r.pais); }).length;
+    if (sinPais) parts.push('<span class="apx-sum-note">' + sinPais + (sinPais === 1 ? ' solicitud sin país no se muestra' : ' solicitudes sin país no se muestran') + ' (marca las dos operaciones para verlas)</span>');
+  }
+  if (filters.desde || filters.hasta) {
+    var sinFecha = applyFilters(RECORDS, filters, 'periodo').filter(function(r) { return !r.fechaSolicitud; }).length;
+    if (sinFecha) parts.push('<span class="apx-sum-note">' + sinFecha + (sinFecha === 1 ? ' solicitud sin fecha no se muestra' : ' solicitudes sin fecha no se muestran') + ' (borra las dos fechas para verlas)</span>');
+  }
+  document.getElementById('filterSummary').innerHTML = parts.map(function(p) { return '<span>' + p + '</span>'; }).join('<span class="apx-sum-sep">·</span>');
+}
+function render() {
+  var filters = refreshFilterCounts(getFilterValues());
+  renderFilterControls();
+  var filtered = applyFilters(RECORDS, filters, null);
+  renderFilterSummary(filtered, filters);
+
+  renderKpis(filtered);
+  renderSummaryCards(filtered);
+  renderDonut(filtered);
+
+  var aprobadores = uniqueCounts(filtered, 'aprobador').map(function(d){ return {name:shortUser(d.value), count:d.count}; });
+  renderRanking('chartAprobador', aprobadores, 8);
+  if (aprobadores.length) document.getElementById('insightAprobador').textContent = aprobadores[0].name + ' · ' + aprobadores[0].count;
+
+  // Mismas filas que el resto del tablero: los inactivos ya los saca (o no) la casilla
+  // «Incluir líderes que ya no están en la organización» (applyActiveScope).
+  var areasData = uniqueCounts(filtered, 'area').map(function(d){return {name:d.value,count:d.count};});
+  renderTreemap('chartArea', areasData);
+  if (areasData.length) document.getElementById('insightArea').textContent = areasData[0].name + ' · ' + areasData[0].count;
+
+  var jefesData = uniqueCounts(filtered.filter(function(r){return r.jefeInmediato;}), 'jefeInmediato').map(function(d){return {name:d.value,count:d.count};});
+  renderLollipop('chartJefe', jefesData, 10);
+  if (jefesData.length) document.getElementById('insightJefe').textContent = jefesData[0].name + ' · ' + jefesData[0].count;
+
+  var tipoData = uniqueCounts(filtered, 'tipo').map(function(d){return {name:d.value,count:d.count};});
+  renderVerticalBars('chartTipo', tipoData);
+  if (tipoData.length) document.getElementById('insightTipo').textContent = tipoData[0].name + ' · ' + tipoData[0].count;
+
+  renderSolicitantesChart(filtered);
+  renderMonthChart(filtered);
+  renderTable(filtered);
+  document.getElementById('btnReset').disabled = !hasActiveFilters();
+}
+
+function jefesForArea(areaValue) {
+  return ALL_JEFE_OPTS.map(function(o) { return o.value; }).filter(function(jefe) { return areaFor(jefe) === areaValue; });
+}
+// Sincronización Área ↔ Jefe (misma regla que con un solo valor, extendida a varios):
+// - Al aceptar jefes, Área queda con las áreas de esos jefes.
+// - Al aceptar áreas: "Todas" limpia Jefe; si hay un único jefe candidato se marca;
+//   si no, se conservan solo los jefes marcados que pertenezcan a esas áreas.
+function syncAreaJefe(key) {
+  if (key === 'jefe') {
+    var jefes = XF_STATE.jefe.sel;
+    if (!jefes) return;
+    var areas = new Set();
+    RECORDS.forEach(function(r) { if (jefes.has(r.jefeInmediato)) areas.add(r.area); });
+    XF_STATE.area.sel = areas.size ? areas : null;
+  } else if (key === 'area') {
+    var areaSel = XF_STATE.area.sel;
+    if (!areaSel) { XF_STATE.jefe.sel = null; return; }
+    var candidatos = [];
+    areaSel.forEach(function(a) { candidatos = candidatos.concat(jefesForArea(a)); });
+    if (candidatos.length === 1) {
+      XF_STATE.jefe.sel = new Set(candidatos);
+    } else if (XF_STATE.jefe.sel) {
+      var keep = new Set(Array.from(XF_STATE.jefe.sel).filter(function(j) { return candidatos.indexOf(j) !== -1; }));
+      XF_STATE.jefe.sel = keep.size ? keep : null;
+    }
+  }
+}
+
+// ---------- Panel "Filtros" (seis listas tipo Excel en columnas) ----------
+// Lo que se marca en el panel es un borrador: solo "Aplicar" lo pasa a los filtros.
+// Clic afuera o Esc descartan el borrador. Los conteos de cada columna se calculan
+// con los demás filtros ya aplicados (ver updateXfOptions).
+var XF_DRAFT = null; // { sel: {key: Set}, q: {key: ''}, vis: {key: []}, inactive: bool }
+function xfCol(key) { return document.querySelector('.xf-col[data-key="' + key + '"]'); }
+function buildXfPanel() {
+  document.getElementById('xfColumns').innerHTML = XF_DEFS.map(function(def) {
+    return '<div class="xf-col" data-key="' + def.key + '">' +
+      '<h5 title="' + escapeHtml(def.title || def.label) + '">' + escapeHtml(def.label) + ' <small></small></h5>' +
+      '<input type="search" class="apx-xf-search xf-search" placeholder="Buscar…" aria-label="Buscar en ' + escapeHtml(def.label) + '">' +
+      '<div class="xf-list"></div>' +
+    '</div>';
+  }).join('');
+  XF_DEFS.forEach(function(def) {
+    var col = xfCol(def.key);
+    var search = col.querySelector('.xf-search');
+    search.addEventListener('input', function() {
+      XF_DRAFT.q[def.key] = search.value;
+      paintXfCol(def.key);
+    });
+    search.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); applyXf(); }
+    });
+    col.querySelector('.xf-list').addEventListener('change', function(e) {
+      var t = e.target;
+      var draft = XF_DRAFT.sel[def.key];
+      if (t.hasAttribute('data-all')) {
+        XF_DRAFT.vis[def.key].forEach(function(o) { if (t.checked) draft.add(o.value); else draft.delete(o.value); });
+        col.querySelectorAll('.xf-list [data-i]').forEach(function(cb) { cb.checked = t.checked; });
+      } else {
+        var o = XF_DRAFT.vis[def.key][+t.getAttribute('data-i')];
+        if (t.checked) draft.add(o.value); else draft.delete(o.value);
+      }
+      updateXfColState(def.key);
+    });
+  });
+}
+function paintXfCol(key) {
+  var st = XF_STATE[key];
+  var list = xfCol(key).querySelector('.xf-list');
+  var q = normTxt(XF_DRAFT.q[key].trim());
+  var vis = st.avail.filter(function(o) { return !q || normTxt(o.label).indexOf(q) !== -1; });
+  XF_DRAFT.vis[key] = vis;
+  if (!vis.length) {
+    list.innerHTML = '<div class="apx-xf-empty">' + (st.avail.length ? 'Sin coincidencias' : 'Sin opciones con los filtros actuales') + '</div>';
+  } else {
+    list.innerHTML =
+      '<label class="xf-option all"><input type="checkbox" data-all><span class="xf-option-text">' +
+        (q ? '(Seleccionar todos los resultados)' : '(Seleccionar todo)') + '</span></label>' +
+      vis.map(function(o, i) {
+        return '<label class="xf-option" title="' + escapeHtml(o.label) + '">' +
+          '<input type="checkbox" data-i="' + i + '"' + (XF_DRAFT.sel[key].has(o.value) ? ' checked' : '') + '>' +
+          '<span class="xf-option-text">' + escapeHtml(o.label) + '</span>' +
+          '<span class="xf-option-count">' + o.count + '</span></label>';
+      }).join('');
+  }
+  updateXfColState(key);
+}
+function xfDraftCount(key) {
+  var draft = XF_DRAFT.sel[key];
+  return XF_STATE[key].avail.filter(function(o) { return draft.has(o.value); }).length;
+}
+function updateXfColState(key) {
+  var col = xfCol(key);
+  var vis = XF_DRAFT.vis[key];
+  var all = col.querySelector('[data-all]');
+  if (all) {
+    var n = vis.filter(function(o) { return XF_DRAFT.sel[key].has(o.value); }).length;
+    all.checked = n > 0 && n === vis.length;
+    all.indeterminate = n > 0 && n < vis.length;
+  }
+  var total = XF_STATE[key].avail.length;
+  var marcadas = xfDraftCount(key);
+  col.querySelector('h5 small').textContent = marcadas + '/' + total;
+  col.classList.toggle('is-empty', total > 0 && marcadas === 0);
+  // Una lista sin nada marcado no se puede aplicar (dejaría el tablero vacío).
+  var vacias = XF_DEFS.filter(function(d) { return XF_STATE[d.key].avail.length && !xfDraftCount(d.key); });
+  document.getElementById('xfApply').disabled = vacias.length > 0;
+  var hint = document.getElementById('xfHint');
+  hint.hidden = !vacias.length;
+  hint.textContent = vacias.length ? 'Marca al menos una opción en: ' + vacias.map(function(d) { return d.label; }).join(', ') : '';
+}
+function openXf() {
+  closeXf();
+  XF_DRAFT = { sel: {}, q: {}, vis: {}, inactive: document.getElementById('fIncludeInactive').checked };
+  XF_DEFS.forEach(function(def) {
+    var st = XF_STATE[def.key];
+    XF_DRAFT.sel[def.key] = st.sel ? new Set(st.sel) : new Set(st.avail.map(function(o) { return o.value; }));
+    XF_DRAFT.q[def.key] = '';
+    xfCol(def.key).querySelector('.xf-search').value = '';
+  });
+  XF_DEFS.forEach(function(def) { paintXfCol(def.key); });
+  document.getElementById('xfPanel').hidden = false;
+  document.getElementById('xfToggle').setAttribute('aria-expanded', 'true');
+  document.getElementById('xf').classList.add('is-open');
+}
+// Cerrar sin aplicar: se descarta el borrador, incluida la casilla de líderes.
+function closeXf(returnFocus) {
+  if (!XF_DRAFT) return;
+  document.getElementById('fIncludeInactive').checked = XF_DRAFT.inactive;
+  XF_DRAFT = null;
+  document.getElementById('xfPanel').hidden = true;
+  document.getElementById('xfToggle').setAttribute('aria-expanded', 'false');
+  document.getElementById('xf').classList.remove('is-open');
+  if (returnFocus) document.getElementById('xfToggle').focus();
+}
+function sameSel(a, b) {
+  if (!a || !b) return a === b;
+  if (a.size !== b.size) return false;
+  return Array.from(a).every(function(v) { return b.has(v); });
+}
+function applyXf() {
+  if (!XF_DRAFT || document.getElementById('xfApply').disabled) return;
+  var prev = {};
+  XF_DEFS.forEach(function(def) {
+    var st = XF_STATE[def.key];
+    var draft = XF_DRAFT.sel[def.key];
+    prev[def.key] = st.sel;
+    var todas = st.avail.every(function(o) { return draft.has(o.value); });
+    st.sel = todas ? null : new Set(st.avail.filter(function(o) { return draft.has(o.value); }).map(function(o) { return o.value; }));
+  });
+  // Área ↔ Jefe: si solo cambió uno de los dos, el otro se ajusta; si cambiaron
+  // ambos en el mismo Aplicar, se respeta lo que marcó la persona.
+  var jefeCambio = !sameSel(prev.jefe, XF_STATE.jefe.sel);
+  var areaCambio = !sameSel(prev.area, XF_STATE.area.sel);
+  if (jefeCambio && !areaCambio) syncAreaJefe('jefe');
+  else if (areaCambio && !jefeCambio) syncAreaJefe('area');
+  var inactiveCambio = document.getElementById('fIncludeInactive').checked !== XF_DRAFT.inactive;
+  XF_DRAFT.inactive = document.getElementById('fIncludeInactive').checked;
+  closeXf(true);
+  if (inactiveCambio) {
+    applyActiveScope();
+    initFilters();
+  }
+  render();
+}
+document.getElementById('xfToggle').addEventListener('click', function() {
+  if (XF_DRAFT) closeXf(); else openXf();
+});
+document.getElementById('xfApply').addEventListener('click', applyXf);
+document.getElementById('xfClear').addEventListener('click', function() {
+  XF_DEFS.forEach(function(def) {
+    XF_DRAFT.sel[def.key] = new Set(XF_STATE[def.key].avail.map(function(o) { return o.value; }));
+    XF_DRAFT.q[def.key] = '';
+    xfCol(def.key).querySelector('.xf-search').value = '';
+    paintXfCol(def.key);
+  });
+  document.getElementById('fIncludeInactive').checked = false;
+});
+document.addEventListener('mousedown', function(e) {
+  if (!XF_DRAFT) return;
+  if (document.getElementById('xfPanel').contains(e.target) || document.getElementById('xf').contains(e.target)) return;
+  closeXf();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && XF_DRAFT) closeXf(true);
+});
+
+// ---------- Operación ----------
+// Cada botón selecciona, no alterna (igual que Flujo de ventas y Flash):
+// GT deja solo Guatemala, SV solo El Salvador y «Todas» las dos.
+document.querySelectorAll('.op-btn').forEach(function(b) {
+  b.addEventListener('click', function() {
+    var v = b.getAttribute('data-op');
+    var nueva = v === 'all' ? new Set(OP_PAISES) : new Set([v]);
+    if (sameSel(nueva, opSel)) return;   // ya era la selección: no se repinta
+    opSel = nueva;
+    render();
+  });
+});
+
+// ---------- Período ----------
+// Se escribe en texto dd/mm/aaaa; el <input type="date"> oculto solo abre el calendario.
+var periodMsgTimer = null;
+function periodText(w) { return document.getElementById(w === 'desde' ? 'fDesde' : 'fHasta'); }
+function periodNative(w) { return document.getElementById(w === 'desde' ? 'fDesdeNative' : 'fHastaNative'); }
+function syncPeriodInputs() {
+  periodText('desde').value = isoToDmy(PERIODO.desde);
+  periodText('hasta').value = isoToDmy(PERIODO.hasta);
+}
+function showPeriodError(which, msg) {
+  var el = periodText(which);
+  var box = document.getElementById('periodMsg');
+  el.classList.remove('is-invalid');
+  void el.offsetWidth;
+  el.classList.add('is-invalid');
+  box.textContent = msg;
+  box.hidden = false;
+  clearTimeout(periodMsgTimer);
+  periodMsgTimer = setTimeout(function() {
+    box.hidden = true;
+    el.classList.remove('is-invalid');
+  }, 3500);
+}
+function commitPeriodo(which, raw) {
+  var txt = String(raw).trim();
+  var iso = '';
+  if (txt) {
+    iso = parseDmy(txt);
+    var err = null;
+    if (!iso) err = 'Fecha no válida. Usa dd/mm/aaaa con una fecha que exista.';
+    else if (iso > todayIso()) err = 'No se pueden elegir fechas futuras.';
+    else if (which === 'desde' && PERIODO.hasta && iso > PERIODO.hasta) err = '"Desde" no puede ser posterior a "Hasta".';
+    else if (which === 'hasta' && PERIODO.desde && iso < PERIODO.desde) err = '"Hasta" no puede ser anterior a "Desde".';
+    if (err) {
+      showPeriodError(which, err);
+      syncPeriodInputs();
+      return;
+    }
+  }
+  if (iso === PERIODO[which]) { syncPeriodInputs(); return; }
+  PERIODO[which] = iso;
+  syncPeriodInputs();
+  render();
+}
+['desde', 'hasta'].forEach(function(w) {
+  var txt = periodText(w);
+  var nat = periodNative(w);
+  txt.addEventListener('change', function() { commitPeriodo(w, txt.value); });
+  txt.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); commitPeriodo(w, txt.value); }
+  });
+  nat.addEventListener('change', function() { commitPeriodo(w, nat.value ? isoToDmy(nat.value) : ''); });
+});
+if (typeof HTMLInputElement === 'undefined' || !('showPicker' in HTMLInputElement.prototype)) {
+  document.getElementById('periodControl').classList.add('no-picker');
+}
+document.querySelectorAll('.apx-period-cal').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var w = btn.getAttribute('data-which');
+    var nat = periodNative(w);
+    var hoy = todayIso();
+    nat.max = w === 'desde' ? (PERIODO.hasta || hoy) : hoy;
+    nat.min = w === 'hasta' ? (PERIODO.desde || '') : '';
+    nat.value = PERIODO[w] || '';
+    try { nat.showPicker(); } catch (e) { periodText(w).focus(); }
+  });
+});
+document.getElementById('periodReset').addEventListener('click', function() {
+  PERIODO = defaultPeriodo();
+  syncPeriodInputs();
+  render();
+});
+
+document.getElementById('fSearch').addEventListener('input', render);
+document.getElementById('fTableSearch').addEventListener('input', function() {
+  renderTable(LAST_FILTERED);
+  document.getElementById('btnReset').disabled = !hasActiveFilters();
+});
+document.getElementById('fSoloDuracion').addEventListener('change', function() {
+  renderTable(LAST_FILTERED);
+  document.getElementById('btnReset').disabled = !hasActiveFilters();
+});
+document.getElementById('btnExportCsv').addEventListener('click', function() {
+  if (TABLE_ROWS.length) downloadBlob(buildCsv(TABLE_ROWS), exportFileName('csv'));
+});
+document.getElementById('btnExportXlsx').addEventListener('click', exportXlsx);
+document.getElementById('tabResumen').addEventListener('click', function() { setTab('Resumen'); });
+document.getElementById('tabInforme').addEventListener('click', function() { setTab('Informe'); });
+document.getElementById('rrhhTabs').addEventListener('keydown', function(e) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  var actual = TABS.findIndex(function(n) { return document.getElementById('tab' + n).getAttribute('aria-selected') === 'true'; });
+  var next = TABS[(actual + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+  setTab(next);
+  document.getElementById('tab' + next).focus();
+});
+document.getElementById('btnReset').addEventListener('click', function() {
+  resetFilterState();
+  render();
+});
+buildXfPanel();
+syncPeriodInputs();
+renderFilterControls();
+</script>
+<!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+<link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+</body>
+</html>

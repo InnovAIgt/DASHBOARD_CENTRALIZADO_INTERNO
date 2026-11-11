@@ -1,0 +1,239 @@
+/* ─── TOKENS ────────────────────────────────────────────────────
+   Los literales de la paleta viven en assets/css/estandar.css (la capa
+   que cargan todos los dashboards). Aquí se leen con valor de respaldo
+   para que esta hoja también funcione por sí sola. */
+:root {
+  --bg:         var(--std-bg, #0f1117);
+  --bg-card:    var(--std-card, #1a1d27);
+  --bg-card-2:  var(--std-surface-2, #151821);
+  --bg-card-hover: var(--std-card-hover, #212430);
+  --border:     var(--std-border, rgba(255,255,255,0.08));
+  --line:       var(--std-border, rgba(255,255,255,0.08));
+  --line-strong:var(--std-border-light, rgba(255,255,255,0.16));
+  --text:       var(--std-text, #e8eaf0);
+  --text-muted: var(--std-text-2, #8b909e);
+  --accent:     var(--std-red, #c43c50);
+  --accent-2:   var(--std-red-2, #d95f6e);
+  --green:      var(--std-green, #2f8f76);
+  --yellow:     var(--std-yellow, #c59600);
+  --blue:       var(--std-blue, #4f8fd8);
+  --font:       var(--std-font, 'Segoe UI', system-ui, sans-serif);
+  --mono:       var(--std-mono, 'Cascadia Code', 'Fira Mono', Consolas, monospace);
+}
+
+/* ─── RESET ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  padding: 28px;
+  min-height: 100vh;
+}
+
+/* ─── FONDO CORPORATIVO ──────────────────────────────────────── */
+/* Mismo tratamiento que Ingresos. "html body" gana en especificidad a los
+   body { background } propios de cada dashboard, sin editarlos uno por uno. */
+@media screen {
+  html body {
+    background:
+      linear-gradient(rgba(15, 17, 23, .82), rgba(15, 17, 23, .82)),
+      url("../img/fondo.png") center / cover no-repeat fixed,
+      radial-gradient(ellipse 1200px 600px at 90% -10%, rgba(196, 60, 80, .08), transparent 60%),
+      radial-gradient(ellipse 1000px 500px at 0% 100%, rgba(79, 143, 216, .04), transparent 60%),
+      #0f1117;
+  }
+}
+
+/* ─── HEADER ──────────────────────────────────────────────────── */
+.page-header  { margin-bottom: 28px; }
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.page-title { font-size: 26px; font-weight: 700; color: var(--text); }
+.page-sub   { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+/* Encabezado con acciones a la derecha (Actualizar, Cargar, Imprimir…) */
+.page-header:has(> .page-actions) {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* ─── KPI CARDS ───────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.kpi-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+}
+.kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+/* Cifra con color de estado (mismos nombres que .pill-*) */
+.kpi-value.is-ok    { color: #42b998; }
+.kpi-value.is-warn  { color: #e0b52e; }
+.kpi-value.is-error { color: #d95f6e; }
+.kpi-value.is-info  { color: #7fb0f0; }
+
+/* ─── PESTAÑAS DE MÓDULOS ────────────────────────────────────────
+   Siempre iguales en todos los dashboards: solo el nombre del módulo,
+   sin íconos ni números. La activa lleva .active. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin: 22px 0 20px;
+}
+.tab-btn {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text);
+  font: 700 12.5px/1.1 var(--font);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.tab-btn:hover  { border-color: var(--accent); }
+.tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ─── CARD ────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+}
+.card-title   { font-size: 21px; font-weight: 700; line-height: 1.2; margin: 0 0 6px; }
+.card-caption { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+
+/* ─── BULLETS DE ESTADO (guía §04) ───────────────────────────────
+   El punto de color comunica estado; la información se lee sin una
+   gráfica decorativa a la derecha. */
+.bullet-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; flex: 0 0 auto; vertical-align: middle;
+}
+.bullet-dot.is-ok    { background: var(--green); }
+.bullet-dot.is-warn  { background: var(--yellow); }
+.bullet-dot.is-error { background: var(--accent); }
+.bullet-dot.is-info  { background: var(--blue); }
+.bullet-dot.is-muted { background: var(--text-muted); }
+
+/* ─── GRÁFICAS (guía §05) ─────────────────────────────────────────
+   Barras: track sobrio, relleno rojo. Línea: área tenue y línea
+   protagonista. Circular: proporción con máximo 3 segmentos. */
+.chart-area { fill: rgba(196,60,80,.11); }
+.chart-line { fill: none; stroke: var(--accent-2); }
+
+/* ─── TABLA ───────────────────────────────────────────────────── */
+/* Guía §06: encabezado fijo y contenido desplazable dentro de un
+   contenedor de altura controlada. Este es el valor por defecto;
+   cada dashboard puede ajustarlo en su propia hoja (que se carga
+   después) — ver .oc-table-wrap, .table-scroll-container, etc. */
+.table-wrap { max-height: 430px; overflow: auto; scrollbar-color: var(--accent) transparent; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #242837;
+  text-align: left;
+  padding: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+tbody tr:last-child td { border-bottom: none; }
+
+/* ─── PILLS ───────────────────────────────────────────────────── */
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.pill-ok    { background: rgba(47,143,118,.15);  color: #2f8f76; }
+.pill-warn  { background: rgba(197,150,0,.12);   color: #c59600; }
+.pill-error { background: rgba(196, 60, 80,.12);   color: #d95f6e; }
+.pill-muted { background: rgba(255,255,255,.06); color: var(--text-muted); }
+
+/* ─── BARRAS ──────────────────────────────────────────────────── */
+.bar-row   { display: grid; grid-template-columns: 1fr 60px; align-items: center; gap: 8px; margin-bottom: 8px; }
+.bar-label { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+.bar-fill  { height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+.bar-count { font-family: var(--mono); font-size: 11px; color: var(--text); text-align: right; }
+
+/* ─── ESTADOS ─────────────────────────────────────────────────── */
+.loading   { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 13px; }
+.error-box {
+  background: rgba(196, 60, 80,.1);
+  border: 1px solid rgba(196, 60, 80,.25);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 12.5px;
+  color: #d95f6e;
+  margin-bottom: 16px;
+}
+
+/* ─── RESPONSIVE BASE (celulares) ────────────────────────────── */
+img { max-width: 100%; height: auto; }
+
+@media (max-width: 768px) {
+  /* 16px evita el zoom automático de iOS al tocar un campo */
+  input:not([type="date"]):not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea { font-size: 16px; }
+}
+
+@media (max-width: 600px) {
+  body { padding: 14px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi { padding: 14px; }
+  .kpi-value { font-size: 22px; }
+  .card { padding: 16px; }
+}
+
+@media (max-width: 380px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+}

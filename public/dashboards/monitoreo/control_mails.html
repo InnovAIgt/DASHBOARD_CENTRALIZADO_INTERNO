@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de mails · Red Intelfon</title>
+    <script src="../../assets/monitoreo/js/tema.js"></script>
+    <link rel="stylesheet" href="../../assets/monitoreo/css/dashboard.css">
+    <link rel="stylesheet" href="../../assets/monitoreo/css/tema-claro.css">
+    <link rel="stylesheet" href="../../assets/monitoreo/css/mails.css">
+    <style>
+        /* Vive dentro del iframe del portal: sin sidebar ni navbar propios */
+        .dash-main,
+        body.sidebar-pinned .dash-main { margin-left: 0 !important; }
+    </style>
+</head>
+<body class="dashboard">
+    <main class="dash-main">
+        <nav class="crumb">Monitoreo <span>/</span> Control de mails</nav>
+
+        <header class="dash-heading dash-heading--split">
+            <div>
+                <h1>Control de mails</h1>
+                <p>Métricas reales de los correos que entrega la API de cumplimiento: envíos, aperturas, clics y errores.</p>
+            </div>
+            <div class="mail-head-actions">
+                <span class="mail-source" id="sourceBadge">API de cumplimiento</span>
+                <button class="btn-tool mail-refresh" id="btnRefresh" type="button">
+                    <span class="mail-refresh__icon" aria-hidden="true">↻</span>
+                    <span>Actualizar</span>
+                </button>
+            </div>
+        </header>
+
+        <section class="filters mail-period-filters" aria-label="Filtrar actividad de correos por periodo">
+            <label class="filter-field">
+                <span>Fecha inicial</span>
+                <input type="date" id="mailDateFrom" aria-label="Fecha inicial del periodo">
+            </label>
+            <label class="filter-field">
+                <span>Fecha final</span>
+                <input type="date" id="mailDateTo" aria-label="Fecha final del periodo">
+            </label>
+            <div class="filter-actions">
+                <button type="button" class="btn-tool btn-tool--ghost" id="mailDateClear" title="Mostrar todo el histórico">Limpiar</button>
+            </div>
+            <p class="mail-period-error" id="mailPeriodError" role="alert" hidden>La fecha inicial no puede ser posterior a la fecha final.</p>
+        </section>
+
+        <div class="mail-status" id="status" role="status" aria-live="polite">Consultando la API…</div>
+
+        <section class="mail-error" id="errorPanel" hidden aria-live="polite"></section>
+
+        <div id="overview" hidden>
+            <section class="kpi-grid mail-kpis" id="kpis"></section>
+
+            <section class="mail-insights" id="insights" aria-label="Resumen de correos"></section>
+
+            <section class="dash-panel mail-chart-panel">
+                <div class="dash-panel__head">
+                    <div class="panel-eyebrow">
+                        <span>Control diario de correos</span>
+                        <h2>Envíos y aperturas por día</h2>
+                    </div>
+                    <span class="mail-panel-note" id="mailChartNote">Histórico completo</span>
+                </div>
+                <div class="dash-panel__body mail-chart mail-chart--control">
+                    <canvas id="mailControlChart" aria-label="Envíos y aperturas por día; la línea punteada muestra los envíos diarios"></canvas>
+                    <p class="mail-empty" id="mailChartEmpty" hidden>La API no devolvió actividad diaria para este periodo.</p>
+                </div>
+            </section>
+
+            <section class="dash-panel mail-table-panel">
+                <div class="dash-panel__head">
+                    <div class="panel-eyebrow"><span id="dayCount">—</span><h2>Detalle diario <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información del detalle diario">i</button><span class="mail-info__pop" role="tooltip">Cada fila corresponde a un día devuelto por la API. Los porcentajes se calculan usando únicamente los valores de esa fecha.</span></span></h2></div>
+                    <span class="mail-panel-note" id="tableNote">—</span>
+                </div>
+                <div class="dash-panel__body dash-table__wrap">
+                    <table class="tbl mail-table" id="dailyTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de fecha">i</button><span class="mail-info__pop" role="tooltip">Día al que corresponden las métricas.</span></span></th>
+                                <th>Enviados <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de enviados">i</button><span class="mail-info__pop" role="tooltip">Cantidad de correos registrados como enviados ese día.</span></span></th>
+                                <th>Abiertos <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de abiertos">i</button><span class="mail-info__pop" role="tooltip">Cantidad de correos enviados que registraron al menos una apertura ese día.</span></span></th>
+                                <th>Aperturas <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de aperturas">i</button><span class="mail-info__pop" role="tooltip">Total de veces que se abrió un correo; un mismo correo puede contar más de una apertura.</span></span></th>
+                                <th>Clics <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de clics">i</button><span class="mail-info__pop" role="tooltip">Total de clics registrados en enlaces de los correos ese día.</span></span></th>
+                                <th>Errores <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de errores">i</button><span class="mail-info__pop" role="tooltip">Envíos que la API marcó como error ese día.</span></span></th>
+                                <th>Tasa de apertura <span class="mail-info mail-info--inline"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Información de tasa de apertura">i</button><span class="mail-info__pop" role="tooltip">Fórmula: abiertos ÷ enviados × 100.</span></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" class="tbl-empty">Cargando datos de la API…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="mail-detail-backdrop" id="mailDetail" hidden>
+        <section class="mail-detail" role="dialog" aria-modal="true" aria-labelledby="mailDetailTitle">
+            <button type="button" class="mail-detail__close" id="mailDetailClose" aria-label="Cerrar detalle">×</button>
+            <span class="panel-eyebrow">Detalle de actividad</span>
+            <h2 id="mailDetailTitle">Detalle de correos</h2>
+            <div class="mail-detail__summary" id="mailDetailSummary" role="group" aria-label="Filtrar correos del día"></div>
+            <div class="mail-detail__search">
+                <label for="mailDetailSearch">Buscar en este día</label>
+                <div class="mail-detail__search-control">
+                    <input type="search" id="mailDetailSearch" placeholder="Destinatario, empresa, asunto, estado…" autocomplete="off">
+                    <button type="button" id="mailDetailSearchClear">Limpiar</button>
+                </div>
+            </div>
+            <div class="mail-detail__list" id="mailDetailList">
+                <p class="mail-detail__loading">Cargando detalle…</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="../../assets/monitoreo/js/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var datos = null;
+            var cargando = false;
+            var chart = null;
+            var detalleCorreos = [];
+            var filtroDetalle = 'sent';
+
+            function $(id) { return document.getElementById(id); }
+            function esc(valor) {
+                return String(valor == null ? '' : valor).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+            function n(valor) {
+                var numero = Number(valor || 0);
+                return numero.toLocaleString('es-SV');
+            }
+            function pct(parte, total) {
+                var t = Number(total || 0);
+                if (!t) return 0;
+                return Math.round((Number(parte || 0) / t) * 1000) / 10;
+            }
+            function decimal(valor) {
+                return (Math.round(Number(valor || 0) * 100) / 100).toLocaleString('es-SV', {
+                    minimumFractionDigits: 0, maximumFractionDigits: 2
+                });
+            }
+            function fechaHora(valor) {
+                if (!valor) return '—';
+                var d = new Date(valor);
+                return isNaN(d.getTime()) ? String(valor) : d.toLocaleString('es-SV', {
+                    dateStyle: 'medium', timeStyle: 'short'
+                });
+            }
+            function fechaDia(clave) {
+                if (!clave) return '—';
+                var d = new Date(String(clave) + 'T12:00:00');
+                return isNaN(d.getTime()) ? String(clave) : d.toLocaleDateString('es-SV', {
+                    weekday: 'short', day: '2-digit', month: 'short'
+                });
+            }
+            function esMesActual(clave) {
+                var fecha = new Date(String(clave || '') + 'T12:00:00');
+                var hoy = new Date();
+                return !isNaN(fecha.getTime()) &&
+                    fecha.getFullYear() === hoy.getFullYear() &&
+                    fecha.getMonth() === hoy.getMonth();
+            }
+            function etiquetaGrafica(clave) {
+                var fecha = new Date(String(clave || '') + 'T12:00:00');
+                if (isNaN(fecha.getTime())) return [String(clave || '—'), ''];
+                var dias = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+                return [
+                    String(fecha.getDate()).padStart(2, '0') + '/' + String(fecha.getMonth() + 1).padStart(2, '0'),
+                    dias[fecha.getDay()]
+                ];
+            }
+            function fechaCorta(d) {
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0');
+            }
+            function rangoFechas() {
+                return { from: $('mailDateFrom').value || null, to: $('mailDateTo').value || null };
+            }
+            function hoyLocal() {
+                var ahora = new Date();
+                return fechaCorta(ahora);
+            }
+            function diasEntre(inicio, fin) {
+                if (!inicio || !fin) return 0;
+                return Math.floor((Date.parse(fin + 'T00:00:00Z') - Date.parse(inicio + 'T00:00:00Z')) / 86400000) + 1;
+            }
+            function sumarCampo(filas, campo, alternativos) {
+                return filas.reduce(function (total, fila) {
+                    var valor = fila[campo];
+                    if (valor == null && alternativos) {
+                        for (var i = 0; i < alternativos.length && valor == null; i++) valor = fila[alternativos[i]];
+                    }
+                    return total + Number(valor || 0);
+                }, 0);
+            }
+            function datosDelPeriodo(data) {
+                var rango = rangoFechas();
+                var filas = (data.emails_daily || data.daily || []).filter(function (fila) {
+                    var dia = String(fila.day || '');
+                    return (!rango.from || dia >= rango.from) && (!rango.to || dia <= rango.to);
+                });
+                var summary = Object.assign({}, data.email_summary || {});
+                if (filas.length || (data.emails_daily || data.daily || []).length) {
+                    summary.emails_sent = sumarCampo(filas, 'emails_sent');
+                    summary.emails_opened = sumarCampo(filas, 'emails_opened');
+                    summary.total_opens = sumarCampo(filas, 'total_opens', ['emails_opens', 'opens']);
+                    summary.total_clicks = sumarCampo(filas, 'total_clicks', ['clicks', 'clics']);
+                    summary.emails_error = sumarCampo(filas, 'emails_error', ['emails_failed', 'errors']);
+                }
+                var fechasValidas = (data.emails_daily || data.daily || []).map(function (fila) {
+                    return String(fila.day || '');
+                }).filter(function (dia) { return /^\d{4}-\d{2}-\d{2}$/.test(dia); }).sort();
+                var inicio = rango.from || fechasValidas[0] || null;
+                var fin = rango.to || fechasValidas[fechasValidas.length - 1] || null;
+                if (inicio && fin && inicio > fin) {
+                    if (rango.from && !rango.to) fin = inicio;
+                    else inicio = fin;
+                }
+                return {
+                    data: Object.assign({}, data, {
+                        emails_daily: filas,
+                        email_summary: summary,
+                        range_mode: rango.from || rango.to ? 'filtered' : 'all',
+                        from: inicio,
+                        to: fin
+                    }),
+                    filas: filas,
+                    inicio: inicio,
+                    fin: fin,
+                    dias: diasEntre(inicio, fin)
+                };
+            }
+            function porcentaje2(parte, total) {
+                var porcentaje = Number(total) ? Number(parte || 0) / Number(total) * 100 : 0;
+                return porcentaje.toLocaleString('es-SV', {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                });
+            }
+            function formatoPorcentaje(valor) {
+                return Number(valor || 0).toLocaleString('es-SV', {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                });
+            }
+            function fechaLarga(clave) {
+                if (!clave) return 'Sin datos';
+                var fecha = new Date(String(clave) + 'T12:00:00');
+                return isNaN(fecha.getTime()) ? String(clave) : fecha.toLocaleDateString('es-SV', {
+                    day: 'numeric', month: 'short', year: 'numeric'
+                });
+            }
+            function resumenKpis(data, filas, inicio, fin, cantidadDias) {
+                var ultimoDia = fin;
+                var filaUltimo = null;
+                if (!rangoFechas().to) {
+                    filas.forEach(function (fila) {
+                        if (!filaUltimo || String(fila.day) > String(filaUltimo.day)) filaUltimo = fila;
+                    });
+                    ultimoDia = filaUltimo ? filaUltimo.day : null;
+                } else {
+                    filaUltimo = filas.find(function (fila) { return String(fila.day) === String(ultimoDia); }) || null;
+                }
+                var abiertosUltimo = Number(filaUltimo && filaUltimo.emails_opened || 0);
+                var enviadosUltimo = Number(filaUltimo && filaUltimo.emails_sent || 0);
+                var sumaTasas = filas.reduce(function (total, fila) {
+                    var enviados = Number(fila.emails_sent || 0);
+                    return total + (enviados ? Number(fila.emails_opened || 0) / enviados * 100 : 0);
+                }, 0);
+                var promedio = cantidadDias ? sumaTasas / cantidadDias : 0;
+                var s = data.email_summary || {};
+                var tarjetas = [
+                    { label: 'Correos enviados', value: n(s.emails_sent), hint: 'total del periodo', tono: 'info', info: 'Cantidad total de correos que la API registró como enviados en el periodo seleccionado.' },
+                    { label: 'Correos abiertos', value: n(s.emails_opened), hint: porcentaje2(s.emails_opened, s.emails_sent) + '% tasa de apertura', tono: 'ok', info: 'Cantidad de correos enviados que registraron al menos una apertura.' },
+                    { label: 'KPI diario', value: porcentaje2(abiertosUltimo, enviadosUltimo) + '%', hint: ultimoDia ? fechaLarga(ultimoDia) + ' · ' + n(abiertosUltimo) + '/' + n(enviadosUltimo) : 'Sin datos aún', tono: 'red', info: 'Tasa de apertura del último día del periodo: correos abiertos ÷ correos enviados × 100.' },
+                    { label: 'KPI promedio de apertura', value: formatoPorcentaje(promedio) + '%', hint: 'De ' + n(cantidadDias) + ' días calendario', tono: 'red', info: 'Promedio diario de apertura del periodo. Se suman las tasas de cada día y se dividen entre todos los días calendario del rango; los días sin envíos cuentan como 0%.' }
+                ];
+
+                $('kpis').innerHTML = tarjetas.map(function (card) {
+                    return '<div class="kpi-card kpi-card--info mail-kpi mail-kpi--' + card.tono + '">' +
+                        '<span class="kpi-card__label">' + esc(card.label) +
+                            '<span class="mail-info"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Cómo se calcula: ' + esc(card.label) + '">i</button><span class="mail-info__pop" role="tooltip">' + esc(card.info) + '</span></span>' +
+                        '</span>' +
+                        '<strong class="kpi-card__value">' + card.value + '</strong>' +
+                        '<span class="kpi-card__hint">' + esc(card.hint) + '</span>' +
+                    '</div>';
+                }).join('');
+            }
+            function colorTema() {
+                return document.documentElement.getAttribute('data-tema') === 'claro' ? '#334155' : '#cbd5e1';
+            }
+            function ponerEstado(tipo, html) {
+                var el = $('status');
+                el.className = 'mail-status' + (tipo ? ' is-' + tipo : '');
+                el.innerHTML = html;
+            }
+
+            function rutasApi() {
+                var rutas = location.protocol === 'https:'
+                    ? ['https://controlapi-oz42.onrender.com/api/alt/overview']
+                    : ['/api/alt/overview'];
+                if (location.protocol !== 'https:') {
+                    rutas.push('http://127.0.0.1:8787/api/alt/overview');
+                    rutas.push('http://localhost:8787/api/alt/overview');
+                }
+                return rutas;
+            }
+
+            function consultarApi(indice) {
+                var rutas = rutasApi();
+                if (indice >= rutas.length) {
+                    return Promise.reject(new Error('No se pudo conectar con el servidor Node en http://127.0.0.1:8787. Inícialo con "npm start".'));
+                }
+                var url = rutas[indice];
+                return fetch(url, { cache: 'no-store' }).then(function (r) {
+                    return r.text().then(function (texto) {
+                        var data;
+                        try { data = JSON.parse(texto); } catch (e) {
+                            if (indice + 1 < rutas.length) return consultarApi(indice + 1);
+                            throw new Error('El servidor devolvió HTML en vez de JSON; inicia Node con "npm start"');
+                        }
+                        if (!r.ok || !data || data.ok === false) {
+                            var error = new Error((data && data.error) || 'La API no devolvió datos');
+                            error.data = data;
+                            error.status = r.status;
+                            throw error;
+                        }
+                        return data;
+                    });
+                }).catch(function (error) {
+                    if (!error.status && indice + 1 < rutas.length) return consultarApi(indice + 1);
+                    throw error;
+                });
+            }
+
+            function mostrarError(error) {
+                var data = error.data || {};
+                var mensaje = data.error || error.message || 'No se pudo consultar la API';
+                ponerEstado('error', 'No se pudieron cargar las métricas: ' + esc(mensaje));
+                $('errorPanel').innerHTML =
+                    '<div class="mail-error__icon" aria-hidden="true">!</div>' +
+                    '<div>' +
+                        '<h2>Sin datos de la API</h2>' +
+                        '<p>' + esc(mensaje) + '</p>' +
+                        '<p class="mail-error__hint">Revisa que <code>ALT_API_KEY</code> esté configurada y que el servidor Node esté corriendo (<code>npm start</code>).</p>' +
+                    '</div>';
+                $('errorPanel').hidden = false;
+                $('overview').hidden = true;
+            }
+
+            function pintarInsights(data) {
+                var s = data.email_summary || {};
+                var enviados = Number(s.emails_sent || 0);
+                var abiertos = Number(s.emails_opened || 0);
+                var aperturas = Number(s.total_opens || 0);
+                var clics = Number(s.total_clicks || 0);
+
+                var items = [
+                    { label: 'Tasa de apertura', value: pct(abiertos, enviados) + '%', hint: n(abiertos) + ' de ' + n(enviados) + ' correos', info: 'Porcentaje de correos abiertos respecto al total enviado. Fórmula: correos abiertos ÷ correos enviados × 100.' },
+                    { label: 'Aperturas por correo', value: abiertos ? decimal(aperturas / abiertos) : '0', hint: 'aperturas promedio', info: 'Promedio de aperturas por cada correo abierto. Fórmula: aperturas totales ÷ correos abiertos.' }
+                ];
+
+                $('insights').innerHTML = items.map(function (item) {
+                    return '<div class="mail-insight">' +
+                        '<span class="mail-insight__label">' + esc(item.label) +
+                            '<span class="mail-info"><button type="button" class="mail-info__btn" aria-expanded="false" aria-label="Cómo se calcula: ' + esc(item.label) + '">i</button><span class="mail-info__pop" role="tooltip">' + esc(item.info) + '</span></span>' +
+                        '</span>' +
+                        '<span class="mail-insight__value">' + esc(item.value) + '</span>' +
+                        '<span class="mail-insight__hint">' + esc(item.hint) + '</span>' +
+                    '</div>';
+                }).join('');
+            }
+
+            document.addEventListener('click', function (event) {
+                var button = event.target.closest ? event.target.closest('.mail-info__btn') : null;
+                var abiertos = document.querySelectorAll('.mail-info.is-open');
+                Array.prototype.forEach.call(abiertos, function (item) {
+                    if (!button || item !== button.parentNode) {
+                        item.classList.remove('is-open');
+                        var trigger = item.querySelector('.mail-info__btn');
+                        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                if (!button) return;
+                var info = button.parentNode;
+                var activo = info.classList.toggle('is-open');
+                button.setAttribute('aria-expanded', activo ? 'true' : 'false');
+                event.stopPropagation();
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Escape') return;
+                Array.prototype.forEach.call(document.querySelectorAll('.mail-info.is-open'), function (item) {
+                    item.classList.remove('is-open');
+                    item.querySelector('.mail-info__btn').setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            function pintarTabla(data) {
+                var diario = (data.emails_daily || []).slice().sort(function (a, b) {
+                    return String(b.day).localeCompare(String(a.day));
+                });
+                var cuerpo = $('dailyTable').querySelector('tbody');
+                $('dayCount').textContent = diario.length + (diario.length === 1 ? ' día' : ' días');
+                $('tableNote').textContent = data.range_mode === 'all'
+                    ? 'Histórico completo'
+                    : 'Del ' + (data.from || '—') + ' al ' + (data.to || '—');
+
+                if (!diario.length) {
+                    cuerpo.innerHTML = '<tr><td colspan="7" class="tbl-empty">La API no devolvió detalle diario.</td></tr>';
+                    return;
+                }
+
+                cuerpo.innerHTML = diario.map(function (d) {
+                    var enviados = Number(d.emails_sent || 0);
+                    var abiertos = Number(d.emails_opened || 0);
+                    var errores = Number(d.emails_error || 0);
+                    var tasa = pct(abiertos, enviados);
+                    return '<tr class="mail-row" data-mail-date="' + esc(d.day) + '" tabindex="0" role="button" aria-label="Ver detalle del ' + esc(fechaDia(d.day)) + '">' +
+                        '<td class="mail-date" title="' + esc(d.day) + '">' + esc(fechaDia(d.day)) + '</td>' +
+                        '<td class="mail-num">' + n(enviados) + '</td>' +
+                        '<td class="mail-num">' + n(abiertos) + '</td>' +
+                        '<td class="mail-num">' + n(d.total_opens) + '</td>' +
+                        '<td class="mail-num">' + n(d.total_clicks) + '</td>' +
+                        '<td class="mail-num ' + (errores ? 'is-error' : '') + '">' + n(errores) + '</td>' +
+                        '<td><span class="mail-rate"><span style="width:' + Math.min(100, tasa) + '%"></span></span><b>' + n(tasa) + '%</b></td>' +
+                    '</tr>';
+                }).join('');
+            }
+
+            function pintarGraficaCorreos(data) {
+                if (chart) {
+                    chart.destroy();
+                    chart = null;
+                }
+                var diario = (data.emails_daily || data.daily || []).slice().sort(function (a, b) {
+                    return String(a.day).localeCompare(String(b.day));
+                });
+                var hayDatos = diario.some(function (d) {
+                    return Number(d.emails_sent || 0) > 0 || Number(d.emails_opened || 0) > 0;
+                });
+                $('mailChartEmpty').hidden = hayDatos;
+                $('mailControlChart').style.display = hayDatos ? '' : 'none';
+                var periodo = data.range_mode === 'all'
+                    ? 'Histórico completo'
+                    : 'Del ' + fechaLarga(data.from) + ' al ' + fechaLarga(data.to);
+                $('mailChartNote').textContent = periodo + ' · ' + diario.length + (diario.length === 1 ? ' día' : ' días');
+                if (!hayDatos || typeof Chart === 'undefined') return;
+
+                var enviadosDiarios = diario.map(function (d) { return Number(d.emails_sent || 0); });
+                var etiquetas = diario.map(function (d) { return etiquetaGrafica(d.day); });
+
+                Chart.defaults.color = document.documentElement.getAttribute('data-tema') === 'claro'
+                    ? '#4c5b78' : '#cbd5e1';
+                Chart.defaults.font.family = "'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+                var lineaPosicion = {
+                    id: 'mailPositionLine',
+                    afterDraw: function (grafica) {
+                        var activos = grafica.tooltip && grafica.tooltip.getActiveElements
+                            ? grafica.tooltip.getActiveElements()
+                            : [];
+                        if (!activos.length) return;
+                        var x = activos[0].element.x;
+                        var area = grafica.chartArea;
+                        var ctx = grafica.ctx;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(x, area.top);
+                        ctx.lineTo(x, area.bottom);
+                        ctx.lineWidth = 1.5;
+                        ctx.setLineDash([5, 5]);
+                        ctx.strokeStyle = document.documentElement.getAttribute('data-tema') === 'claro'
+                            ? 'rgba(226,26,44,.68)' : 'rgba(255,139,146,.82)';
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                };
+                chart = new Chart($('mailControlChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: etiquetas,
+                        datasets: [
+                            {
+                                label: 'Enviados',
+                                data: enviadosDiarios,
+                                backgroundColor: 'rgba(226,26,44,.78)',
+                                hoverBackgroundColor: '#e21a2c',
+                                borderRadius: 6,
+                                maxBarThickness: 36,
+                                order: 2
+                            },
+                            {
+                                label: 'Abiertos',
+                                data: diario.map(function (d) { return Number(d.emails_opened || 0); }),
+                                backgroundColor: 'rgba(34,197,94,.78)',
+                                hoverBackgroundColor: '#16a34a',
+                                borderRadius: 6,
+                                maxBarThickness: 36,
+                                order: 3
+                            },
+                            {
+                                label: 'Clics',
+                                data: diario.map(function (d) { return Number(d.total_clicks || d.clicks || d.clics || 0); }),
+                                backgroundColor: 'rgba(47,128,237,.78)',
+                                hoverBackgroundColor: '#2563eb',
+                                borderRadius: 6,
+                                maxBarThickness: 36,
+                                order: 4
+                            },
+                            {
+                                type: 'line',
+                                label: 'Meta',
+                                data: enviadosDiarios,
+                                borderColor: '#f0333d',
+                                backgroundColor: '#f0333d',
+                                borderWidth: 2.6,
+                                borderDash: [10, 7],
+                                tension: .25,
+                                pointRadius: 3.5,
+                                pointHoverRadius: 6,
+                                order: 1
+                            }
+                        ]
+                    },
+                    plugins: [lineaPosicion],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.dataset.label + ': ' + Number(ctx.parsed.y || 0).toLocaleString('es-SV');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 },
+                                grid: { color: 'rgba(148,163,184,.16)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function rutasDetalle() {
+                var rutas = location.protocol === 'https:'
+                    ? ['https://controlapi-oz42.onrender.com/api/alt/emails']
+                    : ['/api/alt/emails'];
+                if (location.protocol !== 'https:') {
+                    rutas.push('http://127.0.0.1:8787/api/alt/emails');
+                    rutas.push('http://localhost:8787/api/alt/emails');
+                }
+                return rutas;
+            }
+
+            function consultarDetalle(fecha, indice) {
+                var rutas = rutasDetalle();
+                if (indice >= rutas.length) return Promise.reject(new Error('No se pudo conectar con el proxy Node.'));
+                return fetch(rutas[indice] + '?date=' + encodeURIComponent(fecha), { cache: 'no-store' }).then(function (r) {
+                    return r.json().then(function (data) {
+                        if (!r.ok || !data || data.ok === false) throw new Error((data && data.error) || 'La API no devolvió el detalle');
+                        return data;
+                    });
+                }).catch(function (error) {
+                    if (!error.status && indice + 1 < rutas.length) return consultarDetalle(fecha, indice + 1);
+                    throw error;
+                });
+            }
+
+            function normalizarBusqueda(valor) {
+                return String(valor || '').toLocaleLowerCase('es-SV')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function pintarDetalleLista() {
+                var consulta = normalizarBusqueda($('mailDetailSearch').value);
+                var correos = detalleCorreos.filter(function (correo) {
+                    var error = Boolean(correo.last_error) || /error|failed|fallido/i.test(String(correo.status || ''));
+                    var abiertos = Number(correo.open_count || 0) > 0 ||
+                        (Array.isArray(correo.events) && correo.events.some(function (evento) {
+                            return /open|apertura/i.test(String(evento.type || ''));
+                        }));
+                    var clics = Number(correo.click_count || 0) > 0 ||
+                        (Array.isArray(correo.events) && correo.events.some(function (evento) {
+                            return /click|clic/i.test(String(evento.type || ''));
+                        }));
+                    if (filtroDetalle === 'sent' && (error || !correo.sent_at)) return false;
+                    if (filtroDetalle === 'opened' && !abiertos) return false;
+                    if (filtroDetalle === 'clicked' && !clics) return false;
+                    if (filtroDetalle === 'errors' && !error) return false;
+                    var eventos = Array.isArray(correo.events) ? correo.events.map(function (evento) {
+                        return [evento.type, evento.source, evento.at].join(' ');
+                    }).join(' ') : '';
+                    return !consulta || normalizarBusqueda([
+                        correo.email_id, correo.report_id, correo.client_code, correo.report_name,
+                        correo.recipient, correo.subject, correo.message_id, correo.status,
+                        correo.sent_at, correo.last_error, eventos
+                    ].join(' ')).indexOf(consulta) !== -1;
+                });
+                $('mailDetailList').innerHTML = correos.length ? correos.map(function (correo) {
+                    var estado = String(correo.status || '—').toUpperCase();
+                    var error = correo.last_error ? '<p class="mail-detail-card__error">' + esc(correo.last_error) + '</p>' : '';
+                    var eventos = Array.isArray(correo.events) && correo.events.length
+                        ? '<div class="mail-detail-card__events"><b>Eventos:</b>' + correo.events.map(function (evento) {
+                            return '<span>' + esc(evento.type || 'EVENTO') + ' · ' + esc(fechaHora(evento.at)) + '</span>';
+                        }).join('') + '</div>'
+                        : '';
+                    return '<article class="mail-detail-card">' +
+                        '<div class="mail-detail-card__top"><strong>' + esc(correo.recipient || 'Destinatario no disponible') + '</strong><span class="mail-detail-card__status mail-detail-card__status--' + esc(estado.toLowerCase()) + '">' + esc(estado) + '</span></div>' +
+                        '<h3>' + esc(correo.subject || correo.report_name || 'Correo sin asunto') + '</h3>' +
+                        '<p><b>Empresa:</b> ' + esc(correo.client_code || '—') + ' · <b>Enviado:</b> ' + esc(fechaHora(correo.sent_at)) + '</p>' +
+                        '<p><b>Aperturas:</b> ' + n(correo.open_count) + ' · <b>Clics:</b> ' + n(correo.click_count) + '</p>' +
+                        eventos + error + '</article>';
+                }).join('') : '<p class="mail-detail__loading">' +
+                    (consulta
+                        ? 'No hay correos que coincidan con "' + esc($('mailDetailSearch').value) + '".'
+                        : 'No hay correos para este filtro en esta fecha.') + '</p>';
+            }
+
+            function seleccionarFiltroDetalle(filtro) {
+                filtroDetalle = filtro;
+                $('mailDetailSummary').querySelectorAll('[data-mail-filter]').forEach(function (kpi) {
+                    var activo = kpi.getAttribute('data-mail-filter') === filtroDetalle;
+                    kpi.setAttribute('aria-pressed', activo ? 'true' : 'false');
+                });
+                pintarDetalleLista();
+            }
+
+            function abrirDetalle(fecha) {
+                $('mailDetail').hidden = false;
+                $('mailDetailTitle').textContent = 'Correos del ' + fechaDia(fecha);
+                $('mailDetailSearch').value = '';
+                filtroDetalle = 'sent';
+                $('mailDetailSummary').innerHTML = '';
+                $('mailDetailList').innerHTML = '<p class="mail-detail__loading">Cargando detalle…</p>';
+                consultarDetalle(fecha, 0).then(function (data) {
+                    var resumen = data.summary || data.email_summary || {};
+                    detalleCorreos = Array.isArray(data.emails) ? data.emails : [];
+                    $('mailDetailSummary').innerHTML =
+                        '<div class="mail-detail__kpi" data-mail-filter="sent" role="button" tabindex="0" aria-pressed="true"><span>Enviados</span><b>' + n(resumen.emails_sent) + '</b></div>' +
+                        '<div class="mail-detail__kpi" data-mail-filter="opened" role="button" tabindex="0" aria-pressed="false"><span>Abiertos</span><b>' + n(resumen.emails_opened) + '</b></div>' +
+                        '<div class="mail-detail__kpi" data-mail-filter="clicked" role="button" tabindex="0" aria-pressed="false"><span>Clics</span><b>' + n(resumen.total_clicks) + '</b></div>' +
+                        '<div class="mail-detail__kpi" data-mail-filter="errors" role="button" tabindex="0" aria-pressed="false"><span>Errores</span><b>' + n(resumen.emails_error) + '</b></div>';
+                    pintarDetalleLista();
+                }).catch(function (error) {
+                    $('mailDetailList').innerHTML = '<p class="mail-detail__loading mail-detail__loading--error">' + esc(error.message) + '</p>';
+                });
+            }
+
+            function cerrarDetalle() {
+                $('mailDetail').hidden = true;
+            }
+
+            function pintar(data) {
+                datos = data;
+                var periodo = datosDelPeriodo(data);
+                var vista = periodo.data;
+                $('errorPanel').hidden = true;
+                $('overview').hidden = false;
+                resumenKpis(vista, periodo.filas, periodo.inicio, periodo.fin, periodo.dias);
+                pintarInsights(vista);
+                pintarGraficaCorreos(vista);
+                pintarTabla(vista);
+
+                var rango = vista.range_mode === 'all'
+                    ? 'Todo el histórico'
+                    : 'Del ' + (vista.from || '—') + ' al ' + (vista.to || '—');
+                ponerEstado('ok', 'Datos reales de la API · generado ' + esc(fechaHora(data.generated_at)) + ' · ' + esc(rango));
+            }
+
+            function aplicarPeriodo() {
+                var rango = rangoFechas();
+                var error = Boolean(rango.from && rango.to && rango.from > rango.to);
+                $('mailPeriodError').hidden = !error;
+                if (error) return;
+                if (datos) pintar(datos);
+            }
+
+            function prepararFiltroPeriodo() {
+                var hoy = hoyLocal();
+                var inicioMes = hoy.slice(0, 8) + '01';
+                $('mailDateFrom').value = inicioMes;
+                $('mailDateTo').value = hoy;
+                $('mailDateFrom').max = hoy;
+                $('mailDateTo').max = hoy;
+                $('mailDateFrom').addEventListener('change', aplicarPeriodo);
+                $('mailDateTo').addEventListener('change', aplicarPeriodo);
+                $('mailDateClear').addEventListener('click', function () {
+                    $('mailDateFrom').value = '';
+                    $('mailDateTo').value = '';
+                    $('mailPeriodError').hidden = true;
+                    if (datos) pintar(datos);
+                });
+            }
+
+            function cargar(forzar) {
+                if (cargando) return;
+                cargando = true;
+                var boton = $('btnRefresh');
+                boton.disabled = true;
+                boton.classList.add('is-loading');
+                ponerEstado('', 'Consultando la API…');
+
+                consultarApi(0).then(function (data) {
+                    pintar(data);
+                }).catch(function (error) {
+                    mostrarError(error);
+                }).finally(function () {
+                    cargando = false;
+                    boton.disabled = false;
+                    boton.classList.remove('is-loading');
+                });
+            }
+
+            $('btnRefresh').addEventListener('click', function () { cargar(true); });
+            $('dailyTable').querySelector('tbody').addEventListener('click', function (event) {
+                var fila = event.target.closest('.mail-row');
+                if (fila) abrirDetalle(fila.getAttribute('data-mail-date'));
+            });
+            $('dailyTable').querySelector('tbody').addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                var fila = event.target.closest('.mail-row');
+                if (!fila) return;
+                event.preventDefault();
+                abrirDetalle(fila.getAttribute('data-mail-date'));
+            });
+            $('mailDetailClose').addEventListener('click', cerrarDetalle);
+            $('mailDetailSummary').addEventListener('click', function (event) {
+                var kpi = event.target.closest('[data-mail-filter]');
+                if (kpi) seleccionarFiltroDetalle(kpi.getAttribute('data-mail-filter'));
+            });
+            $('mailDetailSummary').addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                var kpi = event.target.closest('[data-mail-filter]');
+                if (!kpi) return;
+                event.preventDefault();
+                seleccionarFiltroDetalle(kpi.getAttribute('data-mail-filter'));
+            });
+            $('mailDetail').addEventListener('click', function (event) {
+                if (event.target === $('mailDetail')) cerrarDetalle();
+            });
+            $('mailDetailSearch').addEventListener('input', pintarDetalleLista);
+            $('mailDetailSearchClear').addEventListener('click', function () {
+                $('mailDetailSearch').value = '';
+                pintarDetalleLista();
+                $('mailDetailSearch').focus();
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !$('mailDetail').hidden) cerrarDetalle();
+            });
+
+            prepararFiltroPeriodo();
+            cargar(false);
+            setInterval(function () {
+                if (document.visibilityState === 'visible' && !cargando) cargar(false);
+            }, 300000);
+        }());
+    </script>
+</body>
+</html>

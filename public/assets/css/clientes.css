@@ -1,0 +1,82 @@
+/* ══════════════════════════════════════════════════════════════════
+   CUMPLIMIENTO DE CLIENTES — solo lo propio; el resto viene de
+   dashboard.css, sims.css y estandar.css (mismo aspecto que SIMs).
+   ══════════════════════════════════════════════════════════════════ */
+.kpi-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px)  { .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.cc-verde { color: #42b998; }
+.cc-rojo  { color: #d95f6e; }
+.cc-gris  { color: var(--text-muted); }
+.cc-num   { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+th.cc-num { text-align: right; }
+.cc-d     { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
+b.cc-d    { font-weight: 800; }
+.cc-quieta td { opacity: .55; }
+td.cc-sin { text-align: center; color: var(--text-muted); font-size: 12px; }
+
+/* Barras apiladas: válido / por corregir / pendiente */
+.cc-bg-ok    { background: #2f8f76; }
+.cc-bg-mal   { background: #d95f6e; }
+.cc-bg-vacio { background: rgba(255, 255, 255, .12); }
+.cc-stack { display: grid; grid-template-columns: 90px 1fr 44px; align-items: center; gap: 10px; margin-bottom: 7px; }
+.cc-stack-lbl { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.cc-stack-cargo { font-size: 12px; font-weight: 700; color: var(--text); margin: 0 0 7px; }
+.cc-stack-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: rgba(255, 255, 255, .06); }
+.cc-stack-bar i { display: block; height: 100%; transition: width .65s cubic-bezier(.2, .75, .25, 1); }
+.cc-stack-val { font: 700 11px var(--mono); color: var(--text); text-align: right; }
+.cc-stack:nth-child(5n) { margin-bottom: 16px; }
+
+/* Ranking */
+.cc-rank { grid-template-columns: 1fr 64px; }
+.cc-rank .bar-label { white-space: normal; }
+.cc-rank .bar-track { height: 8px; }
+
+/* 14 días: barras más angostas */
+.cc-dias { gap: 6px; }
+.cc-dias .vertical-bar .bar-column { width: 100%; max-width: 30px; }
+
+.cc-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .two-col { grid-template-columns: 1fr; }
+  .cc-stack { grid-template-columns: 80px 1fr 40px; }
+}
+
+/* Las 12 marcas de un cliente: GG · GF · GO, cuatro datos cada uno */
+.cc-mk { display: inline-flex; gap: 6px; vertical-align: middle; }
+.cc-mk-g { display: inline-flex; gap: 2px; }
+.cc-mk i { display: block; width: 9px; height: 9px; border-radius: 2px; }
+.cc-mk-v { background: #2f8f76; }
+.cc-mk-c { background: #d95f6e; }
+.cc-mk-x { background: transparent; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28); }
+
+/* Búsqueda y filtros de estado */
+.cc-buscar {
+  width: min(320px, 100%); height: 36px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .04); color: var(--text); font: inherit; font-size: 13px;
+}
+.cc-buscar:focus { outline: none; border-color: var(--accent); }
+.cc-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.cc-filtros b { margin-left: 4px; font-weight: 700; opacity: .8; }
+.cc-pie { display: flex; justify-content: center; margin-top: 12px; }
+
+/* Tablas largas: alto fijo con scroll propio, como en SIMs */
+.cc-alto { max-height: 640px; overflow: auto; }
+.cc-nw { white-space: nowrap; }
+
+/* Carteras: la fila abre sus clientes */
+.cc-abre { cursor: pointer; }
+.cc-abre:hover td, .cc-abre.is-open td { background: rgba(255, 255, 255, .035); }
+.cc-abre:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.cc-chev { display: inline-block; width: 16px; color: var(--text-muted); }
+.cc-cajon > td { padding: 4px 8px 14px 24px !important; background: rgba(0, 0, 0, .18); }
+.cc-sub { width: 100%; }
+.cc-sub th { font-size: 10px; }
+.cc-sub td { padding-top: 6px !important; padding-bottom: 6px !important; font-size: 12px; }
+
+/* Datos no válidos */
+.cc-kpi4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .cc-kpi4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cc-mono { font-family: var(--mono); font-size: 12px; white-space: nowrap; }

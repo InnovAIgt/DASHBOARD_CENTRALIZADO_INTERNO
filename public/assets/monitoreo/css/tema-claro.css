@@ -1,0 +1,1146 @@
+/* =========================================================
+   Red Intelfon · Tema CLARO
+   ---------------------------------------------------------
+   Se carga DESPUÉS de style.css / dashboard.css (y de
+   sidebar.css, que inyecta sidebar.js) en todas las páginas.
+
+   Truco de especificidad: cada regla va prefijada con
+   html[data-tema="claro"]  →  gana (0,2,1) frente a las reglas
+   base (0,1,0) e incluso frente a las de bloque responsive
+   (0,2,0), sin necesidad de !important.
+
+   Todo vive aquí: fondo, sidebar, navbar, paneles, tablas,
+   filtros, popovers, modales, gráficas SVG y login.
+   ========================================================= */
+
+html[data-tema="claro"] {
+    /* --- Paleta base del modo claro --- */
+    --l-fondo: #e8edf7;
+    --l-txt: #16223c;
+    --l-txt2: #4c5b78;
+    --l-txt3: #74819c;
+    --l-surf: rgba(255, 255, 255, .93);
+    --l-surf-2: rgba(255, 255, 255, .74);
+    --l-borde: rgba(15, 27, 51, .12);
+    --l-borde-2: rgba(15, 27, 51, .07);
+    --l-sombra: 0 16px 38px rgba(15, 27, 51, .13);
+    --l-input: #ffffff;
+    --l-hover: rgba(15, 27, 51, .055);
+    /* Splash: relleno de las letras (gris medio) + borde claro */
+    --l-gris-letra: #7c7c7c;
+    --l-gris-borde: #dcdcdc;
+    color-scheme: light;
+}
+
+/* =========================================================
+   1 · Login (style.css)
+   ========================================================= */
+html[data-tema="claro"] body.login {
+    color: var(--l-txt);
+    background-color: var(--l-fondo);
+    background-image: none;
+}
+
+html[data-tema="claro"] body.login::before {
+    background-color: rgba(255, 255, 255, .40);
+    background-image: radial-gradient(58% 65% at 50% 50%, rgba(255, 255, 255, .46), rgba(255, 255, 255, 0) 72%);
+}
+
+html[data-tema="claro"] .login-splash {
+    background-color: var(--l-fondo);
+    background-image: none;
+}
+
+html[data-tema="claro"] .login-splash::before {
+    background: rgba(255, 255, 255, .80);
+}
+
+/* "INTELFON" del splash: en modo claro el relleno sale en GRIS MEDIO
+   (más oscuro que antes) con BORDE GRIS CLARO alrededor de cada letra */
+html[data-tema="claro"] .login-splash__word {
+    color: var(--l-gris-letra);
+    -webkit-text-stroke: 1.8px var(--l-gris-borde);
+    paint-order: stroke fill;
+    text-shadow: none;
+    filter:
+        drop-shadow(0 2px 3px rgba(15, 27, 51, .22))
+        drop-shadow(0 10px 24px rgba(15, 27, 51, .14));
+}
+
+html[data-tema="claro"] .login-splash__word span {
+    color: inherit;
+    -webkit-text-stroke: inherit;
+    text-shadow: none;
+}
+
+html[data-tema="claro"] .stage-light {
+    opacity: .34;
+}
+
+html[data-tema="claro"] .login-card {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, .95), rgba(246, 248, 253, .97)) padding-box,
+        linear-gradient(150deg, rgba(226, 26, 44, .78), rgba(15, 27, 51, .16) 42%, rgba(47, 128, 237, .62)) border-box;
+    box-shadow:
+        0 42px 100px rgba(15, 27, 51, .20),
+        0 18px 50px rgba(15, 27, 51, .13),
+        inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+
+html[data-tema="claro"] .login-card::after {
+    background:
+        radial-gradient(120% 55% at 50% -12%, rgba(255, 255, 255, .9), transparent 62%),
+        linear-gradient(180deg, rgba(255, 255, 255, .55), transparent 26%);
+}
+
+html[data-tema="claro"] .login-card::before {
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(15, 27, 51, .07), transparent 62%);
+}
+
+html[data-tema="claro"] .login-brand::before {
+    background: radial-gradient(circle, rgba(255, 45, 64, .26), rgba(255, 45, 64, 0) 68%);
+}
+
+html[data-tema="claro"] .login-brand::after {
+    background: linear-gradient(90deg, transparent, rgba(15, 27, 51, .14) 35%, rgba(59, 130, 255, .28) 65%, transparent);
+}
+
+html[data-tema="claro"] .login-title { color: var(--l-txt); }
+html[data-tema="claro"] .login-sub { color: rgba(15, 27, 51, .66); }
+html[data-tema="claro"] .login-eyebrow { color: #cf1220; }
+html[data-tema="claro"] .login-eyebrow::before { background: linear-gradient(90deg, transparent, rgba(207, 18, 32, .85)); }
+html[data-tema="claro"] .login-eyebrow::after { background: linear-gradient(90deg, rgba(207, 18, 32, .85), transparent); }
+
+html[data-tema="claro"] .field {
+    background: rgba(15, 27, 51, .05);
+    border-color: rgba(15, 27, 51, .15);
+}
+
+html[data-tema="claro"] .field:focus-within {
+    background: rgba(255, 255, 255, .9);
+    border-color: rgba(226, 26, 44, .6);
+    box-shadow: 0 0 0 4px rgba(226, 26, 44, .13);
+}
+
+html[data-tema="claro"] .field-icon {
+    background: rgba(15, 27, 51, .06);
+    border-color: rgba(15, 27, 51, .10);
+    color: rgba(15, 27, 51, .60);
+}
+
+html[data-tema="claro"] .field:focus-within .field-icon {
+    background: rgba(226, 26, 44, .14);
+    border-color: rgba(226, 26, 44, .40);
+    color: #b81524;
+}
+
+html[data-tema="claro"] .field input { color: var(--l-txt); }
+html[data-tema="claro"] .field input::placeholder { color: rgba(15, 27, 51, .44); }
+
+html[data-tema="claro"] .field-eye { color: rgba(15, 27, 51, .58); }
+html[data-tema="claro"] .field-eye:hover { color: var(--l-txt); background: rgba(15, 27, 51, .08); }
+
+html[data-tema="claro"] .remember-box {
+    background: #fff;
+    border-color: rgba(15, 27, 51, .38);
+}
+
+html[data-tema="claro"] .remember-text,
+html[data-tema="claro"] .accept-text { color: rgba(15, 27, 51, .80); }
+
+html[data-tema="claro"] .login-error {
+    color: #a7121f;
+    background: rgba(226, 26, 44, .10);
+    border-color: rgba(226, 26, 44, .32);
+}
+
+html[data-tema="claro"] .login-demo {
+    background: rgba(255, 255, 255, .78);
+    border-color: rgba(226, 26, 44, .35);
+}
+
+html[data-tema="claro"] .login-demo__t { color: #b81524; }
+html[data-tema="claro"] .login-demo__c b { color: var(--l-txt); }
+html[data-tema="claro"] .login-demo__c i { color: var(--l-txt3); }
+html[data-tema="claro"] .login-demo__row:hover { background: rgba(226, 26, 44, .12); }
+
+html[data-tema="claro"] .login-demo__pass {
+    background: rgba(15, 27, 51, .05);
+    border-color: rgba(15, 27, 51, .15);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .login-secure,
+html[data-tema="claro"] .login-secure svg { color: rgba(15, 27, 51, .68); }
+
+html[data-tema="claro"] .login-secure::after {
+    background: linear-gradient(90deg, transparent, rgba(15, 27, 51, .22));
+}
+
+html[data-tema="claro"] .login-secure::before {
+    background: linear-gradient(90deg, rgba(15, 27, 51, .22), transparent);
+}
+
+html[data-tema="claro"] .login-policies {
+    background: rgba(15, 27, 51, .05);
+    border-color: rgba(15, 27, 51, .15);
+    color: rgba(15, 27, 51, .78);
+}
+
+html[data-tema="claro"] .login-policies:hover {
+    background: rgba(226, 26, 44, .12);
+    border-color: rgba(226, 26, 44, .45);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .login-footer { color: rgba(15, 27, 51, .58); }
+
+html[data-tema="claro"] body.login::after,
+html[data-tema="claro"] .login-overlay-scrim {
+    background: rgba(226, 232, 244, .78);
+}
+
+/* Modal de políticas */
+html[data-tema="claro"] .policies-overlay { background: rgba(226, 232, 244, .82); }
+
+html[data-tema="claro"] .policies-modal {
+    background: linear-gradient(180deg, #ffffff, #f3f6fc);
+    border-color: var(--l-borde);
+    box-shadow: 0 30px 70px rgba(15, 27, 51, .30);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .policies-head h2 { color: var(--l-txt); }
+
+html[data-tema="claro"] .policies-close {
+    background: rgba(15, 27, 51, .06);
+    border-color: rgba(15, 27, 51, .15);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .policies-close:hover {
+    background: rgba(226, 26, 44, .20);
+    border-color: rgba(226, 26, 44, .5);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .policies-section h3 { color: #b81524; }
+html[data-tema="claro"] .policies-section p { color: rgba(15, 27, 51, .82); }
+html[data-tema="claro"] .policies-foot { background: rgba(15, 27, 51, .045); color: var(--l-txt2); }
+
+/* =========================================================
+   2 · Superficie general del dashboard (dashboard.css)
+   ========================================================= */
+html[data-tema="claro"] body.dashboard {
+    color: var(--l-txt);
+    background-color: var(--l-fondo);
+    /* Sin imagen de fondo: el portal central no tiene versión clara de
+       fondo.png, así que el tema claro deja el color plano. */
+    background-image: none;
+}
+
+html[data-tema="claro"] body.dashboard::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .42), rgba(232, 237, 247, .66));
+}
+
+/* ---------- Navbar + salir ---------- */
+html[data-tema="claro"] .dash-navbar {
+    background: linear-gradient(180deg, #ffffff 0%, #f2f5fb 100%);
+    box-shadow: 0 12px 32px rgba(15, 27, 51, .14), inset 0 -2px 0 rgba(226, 26, 44, .55);
+}
+
+html[data-tema="claro"] .btn-logout { color: var(--l-txt); }
+html[data-tema="claro"] .btn-logout:hover { background: rgba(15, 27, 51, .09); }
+
+/* El icono blanco desaparece sobre fondo claro: manda el rojo */
+html[data-tema="claro"] .btn-logout__icon--white,
+html[data-tema="claro"] .btn-logout:hover .btn-logout__icon--white { display: none; }
+
+html[data-tema="claro"] .btn-logout__icon--red,
+html[data-tema="claro"] .btn-logout:hover .btn-logout__icon--red { display: block; }
+
+/* ---------- Encabezados ---------- */
+html[data-tema="claro"] .dash-heading h1,
+html[data-tema="claro"] .dash-heading--split .title-red,
+html[data-tema="claro"] .title-red { color: var(--l-txt); }
+
+html[data-tema="claro"] .dash-heading p { color: var(--l-txt2); }
+
+html[data-tema="claro"] .crumb { color: var(--l-txt3); }
+html[data-tema="claro"] .crumb span { color: #d21526; }
+
+html[data-tema="claro"] .panel-eyebrow span { color: #d21526; }
+html[data-tema="claro"] .panel-sub,
+html[data-tema="claro"] .alerta-leyenda { color: var(--l-txt3); }
+
+html[data-tema="claro"] .live-badge {
+    color: #0f7a45;
+    background: rgba(34, 197, 94, .16);
+    border-color: rgba(34, 197, 94, .42);
+}
+
+html[data-tema="claro"] .live-badge b { color: var(--l-txt); }
+
+/* ---------- Aviso de exportación ---------- */
+html[data-tema="claro"] .exp-toast {
+    background: rgba(255, 255, 255, .97);
+    border-color: rgba(226, 26, 44, .45);
+    box-shadow: 0 14px 34px rgba(15, 27, 51, .20);
+    color: var(--l-txt);
+}
+
+/* =========================================================
+   3 · Paneles, tarjetas y KPIs
+   ========================================================= */
+html[data-tema="claro"] .dash-panel,
+html[data-tema="claro"] .stat-card,
+html[data-tema="claro"] .filters {
+    background: linear-gradient(140deg, rgba(255, 255, 255, .96), rgba(244, 247, 252, .90));
+    border-color: var(--l-borde);
+    box-shadow: var(--l-sombra);
+}
+
+html[data-tema="claro"] .stat-card:hover { border-color: rgba(226, 26, 44, .42); }
+
+html[data-tema="claro"] .stat-card__label,
+html[data-tema="claro"] .kpi-card__label,
+html[data-tema="claro"] .side-card__label { color: var(--l-txt3); }
+
+html[data-tema="claro"] .stat-card__value,
+html[data-tema="claro"] .kpi-card__value,
+html[data-tema="claro"] .side-card__value { color: var(--l-txt); }
+
+html[data-tema="claro"] .stat-card__hint { color: #b81524; }
+html[data-tema="claro"] .kpi-card__hint { color: var(--l-txt3); }
+html[data-tema="claro"] .side-card__sub { color: var(--l-txt3); }
+html[data-tema="claro"] .side-card__note { color: var(--l-txt2); }
+
+html[data-tema="claro"] .kpi-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .97), rgba(247, 249, 253, .88));
+    border-color: var(--l-borde);
+    border-top-color: rgba(226, 26, 44, .62);
+}
+
+html[data-tema="claro"] .kpi-card__value--green { color: #0f8a4d; }
+html[data-tema="claro"] .kpi-card__value--amber { color: #a8760a; }
+html[data-tema="claro"] .kpi-card__value--red { color: #c21524; }
+
+/* Popover de la "i" del KPI */
+html[data-tema="claro"] .kpi-info__btn {
+    background: rgba(15, 27, 51, .07);
+    border-color: rgba(15, 27, 51, .32);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .kpi-info__pop {
+    background: #ffffff;
+    border-color: var(--l-borde);
+    box-shadow: 0 18px 44px rgba(15, 27, 51, .26);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .kpi-info__pop strong,
+html[data-tema="claro"] .kpi-info__pop--ancho strong { color: var(--l-txt); }
+
+/* ---------- Cabeceras y badges de panel ---------- */
+html[data-tema="claro"] .dash-panel__head h2 { color: var(--l-txt); }
+html[data-tema="claro"] .dash-panel__body p { color: var(--l-txt2); }
+html[data-tema="claro"] .dash-panel__date { color: var(--l-txt3); }
+
+html[data-tema="claro"] .dash-panel__badge {
+    color: #fff;
+    background: rgba(226, 26, 44, .92);
+    border-color: rgba(255, 255, 255, .35);
+}
+
+html[data-tema="claro"] .dash-panel__badge--red {
+    background: rgba(226, 26, 44, .14);
+    border-color: rgba(226, 26, 44, .5);
+    color: #a7121f;
+}
+
+/* =========================================================
+   4 · Tablas
+   ========================================================= */
+html[data-tema="claro"] .tbl thead th {
+    background: linear-gradient(180deg, #eef2f9, #e6ebf5);
+    color: #1c2a45;
+}
+
+html[data-tema="claro"] .tbl tbody td { color: var(--l-txt); }
+
+html[data-tema="claro"] .tbl tbody tr:nth-child(even) { background: rgba(15, 27, 51, .035); }
+html[data-tema="claro"] .tbl tbody tr:nth-child(odd) { background: transparent; }
+html[data-tema="claro"] .tbl tbody tr:hover { background: rgba(226, 26, 44, .07); }
+
+html[data-tema="claro"] .tbl-strong { color: var(--l-txt); }
+html[data-tema="claro"] .tbl-name { color: var(--l-txt); }
+html[data-tema="claro"] .tbl-muted,
+html[data-tema="claro"] .tbl-left,
+html[data-tema="claro"] .tbl-date,
+html[data-tema="claro"] .tbl-empty { color: var(--l-txt3); }
+
+html[data-tema="claro"] .tbl--meta .tbl-date { color: var(--l-txt); }
+html[data-tema="claro"] .tbl--meta .meta-nombres { color: var(--l-txt3); }
+
+html[data-tema="claro"] .tbl-rank { color: #d21526; }
+html[data-tema="claro"] .tbl--cuentas .tbl-rank,
+html[data-tema="claro"] .tbl--usuarios .tbl-rank { color: var(--l-txt3); }
+
+html[data-tema="claro"] .tbl--cuentas tbody tr:hover,
+html[data-tema="claro"] .tbl--usuarios tbody tr:hover { background: rgba(15, 27, 51, .045); }
+
+html[data-tema="claro"] .tbl--usuarios .tag--ghost {
+    color: var(--l-txt3);
+    background: rgba(15, 27, 51, .07);
+    border-color: rgba(15, 27, 51, .35);
+}
+
+/* Paginador */
+html[data-tema="claro"] .pager__num {
+    background: rgba(15, 27, 51, .05);
+    border-color: var(--l-borde);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .pager__num:hover {
+    background: rgba(226, 26, 44, .14);
+    border-color: rgba(226, 26, 44, .5);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .pager__info { color: var(--l-txt3); }
+
+/* =========================================================
+   5 · Etiquetas, chips y umbrales
+   ========================================================= */
+html[data-tema="claro"] .tag,
+html[data-tema="claro"] .tag-blue {
+    background: rgba(30, 110, 220, .16);
+    border-color: rgba(30, 110, 220, .45);
+    color: #125a9e;
+}
+
+html[data-tema="claro"] .tag-red {
+    background: rgba(226, 26, 44, .14);
+    border-color: rgba(226, 26, 44, .48);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .tag-yellow,
+html[data-tema="claro"] .tag-amber,
+html[data-tema="claro"] .umbrales .u-amber {
+    background: rgba(202, 138, 4, .18);
+    border-color: rgba(202, 138, 4, .48);
+    color: #8a5a04;
+}
+
+html[data-tema="claro"] .tag-gold {
+    background: rgba(180, 110, 6, .18);
+    border-color: rgba(180, 110, 6, .48);
+    color: #7a4a03;
+}
+
+html[data-tema="claro"] .tag-orange {
+    background: rgba(194, 65, 12, .16);
+    border-color: rgba(194, 65, 12, .45);
+    color: #8f3207;
+}
+
+html[data-tema="claro"] .tag-green,
+html[data-tema="claro"] .chip--green,
+html[data-tema="claro"] .umbrales .u-green {
+    background: rgba(22, 163, 74, .16);
+    border-color: rgba(22, 163, 74, .45);
+    color: #0f7a45;
+}
+
+html[data-tema="claro"] .tag-gray,
+html[data-tema="claro"] .chip {
+    background: rgba(15, 27, 51, .07);
+    border-color: rgba(15, 27, 51, .30);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .chip--red,
+html[data-tema="claro"] .umbrales .u-red {
+    background: rgba(226, 26, 44, .14);
+    border-color: rgba(226, 26, 44, .48);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .chip--blue {
+    background: rgba(30, 110, 220, .16);
+    border-color: rgba(30, 110, 220, .48);
+    color: #125a9e;
+}
+
+html[data-tema="claro"] .chip--amber {
+    background: rgba(202, 138, 4, .18);
+    border-color: rgba(202, 138, 4, .48);
+    color: #8a5a04;
+}
+
+html[data-tema="claro"] .rol-leyenda__fila { color: var(--l-txt2); }
+html[data-tema="claro"] .rol-leyenda__fila b { color: var(--l-txt); }
+
+/* =========================================================
+   6 · Filtros, inputs y botones
+   ========================================================= */
+html[data-tema="claro"] .filter-field span { color: var(--l-txt3); }
+
+html[data-tema="claro"] .filter-field input[type="date"],
+html[data-tema="claro"] .filter-field input[type="email"],
+html[data-tema="claro"] .filter-field input[type="search"],
+html[data-tema="claro"] .filter-field input[type="text"],
+html[data-tema="claro"] .filter-field input[type="password"],
+html[data-tema="claro"] .filter-field select {
+    background: var(--l-input);
+    border-color: var(--l-borde);
+    color: var(--l-txt);
+}
+
+/* dashboard.css pone color-scheme:dark en los date (más específico que el
+   del html) y en tema claro eso dejaba el ícono del calendario BLANCO sobre
+   fondo blanco: invisible. Aquí manda el esquema claro (ícono y desplegable). */
+html[data-tema="claro"] .filter-field input[type="date"] { color-scheme: light; }
+
+html[data-tema="claro"] .filter-field input::placeholder { color: rgba(15, 27, 51, .42); }
+
+html[data-tema="claro"] .filter-field input:focus,
+html[data-tema="claro"] .filter-field select:focus {
+    border-color: rgba(226, 26, 44, .65);
+    background: #fff;
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .btn-tool {
+    background: rgba(226, 26, 44, .95);
+    border-color: rgba(226, 26, 44, .7);
+    color: #fff;
+}
+
+html[data-tema="claro"] .btn-tool:hover { background: #cf1220; }
+
+html[data-tema="claro"] .btn-tool--ghost {
+    background: transparent;
+    border-color: rgba(15, 27, 51, .32);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .btn-tool--ghost:hover {
+    background: rgba(15, 27, 51, .08);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .meta-modos {
+    background: rgba(15, 27, 51, .06);
+    border-color: var(--l-borde);
+}
+
+html[data-tema="claro"] .meta-modo { color: var(--l-txt3); }
+
+html[data-tema="claro"] .meta-modo:hover {
+    color: var(--l-txt);
+    background: rgba(15, 27, 51, .08);
+}
+
+html[data-tema="claro"] .meta-modo.is-on {
+    background: linear-gradient(180deg, #2f80ed, #1f63c9);
+    border-color: rgba(15, 27, 51, .35);
+    color: #fff;
+}
+
+/* ---------- Select múltiple ---------- */
+html[data-tema="claro"] .multi__btn {
+    background: var(--l-input);
+    border-color: var(--l-borde);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .multi__btn.is-on {
+    background: rgba(226, 26, 44, .12);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .multi__box {
+    background: #ffffff;
+    border-color: var(--l-borde);
+    box-shadow: 0 18px 44px rgba(15, 27, 51, .26);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .multi__busq { background: rgba(15, 27, 51, .05); }
+
+html[data-tema="claro"] .multi__q {
+    background: #fff;
+    border-color: var(--l-borde);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .multi__q::placeholder { color: var(--l-txt3); }
+
+html[data-tema="claro"] .multi__opt { color: var(--l-txt); }
+html[data-tema="claro"] .multi__opt:hover { background: rgba(226, 26, 44, .12); }
+html[data-tema="claro"] .multi__opt mark { background: rgba(226, 26, 44, .28); color: var(--l-txt); }
+html[data-tema="claro"] .multi__head { background: rgba(15, 27, 51, .05); }
+html[data-tema="claro"] .multi__link { color: #b81524; }
+html[data-tema="claro"] .multi__link:hover { color: #8d0d18; }
+html[data-tema="claro"] .multi__n { color: #b81524; }
+html[data-tema="claro"] .multi__vacio { color: var(--l-txt3); }
+
+/* ---------- Series (details/summary) ---------- */
+html[data-tema="claro"] .series-menu > summary {
+    background: rgba(255, 255, 255, .85);
+    border-color: var(--l-borde);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .series-menu__pop {
+    background: #ffffff;
+    border-color: var(--l-borde);
+    box-shadow: 0 18px 40px rgba(15, 27, 51, .24);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .series-menu__pop label { color: var(--l-txt); }
+
+/* ---------- Botones de periodo / caja de período ---------- */
+html[data-tema="claro"] .periodo-box {
+    background: rgba(226, 26, 44, .11);
+    border-color: rgba(226, 26, 44, .40);
+}
+
+html[data-tema="claro"] .periodo-box span { color: #b81524; }
+html[data-tema="claro"] .periodo-box b { color: var(--l-txt); }
+html[data-tema="claro"] .periodo-box i { color: var(--l-txt3); }
+
+/* =========================================================
+   7 · Bloques informativos y avisos
+   ========================================================= */
+html[data-tema="claro"] .alert { color: var(--l-txt); }
+
+html[data-tema="claro"] .alert--warn {
+    background: rgba(226, 26, 44, .10);
+    border-color: rgba(226, 26, 44, .42);
+}
+
+html[data-tema="claro"] .alert code {
+    background: rgba(15, 27, 51, .10);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .alt-grupo {
+    background: rgba(15, 27, 51, .045);
+    border-color: var(--l-borde-2);
+}
+
+html[data-tema="claro"] .alt-grupo__titulo { color: var(--l-txt3); }
+html[data-tema="claro"] .alt-grupo__nota { color: var(--l-txt3); }
+html[data-tema="claro"] .alt-item { color: var(--l-txt2); }
+html[data-tema="claro"] .alt-item b { color: var(--l-txt); }
+
+/* =========================================================
+   8 · Gráficas
+   ========================================================= */
+/* Etiquetas del SVG (eje, días, valores) */
+html[data-tema="claro"] .ctrl-eje { fill: rgba(15, 27, 51, .68); }
+html[data-tema="claro"] .ctrl-dia { fill: rgba(15, 27, 51, .52); }
+html[data-tema="claro"] .ctrl-valor { fill: var(--l-txt); }
+html[data-tema="claro"] .ctrl-meta { fill: #c21524; }
+
+/* Líneas de cuadrícula (clase ctrl-grid puesta en inicio.html) */
+html[data-tema="claro"] .ctrl-chart line.ctrl-grid { stroke: rgba(15, 27, 51, .16); }
+
+/* Zona sensible del hover sobre la columna de la gráfica */
+html[data-tema="claro"] .meta-hit:hover { fill: rgba(15, 27, 51, .05); }
+
+/* Burbuja de detalle */
+html[data-tema="claro"] .meta-tip {
+    background: linear-gradient(160deg, rgba(255, 255, 255, .99), rgba(244, 247, 252, .99));
+    border-color: rgba(47, 128, 237, .55);
+    box-shadow: 0 18px 42px rgba(15, 27, 51, .28);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .meta-tip b { color: var(--l-txt); }
+/* % de cumplimiento del día en el tema claro (misma paleta de la tarjeta KPI) */
+html[data-tema="claro"] .meta-tip .meta-tip__pct--verde { color: #0f8a4d; }
+html[data-tema="claro"] .meta-tip .meta-tip__pct--amarillo { color: #a8760a; }
+html[data-tema="claro"] .meta-tip .meta-tip__pct--rojo { color: #c21524; }
+html[data-tema="claro"] .meta-tip .meta-tip__pct--sin { color: var(--l-txt3); }
+html[data-tema="claro"] .meta-tip__fecha { color: #b81524; }
+html[data-tema="claro"] .meta-tip__emp { color: var(--l-txt3); }
+
+html[data-tema="claro"] .meta-tip__emp span {
+    background: rgba(47, 128, 237, .16);
+    border-color: rgba(47, 128, 237, .45);
+    color: #14508f;
+}
+
+html[data-tema="claro"] .ctrl-leyenda { color: var(--l-txt2); }
+
+/* Leyendas, donas y barras horizontales */
+html[data-tema="claro"] .chart-legend { color: var(--l-txt2); }
+html[data-tema="claro"] .chart-legend strong { color: var(--l-txt); }
+html[data-tema="claro"] .donut-legend li { color: var(--l-txt2); }
+html[data-tema="claro"] .donut-legend b { color: var(--l-txt); }
+html[data-tema="claro"] .bar-row__head { color: var(--l-txt2); }
+html[data-tema="claro"] .bar-row__track { background: rgba(15, 27, 51, .09); }
+html[data-tema="claro"] .bar-pct { color: var(--l-txt3); }
+
+/* ---------- Tabla de calor ---------- */
+html[data-tema="claro"] .heat-table__col { color: var(--l-txt3); }
+html[data-tema="claro"] .heat-table__row { color: var(--l-txt); }
+html[data-tema="claro"] .heat-table__tot { color: #b81524; }
+
+html[data-tema="claro"] .heat-cell {
+    color: rgba(15, 27, 51, calc(.35 + .65 * var(--i)));
+    background: rgba(226, 26, 44, calc(.05 + .70 * var(--i)));
+    border-color: rgba(226, 26, 44, calc(.14 + .48 * var(--i)));
+}
+
+html[data-tema="claro"] .heat-cell__val { color: rgba(15, 27, 51, .95); }
+html[data-tema="claro"] .heat-cell__none { color: var(--l-txt3); }
+
+html[data-tema="claro"] .heat-cell--tot {
+    color: rgba(15, 27, 51, calc(.40 + .60 * var(--i)));
+    background: rgba(47, 128, 237, calc(.05 + .55 * var(--i)));
+    border-color: rgba(47, 128, 237, calc(.16 + .40 * var(--i)));
+}
+
+html[data-tema="claro"] .heat-scale { color: var(--l-txt3); }
+html[data-tema="claro"] .heat-scale__bar { border-color: rgba(226, 26, 44, .40); }
+
+/* ---------- Tabla de control (reportes generales) ---------- */
+html[data-tema="claro"] .ctrl-th-emp { color: var(--l-txt); }
+html[data-tema="claro"] .ctrl-th-emp--sin { color: var(--l-txt3); }
+html[data-tema="claro"] .ctrl-th-dia { color: var(--l-txt3); }
+html[data-tema="claro"] .ctrl-th-dia b { color: var(--l-txt); }
+
+html[data-tema="claro"] .ctrl-celda--cnt {
+    background: rgba(15, 27, 51, .10);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .ctrl-fila--resumen .ctrl-th-emp {
+    background: #e9eef7;
+    color: var(--l-txt3);
+}
+
+html[data-tema="claro"] .ctrl-si {
+    background: rgba(22, 163, 74, .22);
+    color: #0c6b3d;
+}
+
+html[data-tema="claro"] .ctrl-no {
+    background: rgba(15, 27, 51, .07);
+    color: var(--l-txt3);
+}
+
+html[data-tema="claro"] .ctrl-pct.ctrl-verde {
+    background: rgba(22, 163, 74, .24);
+    color: #0c6b3d;
+}
+
+html[data-tema="claro"] .ctrl-pct.ctrl-amarillo {
+    background: rgba(202, 138, 4, .26);
+    color: #7a4f03;
+}
+
+html[data-tema="claro"] .ctrl-pct.ctrl-rojo {
+    background: rgba(226, 26, 44, .22);
+    color: #96121d;
+}
+
+html[data-tema="claro"] .ctrl-pct.ctrl-sin {
+    background: rgba(15, 27, 51, .06);
+    color: var(--l-txt3);
+}
+
+/* =========================================================
+   9 · Configuración (modal, roles, cuentas)
+   ========================================================= */
+html[data-tema="claro"] .cfg-overlay { background: rgba(226, 232, 244, .86); }
+
+html[data-tema="claro"] .cfg-modal {
+    background: linear-gradient(160deg, #ffffff, #f1f5fc);
+    border-color: var(--l-borde);
+    box-shadow: 0 30px 70px rgba(15, 27, 51, .34);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .cfg-modal__eyebrow { color: #d21526; }
+html[data-tema="claro"] .cfg-modal__head h2 { color: var(--l-txt); }
+html[data-tema="claro"] .cfg-modal__sub { color: var(--l-txt3); }
+
+html[data-tema="claro"] .cfg-modal__close {
+    background: rgba(15, 27, 51, .06);
+    border-color: var(--l-borde);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .cfg-modal__close:hover {
+    background: rgba(226, 26, 44, .24);
+    color: #a7121f;
+}
+
+html[data-tema="claro"] .cfg-rol {
+    background: rgba(15, 27, 51, .045);
+    border-color: var(--l-borde-2);
+}
+
+html[data-tema="claro"] .cfg-rol__cab b { color: var(--l-txt); }
+html[data-tema="claro"] .cfg-rol__lista { color: var(--l-txt2); }
+html[data-tema="claro"] .cfg-rol__lista b { color: #b81524; }
+
+html[data-tema="claro"] .cfg-clave { color: var(--l-txt3); }
+
+html[data-tema="claro"] .cfg-btn {
+    background: rgba(15, 27, 51, .08);
+    border-color: rgba(15, 27, 51, .30);
+    color: var(--l-txt2);
+}
+
+html[data-tema="claro"] .cfg-btn:hover {
+    background: rgba(30, 110, 220, .18);
+    border-color: rgba(30, 110, 220, .6);
+    color: #10497f;
+}
+
+html[data-tema="claro"] .cfg-btn--danger:hover {
+    background: rgba(226, 26, 44, .24);
+    border-color: rgba(226, 26, 44, .7);
+    color: #96121d;
+}
+
+html[data-tema="claro"] .cfg-msg.is-ok {
+    background: rgba(22, 163, 74, .16);
+    border-color: rgba(22, 163, 74, .45);
+    color: #0c6b3d;
+}
+
+html[data-tema="claro"] .cfg-msg.is-err {
+    background: rgba(226, 26, 44, .14);
+    border-color: rgba(226, 26, 44, .45);
+    color: #a7121f;
+}
+
+/* =========================================================
+   10 · Sidebar (sidebar.css, inyectado por sidebar.js)
+   ========================================================= */
+html[data-tema="claro"] .app-sidebar {
+    background-color: #eef2fa;
+    background-image: none;
+    border-right-color: rgba(15, 27, 51, .12);
+    box-shadow: 8px 0 34px rgba(15, 27, 51, .18);
+}
+
+html[data-tema="claro"] .app-sidebar::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .58), rgba(238, 242, 250, .90));
+}
+
+html[data-tema="claro"] .app-sidebar__head,
+html[data-tema="claro"] .app-sidebar__user,
+html[data-tema="claro"] .app-sidebar__foot {
+    background: rgba(255, 255, 255, .55);
+    border-color: rgba(15, 27, 51, .12);
+}
+
+html[data-tema="claro"] .app-sidebar__head { border-bottom-color: rgba(15, 27, 51, .12); }
+html[data-tema="claro"] .app-sidebar__foot { color: rgba(15, 27, 51, .55); }
+
+html[data-tema="claro"] .app-sidebar__logo {
+    filter: drop-shadow(0 6px 14px rgba(15, 27, 51, .22));
+}
+
+html[data-tema="claro"] .app-sidebar__name { color: var(--l-txt); }
+html[data-tema="claro"] .app-sidebar__sub { color: var(--l-txt3); }
+
+html[data-tema="claro"] .app-sidebar__toggle {
+    background: rgba(255, 255, 255, .95);
+    border-color: rgba(15, 27, 51, .22);
+    color: var(--l-txt2);
+    box-shadow: 0 8px 20px rgba(15, 27, 51, .20);
+}
+
+html[data-tema="claro"] .app-sidebar__toggle:hover {
+    background: #ffffff;
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .nav-item {
+    color: var(--l-txt2);
+    border-color: transparent;
+}
+
+html[data-tema="claro"] .nav-item:hover {
+    background: rgba(15, 27, 51, .08);
+    border-color: rgba(15, 27, 51, .12);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .nav-item.is-active {
+    background: linear-gradient(90deg, rgba(226, 26, 44, .92), rgba(226, 26, 44, .45));
+    border-color: rgba(15, 27, 51, .16);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(200, 16, 32, .28);
+}
+
+html[data-tema="claro"] .nav-group__chev { color: var(--l-txt3); }
+
+html[data-tema="claro"] .nav-subitem {
+    color: var(--l-txt2);
+    border-color: transparent;
+}
+
+html[data-tema="claro"] .nav-subitem::before { background: rgba(15, 27, 51, .30); }
+
+html[data-tema="claro"] .nav-subitem:hover {
+    background: rgba(15, 27, 51, .08);
+    border-color: rgba(15, 27, 51, .12);
+    color: var(--l-txt);
+}
+
+html[data-tema="claro"] .nav-subitem.is-active {
+    background: linear-gradient(90deg, rgba(226, 26, 44, .88), rgba(226, 26, 44, .35));
+    border-color: rgba(15, 27, 51, .16);
+    color: #fff;
+}
+
+html[data-tema="claro"] .nav-subitem.is-active::before {
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, .9);
+}
+
+html[data-tema="claro"] .app-sidebar__avatar {
+    border-color: rgba(255, 255, 255, .75);
+    box-shadow: 0 6px 14px rgba(15, 27, 51, .28);
+}
+
+html[data-tema="claro"] .app-sidebar__user-info strong { color: var(--l-txt); }
+html[data-tema="claro"] .app-sidebar__user-info small { color: var(--l-txt3); }
+
+html[data-tema="claro"] .app-sidebar__scrim { background: rgba(226, 232, 244, .72); }
+
+/* [tabindex]:focus-visible (breadcrumb/sidebar) */
+html[data-tema="claro"] .nav-item[tabindex]:focus-visible,
+html[data-tema="claro"] .nav-subitem[tabindex]:focus-visible { background: rgba(15, 27, 51, .10); color: var(--l-txt); }
+
+/* =========================================================
+   11 · Apariencia (botón único) + panel plegable de usuarios
+   ========================================================= */
+
+/* Este contenedor sólo lleva un botón: lo dejamos recogido
+   y con separación clara respecto a lo que viene debajo. */
+.dash-panel--apariencia {
+    margin-bottom: 26px;
+}
+
+/* El botón vive DENTRO de la cabecera, en la misma línea que el título */
+.dash-panel--apariencia .dash-panel__head {
+    flex-wrap: wrap;
+    gap: 12px 18px;
+    align-items: center;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+/* ---------- Botón único: modo claro / modo oscuro ---------- */
+.tema-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 18px 6px 6px;
+    border-radius: 999px;
+    border: 2px solid var(--l-borde);
+    background: rgba(15, 27, 51, .05);
+    color: var(--l-txt2);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform .18s ease, border-color .18s ease,
+                background .18s ease, box-shadow .18s ease, color .18s ease;
+}
+
+.tema-toggle__ico {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(15, 27, 51, .10);
+    transition: background .18s ease, transform .3s ease;
+}
+
+.tema-toggle__ico svg { width: 15px; height: 15px; display: block; }
+
+/* Icono = modo al que va a cambiar (sol mientras estás en oscuro) */
+.tema-toggle__luna { display: none; }
+.tema-toggle.is-claro .tema-toggle__sol { display: none; }
+.tema-toggle.is-claro .tema-toggle__luna { display: block; }
+
+.tema-toggle:hover {
+    transform: translateY(-2px);
+    border-color: rgba(226, 26, 44, .65);
+    background: rgba(226, 26, 44, .10);
+    color: #b81524;
+    box-shadow: 0 10px 22px rgba(226, 26, 44, .20);
+}
+
+.tema-toggle:hover .tema-toggle__ico { background: rgba(226, 26, 44, .18); transform: rotate(25deg); }
+.tema-toggle:active { transform: translateY(0); }
+.tema-toggle:focus-visible { outline: 2px solid rgba(226, 26, 44, .7); outline-offset: 3px; }
+
+/* Misma pieza cuando la plataforma está en tema oscuro */
+html[data-tema="oscuro"] .tema-toggle {
+    background: rgba(255, 255, 255, .06);
+    border-color: rgba(255, 255, 255, .18);
+    color: #cfd9f2;
+}
+
+html[data-tema="oscuro"] .tema-toggle__ico { background: rgba(255, 255, 255, .12); }
+
+html[data-tema="oscuro"] .tema-toggle:hover {
+    background: rgba(240, 51, 61, .16);
+    border-color: rgba(240, 51, 61, .8);
+    color: #ff9299;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .45);
+}
+
+html[data-tema="oscuro"] .tema-toggle:hover .tema-toggle__ico { background: rgba(240, 51, 61, .28); }
+html[data-tema="oscuro"] .tema-toggle:focus-visible { outline-color: rgba(255, 146, 153, .85); }
+
+/* ---------- Cabecera plegable: Gestión de usuarios ---------- */
+.panel-plegar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 16px;
+    padding: 15px 20px;
+    border-radius: 16px;
+    border: 1px solid var(--l-borde);
+    background: linear-gradient(140deg, rgba(255, 255, 255, .96), rgba(244, 247, 252, .90));
+    box-shadow: var(--l-sombra);
+    color: var(--l-txt);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.panel-plegar__ico {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(226, 26, 44, .12);
+    color: #b81524;
+    transition: transform .25s ease, background .18s ease;
+}
+
+.panel-plegar__ico svg { width: 17px; height: 17px; display: block; }
+.panel-plegar.is-open .panel-plegar__ico { transform: rotate(90deg); }
+
+.panel-plegar__txt {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.panel-plegar__txt b { font-size: 16px; font-weight: 800; }
+.panel-plegar__txt small { font-size: 12.5px; font-weight: 600; color: var(--l-txt3); }
+
+.panel-plegar__pista {
+    flex: 0 0 auto;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--l-borde-2);
+    background: rgba(15, 27, 51, .07);
+    color: var(--l-txt2);
+}
+
+.panel-plegar:hover {
+    transform: translateY(-2px);
+    border-color: rgba(226, 26, 44, .45);
+}
+
+.panel-plegar.is-open { border-color: rgba(226, 26, 44, .55); }
+.panel-plegar:focus-visible { outline: 2px solid rgba(226, 26, 44, .7); outline-offset: 3px; }
+
+.panel-plegar__cuerpo { display: block; }
+.panel-plegar__cuerpo[hidden] { display: none; }
+
+.panel-plegar__cuerpo:not([hidden]) { animation: plegarIn .25s ease both; }
+
+@keyframes plegarIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Misma cabecera cuando la plataforma está en tema oscuro */
+html[data-tema="oscuro"] .panel-plegar {
+    background: linear-gradient(140deg, rgba(12, 22, 46, .78), rgba(6, 12, 28, .70));
+    border-color: rgba(255, 255, 255, .10);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, .34);
+    color: #e9effb;
+}
+
+html[data-tema="oscuro"] .panel-plegar__ico { background: rgba(240, 51, 61, .18); color: #ff8b92; }
+html[data-tema="oscuro"] .panel-plegar__txt small { color: #8fa1c4; }
+
+html[data-tema="oscuro"] .panel-plegar__pista {
+    background: rgba(255, 255, 255, .07);
+    border-color: rgba(255, 255, 255, .14);
+    color: #cfd9f2;
+}
+
+html[data-tema="oscuro"] .panel-plegar:hover { border-color: rgba(240, 51, 61, .5); }
+
+@media (max-width: 560px) {
+    .panel-plegar { padding: 13px 15px; gap: 11px; }
+    .panel-plegar__txt b { font-size: 15px; }
+    .panel-plegar__pista { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel-plegar__cuerpo:not([hidden]) { animation: none; }
+}
+
+/* Zonas reservadas al administrador: ocultas sin esperar a JS */
+html:not(.es-admin) .zona-admin { display: none !important; }
+
+/* =========================================================
+   12 · Accesibilidad y ajustes finos
+   ========================================================= */
+html[data-tema="claro"] [tabindex]:focus-visible { border-color: rgba(15, 27, 51, .55); }
+html[data-tema="claro"] [tabindex]:focus-visible { color: var(--l-txt); }
+
+html[data-tema="claro"] ::selection {
+    background: rgba(226, 26, 44, .28);
+    color: var(--l-txt);
+}
+
+/* Las barras "fantasma" de la gráfica (base oscura) también se aclaran */
+html[data-tema="claro"] .ctrl-chart .meta-base { fill: #b9c6dd; }
+
+/* (El botón de tema del acceso se retiró: esa conmutación vive
+   sólo en Configuración → sección "Apariencia".) */
+
+/* En impresión siempre manda el fondo blanco ya existente */
+@media print {
+    html[data-tema="claro"] .btn-logout,
+    html[data-tema="claro"] .apariencia { display: none; }
+}

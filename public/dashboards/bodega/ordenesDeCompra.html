@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Órdenes de compra · RED Intelfon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/dashboard.css?v=20261021tokens">
+  <link rel="stylesheet" href="../../assets/css/ordenesDeCompra.css?v=20261021tokens">
+  <link rel="stylesheet" href="../../assets/css/filtros-guia.css?v=20261021tokens">
+  <link rel="stylesheet" href="../../assets/css/bodega-pdf.css?v=20261021tokens">
+  <link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
+  <script src="../../assets/js/estandar.js?v=20261021barras"></script>
+  <script src="../../assets/js/filtros-guia.js?v=20261021tokens"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script src="../../assets/js/bodega-excel-export.js?v=20261021tokens"></script>
+</head>
+
+<body>
+
+  <div class="bodega-api-updated-row oc-api-updated-row" id="ocApiUpdatedRow" hidden>
+    <div class="bodega-api-updated" id="ocApiUpdated" hidden>
+      <span class="bodega-api-updated-dot" aria-hidden="true"></span>
+      <span>Actualizado: <time id="ocApiUpdatedAt" aria-live="polite"></time></span>
+    </div>
+  </div>
+
+  <div class="oc-module" id="ordenesDeCompraModule">
+
+    <!-- ENCABEZADO -->
+    <div class="page-header">
+      <div class="page-eyebrow">Bodega</div>
+      <h1 class="page-title">Órdenes de compra</h1>
+      <p class="page-sub">Resumen ejecutivo y seguimiento de órdenes provenientes de la API.</p>
+    </div>
+
+    <!-- MÓDULOS -->
+    <div class="tabs" id="ocTabs">
+      <button class="tab-btn active" type="button" data-view="overview">Vista general</button>
+      <button class="tab-btn" type="button" data-view="report">Informe detallado</button>
+    </div>
+
+    <div id="ocOverviewView">
+      <div class="oc-status-note"><span>Vista inicial: todos los años disponibles en la API</span><span><b
+            class="oc-key oc-key-complete"></b> Completada = estado C <b class="oc-key oc-key-pending"></b> No
+          completada =
+          otro estado</span></div>
+      <!-- Filtros según GUIA_DISEÑO_GENERAL §03: Operaciones · Moneda · Período · Filtros tipo Excel -->
+      <section class="oc-filters oc-filters-v2">
+        <div class="op-group" role="group" aria-label="Operaciones">
+          <span class="op-label">Operaciones</span>
+          <button class="op-btn active" type="button" data-oc-country="combined">Todos</button>
+          <button class="op-btn" type="button" data-oc-country="GT" title="Guatemala"><span class="op-flag op-flag-gt"
+              aria-hidden="true"></span>GT</button>
+          <button class="op-btn" type="button" data-oc-country="SV" title="El Salvador"><span class="op-flag op-flag-sv"
+              aria-hidden="true"></span>SV</button>
+        </div>
+        <input type="hidden" id="ocCountry" value="combined">
+        <div class="fx-control" id="ocFxControl" title="Tipo de cambio oficial · Banco de Guatemala">
+          <span class="fx-rate" id="ocFxRate">1 USD = Q …</span>
+          <span class="fx-sym on" id="ocFxUsd">$</span>
+          <label class="fx-switch"><input id="ocCurrencyToggle" type="checkbox"
+              aria-label="Mostrar montos en quetzales"><i></i></label>
+          <span class="fx-sym" id="ocFxGtq">Q</span>
+        </div>
+        <div class="period-control">
+          <span class="period-icon" aria-hidden="true"></span>
+          <label class="period-label" for="ocStart">Período</label>
+          <input class="period-input" id="ocStart" type="date" aria-label="Fecha inicial">
+          <span class="period-sep">—</span>
+          <input class="period-input" id="ocEnd" type="date" aria-label="Fecha final">
+          <button class="period-reset" id="ocPeriodReset" type="button" title="Restablecer período"
+            aria-label="Restablecer período"></button>
+        </div>
+        <div class="xf" id="ocXf"></div>
+        <div class="oc-search"><input id="ocSap" type="search" placeholder="ID / Pedido" aria-label="Buscar pedido">
+        </div>
+        <div class="xf-chips" id="ocXfChips"></div>
+        <button class="xf-reset" id="ocResetFilters" type="button" title="Volver a filtros por defecto"
+          aria-label="Volver a filtros por defecto"></button>
+        <button type="button" class="pdf-report-btn bodega-pdf-btn" id="bodegaPdfBtn"
+          aria-label="PDF: seleccionar módulos de órdenes de compra">
+          <span class="pdf-report-glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M12 3v11" />
+              <path d="m7.5 10 4.5 4.5 4.5-4.5" />
+              <path d="M4.5 19.5h15" />
+            </svg>
+          </span>
+          <span class="pdf-report-label">PDF</span>
+          <span class="pdf-report-spinner" aria-hidden="true"></span>
+        </button>
+      </section>
+      <section class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Total ordenes</div>
+          <div class="kpi-value" id="ocKpiOrders">0</div>
+          <div class="kpi-sub">Registros recibidos</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Pendientes</div>
+          <div class="kpi-value" id="ocKpiPending">0</div>
+          <div class="kpi-sub">Estado distinto de CERRADO</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Cerradas</div>
+          <div class="kpi-value" id="ocKpiClosed">0</div>
+          <div class="kpi-sub">Estado CERRADO: con entrada de mercancia.</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Ordenes finalizadas</div>
+          <div class="kpi-value" id="ocKpiCompletion">0%</div>
+          <div class="kpi-sub">Finalizadas sobre el total</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Monto consolidado</div>
+          <div class="kpi-value" id="ocKpiAmount">No disponible</div>
+          <div class="kpi-sub">Suma de monto según los filtros</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Promedio por orden</div>
+          <div class="kpi-value" id="ocKpiAverage">No disponible</div>
+          <div class="kpi-sub">Monto consolidado / órdenes</div>
+        </div>
+      </section>
+      <section class="oc-grid">
+        <article class="card">
+          <h2 class="card-title">Órdenes por estado</h2>
+          <p class="card-caption">Cantidad de registros por estado</p>
+          <div class="oc-chart"><canvas id="ocChartStatus"></canvas></div>
+        </article>
+        <article class="card">
+          <h2 class="card-title">Órdenes por mes</h2>
+          <p class="card-caption">Cantidad de órdenes agrupadas por fecha</p>
+          <div class="oc-chart"><canvas id="ocChartMonth"></canvas></div>
+        </article>
+        <article class="card">
+          <h2 class="card-title">Órdenes por proveedor</h2>
+          <p class="card-caption">Cantidad de órdenes por proveedor</p>
+          <div class="oc-chart"><canvas id="ocChartClients"></canvas></div>
+        </article>
+      </section>
+      <section class="card oc-table-card">
+        <h2 class="card-title">Detalle de órdenes de compra</h2>
+        <p class="card-caption" id="ocCount">0 registros</p>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr>
+                <th data-sort="sap">ID</th>
+                <th data-sort="clientName">Nombre del cliente</th>
+                <th class="oc-table-money">Monto</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="ocRows">
+              <tr>
+                <td colspan="4" class="oc-empty">Sin datos cargados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="oc-pagination"><span class="oc-muted" id="ocPageInfo">Página 0 de 0</span><button class="oc-btn"
+            id="ocPrev">Anterior</button><button class="oc-btn" id="ocNext">Siguiente</button></div>
+      </section>
+    </div>
+    <section class="card oc-report-view" id="ocDetailedReport" aria-labelledby="ocReportTitle" hidden>
+      <div class="oc-report-head">
+        <h2 class="card-title" id="ocReportTitle">Informe detallado</h2>
+        <p class="card-caption">Consulta todos los campos recibidos de la API.</p>
+      </div>
+      <div class="oc-report-toolbar">
+        <label class="oc-search oc-report-search" for="ocReportSearch">
+          <span>Buscar en todos los campos</span>
+          <input id="ocReportSearch" type="search"
+            placeholder="Busca por pedido, cliente, estado, fechas, factura, monto y más..." autocomplete="off">
+        </label>
+        <div class="oc-report-filter-grid">
+          <label class="oc-search" for="ocReportOrderSearch">
+            <span>Número de pedido</span>
+            <input id="ocReportOrderSearch" type="search" placeholder="Ej. 1001" autocomplete="off">
+          </label>
+          <label class="oc-search" for="ocReportClientSearch">
+            <span>Cliente</span>
+            <input id="ocReportClientSearch" type="search" placeholder="Código o nombre" autocomplete="off">
+          </label>
+        </div>
+        <div class="oc-report-summary">
+          <p class="oc-muted" id="ocReportCount" aria-live="polite">0 registros</p>
+          <button class="oc-btn" id="ocReportReset" type="button">Limpiar filtros</button>
+          <button class="oc-btn oc-export" id="ocReportExport" type="button">Excel</button>
+        </div>
+      </div>
+      <div class="oc-report-status" id="ocReportStatus" role="status" aria-live="polite"></div>
+      <div class="oc-table-wrap oc-report-table-wrap">
+        <table class="oc-table oc-report-table">
+          <thead id="ocReportHead"></thead>
+          <tbody id="ocReportRows">
+            <tr>
+              <td class="oc-empty">Sin datos cargados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="oc-pagination">
+        <span class="oc-muted" id="ocReportPageInfo">Página 0 de 0</span>
+        <button class="oc-btn" id="ocReportPrev" type="button">Anterior</button>
+        <button class="oc-btn" id="ocReportNext" type="button">Siguiente</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const API_URL = 'https://sapapi.red.com.sv/api/procesos/ordenes?var_pais=valor';
+      const API_KEY = 'fdf0cb340b00402c00a057b0f67c00a3';
+      const API_KEY_HEADER = 'X-API-KEY';
+      const PAGE_SIZE = 10;
+      const state = { records: [], filtered: [], page: 1, reportPage: 1, reportFiltered: [], loading: false, loadError: '', sort: 'date', direction: 'desc', charts: {}, kpiCurrency: 'USD' };
+      function setOrdersUpdatedAt() {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('es-GT', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
+        }).formatToParts(now).reduce((result, part) => {
+          result[part.type] = part.value;
+          return result;
+        }, {});
+        const updatedAt = $('ocApiUpdatedAt');
+        updatedAt.dateTime = now.toISOString();
+        updatedAt.textContent = `${parts.day} ${parts.month.replace(/\.$/, '')} ${parts.year}, ${parts.hour}:${parts.minute} ${parts.dayPeriod.replace(/\s/g, '')}`;
+        $('ocApiUpdated').hidden = false;
+        $('ocApiUpdatedRow').hidden = false;
+      }
+      const reportFields = ['PedidoCompra', 'fecha', 'cliente', 'nombrecliente', 'estado', 'cancelado', 'EntradaMercancia', 'fechaEntrada', 'FacturaProveedor', 'FechaFactura', 'pagoEfectuado', 'fechaPago', 'EstadoProceso', 'EstadoPago', 'montoTotal'];
+      const expandedOrders = new Set();
+      const missingElement = { value: '', checked: false, hidden: true, options: [], textContent: '', innerHTML: '', disabled: false, addEventListener: () => { } };
+      const $ = id => document.getElementById(id) || missingElement; /*
+  const plain = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[ÃÂ][^\s]{0,2}/g,'').replace(/[^-]/g,'');
+  // La limpieza de textos se realiza solo sobre el contenido estatico del HTML.
+  */ const plain = value => String(value ?? '').replace(/Ã³/g, 'ó').replace(/Ã¡/g, 'á').replace(/Ã©/g, 'é').replace(/Ã­/g, 'í').replace(/Ãº/g, 'ú').replace(/Ã±/g, 'ñ').replace(/Ã‘/g, 'Ñ').replace(/Ã“/g, 'Ó').replace(/Ãš/g, 'Ú').replace(/Ã‰/g, 'É').replace(/Ã‚/g, 'Á').replace(/Â·/g, '·');
+      function repairStaticText() { const replacements = { 'Ã³': 'ó', 'Ã¡': 'á', 'Ã©': 'é', 'Ã­': 'í', 'Ãº': 'ú', 'Ã±': 'ñ', 'Ã‘': 'Ñ', 'Ã“': 'Ó', 'Ãš': 'Ú', 'Ã‰': 'É', 'Ã‚': 'Á', 'Â·': '·', 'paí­s': 'país', 'CÃ³digo': 'Código', 'NÃºmero': 'Número', 'PÃ¡gina': 'Página', 'Ã³rdenes': 'órdenes', 'DistribuciÃ³n': 'Distribución', 'EvoluciÃ³n': 'Evolución', 'Ã“rdenes': 'Órdenes', 'Ãšltima': 'Última', 'actualizaciÃ³n': 'actualización' }; document.querySelectorAll('#ordenesDeCompraModule *').forEach(element => element.childNodes.forEach(node => { if (node.nodeType !== Node.TEXT_NODE) return; node.textContent = Object.entries(replacements).reduce((value, [from, to]) => value.replaceAll(from, to), node.textContent); })); }
+      repairStaticText();
+      function syncProviderLabels() { document.querySelectorAll('.oc-table th').forEach(header => { if (header.dataset.sort === 'clientName') header.textContent = 'Cliente'; }); }
+      syncProviderLabels();
+      // Tasa oficial del Banco de Guatemala (se actualiza al cargar); 7.8 solo como respaldo.
+      let EXCHANGE_RATE_GTQ_PER_USD = 7.8;
+      const number = value => Number(value || 0).toLocaleString('es-GT', { maximumFractionDigits: 2 });
+      const money = value => state.kpiCurrency === 'USD' ? moneyUSD(value) : moneyGTQ(value);
+      const moneyGTQ = value => Number(value || 0).toLocaleString('es-GT', { style: 'currency', currency: 'GTQ', maximumFractionDigits: 2 });
+      const moneyUSD = value => Number(value || 0).toLocaleString('es-SV', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+      const combined = () => $('ocCountry')?.value === 'combined';
+      const totalGTQ = item => item.country === 'SV' ? item.total * EXCHANGE_RATE_GTQ_PER_USD : item.total;
+      const totalUSD = item => item.country === 'SV' ? item.total : item.total / EXCHANGE_RATE_GTQ_PER_USD;
+      const primaryCurrency = () => state.kpiCurrency;
+      const totalForView = item => primaryCurrency() === 'USD' ? totalUSD(item) : totalGTQ(item);
+      const convertedForView = item => primaryCurrency() === 'USD' ? totalGTQ(item) : totalUSD(item);
+      const primaryMoney = value => primaryCurrency() === 'USD' ? moneyUSD(value) : moneyGTQ(value);
+      const convertedMoney = value => primaryCurrency() === 'USD' ? moneyGTQ(value) : moneyUSD(value);
+      function syncCurrencyHeaders() { const primary = primaryCurrency(); const primaryHeader = document.querySelector('.oc-primary-total'); const convertedHeader = document.querySelector('.oc-converted-total'); if (primaryHeader) primaryHeader.textContent = `Total (${primary === 'USD' ? 'USD' : 'Q'})`; if (convertedHeader) convertedHeader.textContent = `Total (${primary === 'USD' ? 'Q' : 'USD'})`; }
+      const kpiTotal = rows => rows.reduce((sum, item) => sum + (state.kpiCurrency === 'USD' ? totalUSD(item) : totalGTQ(item)), 0);
+      const kpiMoney = value => state.kpiCurrency === 'USD' ? moneyUSD(value) : moneyGTQ(value);
+      const hasMoneyData = rows => rows.some(item => getMoneyEntries(item.raw).length > 0);
+      const unavailable = 'No disponible';
+      function updateCurrencySummary() { const rows = state.filtered; const isCombined = combined(); const hasAmounts = hasMoneyData(rows); const summary = $('ocCurrencySummary'); if (summary) { summary.hidden = !isCombined; if (isCombined) { const gtq = rows.filter(item => item.country === 'GT').reduce((sum, item) => sum + item.total, 0); const usd = rows.filter(item => item.country === 'SV').reduce((sum, item) => sum + item.total, 0); $('ocTotalGTQ').textContent = hasAmounts ? moneyGTQ(gtq) : unavailable; $('ocTotalUSD').textContent = hasAmounts ? moneyUSD(usd) : unavailable; $('ocCombinedUSD').textContent = hasAmounts ? moneyUSD(rows.reduce((sum, item) => sum + totalUSD(item), 0)) : unavailable; } } if ($('ocKpiAmount')) { const total = kpiTotal(rows); $('ocKpiAmount').textContent = hasAmounts ? kpiMoney(total) : unavailable; $('ocKpiAverage').textContent = hasAmounts ? kpiMoney(rows.length ? total / rows.length : 0) : unavailable; $('ocCurrencyLabel').textContent = state.kpiCurrency === 'USD' ? 'USD' : 'Q'; } syncCurrencyHeaders(); }
+      const text = value => plain(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+      const dateValue = value => { if (!value) return null; const match = String(value).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])); const date = new Date(value); return Number.isNaN(date.getTime()) ? null : date; };
+      const dateKey = value => { const date = dateValue(value); return date ? date.toISOString().slice(0, 10) : ''; };
+      const dateYear = value => { const date = dateValue(value); return date ? String(date.getFullYear()) : ''; };
+      const dateLabel = value => { const date = dateValue(value); return date ? date.toLocaleDateString('es-GT') : (value || '-'); };
+      const getPaisOrden = (item, requestedCountry) => String(item.pais ?? item['pa\u00eds'] ?? item.country ?? item.codigoPais ?? item.var_pais ?? requestedCountry ?? 'No definido').toUpperCase();
+      // La API actual retorna monto; el objeto raw conserva el registro original completo.
+      const moneyKeys = ['total', 'monto', 'montoTotal', 'precio', 'costo', 'amount', 'valor'];
+      const getMoneyEntries = item => Object.entries(item || {}).filter(([key, value]) => moneyKeys.some(candidate => key.toLowerCase() === candidate.toLowerCase()) && value !== '' && value !== null && value !== undefined);
+      const getTotal = item => { const entry = getMoneyEntries(item)[0]; return entry ? Number(String(entry[1]).replace(/[^0-9,.-]/g, '').replace(/,(?=\d{3}(?:\D|$))/g, '').replace(',', '.')) || 0 : 0; };
+      const unwrap = payload => Array.isArray(payload) ? payload : (payload?.data || payload?.items || payload?.records || payload?.result || payload?.results || []);
+      const buildUrl = country => API_URL.replace(/(valor|\{pais\}|:pais)(?=&|$)/i, country);
+      function normalizePurchaseType(value) { const normalized = String(value ?? '').trim().toUpperCase(); if (normalized === 'LOCAL') return 'Local'; if (normalized === 'IMPORTACION' || normalized === 'IMPORTACIÓN') return 'Importación'; return normalized ? normalized : 'No disponible en API'; }
+      /** @typedef {Object} PedidoCompra
+       * @property {string} PedidoCompra
+       * @property {string} fecha
+       * @property {string} cliente
+       * @property {string} nombrecliente
+      * @property {string|number} monto
+       * @property {string} estado
+       * @property {string} cancelado
+       * @property {string} EntradaMercancia
+       * @property {string} fechaEntrada
+       * @property {string} FacturaProveedor
+       * @property {string} FechaFactura
+       * @property {string} pagoEfectuado
+       * @property {string} fechaPago
+       * @property {string} EstadoProceso
+       * @property {string} EstadoPago
+       */
+      function normalize(payload, requestedCountry) { const source = unwrap(payload); return Array.isArray(source) ? source.map((item, index) => { const pedido = { ...item }; return { raw: item, details: pedido, rowKey: `${requestedCountry}:${pedido.PedidoCompra ?? ''}:${index}`, sap: String(pedido.PedidoCompra ?? pedido.numerosap ?? ''), date: pedido.fecha ?? '', delivery: pedido.fechaentrega ?? '', client: String(pedido.cliente ?? ''), clientName: String(pedido.nombrecliente ?? ''), purchaseType: normalizePurchaseType(pedido.tipo_compra), stage: String(pedido.EstadoProceso ?? pedido.etapa ?? 'No disponible en API'), total: getTotal(pedido), state: String(pedido.estado ?? 'Sin estado'), comment: String(pedido.comentario ?? ''), country: getPaisOrden(pedido, requestedCountry), quantity: Number(pedido.cantidad ?? 0) || 0 }; }) : []; }
+      function ensureChartJs() { if (window.Chart) return Promise.resolve(); if (!window.chartJsPromise) { window.chartJsPromise = new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'; script.onload = () => { resolve(); if (typeof render === 'function' && state.records.length) render(); }; script.onerror = reject; document.head.appendChild(script); }); } return Promise.resolve(); }
+      async function fetchCountry(country) { const url = buildUrl(country); const headers = { Accept: 'application/json' }; if (API_KEY) headers[API_KEY_HEADER] = API_KEY; const response = await fetch(url, { headers }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const payload = await response.json(); const source = unwrap(payload); console.log('[Ordenes de compra] Primera entidad cruda de la API:', source[0] ?? null); return normalize(payload, country); }
+      async function loadOrdenesDeCompra() { state.loading = true; state.loadError = ''; renderDetailedReport(); try { await ensureChartJs(); const selectedCountry = $('ocCountry').value; const records = selectedCountry === 'combined' ? (await Promise.all(['GT', 'SV'].map(fetchCountry))).flat() : await fetchCountry(selectedCountry); state.records = records; ocRangoPeriodo(); state.loading = false; populateStates(); render(); renderDetailedReport(); setOrdersUpdatedAt(); } catch (error) { state.records = []; state.loading = false; state.loadError = error.message; render(); renderDetailedReport(); } }
+      // Filtros combinados tipo Excel (assets/js/filtros-guia.js). null = sin filtro.
+      const ocFilters = { year: null, stage: null, state: null, clientName: null };
+      const inSel = (sel, value) => !sel || sel.includes(value);
+      const stateOptionLabel = value => ({ C: 'Cerrada', O: 'Pendiente' })[String(value).toUpperCase()] || value;
+      let ocXF = null;
+      const ocFieldValue = (item, key) => key === 'year' ? dateYear(item.date) : item[key];
+      // Como en Excel: las opciones de cada columna salen de las órdenes que
+      // cumplen los demás filtros (no el de la propia columna).
+      function ocColumns() {
+        const context = key => state.records.filter(item => Object.keys(ocFilters).every(other => other === key || inSel(ocFilters[other], ocFieldValue(item, other))));
+        const values = key => [...new Set(context(key).map(item => ocFieldValue(item, key)).filter(Boolean))];
+        const byText = list => list.sort((a, b) => String(a).localeCompare(String(b), 'es'));
+        const providerCounts = context('clientName').reduce((map, item) => map.set(item.clientName, (map.get(item.clientName) || 0) + 1), new Map());
+        return [
+          { key: 'year', label: 'Año', options: values('year').sort((a, b) => Number(b) - Number(a)).map(value => ({ value, label: value })), selected: ocFilters.year },
+          { key: 'stage', label: 'Estado del proceso', options: byText(values('stage')).map(value => ({ value, label: plain(value) })), selected: ocFilters.stage },
+          { key: 'state', label: 'Estado', options: byText(values('state')).map(value => ({ value, label: stateOptionLabel(value) })), selected: ocFilters.state },
+          { key: 'clientName', label: 'Proveedor', options: byText(values('clientName')).map(value => ({ value, label: plain(value), count: providerCounts.get(value) })), selected: ocFilters.clientName }
+        ];
+      }
+      function populateStates() { document.querySelectorAll('[data-oc-country]').forEach(button => button.classList.toggle('active', button.dataset.ocCountry === $('ocCountry').value)); ocXF?.update(ocColumns()); }
+      function render() { state.filtered = filteredRows(); const total = state.records.reduce((sum, item) => sum + totalForView(item), 0), closed = state.records.filter(item => item.state.toUpperCase() === 'C').length; document.querySelectorAll('.oc-combined-only').forEach(element => element.hidden = !combined()); $('ocKpiOrders').textContent = number(state.records.length); $('ocKpiQuantity').textContent = number(state.records.reduce((sum, item) => sum + item.quantity, 0)); $('ocKpiAmount').textContent = primaryMoney(total); $('ocKpiPending').textContent = number(state.records.length - closed); $('ocKpiClosed').textContent = number(closed); $('ocKpiAverage').textContent = primaryMoney(state.records.length ? total / state.records.length : 0); $('ocKpiCompletion').textContent = `${state.records.length ? number((closed / state.records.length) * 100) : 0}%`; $('ocCount').textContent = `${number(state.filtered.length)} registros`; const pages = Math.ceil(state.filtered.length / PAGE_SIZE); state.page = Math.min(Math.max(state.page, 1), Math.max(pages, 1)); const rows = state.filtered.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE); $('ocRows').innerHTML = rows.map(item => { const stageLabel = item.stage !== 'No disponible en API' ? item.stage : orderStatus(item.state); return `<tr><td>${text(item.sap || '-')}</td><td>${text(item.clientName || '-')}</td><td>${text(item.purchaseType)}</td><td><span class="oc-badge ${item.state.toUpperCase() === 'C' ? 'green' : 'gray'}">${text(stageLabel)}</span></td><td class="oc-total">${primaryMoney(totalForView(item))}</td><td>${convertedMoney(convertedForView(item))}</td><td>${text(dateLabel(item.date))}</td><td>${text(dateLabel(item.delivery))}</td><td>${text(item.comment || '-')}</td><td>${text(item.country)}</td></tr>`; }).join('') || '<tr><td colspan="10" class="oc-empty">No hay registros con estos filtros.</td></tr>'; $('ocPageInfo').textContent = `Página ${pages ? state.page : 0} de ${pages}`; $('ocPrev').disabled = state.page <= 1; $('ocNext').disabled = state.page >= pages; syncCurrencyHeaders(); renderCharts(); }
+      const detailLabel = key => ({ PedidoCompra: 'Número de pedido', fecha: 'Fecha del pedido', cliente: 'Código del cliente', nombrecliente: 'Nombre del cliente', estado: 'Estado', cancelado: 'Cancelado', monto: 'Monto', montoTotal: 'Monto total', EntradaMercancia: 'Entrada de mercancía', fechaEntrada: 'Fecha de entrada', EstadoProceso: 'Estado del proceso', FacturaProveedor: 'Factura proveedor', FechaFactura: 'Fecha de factura', pagoEfectuado: 'Pago efectuado', fechaPago: 'Fecha de pago', EstadoPago: 'Estado del pago' }[key] || key);
+      const isStatusKey = key => /estado|cancelado|pagoefectuado/i.test(key);
+      const dateDetailKeys = new Set(['fecha', 'fechaEntrada', 'FechaFactura', 'fechaPago']);
+      const moneyDetailKeys = new Set(['monto', 'total', 'montoTotal', 'precio', 'costo', 'amount', 'valor']);
+      const detailValue = (key, value) => { if (value === '' || value === null || value === undefined || String(value).toLowerCase() === 'sin registrar') return '-'; if (dateDetailKeys.has(key)) return dateLabel(value); if (moneyDetailKeys.has(key)) return money(value); return String(value); };
+      const statusClass = (key, value) => { const displayValue = detailValue(key, value); if (!isStatusKey(key) || displayValue === '-') return ''; const normalized = String(value).toUpperCase(); return normalized.includes('SIN PAGO') || normalized === 'NO' || normalized.includes('SIN REGISTRAR') ? 'oc-detail-badge is-muted' : 'oc-detail-badge'; };
+      const svgOpen = String.fromCharCode(60);
+      const iconCalendar = `${svgOpen}svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>${svgOpen}/svg>`;
+      const sectionIcon = type => ({ general: `${svgOpen}svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/>${svgOpen}/svg>`, logistics: `${svgOpen}svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7zM7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm11 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>${svgOpen}/svg>`, billing: `${svgOpen}svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>${svgOpen}/svg>` }[type]);
+      const detailField = (key, value, icon = '') => `<div class="oc-detail"><dt>${icon}${text(detailLabel(key))}</dt><dd class="${statusClass(key, value)}${detailValue(key, value) === '-' ? ' is-empty' : ''}">${text(detailValue(key, value))}</dd></div>`;
+      function renderOrderDetails(item) { const details = item.details || item.raw || {}; return `<tr class="oc-details-row" data-details-for="${text(item.rowKey)}"><td colspan="3"><section class="oc-details-panel" aria-label="Detalle de la orden ${text(item.sap || '-')}" aria-expanded="true"><header class="oc-details-header"><div><span class="oc-details-kicker">Orden de compra</span><div class="oc-details-title-row"><h3>#${text(item.sap || '-')} - ${text(item.clientName || 'Proveedor sin registrar')}</h3><span class="oc-date-badge">${text(dateLabel(item.date))}</span></div></div><button type="button" class="oc-btn oc-details-collapse" data-order-key="${text(item.rowKey)}">Plegar <span class="oc-chevron" aria-hidden="true"></span></button></header><div class="oc-details-sections"><section class="oc-detail-section"><h4>${sectionIcon('general')}Información general</h4><dl>${detailField('cliente', details.cliente)}${detailField('estado', details.estado)}${detailField('cancelado', details.cancelado)}</dl></section><section class="oc-detail-section"><h4>${sectionIcon('logistics')}Logística y mercancía</h4><dl>${detailField('EntradaMercancia', details.EntradaMercancia)}${detailField('fechaEntrada', details.fechaEntrada, iconCalendar)}${detailField('EstadoProceso', details.EstadoProceso)}</dl></section><section class="oc-detail-section"><h4>${sectionIcon('billing')}Facturación y pagos</h4><dl>${detailField('FacturaProveedor', details.FacturaProveedor)}${detailField('FechaFactura', details.FechaFactura)}${detailField('pagoEfectuado', details.pagoEfectuado)}${detailField('fechaPago', details.fechaPago)}${detailField('EstadoPago', details.EstadoPago)}</dl></section></div></section></td></tr>`; }
+      const renderStructuredOrderDetails = renderOrderDetails;
+      const rawApiValue = value => { if (value === '' || value === null || value === undefined) return '-'; if (typeof value === 'object') { try { return JSON.stringify(value); } catch (error) { return String(value); } } return String(value); };
+      function renderDetailedReport() {
+        const query = $('ocReportSearch').value.trim().toLocaleLowerCase();
+        const orderQuery = $('ocReportOrderSearch').value.trim().toLocaleLowerCase();
+        const clientQuery = $('ocReportClientSearch').value.trim().toLocaleLowerCase();
+        const fieldSet = new Set(reportFields);
+        state.records.forEach(item => Object.keys(item.raw || {}).forEach(field => fieldSet.add(field)));
+        const fields = [...fieldSet];
+        state.reportFiltered = state.records.filter(item => {
+          const raw = item.raw || {};
+          if (query && !Object.entries(raw).some(([key, value]) => `${key} ${rawApiValue(value)}`.toLocaleLowerCase().includes(query))) return false;
+          if (orderQuery && !String(raw.PedidoCompra ?? '').toLocaleLowerCase().includes(orderQuery)) return false;
+          if (clientQuery && !`${raw.cliente ?? ''} ${raw.nombrecliente ?? ''}`.toLocaleLowerCase().includes(clientQuery)) return false;
+          return true;
+        });
+        const pages = Math.ceil(state.reportFiltered.length / PAGE_SIZE);
+        state.reportPage = Math.min(Math.max(state.reportPage, 1), Math.max(pages, 1));
+        $('ocReportHead').innerHTML = `<tr>${fields.map(field => `<th scope="col">${text(detailLabel(field))}</th>`).join('')}</tr>`;
+        $('ocReportCount').textContent = state.loading ? 'Cargando registros...' : `${number(state.reportFiltered.length)} ${state.reportFiltered.length === 1 ? 'registro' : 'registros'}`;
+        $('ocReportStatus').textContent = state.loading ? 'Consultando el informe en la API...' : state.loadError ? `No se pudo actualizar el informe: ${state.loadError}` : '';
+        $('ocReportStatus').classList.toggle('is-error', Boolean(state.loadError) && !state.loading);
+        $('ocReportPageInfo').textContent = `Página ${pages ? state.reportPage : 0} de ${pages}`;
+        $('ocReportPrev').disabled = state.loading || state.reportPage <= 1;
+        $('ocReportNext').disabled = state.loading || state.reportPage >= pages;
+        if (state.loading) {
+          $('ocReportRows').innerHTML = Array.from({ length: 5 }, () => `<tr class="oc-report-loading">${fields.map(() => '<td><span class="oc-report-skeleton"></span></td>').join('')}</tr>`).join('');
+          return;
+        }
+        const rows = state.reportFiltered.slice((state.reportPage - 1) * PAGE_SIZE, state.reportPage * PAGE_SIZE);
+        $('ocReportRows').innerHTML = rows.length
+          ? rows.map(item => `<tr>${fields.map(field => `<td>${text(rawApiValue(item.raw?.[field]))}</td>`).join('')}</tr>`).join('')
+          : `<tr><td colspan="${fields.length}" class="oc-empty">${state.loadError ? 'No hay datos disponibles porque falló la consulta a la API.' : query || orderQuery || clientQuery ? 'No hay coincidencias para estos filtros.' : 'No hay órdenes de compra disponibles.'}</td></tr>`;
+      }
+      const renderAllApiFields = item => { const fields = Object.entries(item.raw || {}); return `<details class="oc-raw-data"><summary>Ver todos los campos recibidos del API (${fields.length})</summary><dl>${fields.map(([key, value]) => `<div class="oc-raw-field"><dt>${text(key)}</dt><dd>${text(rawApiValue(value))}</dd></div>`).join('')}</dl></details>`; };
+      renderOrderDetails = item => renderStructuredOrderDetails(item).replace('</section></td></tr>', `${renderAllApiFields(item)}</section></td></tr>`);
+      // El período arranca con el rango de fechas de los pedidos, como los demás dashboards.
+      // Si llegan datos nuevos y el usuario no cambió el período, el rango se actualiza.
+      var OC_RANGO = { desde: '', hasta: '' };
+      function ocRangoPeriodo() { const v = state.records.map(item => dateKey(item.date)).filter(Boolean).sort(); if (!v.length) return; const antes = OC_RANGO; OC_RANGO = { desde: v[0], hasta: v[v.length - 1] }; if (!$('ocStart').value || $('ocStart').value === antes.desde) $('ocStart').value = OC_RANGO.desde; if (!$('ocEnd').value || $('ocEnd').value === antes.hasta) $('ocEnd').value = OC_RANGO.hasta; }
+      function filteredRows() { const rangoCompleto = $('ocStart').value === OC_RANGO.desde && $('ocEnd').value === OC_RANGO.hasta; const start = rangoCompleto ? '' : $('ocStart').value, end = rangoCompleto ? '' : $('ocEnd').value, sap = $('ocSap').value.toLowerCase(), f = ocFilters; return state.records.filter(item => { const key = dateKey(item.date); const itemYear = dateYear(item.date); return inSel(f.year, itemYear) && (!start || key >= start) && (!end || key <= end) && inSel(f.stage, item.stage) && inSel(f.state, item.state) && inSel(f.clientName, item.clientName) && (!sap || item.sap.toLowerCase().includes(sap)); }).sort((a, b) => { const av = a[state.sort] ?? '', bv = b[state.sort] ?? ''; const result = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), 'es'); return result * state.direction; }); }
+      function render() { state.filtered = filteredRows(); const total = state.records.reduce((sum, item) => sum + totalForView(item), 0), closed = state.records.filter(item => item.state.toUpperCase() === 'C').length; document.querySelectorAll('.oc-combined-only').forEach(element => element.hidden = !combined()); $('ocKpiOrders').textContent = number(state.records.length); $('ocKpiQuantity').textContent = number(state.records.reduce((sum, item) => sum + item.quantity, 0)); $('ocKpiAmount').textContent = primaryMoney(total); $('ocKpiPending').textContent = number(state.records.length - closed); $('ocKpiClosed').textContent = number(closed); $('ocKpiAverage').textContent = primaryMoney(state.records.length ? total / state.records.length : 0); $('ocKpiCompletion').textContent = `${state.records.length ? number((closed / state.records.length) * 100) : 0}%`; $('ocCount').textContent = `${number(state.filtered.length)} registros`; const pages = Math.ceil(state.filtered.length / PAGE_SIZE); state.page = Math.min(Math.max(state.page, 1), Math.max(pages, 1)); const rows = state.filtered.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE); $('ocRows').innerHTML = rows.map(item => { const expanded = expandedOrders.has(item.rowKey); const hasAmount = getMoneyEntries(item.raw).length > 0; return `<tr class="oc-order-row${expanded ? ' is-expanded' : ''}"><td>${text(item.sap || '-')}</td><td>${text(item.clientName || '-')}</td><td class="oc-table-money">${hasAmount ? text(money(totalForView(item))) : '-'}</td><td><button type="button" class="oc-btn oc-details-toggle" data-order-key="${text(item.rowKey)}" aria-expanded="${expanded}"><span>${expanded ? 'Ocultar detalles' : 'Ver detalles'}</span><span class="oc-chevron" aria-hidden="true"></span></button></td></tr>${expanded ? renderOrderDetails(item) : ''}`; }).join('') || '<tr><td colspan="4" class="oc-empty">No hay registros con estos filtros.</td></tr>'; $('ocPageInfo').textContent = `Página ${pages ? state.page : 0} de ${pages}`; $('ocPrev').disabled = state.page <= 1; $('ocNext').disabled = state.page >= pages; syncCurrencyHeaders(); renderCharts(); }
+      const stateLabels = { C: 'Cerradas', O: 'Pendientes' };
+      const orderStatus = state => stateLabels[String(state || '').toUpperCase()] || 'No completada';
+      // Paleta de la guía (05 · Visualización): dona cian / rojo / amarillo; si hay más de 3 estados sigue la paleta de series
+      const GUIA = window.GuiaGraficas || null;
+      const GP = GUIA ? GUIA.P : { red: '#c43c50', red2: '#d95f6e', cyan: '#4f8fd8', yellow: '#c59600', muted: '#8b909e', grid: 'rgba(255, 255, 255, .08)', green: '#2f8f76', blue: '#4f8fd8', blue2: '#7fb0f0' };
+      const palette = (GUIA && GUIA.SERIES) || [GP.cyan, GP.red, GP.green, GP.yellow, GP.red2, GP.blue2, GP.muted];
+      function chart(id, type, labels, data, label, color, horizontal, formatter) {
+        if (!window.Chart || !$(id)) return;
+        if (state.charts[id]) state.charts[id].destroy();
+        const colors = Array.isArray(color) ? color : labels.map(() => color || palette[0]);
+        const valorCrudo = context => context.parsed && typeof context.parsed === 'object'
+          ? (horizontal ? context.parsed.x : context.parsed.y)
+          : context.parsed;
+        const valueText = context => formatter ? formatter(valorCrudo(context)) : valorCrudo(context);
+        // Forma de la guía (§05): línea protagonista con área que se desvanece;
+        // ranking horizontal en barras finas sobre carril tenue; barras verticales
+        // con radio solo arriba; dona con hueco amplio.
+        const forma = GUIA ? GUIA.forma : { barra: { borderRadius: 6, borderSkipped: 'start', maxBarThickness: 34 }, barraH: { borderRadius: 99, borderSkipped: false, barThickness: 7 }, linea: { tension: .35, borderWidth: 3, pointRadius: 0, pointHoverRadius: 5, pointHitRadius: 12 }, dona: { cutout: '70%', borderWidth: 2, borderColor: '#1a1d27', hoverOffset: 6, spacing: 1 } };
+        const esRanking = type === 'bar' && horizontal;
+        let dataset;
+        if (type === 'line') dataset = { ...forma.linea, borderColor: GP.red2, backgroundColor: GUIA ? GUIA.area(GP.red) : 'rgba(196, 60, 80, .11)', fill: 'origin', borderCapStyle: 'round', borderJoinStyle: 'round', pointRadius: labels.length > 1 ? 0 : 4, pointBackgroundColor: GP.red2, pointHoverBackgroundColor: GP.red2, pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2 };
+        else if (type === 'doughnut') dataset = { ...forma.dona, backgroundColor: colors };
+        else dataset = { ...(horizontal ? forma.barraH : forma.barra), backgroundColor: colors, borderWidth: 0, __guiaValor: esRanking && formatter ? value => formatter(value) : null };
+        const ejes = { grid: { color: GP.grid, drawTicks: false }, border: { display: false }, ticks: { color: GP.muted, padding: 6, font: { family: 'Segoe UI', size: 10 } } };
+        const escalas = type === 'doughnut' ? {}
+          : esRanking ? {
+              x: { beginAtZero: true, display: false },
+              y: { grid: { display: false }, border: { display: false }, ticks: { color: GP.muted, padding: 6, font: { family: 'Segoe UI', size: 10, weight: '700' } } }
+            }
+          : { x: ejes, y: ejes };
+        state.charts[id] = new Chart($(id), {
+          type: type,
+          data: { labels: labels, datasets: [{ label: label, data: data, ...dataset }] },
+          options: {
+            indexAxis: horizontal ? 'y' : 'x', responsive: true, maintainAspectRatio: false,
+            layout: esRanking ? { padding: { right: 48 } } : undefined,
+            plugins: {
+              legend: { display: type === 'doughnut', position: 'bottom', labels: { color: '#8b909e', padding: 16, usePointStyle: true, font: { family: 'Segoe UI', size: 11, weight: '600' } } },
+              guiaPista: esRanking,
+              guiaValor: esRanking,
+              tooltip: { displayColors: type === 'doughnut', callbacks: { label: context => `${context.label}: ${valueText(context)}` } }
+            },
+            scales: escalas
+          }
+        });
+      }
+      function animateKpis() { syncFilteredKpis(); }
+      function setupViewportAnimations() { if (!('IntersectionObserver' in window)) return; const observer = new IntersectionObserver(entries => entries.forEach(entry => { const element = entry.target; if (entry.isIntersecting) { element.classList.add('oc-reveal-visible');  /* las gráficas se re-animan con la capa común (estandar.js) */ if (element.classList.contains('kpi-grid')) animateKpis(); } else { element.classList.remove('oc-reveal-visible'); } }), { threshold: .18 }); document.querySelectorAll('.oc-module .card, .oc-module .kpi, .oc-module .kpi-grid').forEach(element => { element.classList.add('oc-reveal'); observer.observe(element); }); document.querySelectorAll('.oc-module .card:has(canvas)').forEach(element => { const canvas = element.querySelector('canvas'); element.classList.add('oc-chart-card'); element.dataset.chart = canvas.id; element.dataset.chartType = canvas.id === 'ocChartMonth' ? 'line' : canvas.id === 'ocChartStatus' ? 'doughnut' : 'bar'; }); }
+      function syncFilteredKpis() { const rows = state.filtered; const closed = rows.filter(item => /^(C|CERRADO)$/i.test(String(item.state).trim())).length; const amount = kpiTotal(rows); const hasAmounts = rows.some(item => getMoneyEntries(item.raw).length > 0); $('ocKpiOrders').textContent = number(rows.length); $('ocKpiPending').textContent = number(rows.length - closed); $('ocKpiClosed').textContent = number(closed); $('ocKpiCompletion').textContent = `${rows.length ? number((closed / rows.length) * 100) : 0}%`; $('ocKpiAmount').textContent = hasAmounts ? kpiMoney(amount) : 'No disponible'; $('ocKpiAverage').textContent = hasAmounts && rows.length ? kpiMoney(amount / rows.length) : 'No disponible'; $('ocCurrencyLabel').textContent = state.kpiCurrency; }
+      function renderCharts() {
+        syncFilteredKpis();
+        const rows = state.filtered;
+        const byState = {}, byMonth = {}, byClient = {};
+        rows.forEach(item => {
+          const stateName = item.state || 'Sin estado';
+          byState[stateName] = (byState[stateName] || 0) + 1;
+          const month = dateKey(item.date).slice(0, 7) || 'Sin fecha';
+          byMonth[month] = (byMonth[month] || 0) + 1;
+          const client = item.clientName || 'Sin cliente';
+          byClient[client] = (byClient[client] || 0) + 1;
+        });
+        const topClients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        chart('ocChartStatus', 'doughnut', Object.keys(byState), Object.values(byState), 'Cantidad de órdenes', ['#4f8fd8', '#c43c50', '#2f8f76']);
+        chart('ocChartMonth', 'line', Object.keys(byMonth).sort(), Object.keys(byMonth).sort().map(key => byMonth[key]), 'Cantidad de órdenes', '#c43c50', false);
+        chart('ocChartClients', 'bar', topClients.map(item => item[0]), topClients.map(item => item[1]), 'Cantidad de órdenes', '#c43c50', true, value => number(value));
+      }
+      function exportReportToExcel() {
+        if (!state.reportFiltered.length) {
+          $('ocReportStatus').textContent = 'No hay registros para exportar con los filtros actuales.';
+          $('ocReportStatus').classList.add('is-error');
+          return;
+        }
+        if (!window.XLSX) {
+          $('ocReportStatus').textContent = 'No se pudo cargar el componente de Excel. Recarga el informe e inténtalo de nuevo.';
+          $('ocReportStatus').classList.add('is-error');
+          return;
+        }
+        const fields = [...new Set(reportFields.concat(...state.reportFiltered.map(item => Object.keys(item.raw || {}))))];
+        const rows = state.reportFiltered.map(item => fields.map(field => item.raw?.[field] ?? ''));
+        window.BodegaExcelExport.exportTable({
+          headers: fields.map(detailLabel),
+          rows,
+          sheetName: 'Informe detallado',
+          filename: 'informe-detallado-ordenes-compra.xlsx',
+          title: 'REPORTE DETALLADO DE ÓRDENES DE COMPRA',
+          subtitle: `${$('ocCountry').value === 'combined' ? 'Todos los países' : $('ocCountry').value} · ${state.reportFiltered.length.toLocaleString('es-GT')} registros · Moneda: ${state.kpiCurrency} · Búsqueda: ${$('ocReportSearch').value || 'sin filtro'}`
+        });
+      }
+      document.querySelectorAll('#ocTabs .tab-btn').forEach(button => button.addEventListener('click', () => { const report = button.dataset.view === 'report'; document.querySelectorAll('#ocTabs .tab-btn').forEach(other => other.classList.toggle('active', other === button)); $('ocOverviewView').hidden = report; $('ocDetailedReport').hidden = !report; if (report) { renderDetailedReport(); $('ocReportSearch').focus(); } }));
+      ['ocReportSearch', 'ocReportOrderSearch', 'ocReportClientSearch'].forEach(id => $(id).addEventListener('input', () => { state.reportPage = 1; renderDetailedReport(); }));
+      $('ocReportReset').addEventListener('click', () => {
+        ['ocReportSearch', 'ocReportOrderSearch', 'ocReportClientSearch'].forEach(id => { $(id).value = ''; });
+        state.reportPage = 1;
+        renderDetailedReport();
+        $('ocReportSearch').focus();
+      });
+      $('ocReportPrev').addEventListener('click', () => { state.reportPage--; renderDetailedReport(); });
+      $('ocReportNext').addEventListener('click', () => { state.reportPage++; renderDetailedReport(); });
+      $('ocRows').addEventListener('click', event => { const button = event.target.closest('.oc-details-toggle, .oc-details-collapse'); if (!button) return; const key = button.dataset.orderKey; if (expandedOrders.has(key)) expandedOrders.delete(key); else expandedOrders.add(key); render(); });
+      // Moneda (guía): $ [switch] Q — apagado = USD, encendido = quetzales.
+      const syncFxSymbols = () => { $('ocFxUsd').classList.toggle('on', state.kpiCurrency === 'USD'); $('ocFxGtq').classList.toggle('on', state.kpiCurrency === 'GTQ'); };
+      $('ocCurrencyToggle').addEventListener('change', event => { state.kpiCurrency = event.target.checked ? 'GTQ' : 'USD'; syncFxSymbols(); render(); updateCurrencySummary(); });
+      FiltrosGuia.tipoCambioOficial(EXCHANGE_RATE_GTQ_PER_USD).then(fx => {
+        EXCHANGE_RATE_GTQ_PER_USD = fx.rate;
+        const rate = $('ocFxRate');
+        rate.textContent = `1 USD = Q ${fx.rate.toFixed(5)}${fx.oficial ? '' : ' (ref.)'}`;
+        rate.classList.toggle('is-fallback', !fx.oficial);
+        $('ocFxControl').title = fx.oficial ? `Tipo de cambio oficial · ${fx.fuente}${fx.fecha ? ` · ${fx.fecha}` : ''}` : 'No se pudo consultar el Banco de Guatemala; se muestra una tasa de referencia.';
+        if (state.records.length) render();
+      });
+      FiltrosGuia.paintIcons(document.querySelector('.oc-filters-v2'));
+      ocXF = FiltrosGuia.createXF({
+        host: $('ocXf'), chipsHost: $('ocXfChips'),
+        onApply: selection => { Object.assign(ocFilters, selection); state.page = 1; populateStates(); render(); }
+      });
+      document.querySelectorAll('[data-oc-country]').forEach(button => button.addEventListener('click', () => {
+        if ($('ocCountry').value === button.dataset.ocCountry) return;
+        $('ocCountry').value = button.dataset.ocCountry;
+        populateStates();
+        $('ocCountry').dispatchEvent(new Event('input'));
+      }));
+      const syncPeriodLimits = () => { $('ocEnd').min = $('ocStart').value; $('ocStart').max = $('ocEnd').value; };
+      $('ocStart').addEventListener('change', () => { if ($('ocEnd').value && $('ocStart').value > $('ocEnd').value) $('ocEnd').value = $('ocStart').value; syncPeriodLimits(); });
+      $('ocEnd').addEventListener('change', () => { if ($('ocStart').value && $('ocEnd').value < $('ocStart').value) $('ocStart').value = $('ocEnd').value; syncPeriodLimits(); });
+      $('ocPeriodReset').addEventListener('click', () => { $('ocStart').value = OC_RANGO.desde; $('ocEnd').value = OC_RANGO.hasta; syncPeriodLimits(); state.page = 1; render(); });
+      $('ocResetFilters').addEventListener('click', () => {
+        Object.keys(ocFilters).forEach(key => { ocFilters[key] = null; });
+        ['ocStart', 'ocEnd', 'ocSap'].forEach(id => { $(id).value = ''; }); $('ocStart').value = OC_RANGO.desde; $('ocEnd').value = OC_RANGO.hasta;
+        syncPeriodLimits();
+        $('ocCurrencyToggle').checked = false; state.kpiCurrency = 'USD'; syncFxSymbols();
+        state.page = 1;
+        const countryChanged = $('ocCountry').value !== 'combined';
+        $('ocCountry').value = 'combined';
+        populateStates();
+        if (countryChanged) loadOrdenesDeCompra(); else render();
+      });
+      document.querySelectorAll('#ocCountry,#ocStart,#ocEnd,#ocSap').forEach(element => element.addEventListener(element.tagName === 'SELECT' ? 'change' : 'input', () => { state.page = 1; if (element.id === 'ocCountry') loadOrdenesDeCompra(); else render(); })); document.querySelectorAll('.oc-table th[data-sort]').forEach(header => header.addEventListener('click', () => { const key = header.dataset.sort; state.direction = state.sort === key ? -state.direction : 1; state.sort = key; render(); })); $('ocReportExport').addEventListener('click', exportReportToExcel); $('ocPrev').addEventListener('click', () => { state.page--; render(); }); $('ocNext').addEventListener('click', () => { state.page++; render(); }); loadOrdenesDeCompra(); setInterval(loadOrdenesDeCompra, 300000);
+      window.BODEGA_PDF_CONFIG = {
+        title: 'Órdenes de compra',
+        fileName: 'reporte-ordenes-de-compra',
+        modules: [
+          { id: 'summary', title: 'Indicadores del período', hint: 'Total de órdenes, pendientes, cerradas, montos y promedio.', icon: '<path d="M3 20h18"/><rect x="5" y="10.5" width="3.6" height="6.5" rx="1"/><rect x="10.2" y="6" width="3.6" height="11" rx="1"/><rect x="15.4" y="13" width="3.6" height="4" rx="1"/>' },
+          { id: 'charts', title: 'Distribución de órdenes', hint: 'Conteos por estado, mes y proveedor según los filtros activos.', icon: '<path d="M3 17.5 8.5 12l3.5 3.5L21 6.5"/><path d="M15 6.5h6v6"/>' },
+          { id: 'orders', title: 'Detalle de órdenes de compra', hint: 'Todas las órdenes que coinciden con los filtros de la vista general.', icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M9.5 9.5V20"/>' },
+          { id: 'api-report', title: 'Informe detallado del API', hint: 'Registros originales filtrados en la pestaña Informe detallado.', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>' }
+        ],
+        buildReport(ids) {
+          const selected = new Set(ids);
+          const rows = state.filtered.slice();
+          const total = rows.reduce((sum, item) => sum + totalForView(item), 0);
+          const closed = rows.filter(item => item.state.toUpperCase() === 'C').length;
+          const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
+          const statusCounts = new Map();
+          const monthCounts = new Map();
+          const providerCounts = new Map();
+          rows.forEach(item => {
+            const stage = item.stage !== 'No disponible en API' ? item.stage : orderStatus(item.state);
+            statusCounts.set(stage, (statusCounts.get(stage) || 0) + 1);
+            const date = dateValue(item.date);
+            const month = date ? date.toLocaleDateString('es-GT', { month: 'long', year: 'numeric' }) : 'Fecha no disponible';
+            monthCounts.set(month, (monthCounts.get(month) || 0) + 1);
+            const provider = item.clientName || item.client || 'Proveedor sin registrar';
+            providerCounts.set(provider, (providerCounts.get(provider) || 0) + 1);
+          });
+          const sections = [];
+          if (selected.has('summary')) sections.push({
+            title: 'Indicadores del período',
+            headers: ['Indicador', 'Valor'],
+            rows: [
+              ['Total de órdenes', number(rows.length)],
+              ['Pendientes', number(rows.length - closed)],
+              ['Cerradas', number(closed)],
+              ['Órdenes finalizadas', `${rows.length ? number((closed / rows.length) * 100) : 0}%`],
+              ['Monto consolidado', hasMoneyData(rows) ? primaryMoney(total) : unavailable],
+              ['Promedio por orden', hasMoneyData(rows) ? primaryMoney(rows.length ? total / rows.length : 0) : unavailable],
+              ['Cantidad de artículos', number(quantity)]
+            ]
+          });
+          if (selected.has('charts')) {
+            const distribution = [];
+            statusCounts.forEach((value, key) => distribution.push(['Por estado', key, number(value)]));
+            Array.from(monthCounts.entries()).sort((a, b) => a[0].localeCompare(b[0], 'es')).forEach(([key, value]) => distribution.push(['Por mes', key, number(value)]));
+            Array.from(providerCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).forEach(([key, value]) => distribution.push(['Por proveedor', key, number(value)]));
+            sections.push({ title: 'Distribución de órdenes', headers: ['Gráfica', 'Categoría', 'Órdenes'], rows: distribution });
+          }
+          if (selected.has('orders')) sections.push({
+            title: 'Detalle de órdenes de compra',
+            note: `${rows.length} orden(es) según los filtros actuales`,
+            headers: ['Pedido', 'Cliente', 'Tipo de compra', 'Estado', 'Monto', 'Equivalencia', 'Fecha', 'Entrega', 'Comentario', 'País'],
+            rows: rows.map(item => {
+              const stage = item.stage !== 'No disponible en API' ? item.stage : orderStatus(item.state);
+              return [item.sap, item.clientName || item.client, item.purchaseType, stage,
+              hasMoneyData([item]) ? primaryMoney(totalForView(item)) : unavailable,
+              hasMoneyData([item]) ? convertedMoney(convertedForView(item)) : unavailable,
+              dateLabel(item.date), dateLabel(item.delivery), item.comment || '-', item.country];
+            })
+          });
+          if (selected.has('api-report')) {
+            const fields = new Set(reportFields);
+            state.records.forEach(item => Object.keys(item.raw || {}).forEach(field => fields.add(field)));
+            const reportFieldsList = [...fields];
+            sections.push({
+              title: 'Informe detallado del API',
+              note: `${state.reportFiltered.length} registro(s) · ${$('ocReportSearch').value || 'sin búsqueda global'} · pedido: ${$('ocReportOrderSearch').value || 'todos'} · cliente: ${$('ocReportClientSearch').value || 'todos'}`,
+              headers: reportFieldsList.map(detailLabel),
+              rows: state.reportFiltered.map(item => reportFieldsList.map(field => rawApiValue(item.raw?.[field])))
+            });
+          }
+          const country = $('ocCountry').value === 'combined' ? 'Todos los países' : $('ocCountry').value;
+          const start = $('ocStart').value || OC_RANGO.desde || 'sin inicio';
+          const end = $('ocEnd').value || OC_RANGO.hasta || 'sin fin';
+          return {
+            title: 'Reporte de órdenes de compra',
+            filters: `Operación: ${country} · Período: ${start} a ${end} · Moneda: ${state.kpiCurrency} · Búsqueda: ${$('ocSap').value || 'sin búsqueda'}`,
+            hasData: !state.loading && state.records.length > 0,
+            sections
+          };
+        }
+      };
+      setupViewportAnimations(); window.loadOrdenesDeCompra = loadOrdenesDeCompra; setInterval(updateCurrencySummary, 250);
+    })();
+  </script>
+  <div class="pdf-module-modal" id="pdfModuleModal" hidden>
+    <div class="pdf-module-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfModuleTitle"
+      aria-describedby="pdfModuleDesc">
+      <header class="pdf-module-header">
+        <span class="pdf-module-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+            <path d="M14 3v5h5M9 13h6M9 17h4" />
+          </svg>
+        </span>
+        <div class="pdf-module-headcopy">
+          <span class="pdf-module-kicker">Exportar reporte</span>
+          <h2 id="pdfModuleTitle">¿Qué módulos deseas incluir?</h2>
+          <p id="pdfModuleDesc">Selecciona las secciones de órdenes de compra que quieres incluir en el PDF.</p>
+        </div>
+        <button type="button" class="pdf-module-close" id="closePdfModules"
+          aria-label="Cerrar selección de módulos">×</button>
+      </header>
+      <div class="pdf-module-toolbar">
+        <div class="pdf-module-quick">
+          <button type="button" data-pdf-quick="all">Seleccionar todo</button>
+          <button type="button" data-pdf-quick="none">Limpiar</button>
+        </div>
+        <span class="pdf-module-count" id="pdfModuleCount" role="status"></span>
+      </div>
+      <div class="pdf-module-options" id="pdfModuleOptions"></div>
+      <footer class="pdf-module-footer">
+        <span class="pdf-module-hint">Se descarga un solo archivo con los módulos marcados.</span>
+        <div class="pdf-module-actions">
+          <button type="button" class="pdf-module-cancel" id="cancelPdfModules">Cancelar</button>
+          <button type="button" class="pdf-module-generate" id="generatePdfModules">Generar PDF <b
+              id="pdfModuleGenerateCount">0</b></button>
+        </div>
+      </footer>
+    </div>
+  </div>
+  <script src="../../assets/js/bodega-pdf.js?v=20261021tokens"></script>
+  <!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+  <link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+</body>
+
+</html>

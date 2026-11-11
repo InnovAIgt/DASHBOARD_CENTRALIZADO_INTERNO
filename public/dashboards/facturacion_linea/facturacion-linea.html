@@ -1,0 +1,1972 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facturación por línea - RED Intelfon</title>
+  
+  <!-- Fuente: Segoe UI para textos y Cascadia Code/Fira Mono para cifras -->
+
+  <link rel="stylesheet" href="../../assets/css/facturacionLinea.css?v=20261021tokens">
+<link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
+<link rel="stylesheet" href="../../assets/css/dashboard-pdf.css?v=20261021tokens">
+<script src="../../assets/js/estandar.js?v=20261021barras"></script>
+<script src="../../assets/js/dashboard-pdf-logo.js?v=20261021tokens"></script>
+<script src="../../assets/js/dashboard-pdf.js?v=20261021tokens"></script>
+</head>
+<body>
+
+<div class="dashboard-container">
+  
+  <!-- ENCABEZADO SUPERIOR -->
+  <header class="bill-header">
+    <div>
+      <span class="bill-eyebrow">FACTURACIÓN POR LÍNEA</span>
+      <h1>Facturación por línea</h1>
+      <p>Control de facturas emitidas, cobros y saldos pendientes.</p>
+      <div class="bill-status-row">
+        <div class="bill-status-pill">
+          Actualizado: <b id="updated">—</b>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 03 - INGRESOS: BARRA DE FILTROS FIJADA (.filters-bar) -->
+  <section class="filters-bar-wrapper">
+    <div class="filters-box-card">
+      <span class="filters-box-eyebrow">FILTROS DEL EJEMPLO</span>
+      
+      <div class="filters-bar">
+        <!-- GRUPO OPERACIONES -->
+        <div class="op-control-group">
+          <span class="op-label">OPERACIONES</span>
+          <div class="op-btn-group">
+            <button type="button" class="op-btn" data-op="ALL" id="btnOpTodos">Todos</button>
+            <button type="button" class="op-btn" data-op="GT" id="btnOpGT">
+              <!-- Bandera de Guatemala SVG -->
+              <svg class="flag-icon" viewBox="0 0 24 18">
+                <rect width="8" height="18" fill="#4997D0"/>
+                <rect x="8" width="8" height="18" fill="#FFFFFF"/>
+                <rect x="16" width="8" height="18" fill="#4997D0"/>
+                <circle cx="12" cy="9" r="2.2" fill="#88B04B" opacity="0.85"/>
+              </svg>
+              GT
+            </button>
+            <button type="button" class="op-btn active" data-op="SV" id="btnOpSV">
+              <!-- Bandera de El Salvador SVG -->
+              <svg class="flag-icon" viewBox="0 0 24 18">
+                <rect width="24" height="6" fill="#003893"/>
+                <rect y="6" width="24" height="6" fill="#FFFFFF"/>
+                <rect y="12" width="24" height="6" fill="#003893"/>
+                <circle cx="12" cy="9" r="2" fill="#EAAA00" opacity="0.85"/>
+              </svg>
+              SV
+            </button>
+          </div>
+        </div>
+
+        <!-- CONTROL DE DIVISA / FX -->
+        <div class="fx-control">
+          <span class="fx-rate-text">1 USD = Q 7.63856</span>
+          <span class="fx-currency-lbl active" id="lblUSD">$</span>
+          <label class="switch-wrap">
+            <input type="checkbox" id="currencyToggle" aria-label="Activar conversión de dólares a quetzales" />
+            <span class="switch-slider"></span>
+          </label>
+          <span class="fx-currency-lbl" id="lblGTQ">Q</span>
+        </div>
+
+        <!-- CONTROL DE PERÍODO -->
+        <div class="period-control">
+          <span class="period-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Período
+          </span>
+          <input type="date" class="period-input" id="dateFrom" />
+          <span class="period-dash">—</span>
+          <input type="date" class="period-input" id="dateTo" />
+          <button type="button" class="period-reset-btn" id="btnResetPeriod" title="Restablecer período">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- BOTÓN DISPARADOR DE FILTROS (.xf-panel) -->
+        <div class="filter-dropdown-anchor">
+          <button type="button" class="filters-btn" id="btnToggleFilters">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filtros</span>
+            <span class="filters-badge" id="filterCountBadge" style="display:none;">0</span>
+            <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- PANEL DESPLEGABLE CON CHECKLIST TIPO EXCEL (Screenshot 4) -->
+          <div class="xf-panel hidden" id="xfPanel">
+            <div class="xf-grid">
+              <!-- COLUMNA 1: LÍNEA DE NEGOCIO -->
+              <div class="xf-col" id="xfColLineas"></div>
+
+              <!-- COLUMNA 2: FACTURA (Todas, Cíclica, Manuales) -->
+              <div class="xf-col" id="xfColFacturas"></div>
+
+              <!-- COLUMNA 3: REFACTURACIÓN (Todas, Sí, No) -->
+              <div class="xf-col" id="xfColRefacturacion"></div>
+            </div>
+
+            <!-- PIE DEL PANEL DE FILTROS -->
+            <div class="xf-footer">
+              <button type="button" class="xf-btn-clean" id="btnCleanAllFilters">Limpiar todo</button>
+              <button type="button" class="xf-btn-apply" id="btnApplyFilters">Aplicar</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="dashboard-pdf-trigger" id="btnDashboardPdf" title="Descargar módulos del dashboard en PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          PDF
+        </button>
+        <!-- BOTÓN REFRESH CIRCULAR -->
+        <button type="button" class="refresh-circle-btn" id="btnGlobalRefresh" title="Actualizar datos del dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESTADOS DE CARGA Y ERROR -->
+  <div id="loading" class="bill-loading">Consultando facturas en tiempo real con SAP API...</div>
+  <div id="error" class="bill-error"></div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="content">
+    <!-- MODULOS / BOTONES DE NAVEGACIÓN (Facturación | Informe Detallado) -->
+    <nav class="bill-module-nav" id="moduleTabs">
+      <button type="button" class="bill-mod-btn active" data-mod="facturacion" id="btnModFacturacion">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        Facturación
+      </button>
+      <button type="button" class="bill-mod-btn" data-mod="informe" id="btnModInforme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Informe detallado
+      </button>
+    </nav>
+
+    <!-- VISTA 1: FACTURACIÓN (Vista Actual con KPIs, Gráficos y Tabla) -->
+    <div id="viewFacturacion" class="bill-module-view">
+    
+    <!-- GRID DE KPIS -->
+    <!-- KPIs con el formato estándar de la plantilla (.kpi sin íconos) -->
+    <section class="kpi-grid bill-kpis">
+      <div class="kpi">
+        <div class="kpi-label">Facturas emitidas</div>
+        <div class="kpi-value" id="invoiceCount">0</div>
+        <div class="kpi-sub">Registros consultados</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-label">Monto facturado</div>
+        <div class="kpi-value is-info" id="totalAmount">$0.00</div>
+        <div class="kpi-sub">Total de documentos</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-label">Pagado al corte</div>
+        <div class="kpi-value is-ok" id="paidAmount">$0.00</div>
+        <div class="kpi-sub" id="paidCount">0 facturas saldadas</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-label">Saldo pendiente</div>
+        <div class="kpi-value is-error" id="balanceAmount">$0.00</div>
+        <div class="kpi-sub"><span id="overdueCount">0 vencidas</span> · <span id="overdueBadge">Vencido: $0.00</span></div>
+      </div>
+    </section>
+
+    <!-- GRÁFICA DE CÍRCULO (DONUT) Y BARRAS MENSUALES -->
+    <section class="bill-grid">
+      <!-- PANEL DONUT: FONDOS FACTURADOS VS COBRADOS -->
+      <article class="bill-card bill-panel">
+        <div class="bill-panel-tag">Estado de cobro</div>
+        <p class="bill-eyebrow">ESTADO DE COBRO</p>
+        <h2>Fondos facturados vs. cobrados</h2>
+        <span class="caption">Distribucion monetaria del resultado filtrado</span>
+
+        <div class="bill-donut-wrap">
+          <!-- Figura del Círculo Donut -->
+          <div class="bill-donut-figure">
+            <div class="bill-donut gx-donut" id="donut" data-total="$0.00"></div>
+            <div class="bill-donut-center">
+              <strong id="donutRate">$0.00</strong>
+              <small id="donutSummary">0 facturas</small>
+            </div>
+          </div>
+
+          <!-- Desglose Lateral -->
+          <div class="bill-donut-side">
+            <div class="bill-donut-side-row">
+              <div class="label"><span class="dot green"></span>Pagado al corte</div>
+              <div class="value" id="donutClosedValue">$0.00</div>
+            </div>
+            <div class="bill-donut-side-row">
+              <div class="label"><span class="dot coral"></span>Pendiente</div>
+              <div class="value" id="donutOpenValue">$0.00</div>
+            </div>
+            <div class="bill-donut-side-row">
+              <div class="label"><span class="dot red"></span>Vencido</div>
+              <div class="value" id="donutOverdueValue">$0.00</div>
+            </div>
+            <div class="bill-donut-tooltip" id="donutTooltip">Saldo pendiente: $0.00</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- PANEL COMPARATIVO POR MES -->
+      <article class="bill-card bill-panel">
+        <div class="bill-panel-tag">Comparativo</div>
+        <p class="bill-eyebrow">COMPARATIVO</p>
+        <h2>Facturación por mes</h2>
+        <span class="caption">Monto emitido y saldo por período</span>
+        <div class="bill-bars" id="monthBars"></div>
+      </article>
+    </section>
+
+    <!-- HERRAMIENTA DE BÚSQUEDA -->
+    <div class="bill-table-tools">
+      <input class="bill-query" id="query" type="search" placeholder="Buscar SAP, cliente o código..." />
+    </div>
+
+    <!-- TABLA DE DOCUMENTOS EMITIDOS -->
+    <section class="bill-card bill-panel bill-table">
+      <p class="bill-eyebrow">DETALLE DE FACTURAS</p>
+      <h2>Documentos emitidos</h2>
+      <span class="caption" id="summary">0 registros</span>
+      
+      <div class="bill-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 9%;">SAP</th>
+              <th style="width: 9%;">Fecha</th>
+              <th style="width: 9%;">Vencimiento</th>
+              <th style="width: 24%;">Cliente</th>
+              <th style="width: 10%;">Código</th>
+              <th style="width: 10%; text-align: right;" class="num">Total</th>
+              <th style="width: 10%; text-align: right;" class="num">Saldo</th>
+              <th style="width: 9%; text-align: center;">Estado</th>
+              <th style="width: 10%;">Comentario</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <!-- Filas dinámicas -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+    </div><!-- FIN #viewFacturacion -->
+
+    <!-- VISTA 2: INFORME DETALLADO (Tabla Dinámica con Buscador, Filtros por Columna y Exportación Excel) -->
+    <div id="viewInformeDetallado" class="bill-module-view" style="display: none;">
+      <section class="bill-card bill-table" style="padding: 22px;">
+        <!-- Header row of Informe Detallado -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px;">
+          <div>
+            <p class="bill-eyebrow" style="color: var(--intelfon-red);">AUDITORÍA Y EXPORTACIÓN</p>
+            <h2 style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 2px;">Informe Detallado de Facturación SAP</h2>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+              Consulta exhaustiva con filtrado multifactorial por columnas y descarga de reportes oficiales.
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span id="informeSummaryBadge" style="background: rgba(196, 60, 80, 0.14); color: #d95f6e; border: 1px solid rgba(196, 60, 80, 0.32); padding: 5px 14px; border-radius: 9999px; font-weight: 800; font-size: 12px; font-family: var(--font-mono);">
+              0 facturas encontradas
+            </span>
+            <!-- Botón Exportar Excel -->
+            <button type="button" class="export-btn export-excel" id="btnExportExcel" title="Exportar datos actuales a archivo Excel / CSV">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13l3 4 3-4"></path>
+                <path d="M11 17v-8"></path>
+              </svg>
+              Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- Única barra de búsqueda: Hereda automáticamente los filtros del encabezado general -->
+        <div style="width: 100%; margin: 8px 0 14px 0;">
+          <div style="position: relative; width: 100%;">
+            <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #8b909e; pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="informeSearchInput" 
+              class="bill-query" 
+              placeholder="Buscar dentro de las facturas filtradas por número SAP, cliente, código o comentario..." 
+              style="width: 100%; box-sizing: border-box; padding: 11px 16px 11px 42px; background: rgba(15,17,23, 0.85); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; color: #ffffff; font-size: 13px; outline: none;"
+            />
+          </div>
+        </div>
+
+        <!-- Tabla dinámica de informe detallado -->
+        <div class="bill-table-wrap" style="max-height: 520px; overflow-y: auto; overflow-x: hidden; width: 100%; margin-top: 14px;">
+          <table id="tableInforme" style="width: 100%; table-layout: fixed;">
+            <thead>
+              <tr>
+                <th style="width: 9%;">SAP</th>
+                <th style="width: 9%;">Fecha</th>
+                <th style="width: 9%;">Vencimiento</th>
+                <th style="width: 24%;">Cliente / Razón Social</th>
+                <th style="width: 10%;">Código</th>
+                <th style="width: 10%; text-align: right;" class="num">Total</th>
+                <th style="width: 10%; text-align: right;" class="num">Saldo</th>
+                <th style="width: 9%; text-align: center;">Estado</th>
+                <th style="width: 10%;">Comentario</th>
+              </tr>
+            </thead>
+            <tbody id="rowsInforme">
+              <!-- Filas dinámicas generadas en tiempo real -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totales / Footer del Informe Detallado -->
+        <div class="informe-totals-bar">
+          <div class="informe-total-pill">
+            <span>Total Facturado:</span>
+            <strong id="informeTotalFacturado" style="color: #7fb0f0;">$0.00</strong>
+          </div>
+          <div class="informe-total-pill">
+            <span>Total Pagado:</span>
+            <strong id="informeTotalPagado" style="color: #3f9c85;">$0.00</strong>
+          </div>
+          <div class="informe-total-pill">
+            <span>Saldo Pendiente:</span>
+            <strong id="informeTotalSaldo" style="color: #d95f6e;">$0.00</strong>
+          </div>
+        </div>
+      </section>
+    </div><!-- FIN #viewInformeDetallado -->
+  </main>
+
+  <footer class="bill-footer">
+    <span>API SAP Facturas Emitidas v1.0.0</span>
+    <span>Mostrando <b id="footerCount">0</b> registros</span>
+  </footer>
+
+</div>
+
+<!-- SCRIPT COMPLETO DE INTEGRACIÓN Y FUNCIONALIDAD -->
+<script>
+  // CONFIGURACIÓN API SAP RED INTELFON
+  const API_URL = 'https://sapapi.red.com.sv/api/Procesos/facturasemitidas';
+  const API_KEY = 'fdf0cb340b00402c00a057b0f67c00a3';
+  const CURRENCY_RATE = 7.63856; // Tasa oficial Banguat
+
+  // LÍNEAS DE NEGOCIO POR REGLA
+  // Para El Salvador: DATARED, INFRA, RADIO
+  // Para Guatemala: solo RED
+  // Para Todos: todas las anteriores
+  const BUSINESS_CONFIG = {
+    ALL: ['DATARED', 'INFRA', 'RADIO', 'RED'],
+    SV: ['DATARED', 'INFRA', 'RADIO'],
+    GT: ['RED']
+  };
+
+  const FACTURA_OPTIONS = [
+    { label: 'Cíclica', value: 'CICLICA' },
+    { label: 'Manuales', value: 'CICLICA MANUAL' }
+  ];
+
+  const REFACTURACION_OPTIONS = [
+    { label: 'Sí', value: 'S' },
+    { label: 'No', value: 'N' }
+  ];
+
+  // ESTADO DE FILTROS DEL DASHBOARD
+  let currentCountry = 'SV'; // 'ALL' | 'GT' | 'SV'
+  let currentCurrency = 'USD'; // 'USD' | 'GTQ'
+  let selectedLines = ['DATARED', 'INFRA', 'RADIO']; // Inicialmente DATARED
+  let selectedFacturas = ['CICLICA', 'CICLICA MANUAL'];
+  let selectedRefacturacion = ['S', 'N'];
+  
+  let searchLineasText = '';
+  let searchFacturasText = '';
+  let searchRefactText = '';
+  
+  let rawRecords = [];
+  const invoiceSearchIndex = new WeakMap();
+  const invoiceDateIndex = new WeakMap();
+  const invoiceDueDateIndex = new WeakMap();
+
+  const $ = (id) => document.getElementById(id);
+  const invoiceDateFormatter = new Intl.DateTimeFormat('es-SV', { dateStyle: 'medium' });
+  const invoiceMonthFormatter = new Intl.DateTimeFormat('es-SV', { month: 'short' });
+
+  const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  function parseDate(value) {
+    if (!value) return null;
+    const match = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    return match ? new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])) : new Date(value);
+  }
+
+  function isoDate(value) {
+    const date = parseDate(value);
+    return date && !Number.isNaN(date.getTime()) 
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+      : '';
+  }
+
+  function dateText(value) {
+    const date = parseDate(value);
+    return date && !Number.isNaN(date.getTime()) 
+      ? invoiceDateFormatter.format(date)
+      : value || '—';
+  }
+
+  function getInvoiceDate(row) {
+    let date = invoiceDateIndex.get(row);
+    if (date === undefined) {
+      date = isoDate(row.fecha);
+      invoiceDateIndex.set(row, date);
+    }
+    return date;
+  }
+
+  function getInvoiceDueDate(row) {
+    let due = invoiceDueDateIndex.get(row);
+    if (due === undefined) {
+      due = parseDate(row.fechavence);
+      invoiceDueDateIndex.set(row, due || null);
+    }
+    return due;
+  }
+
+  function isOverdue(row, asOf = new Date()) {
+    const due = getInvoiceDueDate(row);
+    return Number(row.saldo) > 0 && due && due < asOf;
+  }
+
+  function money(value, currency = currentCurrency) {
+    const amount = Number(value) || 0;
+    const isGTQ = currency === 'GTQ';
+    const normalized = isGTQ ? amount * CURRENCY_RATE : amount;
+    const symbol = isGTQ ? 'Q' : '$';
+    return `${symbol}${normalized.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function currentMonthRange() {
+    const dateParts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Guatemala',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+    const year = dateParts.find(part => part.type === 'year').value;
+    const month = dateParts.find(part => part.type === 'month').value;
+    const day = dateParts.find(part => part.type === 'day').value;
+    return { from: `${year}-${month}-01`, to: `${year}-${month}-${day}` };
+  }
+
+  // SINCRONIZAR LÍNEAS DE NEGOCIO SEGÚN PAÍS
+  function syncCountryLines() {
+    const allowed = BUSINESS_CONFIG[currentCountry] || BUSINESS_CONFIG.ALL;
+    selectedLines = selectedLines.filter(l => allowed.includes(l));
+  }
+
+  function updateLastRefreshTime() {
+    const updated = $('updated');
+    if (!updated) return;
+
+    const estimatedUpdateTime = new Date(Date.now() - 30 * 60 * 1000);
+    updated.textContent = new Intl.DateTimeFormat('es-GT', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'America/Guatemala'
+    }).format(estimatedUpdateTime);
+  }
+
+    // Dataset en vivo de SAP
+
+  // CONSULTA A LA API REAL DE SAP
+  let cachedMasterRecords = null;
+
+  async function fetchInvoices(forceReload = false) {
+    syncCountryLines();
+    const loading = $('loading');
+    const content = $('content');
+    const errorEl = $('error');
+
+    if (cachedMasterRecords && cachedMasterRecords.length > 0 && !forceReload) {
+      rawRecords = cachedMasterRecords;
+      render();
+      return;
+    }
+
+    updateLastRefreshTime();
+    if (loading) loading.style.display = 'block';
+    if (content) content.hidden = true;
+    if (errorEl) errorEl.style.display = 'none';
+
+    try {
+      const linesToFetch = [
+        { line: 'DATARED', pais: 'SV' },
+        { line: 'INFRA', pais: 'SV' },
+        { line: 'RADIO', pais: 'SV' },
+        { line: 'RED', pais: 'GT' }
+      ];
+
+      const fetchPromises = linesToFetch.map(({ line, pais }) => {
+        const directUrl = `https://sapapi.red.com.sv/api/procesos/facturasemitidas?lineanegocio=${encodeURIComponent(line)}&var_pais=${encodeURIComponent(pais)}`;
+        const proxyUrl = `/api/procesos/facturasemitidas?lineanegocio=${encodeURIComponent(line)}&var_pais=${encodeURIComponent(pais)}`;
+
+        // Intentar directo y luego proxy fallback
+        return fetch(directUrl, { headers: { 'X-API-KEY': API_KEY, 'Accept': 'application/json' }, cache: 'no-store' })
+          .then(r => r.ok ? r.json() : Promise.reject(new Error('Status ' + r.status)))
+          .catch(() => fetch(proxyUrl, { headers: { 'X-API-KEY': API_KEY, 'Accept': 'application/json' }, cache: 'no-store' }).then(r => r.ok ? r.json() : []))
+          .then(data => (Array.isArray(data) ? data : (data.data || [])))
+          .then(items => items.map(it => ({ ...it, linea_negocio: line, pais: pais })))
+          .catch(() => []);
+      });
+
+      const results = await Promise.all(fetchPromises);
+      const fetched = results.flat();
+
+      if (fetched && fetched.length > 0) {
+        cachedMasterRecords = fetched;
+        rawRecords = fetched;
+      } else {
+        rawRecords = [];
+        if (errorEl) {
+          errorEl.style.display = 'block';
+          errorEl.textContent = 'No se recibieron facturas desde la API de SAP (https://sapapi.red.com.sv/api/procesos/facturasemitidas). Verifica la conexión a la red o API Key.';
+        }
+      }
+
+      render();
+    } catch (err) {
+      console.error('Error al consultar SAP API:', err);
+      rawRecords = [];
+      if (errorEl) {
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Error al consultar SAP API: ' + err.message;
+      }
+    } finally {
+      if (loading) loading.style.display = 'none';
+      if (content) content.hidden = false;
+    }
+  }
+
+  // FILTRADO REACTIVO
+  function filtered() {
+    const query = ($('query') ? $('query').value : '').toLowerCase().trim();
+    const from = $('dateFrom') ? $('dateFrom').value : '';
+    const to = $('dateTo') ? $('dateTo').value : '';
+
+    if (selectedLines.length === 0 || selectedFacturas.length === 0 || selectedRefacturacion.length === 0) {
+      return [];
+    }
+
+    return rawRecords.filter((row) => {
+      // 0. Filtro de País
+      if (currentCountry !== 'ALL' && row.pais !== currentCountry) {
+        return false;
+      }
+
+      // 1. Línea de Negocio
+      if (!selectedLines.includes(row.linea_negocio)) {
+        return false;
+      }
+
+      // 2. Tipo de emisión (CICLICA / CICLICA MANUAL)
+      if (row.tipo_emision) {
+        const te = String(row.tipo_emision).toUpperCase();
+        if (!selectedFacturas.includes(te)) return false;
+      }
+
+      // 3. Refacturación (S / N)
+      if (row.es_refacturacion) {
+        const ref = String(row.es_refacturacion).toUpperCase().startsWith('S') ? 'S' : 'N';
+        if (!selectedRefacturacion.includes(ref)) return false;
+      }
+
+      // 4. Fechas
+      const rowDate = getInvoiceDate(row);
+      if ((from || to) && !rowDate) return false;
+      if (from && rowDate < from) return false;
+      if (to && rowDate > to) return false;
+
+      // 5. Búsqueda de texto
+      if (query) {
+        let searchIndex = invoiceSearchIndex.get(row);
+        if (searchIndex === undefined) {
+          searchIndex = JSON.stringify(row).toLowerCase();
+          invoiceSearchIndex.set(row, searchIndex);
+        }
+        if (!searchIndex.includes(query)) return false;
+      }
+
+      return true;
+    });
+  }
+
+  // BARRAS MENSUALES
+  function renderMonthBars(months) {
+    const values = Object.values(months);
+    const max = Math.max(...values.map((v) => v.total), 1);
+    const monthBars = $('monthBars');
+    if (!monthBars) return;
+
+    const entries = Object.entries(months).sort();
+
+    if (entries.length === 0) {
+      monthBars.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Sin datos en el período</span>';
+      return;
+    }
+
+    monthBars.innerHTML = entries.map(([month, val], idx) => `
+      <div class="bill-bar">
+        <label>${month}</label>
+        <div class="bill-track">
+          <div class="bill-fill gx-bar-h" style="width:${Math.max((val.total / max) * 100, 3)}%;--gx-i:${idx};"></div>
+        </div>
+        <b>${money(val.total, currentCurrency)}</b>
+      </div>
+    `).join('');
+  }
+
+  // RENDER GENERAL DEL DASHBOARD
+  function render() {
+    const list = filtered();
+    let total = 0;
+    let balance = 0;
+    let paidCount = 0;
+    let overdueAmount = 0;
+    let overdueCount = 0;
+    const asOf = new Date();
+    list.forEach(row => {
+      const rowTotal = Number(row.total) || 0;
+      const rowBalance = Number(row.saldo) || 0;
+      total += rowTotal;
+      balance += rowBalance;
+      if (rowBalance <= 0) paidCount++;
+      if (isOverdue(row, asOf)) {
+        overdueCount++;
+        overdueAmount += rowBalance;
+      }
+    });
+    const paid = total - balance;
+    const pendingDue = Math.max(balance - overdueAmount, 0);
+
+    const safeText = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+
+    safeText('invoiceCount', list.length.toLocaleString('es-SV'));
+    safeText('totalAmount', money(total));
+    safeText('paidAmount', money(paid));
+    safeText('balanceAmount', money(balance));
+    safeText('paidCount', `${paidCount} facturas saldadas`);
+    safeText('overdueCount', `${overdueCount} vencidas`);
+    safeText('overdueBadge', `Vencido: ${money(overdueAmount)}`);
+
+    // Actualización del Gráfico de Círculo / Donut
+    const paidPct = total ? (paid / total) * 100 : 0;
+    const pendingPct = total ? (pendingDue / total) * 100 : 0;
+    const overduePct = total ? (overdueAmount / total) * 100 : 0;
+
+    const donut = $('donut');
+    if (donut) {
+      const pStart = paidPct;
+      const oStart = pStart + pendingPct;
+      // Tonos de la guía: verde pagado, amarillo pendiente, rojo vencido; resto = pista sobria
+      donut.style.background = `conic-gradient(
+        #2f8f76 0% ${paidPct}%,
+        #c59600 ${pStart}% ${oStart}%,
+        #c43c50 ${oStart}% ${oStart + overduePct}%,
+        rgba(255, 255, 255, 0.07) ${oStart + overduePct}% 100%
+      )`;
+    }
+
+    safeText('donutRate', money(total));
+    safeText('donutSummary', `${list.length} facturas`);
+    safeText('donutClosedValue', money(paid));
+    safeText('donutOpenValue', money(pendingDue));
+    safeText('donutOverdueValue', money(overdueAmount));
+
+    const tooltip = $('donutTooltip');
+    if (tooltip) tooltip.textContent = `Saldo pendiente: ${money(balance)}`;
+
+    // Agrupación mensual
+    const monthly = {};
+    list.forEach((row) => {
+      const date = parseDate(row.fecha);
+      if (!date || Number.isNaN(date.getTime())) return;
+      const key = invoiceMonthFormatter.format(date).replace('.', '').toUpperCase();
+      if (!monthly[key]) monthly[key] = { total: 0, count: 0 };
+      monthly[key].total += Number(row.total) || 0;
+      monthly[key].count += 1;
+    });
+    renderMonthBars(monthly);
+    if (currentModule === 'informe') renderInformeDetallado();
+
+    // Tabla de documentos
+    safeText('summary', `${list.length.toLocaleString('es-SV')} registros filtrados de ${rawRecords.length.toLocaleString('es-SV')}`);
+    safeText('footerCount', list.length.toLocaleString('es-SV'));
+
+    const rowsEl = $('rows');
+    if (rowsEl) {
+      if (list.length === 0) {
+        rowsEl.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-muted);">No hay facturas con los filtros seleccionados.</td></tr>';
+      } else {
+        rowsEl.innerHTML = list.map(item => {
+          const saldo = Number(item.saldo) || 0;
+          const overdueBool = isOverdue(item, asOf);
+          const statusBadge = saldo <= 0 
+            ? '<span class="bill-status paid">Pagada</span>' 
+            : (overdueBool ? '<span class="bill-status overdue">Vencida</span>' : '<span class="bill-status pending">Pendiente</span>');
+          const saldoColor = saldo > 0 ? (overdueBool ? 'color:var(--intelfon-red);' : 'color:#e0b52e;') : 'color:#3f9c85;';
+
+          return `
+            <tr>
+              <td><strong style="color:#ffffff;">${escapeHTML(item.numerosap)}</strong></td>
+              <td>${escapeHTML(dateText(item.fecha))}</td>
+              <td>${escapeHTML(dateText(item.fechavence))}</td>
+              <td><strong style="color:#ffffff;">${escapeHTML(item.cliente)}</strong></td>
+              <td class="code-text">${escapeHTML(item.codigo)}</td>
+              <td class="num"><b style="color:#ffffff;">${money(item.total)}</b></td>
+              <td class="num"><b style="${saldoColor}">${money(item.saldo)}</b></td>
+              <td>${statusBadge}</td>
+              <td style="color:var(--text-muted);font-size:12px;">${escapeHTML(item.comentario)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  }
+
+  // ==========================================================================
+  // PANEL DESPLEGABLE CON CHECKLIST (.xf-panel)
+  // ==========================================================================
+  function renderChecklistCols() {
+    renderColLineas();
+    renderColFacturas();
+    renderColRefact();
+  }
+
+  function renderColLineas() {
+    const col = $('xfColLineas');
+    if (!col) return;
+
+    const allowed = BUSINESS_CONFIG[currentCountry] || BUSINESS_CONFIG.ALL;
+    const filtered = allowed.filter(l => l.toLowerCase().includes(searchLineasText.toLowerCase()));
+    const allChecked = allowed.length > 0 && allowed.every(l => selectedLines.includes(l));
+    const someChecked = allowed.some(l => selectedLines.includes(l));
+    const countChecked = allowed.filter(l => selectedLines.includes(l)).length;
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">Línea de negocio</span>
+        <span class="xf-col-count">${countChecked}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchLineasInput" placeholder="Buscar..." value="${escapeHTML(searchLineasText)}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllLineas" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(linea => {
+          const isChecked = selectedLines.includes(linea);
+          return `
+            <label class="xf-item">
+              <input type="checkbox" class="xf-checkbox chk-linea" data-linea="${escapeHTML(linea)}" ${isChecked ? 'checked' : ''}>
+              <span>${escapeHTML(linea)}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    const chkAll = $('chkAllLineas');
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        selectedLines = e.target.checked ? [...allowed] : [];
+        renderColLineas();
+      });
+    }
+
+    const searchInp = $('searchLineasInput');
+    if (searchInp) {
+      searchInp.addEventListener('input', (e) => {
+        searchLineasText = e.target.value;
+        renderColLineas();
+        const ref = $('searchLineasInput');
+        if (ref) { ref.focus(); ref.setSelectionRange(ref.value.length, ref.value.length); }
+      });
+    }
+
+    col.querySelectorAll('.chk-linea').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute('data-linea');
+        if (e.target.checked) {
+          if (!selectedLines.includes(val)) selectedLines.push(val);
+        } else {
+          selectedLines = selectedLines.filter(x => x !== val);
+        }
+        renderColLineas();
+      });
+    });
+  }
+
+  function renderColFacturas() {
+    const col = $('xfColFacturas');
+    if (!col) return;
+
+    const allowed = FACTURA_OPTIONS;
+    const filtered = allowed.filter(f => f.label.toLowerCase().includes(searchFacturasText.toLowerCase()));
+    const allChecked = allowed.every(f => selectedFacturas.includes(f.value));
+    const someChecked = allowed.some(f => selectedFacturas.includes(f.value));
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">Factura</span>
+        <span class="xf-col-count">${selectedFacturas.length}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchFacturasInput" placeholder="Buscar..." value="${escapeHTML(searchFacturasText)}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllFacturas" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(opt => {
+          const isChecked = selectedFacturas.includes(opt.value);
+          return `
+            <label class="xf-item">
+              <input type="checkbox" class="xf-checkbox chk-fact" data-val="${opt.value}" ${isChecked ? 'checked' : ''}>
+              <span>${opt.label}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    const chkAll = $('chkAllFacturas');
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        selectedFacturas = e.target.checked ? allowed.map(a => a.value) : [];
+        renderColFacturas();
+      });
+    }
+
+    const searchInp = $('searchFacturasInput');
+    if (searchInp) {
+      searchInp.addEventListener('input', (e) => {
+        searchFacturasText = e.target.value;
+        renderColFacturas();
+        const ref = $('searchFacturasInput');
+        if (ref) { ref.focus(); ref.setSelectionRange(ref.value.length, ref.value.length); }
+      });
+    }
+
+    col.querySelectorAll('.chk-fact').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute('data-val');
+        if (e.target.checked) {
+          if (!selectedFacturas.includes(val)) selectedFacturas.push(val);
+        } else {
+          selectedFacturas = selectedFacturas.filter(x => x !== val);
+        }
+        renderColFacturas();
+      });
+    });
+  }
+
+  function renderColRefact() {
+    const col = $('xfColRefacturacion');
+    if (!col) return;
+
+    const allowed = REFACTURACION_OPTIONS;
+    const filtered = allowed.filter(r => r.label.toLowerCase().includes(searchRefactText.toLowerCase()));
+    const allChecked = allowed.every(r => selectedRefacturacion.includes(r.value));
+    const someChecked = allowed.some(r => selectedRefacturacion.includes(r.value));
+
+    col.innerHTML = `
+      <div class="xf-col-head">
+        <span class="xf-col-title">Refacturación</span>
+        <span class="xf-col-count">${selectedRefacturacion.length}/${allowed.length}</span>
+      </div>
+      <div class="xf-search-box">
+        <svg class="xf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="xf-search-input" id="searchRefactInput" placeholder="Buscar..." value="${escapeHTML(searchRefactText)}">
+      </div>
+      <div class="xf-list">
+        <label class="xf-item select-all">
+          <input type="checkbox" class="xf-checkbox" id="chkAllRefact" ${allChecked ? 'checked' : ''}>
+          <span>(Seleccionar todo)</span>
+        </label>
+        ${filtered.map(opt => {
+          const isChecked = selectedRefacturacion.includes(opt.value);
+          return `
+            <label class="xf-item">
+              <input type="checkbox" class="xf-checkbox chk-ref" data-val="${opt.value}" ${isChecked ? 'checked' : ''}>
+              <span>${opt.label}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    const chkAll = $('chkAllRefact');
+    if (chkAll) {
+      chkAll.indeterminate = !allChecked && someChecked;
+      chkAll.addEventListener('change', (e) => {
+        selectedRefacturacion = e.target.checked ? allowed.map(a => a.value) : [];
+        renderColRefact();
+      });
+    }
+
+    const searchInp = $('searchRefactInput');
+    if (searchInp) {
+      searchInp.addEventListener('input', (e) => {
+        searchRefactText = e.target.value;
+        renderColRefact();
+        const ref = $('searchRefactInput');
+        if (ref) { ref.focus(); ref.setSelectionRange(ref.value.length, ref.value.length); }
+      });
+    }
+
+    col.querySelectorAll('.chk-ref').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const val = e.target.getAttribute('data-val');
+        if (e.target.checked) {
+          if (!selectedRefacturacion.includes(val)) selectedRefacturacion.push(val);
+        } else {
+          selectedRefacturacion = selectedRefacturacion.filter(x => x !== val);
+        }
+        renderColRefact();
+      });
+    });
+  }
+
+  // BINDING DE EVENTOS
+  
+  // ==========================================================================
+  // MODULO INFORME DETALLADO: CAMBIO DE VISTAS, FILTRADO Y EXPORTACIÓN
+  // ==========================================================================
+  let currentModule = 'facturacion';
+  let informeSearchText = '';
+  let informeFilterEstado = 'ALL';
+  let informeFilterPais = 'ALL';
+
+  function switchModule(mod) {
+    currentModule = mod;
+    document.querySelectorAll('.bill-mod-btn').forEach(btn => {
+      const match = btn.getAttribute('data-mod') === mod;
+      btn.classList.toggle('active', match);
+    });
+    const viewFact = $('viewFacturacion');
+    const viewInfo = $('viewInformeDetallado');
+    if (viewFact) viewFact.style.display = (mod === 'facturacion') ? 'block' : 'none';
+    if (viewInfo) viewInfo.style.display = (mod === 'informe') ? 'block' : 'none';
+    if (mod === 'informe') {
+      renderInformeDetallado();
+    }
+  }
+
+  function getInformeData() {
+    // Hereda directamente la lista de facturas con todos los filtros generales aplicados (País, Fechas, Líneas, Factura, Refacturación)
+    const baseList = filtered();
+    if (!informeSearchText) return baseList;
+    const q = informeSearchText.toLowerCase().trim();
+    return baseList.filter(item => {
+      const sap = String(item.numerosap || '').toLowerCase();
+      const cli = String(item.cliente || '').toLowerCase();
+      const cod = String(item.codigo || '').toLowerCase();
+      const com = String(item.comentario || '').toLowerCase();
+      const tot = String(item.total || '');
+      return sap.includes(q) || cli.includes(q) || cod.includes(q) || com.includes(q) || tot.includes(q);
+    });
+  }
+
+  function renderInformeDetallado() {
+    const list = getInformeData();
+    const asOf = new Date();
+    const rowsInforme = $('rowsInforme');
+    const badge = $('informeSummaryBadge');
+
+    if (badge) {
+      badge.textContent = `Mostrando ${list.length} facturas filtradas`;
+    }
+
+    const totalFact = list.reduce((sum, r) => sum + (Number(r.total) || 0), 0);
+    const totalSaldo = list.reduce((sum, r) => sum + (Number(r.saldo) || 0), 0);
+    const totalPagado = totalFact - totalSaldo;
+
+    const safeText = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+    safeText('informeTotalFacturado', money(totalFact, currentCurrency));
+    safeText('informeTotalPagado', money(totalPagado, currentCurrency));
+    safeText('informeTotalSaldo', money(totalSaldo, currentCurrency));
+
+    if (!rowsInforme) return;
+
+    if (list.length === 0) {
+      rowsInforme.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--text-muted);"><div style="font-size:22px;margin-bottom:6px;">🔍</div><b>No se encontraron facturas con los criterios de búsqueda</b></td></tr>';
+      return;
+    }
+
+    rowsInforme.innerHTML = list.map(item => {
+      const saldo = Number(item.saldo) || 0;
+      const overdueBool = isOverdue(item, asOf);
+      const statusBadge = saldo <= 0 
+        ? '<span class="bill-status paid">Pagada</span>' 
+        : (overdueBool ? '<span class="bill-status overdue">Vencida</span>' : '<span class="bill-status pending">Pendiente</span>');
+      const saldoColor = saldo > 0 ? (overdueBool ? 'color:var(--intelfon-red);' : 'color:#e0b52e;') : 'color:#3f9c85;';
+      return `
+        <tr>
+          <td><strong style="color:#ffffff;">${escapeHTML(item.numerosap)}</strong></td>
+          <td>${escapeHTML(dateText(item.fecha))}</td>
+          <td>${escapeHTML(dateText(item.fechavence))}</td>
+          <td><strong style="color:#ffffff;" title="${escapeHTML(item.cliente)}">${escapeHTML(item.cliente)}</strong></td>
+          <td class="code-text">${escapeHTML(item.codigo)}</td>
+          <td class="num"><b style="color:#ffffff;">${money(item.total, currentCurrency)}</b></td>
+          <td class="num"><b style="${saldoColor}">${money(item.saldo, currentCurrency)}</b></td>
+          <td style="text-align:center;">${statusBadge}</td>
+          <td style="color:var(--text-muted);font-size:12px;" title="${escapeHTML(item.comentario)}">${escapeHTML(item.comentario)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Carga ExcelJS bajo demanda (solo al presionar "Excel")
+  function loadExcelJsLib() {
+    return new Promise((resolve, reject) => {
+      if (window.ExcelJS) return resolve(window.ExcelJS);
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+      s.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error('ExcelJS no disponible'));
+      s.onerror = () => reject(new Error('No se pudo cargar ExcelJS'));
+      document.head.appendChild(s);
+    });
+  }
+
+  // ---------- Helpers compartidos por Excel y PDF ----------
+  const BILL_LINE_ORDER = ['DATARED', 'INFRA', 'RADIO', 'RED'];
+
+  // Convierte un monto base (USD) a la moneda activa
+  function billConv(v) {
+    return (Number(v) || 0) * (currentCurrency === 'GTQ' ? CURRENCY_RATE : 1);
+  }
+
+  // Estado de una factura: 'pagada' | 'vencida' | 'pendiente'
+  function billStatus(item) {
+    if ((Number(item.saldo) || 0) <= 0) return 'pagada';
+    return isOverdue(item) ? 'vencida' : 'pendiente';
+  }
+
+  // Estadísticas de un conjunto de facturas (montos en USD base)
+  function billStats(items) {
+    const total = items.reduce((s, r) => s + (Number(r.total) || 0), 0);
+    const saldo = items.reduce((s, r) => s + (Number(r.saldo) || 0), 0);
+    const vencidas = items.filter(r => billStatus(r) === 'vencida');
+    const vencido = vencidas.reduce((s, r) => s + (Number(r.saldo) || 0), 0);
+    const pagado = total - saldo;
+    return {
+      n: items.length,
+      total,
+      saldo,
+      pagado,
+      vencido,
+      pendiente: Math.max(saldo - vencido, 0),
+      nVencidas: vencidas.length,
+      nSaldadas: items.filter(r => billStatus(r) === 'pagada').length,
+      pct: total > 0 ? Math.max(Math.min(pagado / total, 1), 0) : 0
+    };
+  }
+
+  // Agrupa por línea de negocio (orden DATARED, INFRA, RADIO, RED, luego otras)
+  function billGroupByLine(list) {
+    const keys = Array.from(new Set(list.map(r => r.linea_negocio).filter(Boolean)));
+    keys.sort((a, b) => {
+      const ia = BILL_LINE_ORDER.indexOf(a);
+      const ib = BILL_LINE_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    return keys.map(key => {
+      const items = list.filter(r => r.linea_negocio === key);
+      return { key, pais: items[0].pais || '', items, stats: billStats(items) };
+    });
+  }
+
+  // Agrupa por mes de emisión (clave YYYY-MM, ordenado ascendente)
+  function billGroupByMonth(list) {
+    const map = {};
+    list.forEach(r => {
+      const iso = isoDate(r.fecha);
+      if (!iso) return;
+      const key = iso.slice(0, 7);
+      (map[key] = map[key] || []).push(r);
+    });
+    return Object.keys(map).sort().map(key => {
+      const [y, mo] = key.split('-').map(Number);
+      const name = new Intl.DateTimeFormat('es-SV', { month: 'long' }).format(new Date(y, mo - 1, 1));
+      return {
+        key,
+        label: name.charAt(0).toUpperCase() + name.slice(1) + ' ' + y,
+        short: name.slice(0, 3).toUpperCase() + ' ' + String(y).slice(2),
+        items: map[key],
+        stats: billStats(map[key])
+      };
+    });
+  }
+
+  // Contexto común: período, región, moneda, fecha de generación
+  function billExportContext() {
+    const fmtIso = (iso) => iso ? iso.split('-').reverse().join('/') : '';
+    const fromEl = $('dateFrom');
+    const toEl = $('dateTo');
+    const dRaw = fromEl ? fromEl.value : '';
+    const hRaw = toEl ? toEl.value : '';
+    const now = new Date();
+    return {
+      now,
+      dIso: dRaw || 'inicio',
+      hIso: hRaw || now.toISOString().split('T')[0],
+      desde: fmtIso(dRaw) || 'inicio',
+      hasta: fmtIso(hRaw) || 'hoy',
+      regionLabel: currentCountry === 'GT' ? 'Guatemala' : currentCountry === 'SV' ? 'El Salvador' : 'Consolidado Regional',
+      paisCode: currentCountry === 'ALL' ? 'GT-SV' : currentCountry,
+      generado: now.toLocaleDateString('es-SV') + ' a las ' +
+        now.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' }),
+      monedaTxt: currentCurrency === 'GTQ' ? 'Quetzales (Q) · 1 USD = Q ' + CURRENCY_RATE : 'Dólares (USD)'
+    };
+  }
+
+  async function exportToExcel() {
+    const list = getInformeData();
+    if (list.length === 0) {
+      alert('No hay facturas disponibles para exportar con los filtros seleccionados.');
+      return;
+    }
+
+    let ExcelJS;
+    try {
+      ExcelJS = await loadExcelJsLib();
+    } catch (err) {
+      console.warn('ExcelJS no cargó, se usa exportación CSV de respaldo:', err.message);
+      exportToExcelCsv();
+      return;
+    }
+
+    const ctx = billExportContext();
+    const cur = currentCurrency;
+    const NAVY = 'FF0F172A';
+    const WHITE = 'FFFFFFFF';
+    const MONEY_FMT = cur === 'GTQ' ? '"Q"#,##0.00' : '"$"#,##0.00';
+    const thin = { style: 'thin', color: { argb: 'FFE2E8F0' } };
+    const fill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+    const round2 = (v) => Math.round(billConv(v) * 100) / 100;
+    const paisTxt = (p) => p === 'SV' ? 'El Salvador' : p === 'GT' ? 'Guatemala' : (p || '');
+    const estadoTxt = { pagada: 'Pagada', vencida: 'Vencida', pendiente: 'Pendiente' };
+    const estadoColor = { pagada: 'FF15803D', vencida: 'FFB91C1C', pendiente: 'FFB45309' };
+    const tipoTxt = (t) => {
+      const u = String(t || '').toUpperCase();
+      return u === 'CICLICA MANUAL' ? 'Cíclica manual' : u === 'CICLICA' ? 'Cíclica' : (t || '');
+    };
+    const refTxt = (r) => r ? (String(r).toUpperCase().startsWith('S') ? 'Sí' : 'No') : '';
+    // Fecha real para Excel (UTC para evitar corrimientos de día)
+    const toXlDate = (v) => {
+      const iso = isoDate(v);
+      if (!iso) return '';
+      const [y, mo, d] = iso.split('-').map(Number);
+      return new Date(Date.UTC(y, mo - 1, d));
+    };
+
+    const st = billStats(list);
+    const subtitulo = `${ctx.regionLabel} · Período ${ctx.desde} al ${ctx.hasta} · ${list.length} facturas · Moneda: ${cur}`;
+
+    // Banner (filas 1-3) + encabezados (fila 4) + autofiltro. Reutilizado por las 3 hojas.
+    const buildHeader = (ws, cols, title) => {
+      const last = cols.length;
+      ws.columns = cols.map(c => ({ width: c.width }));
+      [
+        { row: 1, value: title, size: 16, bold: true, color: WHITE, bg: NAVY, h: 32 },
+        { row: 2, value: subtitulo, size: 11, italic: true, color: 'FF475569', bg: 'FFEAF0F8', h: 20 },
+        { row: 3, value: `Generado el ${ctx.generado} · Dashboard de Facturación · Intelfon`, size: 9, color: 'FF64748B', bg: 'FFF8FAFC', h: 16 }
+      ].forEach(b => {
+        ws.mergeCells(b.row, 1, b.row, last);
+        const cell = ws.getCell(b.row, 1);
+        cell.value = b.value;
+        cell.font = { name: 'Calibri', size: b.size, bold: !!b.bold, italic: !!b.italic, color: { argb: b.color } };
+        cell.fill = fill(b.bg);
+        cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+        ws.getRow(b.row).height = b.h;
+      });
+      const hr = ws.getRow(4);
+      cols.forEach((c, i) => {
+        const cell = hr.getCell(i + 1);
+        const al = c.align || 'left';
+        cell.value = c.header;
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+        cell.fill = fill(NAVY);
+        cell.alignment = { vertical: 'middle', horizontal: al, indent: al === 'left' ? 1 : 0 };
+      });
+      hr.height = 26;
+      ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4, column: last } };
+    };
+
+    // Filas de resumen (hojas 2 y 3) + fila TOTAL
+    const writeSummary = (ws, cols, rows, totals) => {
+      const fmtCell = (cell, c) => {
+        const al = c.align || 'left';
+        if (c.fmt === 'money') cell.numFmt = MONEY_FMT;
+        if (c.fmt === 'pct') cell.numFmt = '0.0%';
+        cell.alignment = { vertical: 'middle', horizontal: al, indent: al === 'left' ? 1 : 0 };
+      };
+      rows.forEach((vals, idx) => {
+        const row = ws.getRow(5 + idx);
+        row.values = vals;
+        row.height = 20;
+        cols.forEach((c, i) => {
+          const cell = row.getCell(i + 1);
+          cell.font = { name: 'Calibri', size: 11, bold: i === 0, color: { argb: 'FF1E293B' } };
+          cell.border = { bottom: thin };
+          fmtCell(cell, c);
+          if (idx % 2 === 1) cell.fill = fill('FFF8FAFC');
+        });
+      });
+      const tr = ws.getRow(5 + rows.length);
+      tr.values = totals;
+      tr.height = 22;
+      cols.forEach((c, i) => {
+        const cell = tr.getCell(i + 1);
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+        cell.fill = fill(NAVY);
+        fmtCell(cell, c);
+      });
+    };
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'RED Intelfon';
+    wb.created = ctx.now;
+    const sheetOpts = () => ({
+      views: [{ state: 'frozen', ySplit: 4, showGridLines: false }],
+      properties: { tabColor: { argb: 'FFFF1A43' } }
+    });
+
+    // ==================== HOJA 1: INFORME DETALLADO ====================
+    const ws = wb.addWorksheet('Informe detallado', sheetOpts());
+    const cols = [
+      { header: '#', width: 6, align: 'center' },
+      { header: 'No. SAP', width: 14, align: 'center' },
+      { header: 'Fecha emisión', width: 14, align: 'center' },
+      { header: 'Vencimiento', width: 14, align: 'center' },
+      { header: 'Cliente / Razón Social', width: 44 },
+      { header: 'Código', width: 14 },
+      { header: 'País', width: 13, align: 'center' },
+      { header: 'Línea de Negocio', width: 17 },
+      { header: 'Tipo de factura', width: 18 },
+      { header: 'Refacturación', width: 14, align: 'center' },
+      { header: `Total (${cur})`, width: 16, align: 'right' },
+      { header: `Saldo (${cur})`, width: 16, align: 'right' },
+      { header: 'Estado', width: 14, align: 'center' },
+      { header: 'Comentario', width: 40 }
+    ];
+    const lastCol = cols.length;
+    buildHeader(ws, cols, 'INFORME DETALLADO DE FACTURACIÓN');
+
+    list.forEach((item, idx) => {
+      const est = billStatus(item);
+      const row = ws.getRow(5 + idx);
+      row.values = [
+        idx + 1,
+        item.numerosap ? (Number(item.numerosap) || String(item.numerosap)) : '',
+        toXlDate(item.fecha),
+        toXlDate(item.fechavence),
+        item.cliente || 'Cliente Sin Registro',
+        item.codigo || '',
+        paisTxt(item.pais),
+        item.linea_negocio || '',
+        tipoTxt(item.tipo_emision),
+        refTxt(item.es_refacturacion),
+        round2(item.total),
+        round2(item.saldo),
+        estadoTxt[est],
+        item.comentario || ''
+      ];
+      row.height = 20;
+      for (let c = 1; c <= lastCol; c++) {
+        const cell = row.getCell(c);
+        const al = cols[c - 1].align || 'left';
+        cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF1E293B' } };
+        cell.border = { bottom: thin };
+        cell.alignment = { vertical: 'middle', horizontal: al, indent: al === 'left' ? 1 : 0 };
+        if (idx % 2 === 1) cell.fill = fill('FFF8FAFC');
+      }
+      row.getCell(1).font = { name: 'Calibri', size: 11, color: { argb: 'FF64748B' } };
+      row.getCell(2).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(3).numFmt = 'dd/mm/yyyy';
+      row.getCell(4).numFmt = 'dd/mm/yyyy';
+      row.getCell(7).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF047857' } };
+      row.getCell(11).numFmt = MONEY_FMT;
+      row.getCell(11).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(12).numFmt = MONEY_FMT;
+      row.getCell(12).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor[est] } };
+      row.getCell(13).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor[est] } };
+      row.getCell(14).font = { name: 'Calibri', size: 11, color: { argb: 'FF64748B' } };
+    });
+
+    // Fila TOTAL con SUBTOTAL (respeta el autofiltro de Excel)
+    const firstData = 5;
+    const lastData = 4 + list.length;
+    const totIdx = lastData + 1;
+    const totRow = ws.getRow(totIdx);
+    ws.mergeCells(totIdx, 1, totIdx, 10);
+    totRow.getCell(1).value = 'TOTAL (según filtro de Excel)';
+    totRow.getCell(11).value = { formula: `SUBTOTAL(109,K${firstData}:K${lastData})`, result: round2(st.total) };
+    totRow.getCell(12).value = { formula: `SUBTOTAL(109,L${firstData}:L${lastData})`, result: round2(st.saldo) };
+    totRow.height = 22;
+    for (let c = 1; c <= lastCol; c++) {
+      const cell = totRow.getCell(c);
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+      cell.fill = fill(NAVY);
+      cell.alignment = { vertical: 'middle', horizontal: c === 1 || c >= 11 ? 'right' : 'left', indent: 0 };
+      if (c === 11 || c === 12) cell.numFmt = MONEY_FMT;
+    }
+
+    // ==================== HOJA 2: RESUMEN POR LÍNEA ====================
+    const ws2 = wb.addWorksheet('Resumen por línea', sheetOpts());
+    const cols2 = [
+      { header: 'Línea de Negocio', width: 22 },
+      { header: 'País', width: 14, align: 'center' },
+      { header: 'Facturas', width: 12, align: 'center' },
+      { header: `Total facturado (${cur})`, width: 22, align: 'right', fmt: 'money' },
+      { header: `Pagado al corte (${cur})`, width: 22, align: 'right', fmt: 'money' },
+      { header: `Saldo pendiente (${cur})`, width: 22, align: 'right', fmt: 'money' },
+      { header: `Vencido (${cur})`, width: 18, align: 'right', fmt: 'money' },
+      { header: 'Facturas vencidas', width: 17, align: 'center' },
+      { header: '% Cobrado', width: 12, align: 'center', fmt: 'pct' }
+    ];
+    buildHeader(ws2, cols2, 'RESUMEN POR LÍNEA DE NEGOCIO');
+    const rowLine = (label, pais, s) => [label, pais, s.n, round2(s.total), round2(s.pagado), round2(s.saldo), round2(s.vencido), s.nVencidas, s.pct];
+    writeSummary(
+      ws2, cols2,
+      billGroupByLine(list).map(l => rowLine(l.key, paisTxt(l.pais), l.stats)),
+      rowLine('TOTAL', '', st)
+    );
+
+    // ==================== HOJA 3: RESUMEN POR MES ====================
+    const ws3 = wb.addWorksheet('Resumen por mes', sheetOpts());
+    const cols3 = [
+      { header: 'Mes', width: 24 },
+      { header: 'Facturas', width: 12, align: 'center' },
+      { header: `Total facturado (${cur})`, width: 22, align: 'right', fmt: 'money' },
+      { header: `Pagado al corte (${cur})`, width: 22, align: 'right', fmt: 'money' },
+      { header: `Saldo pendiente (${cur})`, width: 22, align: 'right', fmt: 'money' },
+      { header: `Vencido (${cur})`, width: 18, align: 'right', fmt: 'money' },
+      { header: '% Cobrado', width: 12, align: 'center', fmt: 'pct' }
+    ];
+    buildHeader(ws3, cols3, 'RESUMEN DE FACTURACIÓN POR MES');
+    const rowMonth = (label, s) => [label, s.n, round2(s.total), round2(s.pagado), round2(s.saldo), round2(s.vencido), s.pct];
+    writeSummary(
+      ws3, cols3,
+      billGroupByMonth(list).map(mo => rowMonth(mo.label, mo.stats)),
+      rowMonth('TOTAL', st)
+    );
+
+    // ==================== DESCARGA ====================
+    try {
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Informe_facturacion_${ctx.paisCode}_${ctx.dIso}_${ctx.hIso}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error generando el Excel:', err);
+      exportToExcelCsv();
+    }
+  }
+
+  function exportToExcelCsv() {
+    const list = getInformeData();
+    if (list.length === 0) {
+      alert('No hay facturas disponibles para exportar con los filtros seleccionados.');
+      return;
+    }
+    
+    let csv = '\uFEFF';
+    csv += 'No. SAP;Fecha Emisión;Fecha Vencimiento;Cliente / Razón Social;Código;Total (' + currentCurrency + ');Saldo (' + currentCurrency + ');Estado;País;Línea Negocio;Comentario\r\n';
+
+    list.forEach(item => {
+      const saldo = Number(item.saldo) || 0;
+      const overdueBool = isOverdue(item);
+      const estado = saldo <= 0 ? 'Pagada' : (overdueBool ? 'Vencida' : 'Pendiente');
+      const rateMultiplier = (currentCurrency === 'GTQ') ? CURRENCY_RATE : 1;
+      const itemTotalConverted = ((Number(item.total) || 0) * rateMultiplier).toFixed(2);
+      const itemSaldoConverted = (saldo * rateMultiplier).toFixed(2);
+
+      const row = [
+        `"${item.numerosap || ''}"`,
+        `"${dateText(item.fecha)}"`,
+        `"${dateText(item.fechavence)}"`,
+        `"${(item.cliente || '').replace(/"/g, '""')}"`,
+        `"${item.codigo || ''}"`,
+        `"${itemTotalConverted}"`,
+        `"${itemSaldoConverted}"`,
+        `"${estado}"`,
+        `"${item.pais || 'SV'}"`,
+        `"${item.linea_negocio || ''}"`,
+        `"${(item.comentario || '').replace(/"/g, '""')}"`
+      ];
+      csv += row.join(';') + '\r\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Informe_Facturacion_SAP_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportToPDF(selectedModules) {
+    const list = getInformeData();
+    if (list.length === 0) throw new Error('No hay facturas disponibles para exportar con los filtros seleccionados.');
+
+      const esc = (s) => String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const ctx = billExportContext();
+      const m = (v) => money(v, currentCurrency);
+      const paisTxt = (p) => p === 'SV' ? 'SV' : p === 'GT' ? 'GT' : (p || '');
+
+      // Rutas absolutas del logo (la ventana nueva es about:blank, una ruta relativa no resolvería)
+      const baseHref = document.baseURI;
+      const logoCandidates = [
+        new URL('../../assets/img/logo-intelfon.png', baseHref).href,
+        new URL('../../assets/img/logo-intelfon.png', baseHref).href,
+        new URL('/assets/img/logo-intelfon.png', baseHref).href
+      ];
+
+      // ---- Métricas generales ----
+      const st = billStats(list);
+      const cobradoPct = Math.round(st.pct * 100);
+      const pctOf = (v) => st.total > 0 ? Math.round((v / st.total) * 100) : 0;
+      const lines = billGroupByLine(list);
+      const months = billGroupByMonth(list);
+
+      // ---- Dona: Fondos facturados vs. cobrados ----
+      const circ = 2 * Math.PI * 38;
+      let off = 0;
+      let donut = '';
+      [[Math.max(st.pagado, 0), '#2f8f76'], [st.pendiente, '#c43c50'], [st.vencido, '#c43c50']].forEach(([val, col]) => {
+        if (val > 0 && st.total > 0) {
+          const dash = Math.min(val / st.total, 1) * circ;
+          donut += `<circle cx="50" cy="50" r="38" fill="none" stroke="${col}" stroke-width="13" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="-${off}" />`;
+          off += dash;
+        }
+      });
+      if (!donut) donut = '<circle cx="50" cy="50" r="38" fill="none" stroke="#e8eaf0" stroke-width="13" />';
+
+      // ---- Barras: Facturación por mes ----
+      const palette = ['#2f8f76'];
+      const maxMonth = Math.max(...months.map(x => x.stats.total), 1);
+      const monthBars = months.length
+        ? months.map((mo, i) => `
+          <div class="bar">
+            <label>${esc(mo.short)}</label>
+            <div class="track"><div class="fill" style="width:${Math.max((mo.stats.total / maxMonth) * 100, 3)}%;background:${palette[i % palette.length]};"></div></div>
+            <b>${m(mo.stats.total)}</b>
+          </div>
+          <div class="bar-sub">Saldo: ${m(mo.stats.saldo)} · ${mo.stats.n} facturas</div>`).join('')
+        : '<div class="bar-sub" style="margin-left:0;">Sin datos en el período</div>';
+
+      // ---- Resumen por línea de negocio ----
+      const lineRow = (label, pais, s, isTotal) => {
+        const p = Math.round(s.pct * 100);
+        return `
+          <tr class="${isTotal ? 'tot' : ''}">
+            <td><b>${esc(label)}</b></td>
+            <td class="c">${esc(pais)}</td>
+            <td class="c">${s.n}</td>
+            <td class="r">${m(s.total)}</td>
+            <td class="r" style="color:${isTotal ? 'inherit' : '#2f8f76'};">${m(s.pagado)}</td>
+            <td class="r" style="color:${isTotal ? 'inherit' : '#c59600'};">${m(s.saldo)}</td>
+            <td class="r" style="color:${isTotal ? 'inherit' : '#c43c50'};">${m(s.vencido)}</td>
+            <td class="c">${s.nVencidas}</td>
+            <td><span class="mini"><span style="width:${p}%;"></span></span>${p}%</td>
+          </tr>`;
+      };
+      const lineasRows = lines.map(l => lineRow(l.key, paisTxt(l.pais), l.stats, false)).join('')
+        + lineRow('TOTAL', '', st, true);
+
+      // ---- Detalle ----
+      const detalleRows = list.map(item => {
+        const est = billStatus(item);
+        const bClass = est === 'pagada' ? 'b-ok' : est === 'vencida' ? 'b-venc' : 'b-near';
+        const bText = est === 'pagada' ? 'Pagada' : est === 'vencida' ? 'Vencida' : 'Pendiente';
+        const sColor = est === 'pagada' ? '#2f8f76' : est === 'vencida' ? '#c43c50' : '#c59600';
+        return `
+          <tr>
+            <td><b>${esc(item.numerosap)}</b></td>
+            <td>${esc(dateText(item.fecha))}</td>
+            <td>${esc(dateText(item.fechavence))}</td>
+            <td><b>${esc(item.cliente || 'Cliente Sin Registro')}</b></td>
+            <td>${esc(item.codigo)}</td>
+            <td class="c">${esc(item.linea_negocio || '-')}</td>
+            <td class="r">${m(item.total)}</td>
+            <td class="r" style="color:${sColor};"><b>${m(item.saldo)}</b></td>
+            <td class="c"><span class="badge ${bClass}">${bText}</span></td>
+            <td class="com">${esc(item.comentario)}</td>
+          </tr>`;
+      }).join('');
+
+      const periodo = `${ctx.desde} al ${ctx.hasta}`;
+      const operacion = currentCountry === 'ALL'
+        ? 'Todos (Guatemala & El Salvador)'
+        : (currentCountry === 'GT' ? 'Guatemala (GT)' : 'El Salvador (SV)');
+      const lineasSel = (selectedLines && selectedLines.length) ? selectedLines.join(', ') : 'Todas';
+      const fechaEmision = ctx.now.toLocaleDateString('es-SV', { year: 'numeric', month: 'long', day: 'numeric' })
+        + ' a las ' + ctx.now.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
+
+      const typesTxt = selectedFacturas.length
+        ? selectedFacturas.map(value => {
+          const option = FACTURA_OPTIONS.find(item => item.value === value);
+          return option ? option.label : value;
+        }).join(', ')
+        : 'Ninguno';
+      const refactTxt = selectedRefacturacion.length
+        ? selectedRefacturacion.map(value => value === 'S' ? 'Sí' : 'No').join(', ')
+        : 'Ninguno';
+      const searchTerms = [
+        $('query') && $('query').value.trim() ? `Búsqueda: ${$('query').value.trim()}` : '',
+        informeSearchText ? `Búsqueda del informe: ${informeSearchText}` : ''
+      ].filter(Boolean);
+      const moduleNames = { facturacion: 'Facturación', informe: 'Informe detallado' };
+      const modulesLabel = (selectedModules || []).map(id => moduleNames[id]).filter(Boolean).join(' · ');
+      const html = `<!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <base href="${esc(baseHref)}">
+    <title>Reporte de Facturación por Línea - RED Intelfon</title>
+    <style>
+      @page { size: A4 landscape; margin: 10mm; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; background: #e8eaf0; color: #242837; font-size: 12px; }
+      .report-shell { width: 100%; max-width: 100%; margin: 0 auto; padding: 12px; overflow: hidden; }
+      .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 4px solid #c43c50; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; background: #151821; color: #fff; }
+      .head-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+      .head-left > div { min-width: 0; }
+      .logo { height: 54px; width: auto; max-width: 150px; object-fit: contain; }
+      .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #c43c50; text-transform: uppercase; }
+      .title { font-size: 20px; font-weight: 800; color: #fff; margin: 2px 0; }
+      .filtro { font-size: 11px; color: #cbd5e1; overflow-wrap: anywhere; }
+      .head-right { flex: 0 0 160px; text-align: right; font-size: 11px; color: #cbd5e1; }
+      .pill { display: inline-block; margin-top: 6px; background: #c43c50; color: #fff; font-weight: 800; padding: 6px 14px; border-radius: 8px; font-size: 12px; }
+      .module-summary { margin: 10px 0 12px; padding: 8px 12px; background: #e8eaf0; border-left: 4px solid #c43c50; border-radius: 4px; color: #8b909e; font-size: 10px; }
+      h2 { font-size: 13px; text-transform: uppercase; margin: 16px 0 8px; color: #151821; border-bottom: 1px solid #e8eaf0; padding-bottom: 4px; }
+      .period-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+      .period-kpi { min-width: 0; overflow: hidden; border: 1px solid #e8eaf0; border-top: 6px solid #151821; border-radius: 8px; padding: 11px 10px; background: #fff; page-break-inside: avoid; }
+      .period-kpi .lbl { font-size: 9px; font-weight: 800; letter-spacing: .1em; color: #8b909e; text-transform: uppercase; }
+      .period-kpi .num { font-size: 18px; font-weight: 900; margin-top: 8px; white-space: nowrap; }
+      .period-kpi .sub { font-size: 9px; color: #8b909e; margin-top: 6px; line-height: 1.35; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+      .box { border: 1px solid #e8eaf0; border-radius: 8px; padding: 12px 14px; page-break-inside: avoid; }
+      .box h3 { font-size: 13px; margin: 0 0 8px; }
+      .sit { display: flex; align-items: center; gap: 18px; }
+      .sit ul { list-style: none; margin: 0; padding: 0; line-height: 1.9; font-size: 12px; }
+      .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+      .bar { display: grid; grid-template-columns: 52px 1fr 100px; align-items: center; gap: 10px; margin-top: 8px; font-size: 11px; }
+      .bar label { font-weight: 800; }
+      .bar b { text-align: right; }
+      .track { height: 9px; border-radius: 99px; background: #e8eaf0; overflow: hidden; }
+      .fill { height: 100%; border-radius: inherit; }
+      .bar-sub { font-size: 10px; color: #8b909e; margin: 2px 0 0 62px; }
+      table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      th { background: #151821; color: #fff; text-align: left; padding: 8px 10px; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+      td { padding: 7px 10px; border-bottom: 1px solid #e8eaf0; }
+      tr:nth-child(even) td { background: #e8eaf0; }
+      tr.tot td { background: #151821 !important; color: #fff; font-weight: 800; }
+      .c { text-align: center; } th.c { text-align: center; }
+      .r { text-align: right; } th.r { text-align: right; }
+      .com { font-size: 10px; color: #8b909e; max-width: 180px; word-wrap: break-word; }
+      .mini { display: inline-block; width: 60px; height: 7px; background: #e8eaf0; border-radius: 99px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+      .mini span { display: block; height: 100%; background: #3f9c85; }
+      .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+      .b-ok { background: #dcfce7; color: #15803d; }
+      .b-near { background: #fef3c7; color: #b45309; }
+      .b-venc { background: #fee2e2; color: #c43c50; }
+      thead { display: table-header-group; }
+      tr { page-break-inside: avoid; }
+      @media print { body { margin: 0; } }
+    </style>
+  </head>
+  <body>
+    <div class="report-shell">
+      <div class="header">
+      <div class="head-left">
+        <img class="logo" id="logoImg" src="${esc(logoCandidates[0])}" alt="RED Intelfon" />
+        <div>
+          <div class="eyebrow">RED INTELFON · TELECOMUNICACIONES · FINANZAS</div>
+          <div class="title">Reporte de Facturación por Línea</div>
+          <div class="filtro">Filtros aplicados: <b>${esc(periodo)}</b> | País: <b>${esc(operacion)}</b> | Líneas: <b>${esc(lineasSel)}</b> | Tipo: <b>${esc(typesTxt)}</b> | Refacturación: <b>${esc(refactTxt)}</b> | Moneda: <b>${esc(ctx.monedaTxt)}</b>${searchTerms.length ? ` | ${esc(searchTerms.join(' | '))}` : ''}</div>
+        </div>
+      </div>
+      <div class="head-right">
+        <div>Fecha de Emisión: <b>${esc(fechaEmision)}</b></div>
+        <div class="pill">Cobrado: ${cobradoPct}%</div>
+      </div>
+    </div>
+      <div class="module-summary"><b>Módulos incluidos:</b> ${esc(modulesLabel)}</div>
+
+    <section data-pdf-module="facturacion">
+    <h2>1. Indicadores del período</h2>
+    <div class="period-kpis">
+      <div class="period-kpi" style="border-top-color:#151821;"><div class="lbl">Facturas emitidas</div><div class="num">${st.n}</div><div class="sub">Registros en el período</div></div>
+      <div class="period-kpi" style="border-top-color:#151821;"><div class="lbl">Monto facturado</div><div class="num" style="color:#4f8fd8;">${m(st.total)}</div><div class="sub">Total de documentos</div></div>
+      <div class="period-kpi" style="border-top-color:#2f8f76;"><div class="lbl">Pagado al corte</div><div class="num" style="color:#2f8f76;">${m(st.pagado)}</div><div class="sub">${st.nSaldadas} facturas saldadas</div></div>
+      <div class="period-kpi" style="border-top-color:#c43c50;"><div class="lbl">Saldo pendiente</div><div class="num" style="color:#c43c50;">${m(st.saldo)}</div><div class="sub">Saldo por cobrar al corte</div></div>
+      <div class="period-kpi" style="border-top-color:#b45309;"><div class="lbl">Facturas vencidas</div><div class="num" style="color:#b45309;">${st.nVencidas}</div><div class="sub">Monto vencido: ${m(st.vencido)}</div></div>
+      <div class="period-kpi" style="border-top-color:#4f8fd8;"><div class="lbl">Porcentaje cobrado</div><div class="num" style="color:#4f8fd8;">${cobradoPct}%</div><div class="sub">${m(st.pagado)} cobrados del total</div></div>
+    </div>
+
+    <h2>2. Estado de cobro y facturación mensual</h2>
+    <div class="grid2">
+      <div class="box">
+        <h3>Fondos facturados vs. cobrados</h3>
+        <div class="sit">
+          <svg width="130" height="130" viewBox="0 0 100 100">
+            <g transform="rotate(-90 50 50)">${donut}</g>
+            <text x="50" y="52" text-anchor="middle" font-size="15" font-weight="800" fill="#151821">${cobradoPct}%</text>
+            <text x="50" y="62" text-anchor="middle" font-size="6" fill="#8b909e">cobrado</text>
+          </svg>
+          <ul>
+            <li><span class="dot" style="background:#087f50;"></span>Pagado al corte: <b>${m(st.pagado)}</b> (${pctOf(st.pagado)}%)</li>
+            <li><span class="dot" style="background:#c43c50;"></span>Pendiente: <b>${m(st.pendiente)}</b> (${pctOf(st.pendiente)}%)</li>
+            <li><span class="dot" style="background:#bd123b;"></span>Vencido: <b>${m(st.vencido)}</b> (${pctOf(st.vencido)}%)</li>
+            <li style="color:#8b909e;">Saldo pendiente total: <b>${m(st.saldo)}</b></li>
+          </ul>
+        </div>
+      </div>
+      <div class="box">
+        <h3>Facturación por mes</h3>
+        ${monthBars}
+      </div>
+    </div>
+
+    <h2>3. Resumen por línea de negocio</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Línea</th><th class="c">País</th><th class="c">Facturas</th>
+          <th class="r">Total facturado</th><th class="r">Pagado</th><th class="r">Saldo</th><th class="r">Vencido</th>
+          <th class="c"># Vencidas</th><th>% Cobrado</th>
+        </tr>
+      </thead>
+      <tbody>${lineasRows}</tbody>
+    </table>
+
+    </section>
+    <section data-pdf-module="informe">
+    <h2>4. Detalle completo de facturas (${st.n} registros)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>SAP</th><th>Fecha</th><th>Vencimiento</th><th>Cliente / Razón Social</th><th>Código</th>
+          <th class="c">Línea</th><th class="r">Total</th><th class="r">Saldo</th><th class="c">Estado</th><th>Comentario</th>
+        </tr>
+      </thead>
+      <tbody>${detalleRows}</tbody>
+    </table>
+    </section>
+    </div>
+  </body>
+  </html>`;
+    return html;
+}
+
+  function bindEvents() {
+  // 1. Botones de Operación (Todos, GT, SV)
+  const opBtns = document.querySelectorAll('.op-btn');
+  opBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      opBtns.forEach(b => b.classList.remove('active'));
+      const target = e.currentTarget;
+      target.classList.add('active');
+      currentCountry = target.getAttribute('data-op');
+
+      // Sincronizar automáticamente líneas según la regla:
+      // SV: DATARED, INFRA, RADIO
+      // GT: RED
+      // ALL: todas
+      selectedLines = [...(BUSINESS_CONFIG[currentCountry] || BUSINESS_CONFIG.ALL)];
+      renderChecklistCols();
+      fetchInvoices();
+    });
+  });
+
+  // 2. Switch Divisa ($ / Q)
+    const currToggle = $('currencyToggle');
+    const lblUSD = $('lblUSD');
+    const lblGTQ = $('lblGTQ');
+
+    if (currToggle) {
+      currToggle.addEventListener('change', (e) => {
+        currentCurrency = e.target.checked ? 'GTQ' : 'USD';
+        if (lblUSD && lblGTQ) {
+          lblGTQ.classList.toggle('active', e.target.checked);
+          lblUSD.classList.toggle('active', !e.target.checked);
+        }
+        render();
+      });
+    }
+
+    // 3. Fechas
+    const fromEl = $('dateFrom');
+    const toEl = $('dateTo');
+    const resetPeriod = $('btnResetPeriod');
+
+    if (fromEl) fromEl.addEventListener('change', () => render());
+    if (toEl) toEl.addEventListener('change', () => render());
+
+    if (resetPeriod) {
+      resetPeriod.addEventListener('click', () => {
+        const range = currentMonthRange();
+        if (fromEl) fromEl.value = range.from;
+        if (toEl) toEl.value = range.to;
+        render();
+      });
+    }
+
+    // 4. Panel Desplegable (.xf-panel)
+    const btnToggle = $('btnToggleFilters');
+    const xfPanel = $('xfPanel');
+
+    if (btnToggle && xfPanel) {
+      btnToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !xfPanel.classList.contains('hidden');
+        if (isOpen) {
+          xfPanel.classList.add('hidden');
+          btnToggle.classList.remove('open');
+        } else {
+          xfPanel.classList.remove('hidden');
+          btnToggle.classList.add('open');
+          renderChecklistCols();
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!xfPanel.contains(e.target) && !btnToggle.contains(e.target)) {
+          xfPanel.classList.add('hidden');
+          btnToggle.classList.remove('open');
+        }
+      });
+    }
+
+    // 5. Botones Limpiar todo y Aplicar del panel
+    const btnClean = $('btnCleanAllFilters');
+    const btnApply = $('btnApplyFilters');
+
+    if (btnClean) {
+      btnClean.addEventListener('click', () => {
+        const allowed = BUSINESS_CONFIG[currentCountry] || BUSINESS_CONFIG.ALL;
+        selectedLines = [...allowed];
+        selectedFacturas = FACTURA_OPTIONS.map(f => f.value);
+        selectedRefacturacion = REFACTURACION_OPTIONS.map(r => r.value);
+        searchLineasText = '';
+        searchFacturasText = '';
+        searchRefactText = '';
+        renderChecklistCols();
+        fetchInvoices();
+      });
+    }
+
+    if (btnApply) {
+      btnApply.addEventListener('click', () => {
+        if (xfPanel) xfPanel.classList.add('hidden');
+        if (btnToggle) btnToggle.classList.remove('open');
+        fetchInvoices();
+      });
+    }
+
+    // 6. Buscador de texto en tabla
+    const queryEl = $('query');
+    if (queryEl) queryEl.addEventListener('input', () => render());
+
+    // 7. Botón circular reload
+    const btnRefresh = $('btnGlobalRefresh');
+    if (btnRefresh) {
+      btnRefresh.addEventListener('click', () => {
+        fetchInvoices(true);
+        btnRefresh.style.transform = 'rotate(360deg)';
+        setTimeout(() => { btnRefresh.style.transform = ''; }, 350);
+      });
+    }
+  
+    // Navegación de módulos (Facturación | Informe detallado)
+    const btnModFact = $('btnModFacturacion');
+    const btnModInfo = $('btnModInforme');
+    if (btnModFact) {
+      btnModFact.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchModule('facturacion');
+      });
+    }
+    if (btnModInfo) {
+      btnModInfo.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchModule('informe');
+      });
+    }
+    document.querySelectorAll('.bill-mod-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const mod = e.currentTarget.getAttribute('data-mod');
+        if (mod) switchModule(mod);
+      });
+    });
+
+    // Buscador en Informe Detallado
+    const infSearch = $('informeSearchInput');
+    if (infSearch) {
+      infSearch.addEventListener('input', (e) => {
+        informeSearchText = (e.target.value || '').trim();
+        renderInformeDetallado();
+      });
+    }
+
+    // Filtros de columna en Informe Detallado
+    const infEst = $('informeFilterEstado');
+    if (infEst) infEst.addEventListener('change', (e) => { informeFilterEstado = e.target.value; renderInformeDetallado(); });
+
+    const infPais = $('informeFilterPais');
+    if (infPais) infPais.addEventListener('change', (e) => { informeFilterPais = e.target.value; renderInformeDetallado(); });
+
+    const btnCleanInf = $('btnCleanInformeFilters');
+    if (btnCleanInf) {
+      btnCleanInf.addEventListener('click', () => {
+        informeSearchText = '';
+        informeFilterEstado = 'ALL';
+        informeFilterPais = 'ALL';
+        if (infSearch) infSearch.value = '';
+        if (infEst) infEst.value = 'ALL';
+        if (infPais) infPais.value = 'ALL';
+        renderInformeDetallado();
+      });
+    }
+
+    // Botones Exportar
+    const btnExExcel = $('btnExportExcel');
+    if (btnExExcel) btnExExcel.addEventListener('click', exportToExcel);
+
+    window.DashboardPdf.openModulePicker({
+      buttonId: 'btnDashboardPdf',
+      modules: [
+        { id: 'facturacion', name: 'Facturación', description: 'Indicadores, gráficas y resumen por línea de negocio.' },
+        { id: 'informe', name: 'Informe detallado', description: 'Detalle de facturas y datos de auditoría.' }
+      ],
+      getFilterChips: () => {
+        const selectedLabels = (options, values) => options
+          .filter(option => values.includes(option.value))
+          .map(option => option.label);
+        const selectedSummary = labels => labels.length === 0
+          ? 'Ninguna'
+          : labels.length === 1
+            ? labels[0]
+            : `${labels.length} seleccionadas`;
+        const dateLabel = value => value
+          ? new Date(`${value}T00:00:00`).toLocaleDateString('es-SV')
+          : 'Sin límite';
+        const country = currentCountry === 'ALL'
+          ? 'Todos los países'
+          : currentCountry === 'GT' ? 'Guatemala (GT)' : 'El Salvador (SV)';
+        const lineLabels = selectedLines.map(line => line);
+        const invoiceLabels = selectedLabels(FACTURA_OPTIONS, selectedFacturas);
+        const rebillLabels = selectedLabels(REFACTURACION_OPTIONS, selectedRefacturacion);
+        const from = $('dateFrom') ? $('dateFrom').value : '';
+        const to = $('dateTo') ? $('dateTo').value : '';
+        return [
+          { label: 'País', value: country },
+          { label: 'Período', value: `${dateLabel(from)} – ${dateLabel(to)}` },
+          { label: 'Líneas', value: selectedSummary(lineLabels), tooltip: `Líneas: ${lineLabels.join(', ') || 'Ninguna'}` },
+          { label: 'Tipo', value: selectedSummary(invoiceLabels), tooltip: `Tipo de factura: ${invoiceLabels.join(', ') || 'Ninguna'}` },
+          { label: 'Refacturación', value: selectedSummary(rebillLabels), tooltip: `Refacturación: ${rebillLabels.join(', ') || 'Ninguna'}` },
+          { label: 'Moneda', value: currentCurrency },
+          { label: 'Facturas', value: `${getInformeData().length}` }
+        ];
+      },
+      buildReport: exportToPDF,
+      filename: () => {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).formatToParts(new Date());
+        const date = `${parts.find(part => part.type === 'year').value}-${parts.find(part => part.type === 'month').value}-${parts.find(part => part.type === 'day').value}`;
+        return `Facturacion_por_linea_${date}.pdf`;
+      }
+    });
+
+  }
+
+  // INICIALIZACIÓN
+  document.addEventListener('DOMContentLoaded', () => {
+    const range = currentMonthRange();
+    const fromEl = $('dateFrom');
+    const toEl = $('dateTo');
+    if (fromEl) fromEl.value = range.from;
+    if (toEl) toEl.value = range.to;
+    bindEvents();
+    renderChecklistCols();
+    fetchInvoices();
+  });
+</script>
+<!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+<link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inventario mínimo · RED Intelfon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/dashboard.css?v=20261021tokens">
+  <link rel="stylesheet" href="../../assets/css/inventarioBodega.css?v=20261021tokens">
+  <link rel="stylesheet" href="../../assets/css/filtros-guia.css?v=20261021tokens">
+  <link rel="stylesheet" href="../../assets/css/bodega-pdf.css?v=20261021tokens">
+  <link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
+  <script src="../../assets/js/estandar.js?v=20261021barras"></script>
+  <script src="../../assets/js/filtros-guia.js?v=20261021tokens"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script src="../../assets/js/bodega-excel-export.js?v=20261021tokens"></script>
+</head>
+
+<body>
+
+  <div class="bodega-api-updated-row inventory-api-updated-row" id="inventoryApiUpdatedRow" hidden>
+    <div class="bodega-api-updated" id="inventoryApiUpdated" hidden>
+      <span class="bodega-api-updated-dot" aria-hidden="true"></span>
+      <span>Actualizado: <time id="inventoryApiUpdatedAt" aria-live="polite"></time></span>
+    </div>
+  </div>
+
+  <div class="inventory-page">
+
+    <!-- ENCABEZADO -->
+    <div class="page-header">
+      <div class="page-eyebrow">Bodega</div>
+      <h1 class="page-title">Inventario mínimo</h1>
+      <p class="page-sub">Productos que requieren revisión o reposición.</p>
+    </div>
+    <div class="inventory-toolbar">
+      <div class="inventory-toolbar-actions">
+        <button class="btn btn-primary" id="inventoryRefresh"><span class="inventory-button-icon"
+            aria-hidden="true">&#8635;</span> Actualizar datos</button>
+      </div>
+    </div>
+    <div class="inventory-error" id="inventoryError" role="alert" hidden></div>
+
+    <!-- MÓDULOS -->
+    <div class="tabs" id="inventoryTabs">
+      <button class="tab-btn active" type="button" data-view="overview">Vista general</button>
+      <button class="tab-btn" type="button" data-view="report">Informe detallado</button>
+    </div>
+
+    <div id="inventoryOverviewView">
+      <!-- Filtros según GUIA_DISEÑO_GENERAL §03: Operaciones · búsqueda · Filtros combinados tipo Excel.
+       Sin Moneda ni Período: el inventario no trae montos ni fechas. La clasificación de producto
+       (SIMs, Licencias, Accesorios, Equipos) es una columna más de los filtros combinados. -->
+      <div class="filters-bar inventory-filters-top inventory-filters-v2">
+        <div class="op-group" role="group" aria-label="Operaciones">
+          <span class="op-label">Operaciones</span>
+          <button class="op-btn active" type="button" data-inventory-country="GT+SV">Todos</button>
+          <button class="op-btn" type="button" data-inventory-country="GT" title="Guatemala"><span
+              class="op-flag op-flag-gt" aria-hidden="true"></span>GT</button>
+          <button class="op-btn" type="button" data-inventory-country="SV" title="El Salvador"><span
+              class="op-flag op-flag-sv" aria-hidden="true"></span>SV</button>
+        </div>
+        <input type="hidden" id="inventoryCountry" value="GT+SV">
+        <div class="inventory-search"><input id="inventorySearch" type="search"
+            placeholder="Buscar producto: código o nombre" aria-label="Buscar producto"></div>
+        <div class="xf" id="inventoryXf"></div>
+        <div class="xf-chips" id="inventoryXfChips"></div>
+        <button class="xf-reset" id="inventoryResetFilters" type="button" title="Volver a filtros por defecto"
+          aria-label="Volver a filtros por defecto"></button>
+        <button type="button" class="pdf-report-btn bodega-pdf-btn" id="bodegaPdfBtn"
+          aria-label="PDF: seleccionar módulos del inventario">
+          <span class="pdf-report-glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M12 3v11" />
+              <path d="m7.5 10 4.5 4.5 4.5-4.5" />
+              <path d="M4.5 19.5h15" />
+            </svg>
+          </span>
+          <span class="pdf-report-label">PDF</span>
+          <span class="pdf-report-spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="kpi-grid inventory-kpis">
+        <div class="kpi">
+          <div class="kpi-label">Productos consultados <span class="info-tip" tabindex="0"
+              data-tip="¿Qué es? Cuántos códigos distintos ve ahora. ¿Qué hace? Cambia con sus filtros. Si elige GT+SV, suma ambos países.">?</span>
+          </div>
+          <div class="kpi-value" id="inventoryTotal">0</div>
+          <div class="kpi-sub" id="inventoryTotalMeta">Registros completos de GT + SV</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Inventario mínimo <span class="info-tip" tabindex="0"
+              data-tip="¿Qué es? Productos que ya están por debajo del mínimo. ¿Qué hace? Le indica qué comprar ya — van en rojo.">?</span>
+          </div>
+          <div class="kpi-value text-accent" id="inventoryCritical">0</div>
+          <div class="kpi-sub">Existencia menor al mínimo</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Unidades disponibles <span class="info-tip" tabindex="0"
+              data-tip="¿Qué es? Suma total de piezas físicas en bodega. ¿Qué hace? Le da el pulso de stock total filtrado.">?</span>
+          </div>
+          <div class="kpi-value text-green" id="inventoryUnits">0</div>
+          <div class="kpi-sub">Existencia total</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Requieren reposición <span class="info-tip" tabindex="0"
+              data-tip="¿Qué es? Cuántos productos necesitan pedido hoy. ¿Qué hace? Prioriza su lista de compras.">?</span>
+          </div>
+          <div class="kpi-value" id="inventoryReplenish">0</div>
+          <div class="kpi-sub">Debajo del stock configurado</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Sobre el mínimo <span class="info-tip" tabindex="0"
+              data-tip="¿Qué es? % de productos con stock saludable (≥ mínimo). ¿Qué hace? Si baja de 80%, su bodega está en riesgo.">?</span>
+          </div>
+          <div class="kpi-value text-green" id="inventoryAboveMinimum">0%</div>
+          <div class="kpi-sub">Artículos con stock suficiente</div>
+        </div>
+      </div>
+      <div class="grid-2-1 inventory-content">
+        <div class="card inventory-chart-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Existencia por producto <span class="info-tip" tabindex="0"
+                  data-tip="¿Qué es? Top 10 visual. ¿Qué hace? Cambie arriba entre Más stock y Críticos.">?</span></div>
+              <div class="card-caption" id="inventoryChartSub">Top 10 con mayor stock — pase el mouse para ver detalle
+              </div>
+            </div>
+            <div class="inventory-chart-toggle" role="group" aria-label="Modo de gráfica">
+              <button type="button" class="is-active" data-chart-mode="top">Más stock</button>
+              <button type="button" data-chart-mode="critical">Menos stock</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="inventoryChart"></canvas></div>
+        </div>
+        <div class="card inventory-criteria-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Criterio de estado <span class="info-tip" tabindex="0"
+                  data-tip="¿Qué es? La regla que decide si un producto está en rojo o verde. ¿Qué hace? Usted ajusta el mínimo y el sistema reclasifica al instante.">?</span>
+              </div>
+              <div class="card-caption">Usted decide el mínimo — el sistema colorea el riesgo</div>
+            </div>
+          </div>
+          <div class="inventory-minimum-control">
+            <div class="inventory-minimum-head">
+              <label for="inventoryDefaultMinimum">Umbral dinámico <span class="info-tip" tabindex="0"
+                  data-tip="¿Qué hace? Define en cuántas unidades salta la alerta. ¿Para qué? Si SAP no trajo mínimo (0), este valor lo reemplaza. No toca productos que ya tienen mínimo.">?</span></label>
+              <span class="inventory-hint" id="inventoryHint">—</span>
+            </div>
+            <div class="inventory-minimum-row">
+              <button type="button" class="inventory-step-btn" id="inventoryStepDown" aria-label="Disminuir">−</button>
+              <div class="inventory-input-wrap">
+                <input id="inventoryDefaultMinimum" type="number" min="0" step="1" value="10" inputmode="numeric">
+                <span class="inventory-unit">uds</span>
+              </div>
+              <button type="button" class="inventory-step-btn" id="inventoryStepUp" aria-label="Aumentar">+</button>
+              <button class="btn btn-primary" id="inventoryApplyMinimum" type="button">Aplicar</button>
+            </div>
+            <div class="inventory-presets" role="group" aria-label="Presets rápidos">
+              <button type="button" data-preset="5">5</button>
+              <button type="button" data-preset="10" class="is-active">10</button>
+              <button type="button" data-preset="15">15</button>
+              <button type="button" data-preset="25">25</button>
+            </div>
+          </div>
+          <div class="ranking-list" id="inventoryLegend">
+            <div class="ranking-item"><span class="inventory-status critical">Inventario mínimo</span><span
+                class="ranking-value" id="legendCritical">Existencia &lt; mínimo</span></div>
+            <div class="ranking-item"><span class="inventory-status available">Stock disponible</span><span
+                class="ranking-value" id="legendAvailable">Existencia &gt;= mínimo</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card inventory-table-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Detalle de inventario <span class="info-tip" tabindex="0"
+                data-tip="¿Qué es? La lista completa filtrada. ¿Qué hace? Ordene haciendo click en el encabezado, pagíne abajo y vea la recomendación de reposición.">?</span>
+            </div>
+            <div class="card-caption" id="inventoryCount">0 productos visibles</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="inventoryTable">
+            <thead>
+              <tr>
+                <th data-sort="codigo" title="¿Qué es? Código SAP único. ¿Para qué? Búsquelo aquí para ubicar rápido.">
+                  Código</th>
+                <th data-sort="producto" title="¿Qué es? Nombre del artículo. ¿Para qué? Identifique qué producto es.">
+                  Producto</th>
+                <th data-sort="grupoContable"
+                  title="¿Qué es? Familia contable SAP. ¿Para qué? Separe accesorios de equipos.">Grupo contable</th>
+                <th data-sort="inventarioClasificado"
+                  title="¿Qué es? Condición: Nuevo/Usado/Refurbished. ¿Para qué? Priorice lo vendible.">Clasificación
+                </th>
+                <th data-sort="simcard" title="¿Qué es? Indica si es chip. ¿Para qué? Filtre solo SIMs.">SIM card</th>
+                <th class="text-right" data-sort="existencia"
+                  title="¿Qué es? Piezas reales en bodega. ¿Para qué? Sabe cuánto tiene.">Disponible</th>
+                <th class="text-right" data-sort="stockMinimo"
+                  title="¿Qué es? Mínimo antes de alerta. ¿Para qué? Su umbral de seguridad.">Stock mínimo</th>
+                <th class="text-right" data-sort="diferencia"
+                  title="¿Qué es? Disponible − mínimo. Negativo = le faltan. ¿Para qué? Ve cuánto reponer.">Diferencia
+                </th>
+                <th data-sort="estado" title="¿Qué es? Rojo = pedir ya, Verde = OK.">Estado</th>
+                <th title="¿Qué es? Cantidad sugerida a reponer.">Recomendación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="10" class="text-center text-muted inventory-empty">Sin datos cargados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="inventory-pagination"><span id="inventoryPageInfo">Página 0 de 0</span><button
+            class="btn inventory-page-button" id="inventoryPrev" type="button">Anterior</button><button
+            class="btn inventory-page-button" id="inventoryNext" type="button">Siguiente</button></div>
+      </div>
+    </div>
+    <section class="card inventory-report" id="inventoryReport" aria-labelledby="inventoryReportTitle" hidden>
+      <div class="inventory-report-header">
+        <h2 class="card-title" id="inventoryReportTitle">Informe detallado</h2>
+        <p class="card-caption">Existencia, stock mínimo y cantidad de reorden por artículo, tal como llegan de la API.
+        </p>
+      </div>
+      <div class="inventory-report-toolbar">
+        <label class="inventory-report-field" for="inventoryReportCode">
+          <span>Código</span>
+          <input id="inventoryReportCode" type="search" placeholder="Ej. 0-100001" autocomplete="off"
+            spellcheck="false">
+        </label>
+        <label class="inventory-report-field" for="inventoryReportSearch">
+          <span>Buscar en todos los campos</span>
+          <input id="inventoryReportSearch" type="search"
+            placeholder="Descripción, grupo, existencia, clasificación, país..." autocomplete="off">
+        </label>
+        <div class="inventory-report-actions">
+          <button class="btn inventory-page-button" id="inventoryReportReset" type="button">Limpiar filtros</button>
+          <button class="btn btn-primary inventory-page-button" id="inventoryReportExport" type="button">Excel</button>
+        </div>
+      </div>
+      <div class="inventory-report-meta"><span id="inventoryReportCount" aria-live="polite">0 registros</span><span
+          id="inventoryReportScope"></span></div>
+      <div class="inventory-report-status" id="inventoryReportStatus" role="status" aria-live="polite"></div>
+      <div class="table-wrap inventory-report-table-wrap">
+        <table class="data-table inventory-report-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Grupo</th>
+              <th class="text-right">Existencia</th>
+              <th class="text-right">Stock mínimo</th>
+              <th class="text-right">Cantidad reorden</th>
+              <th>Clasificación</th>
+              <th>SIM card</th>
+              <th>País</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryReportRows">
+            <tr>
+              <td colspan="10" class="inventory-report-empty"><strong>Sin datos cargados</strong><span>Esperando
+                  consulta de API...</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="inventory-pagination"><span id="inventoryReportPageInfo">Página 0 de 0</span><button
+          class="btn inventory-page-button" id="inventoryReportPrev" type="button">Anterior</button><button
+          class="btn inventory-page-button" id="inventoryReportNext" type="button">Siguiente</button></div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      // En var_pais, valor debe ser SV (El Salvador) o GT (Guatemala).
+      const INVENTORY_API_URL = 'https://sapapi.red.com.sv/api/producto/inventarioporarticulo?var_pais=';
+      const INVENTORY_API_KEY = 'fdf0cb340b00402c00a057b0f67c00a3';
+      const INVENTORY_CACHE_TTL = 5 * 60 * 1000;
+      let inventoryRecords = [];
+      let inventoryRefreshTimer = null;
+      let inventoryLoadController = null;
+      let inventoryLoadSequence = 0;
+      const inventoryPayloadCache = new Map();
+      let inventoryChart = null;
+      let inventoryChartMode = 'top'; // top = 10 con más stock, critical = 10 con menos stock
+      let inventorySortKey = 'existencia';
+      let inventorySortDirection = -1;
+      let inventoryPage = 1;
+      const INVENTORY_PAGE_SIZE = 25;
+      const INVENTORY_MINIMUMS_KEY = 'inventory-minimums-v1';
+      let inventoryMinimumCache = null;
+      let inventoryObserver = null;
+      let inventoryScopeLabel = 'GT + SV';
+      let inventoryDuplicateCount = 0;
+      let inventoryLoadedCountry = null;
+      // Informe detallado: filas del API sin combinar (una por país) para ver el dato tal cual llega.
+      let inventoryReportRows = [];
+      let inventoryReportPage = 1;
+      let inventoryLoading = false;
+      let inventoryLoadError = '';
+
+      function formatValue(value) { return Number(value || 0).toLocaleString('es-GT'); }
+      function setInventoryUpdatedAt(timestamp = Date.now()) {
+        const now = new Date(timestamp);
+        const parts = new Intl.DateTimeFormat('es-GT', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
+        }).formatToParts(now).reduce((result, part) => {
+          result[part.type] = part.value;
+          return result;
+        }, {});
+        const updatedAt = document.getElementById('inventoryApiUpdatedAt');
+        updatedAt.dateTime = now.toISOString();
+        updatedAt.textContent = `${parts.day} ${parts.month.replace(/\.$/, '')} ${parts.year}, ${parts.hour}:${parts.minute} ${parts.dayPeriod.replace(/\s/g, '')}`;
+        document.getElementById('inventoryApiUpdated').hidden = false;
+        document.getElementById('inventoryApiUpdatedRow').hidden = false;
+      }
+      const foldText = value => String(value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      function parseInventoryNumber(value) {
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        const normalized = String(value ?? '').trim().replace(/\s/g, '');
+        if (!normalized) return 0;
+        const hasComma = normalized.includes(',');
+        const hasDot = normalized.includes('.');
+        const numeric = hasComma && hasDot
+          ? (normalized.lastIndexOf(',') > normalized.lastIndexOf('.')
+            ? normalized.replace(/\./g, '').replace(',', '.')
+            : normalized.replace(/,/g, ''))
+          : hasComma
+            ? (/^[-+]?\d{1,3}(,\d{3})+$/.test(normalized) ? normalized.replace(/,/g, '') : normalized.replace(',', '.'))
+            : normalized;
+        const parsed = Number(numeric);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      function escapeValue(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character])); }
+      function normalizeClassification(value) {
+        const raw = String(value ?? '').trim();
+        if (!raw) return 'Sin clasificación';
+        const normalized = raw.toLowerCase().replace(/\s+/g, ' ');
+        if (normalized === 'nuevo') return 'Nuevo';
+        if (normalized === 'usado') return 'Usado';
+        if (normalized === 'refurbished' || normalized === 'refurbish') return 'Refurbished';
+        if (['taller de garantia', 'taller de garantía', 'gestion taller', 'gestión taller'].includes(normalized)) return 'Taller de garantía';
+        // Automático: cualquier valor nuevo del API se conserva tal cual (Title Case) sin harcodear
+        return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+      }
+      function normalizeSimcard(value) {
+        const raw = String(value ?? '').trim();
+        if (!raw) return 'Sin especificar';
+        const normalized = raw.toLowerCase();
+        if (['si', 'sí', 'yes', 'true', '1', 'sims', 'simcard', 'sim card'].includes(normalized)) return 'Sí';
+        if (['no', 'false', '0'].includes(normalized)) return 'No';
+        // Automático: conserva valor original del API como nueva clasificación sin harcodear
+        return raw;
+      }
+      function classifyInventoryGroup(item) {
+        const description = String(item.descripcion ?? item.producto ?? item.nombre ?? '').toUpperCase();
+        const sourceGroup = String(item.grupo ?? '').toUpperCase();
+        if (/LICEN|LICENSE|SUSCRIP|SOFTWARE/.test(description)) return 'Licencias';
+        if (/SIMCARD|\bCHIP\b|\bUSIM\b|^TIGO \d|^TIG \d|^CLG[ -]|^CLO \d/.test(description)) return 'SIMs';
+        if (/BATER|CARGADOR|ANTENA|CABLE|ADAPTADOR|CLIP|BASE |TAPA|FUNDA|MICROFONO|AURICULAR|MANUAL|KIT |CINTA|TORNILLO|CONECTOR|SOPORTE|PARLANTE|LECTOR|MANOS LIBRES|HANDSFREE|COVER|STICKER|ETIQUETA|BOTON|PERILLA|DIVISOR|COMBINADOR|TECLADO/.test(description)) return 'Accesorios';
+        if (/HANDSET|EQUIPO|RADIO|REPETIDOR|TERMINAL|BODY CAM|TSP|FMT-|TCR-|TCP-|TAC-|TIOP-|TM-|E880|ROUTER|MODEM|BOXCHIP/.test(description)) return 'Equipos';
+        if (sourceGroup.includes('VTA ACC')) return 'Accesorios';
+        if (sourceGroup.includes('VTA EQ') || sourceGroup.includes('SER DE RADIO')) return 'Equipos';
+        return 'SIMs';
+      }
+      function savedMinimums() { if (inventoryMinimumCache) return inventoryMinimumCache; try { inventoryMinimumCache = JSON.parse(localStorage.getItem(INVENTORY_MINIMUMS_KEY) || '{}'); } catch (error) { inventoryMinimumCache = {}; } return inventoryMinimumCache; }
+      function saveMinimums(minimums) { inventoryMinimumCache = minimums; localStorage.setItem(INVENTORY_MINIMUMS_KEY, JSON.stringify(minimums)); }
+      function minimumFor(item) { const saved = savedMinimums()[item.codigo]; return saved === undefined ? item.stockMinimo : parseInventoryNumber(saved); }
+      function isCritical(item) { return item.existencia < minimumFor(item); }
+      function ensureChartJs() {
+        if (window.Chart) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+      function normalizeRecords(payload, countryCode) {
+        if (!Array.isArray(payload)) throw new TypeError('La API de inventario no devolvió un arreglo de registros');
+        return payload.map((item, index) => ({
+          codigo: String(item.codigo ?? item.code ?? item.sku ?? `ITEM-${countryCode}-${String(index + 1).padStart(3, '0')}`),
+          producto: String(item.producto ?? item.descripcion ?? item.nombre ?? item.name ?? 'Producto sin nombre'),
+          categoriaOriginal: String(item.categoria ?? item.category ?? ''),
+          categoria: classifyInventoryGroup(item).toUpperCase(),
+          grupo: String(item.grupo ?? ''),
+          grupoInventario: classifyInventoryGroup(item),
+          grupoContable: String(item.grupoContable ?? item.grupocontable ?? item.grupo_contable ?? item.accountingGroup ?? item.accounting_group ?? item.grupo ?? 'Sin grupo'),
+          inventarioClasificado: normalizeClassification(item.inventarioclasificado ?? item.inventarioClasificado ?? item.inventoryClassification),
+          simcard: normalizeSimcard(item.simcard ?? item.simCard ?? item.sim_card),
+          existencia: parseInventoryNumber(item.existencia ?? item.stock ?? item.quantity ?? item.cantidad ?? 0),
+          stockMinimo: parseInventoryNumber(item.stockMinimo ?? item.stockminimo ?? item.stock_minimo ?? item.minimumStock ?? item.minimo ?? 0),
+          cantidadReorden: parseInventoryNumber(item.cantidadreorden ?? item.cantidadReorden ?? item.reorderQuantity ?? 0)
+        }));
+      }
+      function normalizeReportRow(item, country) {
+        const row = {
+          pais: country,
+          codigo: String(item.codigo ?? item.code ?? item.sku ?? ''),
+          descripcion: String(item.descripcion ?? item.producto ?? item.nombre ?? ''),
+          grupo: String(item.grupo ?? ''),
+          existencia: parseInventoryNumber(item.existencia ?? item.stock ?? item.quantity ?? item.cantidad ?? 0),
+          stockMinimo: parseInventoryNumber(item.stockminimo ?? item.stockMinimo ?? item.stock_minimo ?? item.minimumStock ?? item.minimo ?? 0),
+          cantidadReorden: parseInventoryNumber(item.cantidadreorden ?? item.cantidadReorden ?? item.reorderQuantity ?? 0),
+          inventarioClasificado: normalizeClassification(item.inventarioclasificado ?? item.inventarioClasificado),
+          simcard: normalizeSimcard(item.simcard ?? item.simCard ?? item.sim_card)
+        };
+        // Texto de búsqueda general: valores crudos del API + números formateados + etiquetas visibles.
+        row.searchText = foldText([...Object.values(item), row.descripcion, row.grupo, formatValue(row.existencia), formatValue(row.stockMinimo), formatValue(row.cantidadReorden), row.inventarioClasificado, row.simcard, country, country === 'GT' ? 'Guatemala' : 'El Salvador'].join(' '));
+        return row;
+      }
+      function combineInventoryRecords(recordSets) {
+        const combined = new Map();
+        recordSets.flat().forEach(item => {
+          const key = item.codigo || `${item.producto}|${item.categoria}`;
+          const existing = combined.get(key);
+          if (!existing) {
+            combined.set(key, { ...item });
+            return;
+          }
+          existing.existencia += item.existencia;
+          existing.stockMinimo += item.stockMinimo;
+          existing.cantidadReorden += item.cantidadReorden;
+        });
+        return [...combined.values()];
+      }
+      // Filtros combinados tipo Excel (assets/js/filtros-guia.js). null = sin filtro.
+      const inventoryFilters = { grupoInventario: null, grupoContable: null, estado: null, inventarioClasificado: null, simcard: null };
+      const INVENTORY_PRODUCT_GROUPS = ['SIMs', 'Licencias', 'Accesorios', 'Equipos'];
+      const INVENTORY_STATUS_OPTIONS = [{ value: 'critical', label: 'Inventario mínimo' }, { value: 'available', label: 'Stock disponible' }];
+      const INVENTORY_CLASSIFICATIONS = ['Nuevo', 'Usado', 'Refurbished', 'Taller de garantía', 'Sin clasificación'];
+      const INVENTORY_SIMCARD_OPTIONS = [{ value: 'Sí', label: 'Solo SIM card' }, { value: 'No', label: 'No SIM card' }, { value: 'Sin especificar', label: 'Sin especificar' }];
+      const inSel = (sel, value) => !sel || sel.includes(value);
+      let inventoryXF = null;
+      const inventoryFieldValue = (item, key) => key === 'estado' ? (isCritical(item) ? 'critical' : 'available') : item[key];
+      // Como en Excel: las opciones de cada columna salen de los artículos que
+      // cumplen los demás filtros (no el de la propia columna).
+      function inventoryColumns() {
+        const context = key => inventoryRecords.filter(item => Object.keys(inventoryFilters).every(other => other === key || inSel(inventoryFilters[other], inventoryFieldValue(item, other))));
+        const present = key => new Set(context(key).map(item => inventoryFieldValue(item, key)));
+        const keep = (key, options) => { const values = present(key); return options.filter(option => values.has(option.value)); };
+        const groups = [...present('grupoContable')].filter(Boolean).sort((a, b) => a.localeCompare(b, 'es'));
+        return [
+          { key: 'grupoInventario', label: 'Clasificación de producto', options: keep('grupoInventario', INVENTORY_PRODUCT_GROUPS.map(value => ({ value, label: value }))), selected: inventoryFilters.grupoInventario },
+          { key: 'grupoContable', label: 'Grupo contable', options: groups.map(value => ({ value, label: value })), selected: inventoryFilters.grupoContable },
+          { key: 'estado', label: 'Estado', options: keep('estado', INVENTORY_STATUS_OPTIONS), selected: inventoryFilters.estado },
+          { key: 'inventarioClasificado', label: 'Inventario clasificado', options: keep('inventarioClasificado', INVENTORY_CLASSIFICATIONS.map(value => ({ value, label: value }))), selected: inventoryFilters.inventarioClasificado },
+          { key: 'simcard', label: 'Tipo de producto', options: keep('simcard', INVENTORY_SIMCARD_OPTIONS), selected: inventoryFilters.simcard }
+        ];
+      }
+      function renderInventoryFilters() {
+        document.querySelectorAll('[data-inventory-country]').forEach(button => button.classList.toggle('active', button.dataset.inventoryCountry === document.getElementById('inventoryCountry').value));
+        inventoryXF?.update(inventoryColumns());
+      }
+      function filteredRecords() {
+        const search = (document.getElementById('inventorySearch').value || '').toLowerCase().trim();
+        const f = inventoryFilters;
+        return inventoryRecords.filter(item => inSel(f.grupoInventario, item.grupoInventario) && (!search || `${item.codigo} ${item.producto}`.toLowerCase().includes(search)) && inSel(f.grupoContable, item.grupoContable) && inSel(f.estado, isCritical(item) ? 'critical' : 'available') && inSel(f.inventarioClasificado, item.inventarioClasificado) && inSel(f.simcard, item.simcard)).sort((a, b) => { const first = inventorySortKey === 'diferencia' ? a.existencia - minimumFor(a) : inventorySortKey === 'estado' ? (isCritical(a) ? 0 : 1) - (isCritical(b) ? 0 : 1) : a[inventorySortKey]; const second = inventorySortKey === 'diferencia' ? b.existencia - minimumFor(b) : inventorySortKey === 'estado' ? (isCritical(b) ? 0 : 1) - (isCritical(a) ? 0 : 1) : b[inventorySortKey]; return (typeof first === 'number' ? first - second : String(first).localeCompare(String(second), 'es')) * inventorySortDirection; });
+      }
+      function renderInventory() {
+        const rows = filteredRecords();
+        const totalPages = Math.ceil(rows.length / INVENTORY_PAGE_SIZE);
+        inventoryPage = Math.min(Math.max(inventoryPage, 1), Math.max(totalPages, 1));
+        const visibleRows = rows.slice((inventoryPage - 1) * INVENTORY_PAGE_SIZE, inventoryPage * INVENTORY_PAGE_SIZE);
+        const critical = rows.filter(isCritical);
+        const replenish = critical;
+        const aboveMinimum = rows.length ? ((rows.length - critical.length) / rows.length) * 100 : 0;
+        document.getElementById('inventoryTotal').textContent = formatValue(rows.length);
+        document.getElementById('inventoryTotalMeta').textContent = inventoryDuplicateCount
+          ? `${inventoryScopeLabel} · ${formatValue(inventoryDuplicateCount)} filas consolidadas por producto`
+          : `${inventoryScopeLabel} · registros completos del API`;
+        document.getElementById('inventoryCritical').textContent = formatValue(critical.length);
+        document.getElementById('inventoryUnits').textContent = formatValue(rows.reduce((sum, item) => sum + item.existencia, 0));
+        document.getElementById('inventoryReplenish').textContent = formatValue(replenish.length);
+        document.getElementById('inventoryAboveMinimum').textContent = `${aboveMinimum.toLocaleString('es-GT', { maximumFractionDigits: 1 })}%`;
+        document.getElementById('inventoryCount').textContent = `${formatValue(rows.length)} productos visibles · mostrando ${formatValue(visibleRows.length)}`;
+        document.getElementById('inventoryPageInfo').textContent = `Página ${totalPages ? inventoryPage : 0} de ${totalPages}`;
+        document.getElementById('inventoryPrev').disabled = inventoryPage <= 1;
+        document.getElementById('inventoryNext').disabled = inventoryPage >= totalPages;
+        // Hint/leyenda profesional — conteos vivos
+        const withoutMinimum = inventoryRecords.filter(r => !r.stockMinimo).length;
+        const hint = document.getElementById('inventoryHint');
+        if (hint) hint.textContent = withoutMinimum ? `${formatValue(withoutMinimum)} sin mínimo · se actualizarán` : 'Todos con mínimo definido';
+        const lc = document.getElementById('legendCritical');
+        const la = document.getElementById('legendAvailable');
+        if (lc) lc.textContent = `${formatValue(critical.length)} en riesgo · Existencia < mínimo`;
+        if (la) la.textContent = `${formatValue(rows.length - critical.length)} estables · Existencia ≥ mínimo`;
+        document.querySelector('#inventoryTable tbody').innerHTML = visibleRows.map(item => {
+          const criticalItem = isCritical(item);
+          const minimum = minimumFor(item);
+          const difference = item.existencia - minimum;
+          const replenishment = item.cantidadReorden || Math.max(0, -difference);
+          return `<tr><td><strong>${escapeValue(item.codigo)}</strong></td><td>${escapeValue(item.producto)}<span class="inventory-note">${escapeValue(item.categoria)}</span></td><td>${escapeValue(item.grupoContable)}</td><td>${escapeValue(item.inventarioClasificado)}</td><td>${escapeValue(item.simcard)}</td><td class="text-right">${formatValue(item.existencia)}</td><td class="text-right">${formatValue(minimum)}</td><td class="text-right ${difference < 0 ? 'text-accent' : 'text-green'}">${difference > 0 ? '+' : ''}${formatValue(difference)}</td><td><span class="inventory-status ${criticalItem ? 'critical' : 'available'}">${criticalItem ? 'Inventario mínimo' : 'Stock disponible'}</span></td><td><span class="replenishment ${difference >= 0 ? 'ready' : ''}">${replenishment > 0 ? `Reponer ${formatValue(replenishment)}` : 'Sin reposición'}</span></td></tr>`;
+        }).join('') || '<tr><td colspan="10" class="text-center text-muted inventory-empty">No hay productos con estos filtros.</td></tr>';
+        // Gráfica profesional: 10 más / 10 menos + diseño premium
+        const isCriticalMode = inventoryChartMode === 'critical';
+        const chartSub = document.getElementById('inventoryChartSub');
+        if (chartSub) chartSub.textContent = isCriticalMode ? 'Top 10 más críticos — menor stock vs mínimo' : 'Top 10 con mayor stock — pase el mouse para ver detalle';
+        let chartItems;
+        if (isCriticalMode) {
+          const sortedCritical = rows.filter(item => item.existencia >= 1).slice().sort((a, b) => (a.existencia - minimumFor(a)) - (b.existencia - minimumFor(b)));
+          // Variedad: máximo 2 por mismo nivel de existencia para no mostrar 10× “1”
+          const byExist = new Map();
+          const diverse = [];
+          for (const it of sortedCritical) {
+            const c = byExist.get(it.existencia) || 0;
+            if (c < 2) { diverse.push(it); byExist.set(it.existencia, c + 1); }
+            if (diverse.length >= 10) break;
+          }
+          if (diverse.length < 10) {
+            for (const it of sortedCritical) if (!diverse.includes(it)) { diverse.push(it); if (diverse.length >= 10) break; }
+          }
+          chartItems = diverse.slice(0, 10).sort((a, b) => (a.existencia - minimumFor(a)) - (b.existencia - minimumFor(b)));
+        } else {
+          chartItems = rows.filter(item => item.existencia >= 1).slice().sort((a, b) => b.existencia - a.existencia).slice(0, 10);
+        }
+        if (window.Chart) {
+          if (inventoryChart) inventoryChart.destroy();
+          const canvas = document.getElementById('inventoryChart');
+          // Guía §05 · Visualización: el ranking va en barras finas sobre carril
+          // tenue, sin rejilla ni eje visible. En modo crítico se conserva el color
+          // con significado (rojo = bajo mínimo, verde = stock disponible).
+          const color = isCriticalMode
+            ? chartItems.map(item => isCritical(item) ? '#c43c50' : '#2f8f76')
+            : ((window.GuiaGraficas && window.GuiaGraficas.P.red) || '#c43c50');
+          const cfg = window.GuiaGraficas.rank(
+            chartItems.map(item => item.codigo),
+            chartItems.map(item => item.existencia),
+            {
+              label: isCriticalMode ? 'Disponible' : 'Existencia',
+              color,
+              format: value => formatValue(value),
+              tooltip: { callbacks: {
+                title: items => { const item = chartItems[items[0].dataIndex]; return item ? `${item.codigo} · ${item.producto}` : ''; },
+                label: context => {
+                  const item = chartItems[context.dataIndex];
+                  const min = minimumFor(item), diff = item.existencia - min;
+                  return isCriticalMode
+                    ? `Disponible: ${formatValue(context.parsed.x)} · Mínimo: ${formatValue(min)} · Dif: ${diff > 0 ? '+' : ''}${formatValue(diff)}`
+                    : `Existencia: ${formatValue(context.parsed.x)}`;
+                }
+              } }
+            }
+          );
+          inventoryChart = new Chart(canvas, cfg);
+          if (inventoryObserver && canvas.closest('.inventory-chart-card')) inventoryObserver.observe(canvas.closest('.inventory-chart-card'));
+        }
+      }
+      // La animación de la gráfica (crecer en cascada al entrar en pantalla) la da la capa común de estandar.js
+      function setupInventoryAnimations() { if (!('IntersectionObserver' in window)) { document.querySelector('.inventory-kpis')?.classList.add('is-visible'); document.querySelector('.inventory-content')?.classList.add('is-visible'); document.querySelector('.inventory-table-card')?.classList.add('is-visible'); return; } inventoryObserver = new IntersectionObserver(entries => entries.forEach(entry => { entry.target.classList.toggle('is-visible', entry.isIntersecting); }), { threshold: .2 }); document.querySelectorAll('.inventory-kpis, .inventory-content, .inventory-table-card, .inventory-chart-card').forEach(element => inventoryObserver.observe(element)); }
+      // Código: coincidencia exacta; si no existe exacta, muestra los códigos que empiezan con lo escrito.
+      // General: todas las palabras deben aparecer en algún campo (sin distinguir acentos ni mayúsculas).
+      function inventoryReportMatches() {
+        const codeInput = document.getElementById('inventoryReportCode').value.trim();
+        const code = codeInput.toLowerCase();
+        const terms = foldText(document.getElementById('inventoryReportSearch').value).split(/\s+/).filter(Boolean);
+        let rows = inventoryReportRows;
+        let exact = false;
+        if (code) {
+          const exactRows = rows.filter(row => row.codigo.toLowerCase() === code);
+          exact = exactRows.length > 0;
+          rows = exact ? exactRows : rows.filter(row => row.codigo.toLowerCase().startsWith(code));
+        }
+        if (terms.length) rows = rows.filter(row => { const text = `${row.searchText} ${foldText(isCritical(row) ? 'Inventario mínimo' : 'Stock disponible')}`; return terms.every(term => text.includes(term)); });
+        return { rows, code, codeInput, terms, exact };
+      }
+      function inventoryReportEmpty(title, message) { return `<tr><td colspan="10" class="inventory-report-empty"><strong>${escapeValue(title)}</strong><span>${escapeValue(message)}</span></td></tr>`; }
+      function renderInventoryReport() {
+        const { rows, code, codeInput, terms, exact } = inventoryReportMatches();
+        const totalPages = Math.ceil(rows.length / INVENTORY_PAGE_SIZE);
+        inventoryReportPage = Math.min(Math.max(inventoryReportPage, 1), Math.max(totalPages, 1));
+        const status = document.getElementById('inventoryReportStatus');
+        status.textContent = inventoryLoading ? 'Consultando inventario en la API...' : inventoryLoadError;
+        status.classList.toggle('is-error', !inventoryLoading && Boolean(inventoryLoadError));
+        document.getElementById('inventoryReportCount').textContent = inventoryLoading ? 'Cargando registros...' : `${formatValue(rows.length)} de ${formatValue(inventoryReportRows.length)} registros`;
+        document.getElementById('inventoryReportScope').textContent = `Operación: ${inventoryScopeLabel}${code ? (exact ? ' · Código exacto' : ' · Códigos que empiezan con lo escrito') : ''}`;
+        document.getElementById('inventoryReportPageInfo').textContent = `Página ${totalPages ? inventoryReportPage : 0} de ${totalPages}`;
+        document.getElementById('inventoryReportPrev').disabled = inventoryLoading || inventoryReportPage <= 1;
+        document.getElementById('inventoryReportNext').disabled = inventoryLoading || inventoryReportPage >= totalPages;
+        document.getElementById('inventoryReportExport').disabled = inventoryLoading || rows.length === 0;
+        const body = document.getElementById('inventoryReportRows');
+        if (inventoryLoading) {
+          body.innerHTML = Array.from({ length: 6 }, () => `<tr class="inventory-report-loading">${'<td><span class="inventory-report-skeleton"></span></td>'.repeat(10)}</tr>`).join('');
+          return;
+        }
+        const visibleRows = rows.slice((inventoryReportPage - 1) * INVENTORY_PAGE_SIZE, inventoryReportPage * INVENTORY_PAGE_SIZE);
+        if (!visibleRows.length) {
+          const searchLabel = document.getElementById('inventoryReportSearch').value.trim();
+          body.innerHTML = !inventoryReportRows.length
+            ? inventoryReportEmpty(inventoryLoadError ? 'No se pudo cargar el inventario' : 'Sin datos cargados', inventoryLoadError ? 'Intente de nuevo con "Actualizar datos" en el dashboard.' : 'La API no devolvió artículos para esta operación.')
+            : inventoryReportEmpty('Sin coincidencias', code && searchLabel ? `Ningún artículo con código "${codeInput}" coincide con "${searchLabel}".` : code ? `No existe un artículo con el código "${codeInput}".` : `Ningún artículo coincide con "${searchLabel}". Revise el texto o limpie los filtros.`);
+          return;
+        }
+        body.innerHTML = visibleRows.map(row => {
+          const criticalItem = isCritical(row);
+          const minimum = minimumFor(row);
+          const adjusted = minimum !== row.stockMinimo;
+          return `<tr><td><strong>${escapeValue(row.codigo || '-')}</strong></td><td class="inventory-report-desc">${escapeValue(row.descripcion || '-')}</td><td>${escapeValue(row.grupo || '-')}</td><td class="text-right">${formatValue(row.existencia)}</td><td class="text-right">${formatValue(minimum)}${adjusted ? `<span class="inventory-note">Umbral dinámico · API ${formatValue(row.stockMinimo)}</span>` : ''}</td><td class="text-right">${formatValue(row.cantidadReorden)}</td><td>${escapeValue(row.inventarioClasificado)}</td><td>${escapeValue(row.simcard)}</td><td>${escapeValue(row.pais)}</td><td><span class="inventory-status ${criticalItem ? 'critical' : 'available'}">${criticalItem ? 'Inventario mínimo' : 'Stock disponible'}</span></td></tr>`;
+        }).join('');
+      }
+      function exportInventoryReportToExcel() {
+        const { rows } = inventoryReportMatches();
+        const status = document.getElementById('inventoryReportStatus');
+        if (inventoryLoading || rows.length === 0) {
+          status.textContent = 'No hay artículos disponibles para exportar con los filtros actuales.';
+          status.classList.add('is-error');
+          return;
+        }
+        if (!window.XLSX) {
+          status.textContent = 'No se pudo cargar el componente de Excel. Recarga la página e inténtalo de nuevo.';
+          status.classList.add('is-error');
+          return;
+        }
+        const headers = ['Código', 'Descripción', 'Grupo', 'Existencia', 'Stock mínimo', 'Cantidad reorden', 'Clasificación', 'SIM card', 'País', 'Estado'];
+        const data = rows.map(row => [
+          row.codigo,
+          row.descripcion,
+          row.grupo,
+          row.existencia,
+          minimumFor(row),
+          row.cantidadReorden,
+          row.inventarioClasificado,
+          row.simcard,
+          row.pais,
+          isCritical(row) ? 'Inventario mínimo' : 'Stock disponible'
+        ]);
+        window.BodegaExcelExport.exportTable({
+          headers,
+          rows: data,
+          sheetName: 'Inventario detallado',
+          filename: 'inventario-bodega-detallado.xlsx',
+          title: 'REPORTE DETALLADO DE INVENTARIO',
+          subtitle: `${inventoryScopeLabel} · ${rows.length.toLocaleString('es-GT')} registros · Búsqueda: ${document.getElementById('inventoryReportSearch').value || 'sin filtro'}`,
+          columnWidths: [{ wch: 18 }, { wch: 42 }, { wch: 24 }, { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 22 }],
+          numericColumns: [3, 4, 5]
+        });
+      }
+      function showInventoryView(view) {
+        const showReport = view === 'report';
+        document.getElementById('inventoryOverviewView').hidden = showReport;
+        document.getElementById('inventoryReport').hidden = !showReport;
+        document.querySelectorAll('#inventoryTabs .tab-btn').forEach(button => button.classList.toggle('active', button.dataset.view === view));
+        if (showReport) { renderInventoryReport(); document.getElementById('inventoryReportCode').focus({ preventScroll: true }); }
+        document.querySelector('.inventory-page').scrollIntoView({ block: 'start' });
+      }
+      async function fetchInventoryCountry(countryCode, signal, forceRefresh) {
+        const cached = inventoryPayloadCache.get(countryCode);
+        if (!forceRefresh && cached && Date.now() - cached.fetchedAt < INVENTORY_CACHE_TTL) {
+          return cached;
+        }
+        const response = await fetch(`${INVENTORY_API_URL}${encodeURIComponent(countryCode)}`, { headers: { Accept: 'application/json', 'X-API-KEY': INVENTORY_API_KEY }, signal });
+        if (!response.ok) {
+          const details = (await response.text()).trim();
+          throw new Error(`HTTP ${response.status}${details ? `: ${details.slice(0, 180)}` : ''}`);
+        }
+        const payload = await response.json();
+        if (!Array.isArray(payload)) throw new TypeError('La respuesta de inventario debe ser un arreglo');
+        return { payload, fetchedAt: Date.now() };
+      }
+      async function loadInventory({ forceRefresh = false } = {}) {
+        const refreshButton = document.getElementById('inventoryRefresh');
+        const errorBox = document.getElementById('inventoryError');
+        const showError = message => { errorBox.textContent = `Error al conectar con la API: ${message}`; errorBox.hidden = false; };
+        const requestId = ++inventoryLoadSequence;
+        inventoryLoadController?.abort();
+        const controller = new AbortController();
+        inventoryLoadController = controller;
+        const country = document.getElementById('inventoryCountry').value;
+        const countries = country === 'GT+SV' ? ['GT', 'SV'] : [country];
+        const countryLabel = country === 'GT+SV' ? 'GT + SV' : country === 'GT' ? 'Guatemala' : 'El Salvador';
+        if (inventoryLoadedCountry !== country) {
+          inventoryRecords = [];
+          inventoryReportRows = [];
+          inventoryDuplicateCount = 0;
+          inventoryScopeLabel = countryLabel;
+          renderInventory();
+        }
+        refreshButton.disabled = true;
+        refreshButton.classList.add('inventory-loading');
+        errorBox.hidden = true;
+        inventoryLoading = true;
+        inventoryLoadError = '';
+        renderInventoryReport();
+        let timedOut = false;
+        let timeout = null;
+        try {
+          if (!INVENTORY_API_URL) throw new Error('Endpoint pendiente de configurar');
+          timeout = setTimeout(() => {
+            timedOut = true;
+            controller.abort();
+          }, 60000);
+          try {
+            const countryResults = await Promise.all(countries.map(countryCode =>
+              fetchInventoryCountry(countryCode, controller.signal, forceRefresh).catch(error => {
+                throw new Error(`${countryCode}: ${error.message || 'error desconocido'}`);
+              })
+            )).catch(error => {
+              controller.abort();
+              throw error;
+            });
+            if (requestId !== inventoryLoadSequence) return;
+            countryResults.forEach((result, index) => {
+              inventoryPayloadCache.set(countries[index], result);
+            });
+            const successfulPayloads = countryResults.map(result => result.payload);
+            inventoryScopeLabel = countryLabel;
+            const normalizedSets = successfulPayloads.map((payload, index) => normalizeRecords(payload, countries[index]));
+            const rawCombined = normalizedSets.flat();
+            inventoryDuplicateCount = rawCombined.length - new Set(rawCombined.map(item => item.codigo)).size;
+            inventoryRecords = combineInventoryRecords(normalizedSets);
+            inventoryReportRows = successfulPayloads.flatMap((payload, index) => payload.map(item => normalizeReportRow(item, countries[index])))
+              .sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }) || a.pais.localeCompare(b.pais));
+            inventoryLoadedCountry = country;
+            if (inventoryFilters.grupoInventario) { const present = new Set(inventoryRecords.map(item => item.grupoInventario)); const kept = inventoryFilters.grupoInventario.filter(group => present.has(group)); inventoryFilters.grupoInventario = kept.length ? kept : null; }
+          } finally {
+            if (timeout) clearTimeout(timeout);
+          }
+          renderInventoryFilters();
+          renderInventory();
+          setInventoryUpdatedAt(Math.min(...countries.map(countryCode => inventoryPayloadCache.get(countryCode).fetchedAt)));
+          try {
+            await ensureChartJs();
+            if (requestId !== inventoryLoadSequence) return;
+            renderInventory();
+          } catch (chartError) {
+            if (requestId !== inventoryLoadSequence) return;
+            console.error('[Inventario] Los datos cargaron, pero Chart.js falló:', chartError);
+            showError(`Los datos cargaron, pero el gráfico no pudo inicializarse: ${chartError.message}`);
+          }
+        } catch (error) {
+          if (requestId !== inventoryLoadSequence) return;
+          if (inventoryLoadedCountry !== country) {
+            inventoryRecords = [];
+            inventoryReportRows = [];
+            inventoryDuplicateCount = 0;
+            renderInventoryFilters();
+          }
+          const message = timedOut
+            ? 'la solicitud excedió el tiempo límite de 60 segundos'
+            : error.message || 'error desconocido';
+          inventoryLoadError = `Error al conectar con la API: ${message}`;
+          try {
+            renderInventory();
+          } catch (renderError) {
+            console.error('[Inventario] También falló el render de estado vacío:', renderError);
+          }
+          console.error('[Inventario] Error completo al consultar o procesar la API:', error);
+          showError(message);
+        } finally {
+          if (requestId === inventoryLoadSequence) {
+            inventoryLoading = false;
+            renderInventoryReport();
+            refreshButton.disabled = false;
+            refreshButton.classList.remove('inventory-loading');
+            if (inventoryLoadController === controller) inventoryLoadController = null;
+          }
+        }
+      }
+      document.getElementById('inventorySearch').addEventListener('input', () => { inventoryPage = 1; renderInventory(); });
+      FiltrosGuia.paintIcons(document.querySelector('.inventory-filters-v2'));
+      inventoryXF = FiltrosGuia.createXF({
+        host: document.getElementById('inventoryXf'),
+        chipsHost: document.getElementById('inventoryXfChips'),
+        onApply: selection => { Object.assign(inventoryFilters, selection); inventoryPage = 1; renderInventoryFilters(); renderInventory(); }
+      });
+      document.querySelectorAll('[data-inventory-country]').forEach(button => button.addEventListener('click', () => {
+        const country = document.getElementById('inventoryCountry');
+        if (country.value === button.dataset.inventoryCountry) return;
+        country.value = button.dataset.inventoryCountry;
+        country.dispatchEvent(new Event('change'));
+        renderInventoryFilters();
+      }));
+      document.getElementById('inventoryResetFilters').addEventListener('click', () => {
+        Object.keys(inventoryFilters).forEach(key => { inventoryFilters[key] = null; });
+        document.getElementById('inventorySearch').value = '';
+        inventoryPage = 1;
+        const country = document.getElementById('inventoryCountry');
+        const countryChanged = country.value !== 'GT+SV';
+        country.value = 'GT+SV';
+        renderInventoryFilters();
+        if (countryChanged) loadInventory(); else renderInventory();
+      });
+      document.getElementById('inventoryApplyMinimum').addEventListener('click', () => { const button = document.getElementById('inventoryApplyMinimum'); if (button.disabled) return; button.disabled = true; const value = Math.max(0, parseInventoryNumber(document.getElementById('inventoryDefaultMinimum').value)); const minimums = { ...savedMinimums() }; inventoryRecords.forEach(item => { if (!item.stockMinimo) minimums[item.codigo] = value; }); saveMinimums(minimums); requestAnimationFrame(() => { try { renderInventory(); } finally { button.disabled = false; } }); });
+      document.getElementById('inventoryCountry').addEventListener('change', () => { inventoryPage = 1; loadInventory(); });
+      document.getElementById('inventoryRefresh').addEventListener('click', () => loadInventory({ forceRefresh: true }));
+      document.querySelectorAll('#inventoryTabs .tab-btn').forEach(button => button.addEventListener('click', () => showInventoryView(button.dataset.view)));
+      ['inventoryReportCode', 'inventoryReportSearch'].forEach(id => document.getElementById(id).addEventListener('input', () => { inventoryReportPage = 1; renderInventoryReport(); }));
+      document.getElementById('inventoryReportReset').addEventListener('click', () => {
+        ['inventoryReportCode', 'inventoryReportSearch'].forEach(id => { document.getElementById(id).value = ''; });
+        inventoryReportPage = 1;
+        renderInventoryReport();
+        document.getElementById('inventoryReportCode').focus();
+      });
+      document.getElementById('inventoryReportExport').addEventListener('click', exportInventoryReportToExcel);
+      document.getElementById('inventoryReportPrev').addEventListener('click', () => { inventoryReportPage -= 1; renderInventoryReport(); });
+      document.getElementById('inventoryReportNext').addEventListener('click', () => { inventoryReportPage += 1; renderInventoryReport(); });
+      document.getElementById('inventoryPrev').addEventListener('click', () => { inventoryPage -= 1; renderInventory(); });
+      document.getElementById('inventoryNext').addEventListener('click', () => { inventoryPage += 1; renderInventory(); });
+      document.querySelectorAll('#inventoryTable th[data-sort]').forEach(header => header.addEventListener('click', () => { const key = header.dataset.sort; inventorySortDirection = inventorySortKey === key ? -inventorySortDirection : 1; inventorySortKey = key; renderInventory(); }));
+      window.BODEGA_PDF_CONFIG = {
+        title: 'Inventario mínimo',
+        fileName: 'reporte-inventario-bodega',
+        modules: [
+          { id: 'summary', title: 'Indicadores de inventario', hint: 'Productos consultados, unidades, artículos críticos y reposición.', icon: '<path d="M3 20h18"/><rect x="5" y="10.5" width="3.6" height="6.5" rx="1"/><rect x="10.2" y="6" width="3.6" height="11" rx="1"/><rect x="15.4" y="13" width="3.6" height="4" rx="1"/>' },
+          { id: 'stock', title: 'Existencia por producto', hint: 'Ranking de productos según el modo de gráfica seleccionado.', icon: '<path d="M3 17.5 8.5 12l3.5 3.5L21 6.5"/><path d="M15 6.5h6v6"/>' },
+          { id: 'detail', title: 'Detalle de inventario', hint: 'Todos los artículos que coinciden con los filtros de inventario.', icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M9.5 9.5V20"/>' },
+          { id: 'api-report', title: 'Informe detallado del API', hint: 'Registros originales filtrados desde la pestaña Informe detallado.', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>' }
+        ],
+        buildReport(ids) {
+          const selected = new Set(ids);
+          const rows = filteredRecords();
+          const critical = rows.filter(isCritical);
+          const units = rows.reduce((sum, item) => sum + item.existencia, 0);
+          const aboveMinimum = rows.length ? ((rows.length - critical.length) / rows.length) * 100 : 0;
+          const reportRows = inventoryReportMatches().rows;
+          const chartItems = rows.filter(item => item.existencia >= 1).slice().sort((a, b) => inventoryChartMode === 'critical'
+            ? (a.existencia - minimumFor(a)) - (b.existencia - minimumFor(b))
+            : b.existencia - a.existencia).slice(0, 10);
+          const sections = [];
+          if (selected.has('summary')) sections.push({
+            title: 'Indicadores de inventario',
+            headers: ['Indicador', 'Valor'],
+            rows: [
+              ['Productos consultados', formatValue(rows.length)],
+              ['Inventario mínimo', formatValue(critical.length)],
+              ['Unidades disponibles', formatValue(units)],
+              ['Requieren reposición', formatValue(critical.length)],
+              ['Sobre el mínimo', `${aboveMinimum.toLocaleString('es-GT', { maximumFractionDigits: 1 })}%`]
+            ]
+          });
+          if (selected.has('stock')) sections.push({
+            title: 'Existencia por producto',
+            note: inventoryChartMode === 'critical' ? 'Productos con menor diferencia contra el mínimo' : 'Productos con mayor existencia',
+            headers: ['Código', 'Producto', 'Existencia', 'Stock mínimo', 'Diferencia', 'Estado'],
+            rows: chartItems.map(item => {
+              const minimum = minimumFor(item);
+              const difference = item.existencia - minimum;
+              return [item.codigo, item.producto, formatValue(item.existencia), formatValue(minimum),
+              `${difference > 0 ? '+' : ''}${formatValue(difference)}`, isCritical(item) ? 'Inventario mínimo' : 'Stock disponible'];
+            })
+          });
+          if (selected.has('detail')) sections.push({
+            title: 'Detalle de inventario',
+            note: `${rows.length} producto(s) según los filtros actuales`,
+            headers: ['Código', 'Producto', 'Grupo contable', 'Clasificación', 'SIM card', 'Disponible', 'Stock mínimo', 'Diferencia', 'Estado', 'Recomendación'],
+            rows: rows.map(item => {
+              const minimum = minimumFor(item);
+              const difference = item.existencia - minimum;
+              const replenishment = item.cantidadReorden || Math.max(0, -difference);
+              return [item.codigo, item.producto, item.grupoContable, item.inventarioClasificado, item.simcard,
+              formatValue(item.existencia), formatValue(minimum), `${difference > 0 ? '+' : ''}${formatValue(difference)}`,
+              isCritical(item) ? 'Inventario mínimo' : 'Stock disponible',
+              replenishment > 0 ? `Reponer ${formatValue(replenishment)}` : 'Sin reposición'];
+            })
+          });
+          if (selected.has('api-report')) sections.push({
+            title: 'Informe detallado del API',
+            note: `${reportRows.length} registro(s) · ${document.getElementById('inventoryReportCode').value || 'todos los códigos'} · ${document.getElementById('inventoryReportSearch').value || 'sin búsqueda'}`,
+            headers: ['Código', 'Descripción', 'Grupo', 'Existencia', 'Stock mínimo', 'Cantidad reorden', 'Clasificación', 'SIM card', 'País', 'Estado'],
+            rows: reportRows.map(item => [item.codigo, item.descripcion, item.grupo, formatValue(item.existencia),
+            formatValue(minimumFor(item)), formatValue(item.cantidadReorden), item.inventarioClasificado, item.simcard,
+            item.pais, isCritical(item) ? 'Inventario mínimo' : 'Stock disponible'])
+          });
+          return {
+            title: 'Reporte de inventario mínimo',
+            filters: `Operación: ${inventoryScopeLabel} · Búsqueda: ${document.getElementById('inventorySearch').value || 'sin búsqueda'} · Umbral dinámico: ${document.getElementById('inventoryDefaultMinimum').value} unidades`,
+            hasData: !inventoryLoading && inventoryRecords.length > 0,
+            sections
+          };
+        }
+      };
+      setupInventoryAnimations();
+      renderInventory();
+      loadInventory();
+      clearInterval(inventoryRefreshTimer);
+      inventoryRefreshTimer = INVENTORY_API_URL ? setInterval(() => loadInventory({ forceRefresh: true }), INVENTORY_CACHE_TTL) : null;
+    })();
+  </script>
+  <div class="pdf-module-modal" id="pdfModuleModal" hidden>
+    <div class="pdf-module-dialog" role="dialog" aria-modal="true" aria-labelledby="pdfModuleTitle"
+      aria-describedby="pdfModuleDesc">
+      <header class="pdf-module-header">
+        <span class="pdf-module-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+            <path d="M14 3v5h5M9 13h6M9 17h4" />
+          </svg>
+        </span>
+        <div class="pdf-module-headcopy">
+          <span class="pdf-module-kicker">Exportar reporte</span>
+          <h2 id="pdfModuleTitle">¿Qué módulos deseas incluir?</h2>
+          <p id="pdfModuleDesc">Selecciona las secciones del inventario que quieres incluir en el PDF.</p>
+        </div>
+        <button type="button" class="pdf-module-close" id="closePdfModules"
+          aria-label="Cerrar selección de módulos">×</button>
+      </header>
+      <div class="pdf-module-toolbar">
+        <div class="pdf-module-quick">
+          <button type="button" data-pdf-quick="all">Seleccionar todo</button>
+          <button type="button" data-pdf-quick="none">Limpiar</button>
+        </div>
+        <span class="pdf-module-count" id="pdfModuleCount" role="status"></span>
+      </div>
+      <div class="pdf-module-options" id="pdfModuleOptions"></div>
+      <footer class="pdf-module-footer">
+        <span class="pdf-module-hint">Se descarga un solo archivo con los módulos marcados.</span>
+        <div class="pdf-module-actions">
+          <button type="button" class="pdf-module-cancel" id="cancelPdfModules">Cancelar</button>
+          <button type="button" class="pdf-module-generate" id="generatePdfModules">Generar PDF <b
+              id="pdfModuleGenerateCount">0</b></button>
+        </div>
+      </footer>
+    </div>
+  </div>
+  <script src="../../assets/js/bodega-pdf.js?v=20261021tokens"></script>
+  <!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
+  <link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+</body>
+
+</html>

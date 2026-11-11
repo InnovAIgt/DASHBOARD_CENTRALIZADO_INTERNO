@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de sesiones · Red Intelfon</title>
+    <script src="../../assets/monitoreo/js/tema.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/monitoreo/css/dashboard.css">
+    <link rel="stylesheet" href="../../assets/monitoreo/css/tema-claro.css">
+    <style>
+        /* Vivita dentro del iframe del portal: sin sidebar ni navbar propios */
+        .dash-main,
+        body.sidebar-pinned .dash-main { margin-left: 0 !important; }
+    </style>
+</head>
+<body class="dashboard">
+
+    <main class="dash-main">
+        <nav class="crumb">Monitoreo <span>/</span> Control de sesiones</nav>
+
+        <header class="dash-heading dash-heading--split">
+            <div>
+                <h1>Meta diaria de cumplimiento</h1>
+                <p>Dashboards creados vs. empresas que iniciaron sesión cada día. Cada empresa cuenta una sola vez por fecha, aunque tenga varias sesiones.</p>
+            </div>
+            <span class="live-badge"><span class="live-dot"></span> Datos actualizados <b id="stampActualizado">—</b></span>
+        </header>
+
+        <!-- Filtros: en este control sólo aplican empresa, fechas y país -->
+        <section class="filters">
+            <label class="filter-field filter-field--wide">
+                <span>Seleccionar empresa</span>
+                <select id="fEmpresa"><option value="">Todas las empresas</option></select>
+            </label>
+            <label class="filter-field">
+                <span>Fecha inicial</span>
+                <input type="date" id="fInicio">
+            </label>
+            <label class="filter-field">
+                <span>Fecha final</span>
+                <input type="date" id="fFin">
+            </label>
+            <label class="filter-field">
+                <span>País</span>
+                <select id="fPais"><option value="">Todos</option></select>
+            </label>
+            <div class="filter-actions">
+                <button type="button" class="btn-tool btn-tool--ghost" id="btnLimpiar">Limpiar</button>
+                <button type="button" class="btn-tool" data-exp="pdf" title="Descargar reporte en PDF">PDF</button>
+                <button type="button" class="btn-tool" data-exp="excel" title="Descargar tabla en Excel">Excel</button>
+            </div>
+        </section>
+
+        <!-- KPIs del control diario -->
+        <section class="kpi-grid kpi-grid--7" id="kpiGrid">
+            <div class="kpi-card kpi-card--info">
+                <span class="kpi-card__label">Dashboards creados</span>
+                <strong class="kpi-card__value">—</strong>
+                <span class="kpi-card__hint">Calculando con la 2ª API…</span>
+            </div>
+        </section>
+
+        <!-- Gráfica combinada: barras azules (empresas con sesión) + línea roja punteada (meta) -->
+        <section class="dash-panel">
+            <div class="dash-panel__head">
+                <div class="panel-eyebrow">
+                    <span>Control diario de cumplimiento</span>
+                    <h2>Empresas que iniciaron sesión por día vs. meta acumulada</h2>
+                </div>
+                <div class="dash-panel__head-right">
+                    <span class="dash-panel__date" id="fechasBarras">Fechas: todo el periodo</span>
+                    <span class="dash-panel__badge" id="badgeBarras">Meta: dashboards</span>
+                    <div class="meta-modos" role="group" aria-label="Modo de la meta">
+                        <button type="button" class="meta-modo" id="btnModoEmpresas" aria-pressed="false">Meta: empresas únicas</button>
+                        <button type="button" class="meta-modo is-on" id="btnModoDash" aria-pressed="true">Meta: dashboards</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dash-panel__body">
+                <div class="meta-wrap" id="chartMeta">
+                    <p class="panel-sub">Cargando datos…</p>
+                </div>
+                <div class="alerta-leyenda ctrl-leyenda" id="leyendaMeta"></div>
+            </div>
+        </section>
+
+        <!-- Detalle por fecha: la tabla que exporta el botón Excel/PDF -->
+        <section class="dash-panel">
+            <div class="dash-panel__head">
+                <div class="panel-eyebrow">
+                    <span id="conteoRegistros">—</span>
+                    <h2>Detalle diario del cumplimiento</h2>
+                </div>
+                <div class="dash-panel__head-right">
+                    <span class="dash-panel__date" id="fechasDetalle">Fechas: todo el periodo</span>
+                    <span class="dash-panel__badge dash-panel__badge--red" id="badgeDetalle">Control diario</span>
+                </div>
+            </div>
+            <div class="dash-panel__body dash-table__wrap detail-wrap">
+                <table class="tbl tbl--meta" id="tblMeta">
+                    <thead id="theadMeta">
+                        <tr><th>Cargando datos…</th></tr>
+                    </thead>
+                    <tbody id="tbodyMeta">
+                        <tr><td class="tbl-empty">Cargando datos…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pager">
+                <span class="pager__info" id="pgInfo">—</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Burbuja de detalle de la gráfica: FUERA de .dash-panel porque ese
+         panel usa backdrop-filter, que haría del panel el bloque contenedor
+         de su position:fixed y la ficha se posicionaría fuera de pantalla. -->
+    <div class="meta-tip" id="metaTip" hidden></div>
+
+    <!-- Módulos del portal de monitoreo (sin auth.js ni sidebar.js:
+         la sesión y el menú los aporta el portal central) -->
+    <script src="../../assets/monitoreo/js/api.js?v=8"></script>
+    <script src="../../assets/monitoreo/js/export.js"></script>
+    <script src="../../assets/monitoreo/js/multi_filtro.js?v=1"></script>
+    <script>
+        (function () {
+            var todas = [];        // filas sin filtrar
+            var empresasAll = [];  // empresas de AMBAS APIs (hoja + 2ª API)
+            var opciones = {};
+            var kpisActuales = [];
+
+            /* Dashboards creados (2ª API): id, client_code, empresa y FECHA
+               de creación. De aquí sale TODO el cálculo de la meta: la
+               cantidad es dinámica (nunca un número fijo) y la línea roja
+               sube sola cuando se crea un dashboard nuevo. */
+            var dashboards = [];
+
+            /* Sesiones verificadas por client_code y día (2ª API) */
+            var ctrl = { datos: null, cargando: false, error: null, desde: '', hasta: '', token: 0 };
+
+            /* Modo de la meta: 'dashboards' (defecto) | 'unicas' */
+            var modoMeta = 'dashboards';
+
+            /* Cumplimiento diario esperado (semáforo de la tabla y tarjetas) */
+            var META_FIJA = 90;
+            var DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+            function $(id) { return document.getElementById(id); }
+
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            }
+
+            /* Escapa y convierte los saltos de línea en <br> (para el tooltip largo de la "i") */
+            function escBr(s) {
+                return esc(s).replace(/\n/g, '<br>');
+            }
+
+            function num(n) { return (n || 0).toLocaleString('es-ES'); }
+
+            function pct2(x) { return (Number(x) || 0).toFixed(2); }
+
+            function fechaCorta(iso) {
+                if (!iso) return '—';
+                var d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+                if (isNaN(d.getTime())) return '—';
+                return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+
+            function fechaDia(iso) {
+                if (!iso || iso.length !== 10) return '—';
+                return iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
+            }
+
+            function fechaCortaDia(iso) {
+                return (!iso || iso.length !== 10) ? '—' : iso.slice(8, 10) + '/' + iso.slice(5, 7);
+            }
+
+            /* HOY en horario de El Salvador (UTC-6): el mismo con el que la
+               2ª API agrupa las sesiones y con el que se fechan los
+               dashboards creados. Sin este ajuste, entre las 00:00 y las
+               06:00 UTC se pintaría un día que todavía no existe. */
+            function hoyISO() {
+                return new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 10);
+            }
+
+            /* 'aaaa-mm-dd' -> timestamp a medianoche local */
+            function tsDeFecha(s) {
+                var p = String(s || '').split('-');
+                if (p.length !== 3) return 0;
+                return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+            }
+
+            /* Todos los días calendario entre dos fechas ('aaaa-mm-dd') */
+            function diasEntre(desde, hasta) {
+                var out = [];
+                if (!desde || !hasta || desde > hasta) return out;
+                var t0 = tsDeFecha(desde), t1 = tsDeFecha(hasta);
+                if (!t0 || !t1) return out;
+                for (var t = t0; t <= t1; t += 86400000) {
+                    var d = new Date(t);
+                    var p = function (n) { return String(n).padStart(2, '0'); };
+                    out.push(d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()));
+                }
+                return out;
+            }
+
+            /* ---------- Filtros de fecha ---------- */
+            function rangoFechas() {
+                var inicio = $('fInicio'), fin = $('fFin');
+                var a = inicio ? inicio.value : '', b = fin ? fin.value : '';
+                if (a && b && a > b) { var t = a; a = b; b = t; }
+                return { desde: a || '', hasta: b || '' };
+            }
+
+            function aplicarPeriodoActual() {
+                var hoy = new Date();
+                var pad = function (n) { return String(n).padStart(2, '0'); };
+                if ($('fInicio')) $('fInicio').value = hoy.getFullYear() + '-' + pad(hoy.getMonth() + 1) + '-01';
+                if ($('fFin')) $('fFin').value = hoy.getFullYear() + '-' + pad(hoy.getMonth() + 1) + '-' + pad(hoy.getDate());
+            }
+
+            function actualizarEtiquetasFechas() {
+                var r = rangoFechas();
+                var texto = 'Fechas: ';
+                if (r.desde && r.hasta) texto += fechaCorta(r.desde) + ' - ' + fechaCorta(r.hasta);
+                else if (r.desde) texto += 'desde ' + fechaCorta(r.desde);
+                else if (r.hasta) texto += 'hasta ' + fechaCorta(r.hasta);
+                else texto += 'todo el periodo';
+                $('fechasBarras').textContent = texto;
+                $('fechasDetalle').textContent = texto;
+            }
+
+            /* Sello de "Datos actualizados" (fecha que trae la fuente) */
+            function pintarStamp(actualizado) {
+                var d = new Date(actualizado);
+                if (isNaN(d.getTime())) return;
+                $('stampActualizado').textContent =
+                    d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' ' +
+                    d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            /* ---------- Índices de empresas (client_code) ---------- */
+            /* Cada empresa se identifica por su CÓDIGO de cliente
+               (CL000103…): así una empresa con dos dashboards sólo cuenta
+               UNA vez al día, pero sus dashboards siguen en la meta. */
+            function baseCode(v) {
+                var m = /^CL\d{6}/i.exec(String(v == null ? '' : v).trim());
+                return m ? m[0].toUpperCase() : '';
+            }
+
+            var nombrePorCodigo = {};    // CL000103 -> "ARANA CARRILLO…"
+            var codigosPorNombre = {};   // "ARANA…" -> { CL000103: 1 }
+
+            function construirIndice() {
+                nombrePorCodigo = {};
+                codigosPorNombre = {};
+
+                dashboards.forEach(function (d) {
+                    if (!nombrePorCodigo[d.codigo]) nombrePorCodigo[d.codigo] = d.empresa;
+                });
+
+                /* Las filas de la hoja/2ª API aportan el nombre que ya usa
+                   el filtro, así el filtro y la meta hablan igual */
+                todas.forEach(function (f) {
+                    var c = baseCode(f.clave) || baseCode(f.empresa);
+                    if (!c) return;
+                    if (!nombrePorCodigo[c] && f.empresa) nombrePorCodigo[c] = f.empresa;
+                });
+
+                Object.keys(nombrePorCodigo).forEach(function (c) {
+                    var n = nombrePorCodigo[c];
+                    if (!codigosPorNombre[n]) codigosPorNombre[n] = {};
+                    codigosPorNombre[n][c] = 1;
+                });
+            }
+
+            function nombreDe(codigo) {
+                return nombrePorCodigo[codigo] || codigo;
+            }
+
+            /* ---------- Dashboards que entran al control ---------- */
+            function dashboardsFiltrados() {
+                var empSel = valoresDe('fEmpresa');
+                var paisSel = valoresDe('fPais');
+                if (!empSel.length && !paisSel.length) return dashboards;
+
+                var selCodigos = {};
+                empSel.forEach(function (n) {
+                    if (codigosPorNombre[n]) {
+                        Object.keys(codigosPorNombre[n]).forEach(function (c) { selCodigos[c] = 1; });
+                    }
+                });
+
+                return dashboards.filter(function (d) {
+                    if (empSel.length &&
+                        !(selCodigos[d.codigo] || empSel.indexOf(d.empresa) !== -1)) return false;
+                    if (paisSel.length && paisSel.indexOf(d.pais) === -1) return false;
+                    return true;
+                });
+            }
+
+            /* Primera creación de dashboard del filtro: es el PISO del
+               período del KPI (nunca se evalúa antes de que existiera el
+               primer dashboard); el inicio real lo fija la fecha inicial
+               elegida en el filtro de periodo. */
+            function primeraCreacion() {
+                var ds = dashboardsFiltrados();
+                return ds.length ? ds[0].fecha : '';
+            }
+
+            /* ---------- Sesiones verificadas por día y client_code ----------
+               El rango pedido CUBRE el período del KPI (desde la primera
+               creación, aunque el filtro empiece más tarde) y el rango
+               elegido en los filtros. */
+            function cargarControl(forzar) {
+                var r = rangoFechas();
+                var hoy = hoyISO();
+                var fin = (r.hasta && r.hasta < hoy) ? r.hasta : hoy;
+                var inicio = primeraCreacion();
+                var pedirDesde = r.desde || '';
+                if (inicio && (!pedirDesde || inicio < pedirDesde)) pedirDesde = inicio;
+                if (!pedirDesde) pedirDesde = fin;
+
+                if (!forzar && ctrl.datos && ctrl.desde === pedirDesde && ctrl.hasta === fin) {
+                    return Promise.resolve(ctrl.datos);
+                }
+
+                var tok = ++ctrl.token;
+                ctrl.desde = pedirDesde; ctrl.hasta = fin;
+                ctrl.cargando = true; ctrl.error = null;
+                pintarTodo();
+
+                return RI_API.getDiarioCodigos(pedirDesde, fin).then(function (d) {
+                    if (tok !== ctrl.token) return null;
+                    ctrl.datos = d; ctrl.cargando = false;
+                    pintarTodo();
+                    return d;
+                }, function (e) {
+                    if (tok !== ctrl.token) return null;
+                    ctrl.cargando = false;
+                    ctrl.error = 'No se pudo cargar el historial de sesiones por empresa y fecha';
+                    pintarTodo();
+                    console.warn('Sesiones por código:', e);
+                    return null;
+                });
+            }
+
+            /* ---------- Cálculo día a día ----------
+               · Meta = dashboards CREADOS hasta esa fecha (o empresas
+                 distintas que ya tienen dashboard, según el modo).
+               · Cumplimiento = empresas ÚNICAS con ≥1 sesión ese día,
+                 contando cada empresa UNA sola vez por fecha.
+               · Nunca se cuentan sesiones anteriores a la creación del
+                 dashboard de esa empresa. */
+            function calcularFila(fecha, ds) {
+                var codigos = {}, dashAcum = 0;
+                ds.forEach(function (d) {
+                    if (d.fecha <= fecha) { dashAcum++; codigos[d.codigo] = 1; }
+                });
+                var empAcum = Object.keys(codigos).length;
+
+                var conSesion = [], sesiones = 0;
+                Object.keys(codigos).forEach(function (c) {
+                    var n = (ctrl.datos.porCodigo[c] && ctrl.datos.porCodigo[c][fecha]) || 0;
+                    if (n > 0) { conSesion.push(c); sesiones += n; }
+                });
+
+                var denom = modoMeta === 'dashboards' ? dashAcum : empAcum;
+                /* Tope 100%: es una cantidad de empresas únicas */
+                var pct = denom > 0 ? Math.min(100, (conSesion.length / denom) * 100) : 0;
+
+                return {
+                    fecha: fecha,
+                    dia: DIAS_CORTOS[new Date(fecha + 'T00:00:00').getDay()],
+                    dashAcum: dashAcum,
+                    empAcum: empAcum,
+                    conSesion: conSesion.length,
+                    sesiones: sesiones,
+                    nombres: conSesion.map(nombreDe),
+                    denom: denom,
+                    pct: pct,
+                    valido: denom > 0
+                };
+            }
+
+            /* Filas del rango elegido en los filtros (gráfica + tabla) */
+            function filasRango() {
+                if (!ctrl.datos) return [];
+                var ds = dashboardsFiltrados();
+                var r = rangoFechas();
+                var hoy = hoyISO();
+                var fechas = (ctrl.datos.fechas || []).filter(function (f) {
+                    if (f > hoy) return false;
+                    if (r.desde && f < r.desde) return false;
+                    if (r.hasta && f > r.hasta) return false;
+                    return true;
+                });
+                return fechas.map(function (f) { return calcularFila(f, ds); });
+            }
+
+            /* Filas del PERÍODO DEL KPI: el que marcan los filtros de fecha
+               (fecha inicial → fecha final), SIN bajar nunca de la primera
+               creación de dashboard (antes no había nada que evaluar).
+               Todos los días calendario, incluidos fines de semana y días
+               sin sesiones: esos días valen 0%.
+               Así "Días en verde/rojo" y el promedio cuentan exactamente los
+               días del periodo elegido, no desde la creación del 1er dashboard. */
+            function filasKpi() {
+                var ds = dashboardsFiltrados();
+                var vacio = {
+                    filas: [], inicio: '', fin: '', inicioReal: '',
+                    inicioDeseado: '', porFiltro: false, limitado: false, motivo: ''
+                };
+                if (!ds.length) {
+                    vacio.motivo = 'No hay dashboards creados para los filtros seleccionados';
+                    return vacio;
+                }
+                var disponibles = (ctrl.datos && ctrl.datos.fechas || []).filter(function (f) {
+                    return f <= hoyISO();
+                });
+                if (!disponibles.length) {
+                    vacio.motivo = 'Sin historial de sesiones para el rango seleccionado';
+                    return vacio;
+                }
+
+                var inicioReal = ds[0].fecha;                 // 1ª creación (ds va ordenado)
+                var r = rangoFechas();
+                var hoy = hoyISO();
+                var fin = (r.hasta && r.hasta < hoy) ? r.hasta : hoy;
+
+                /* Inicio que manda el FILTRO de periodo (fecha inicial).
+                   Si el filtro empieza ANTES de la primera creación, se usa
+                   la creación: esos días no tienen dashboards que evaluar. */
+                var porFiltro = !!(r.desde && r.desde > inicioReal);
+                var inicioDeseado = porFiltro ? r.desde : inicioReal;
+
+                /* El tope de días de la API puede cortar el inicio: en ese
+                   caso SÓLO se evalúan los días con historial disponible y
+                   el resultado se marca como mínimo verificable. */
+                var inicio = inicioDeseado < disponibles[0] ? disponibles[0] : inicioDeseado;
+                var limitado = inicio > inicioDeseado;
+
+                var fechas = disponibles.filter(function (f) { return f >= inicio && f <= fin; });
+                return {
+                    filas: fechas.map(function (f) { return calcularFila(f, ds); }),
+                    inicio: inicio,
+                    fin: fin,
+                    inicioReal: inicioReal,
+                    inicioDeseado: inicioDeseado,
+                    porFiltro: porFiltro,
+                    limitado: limitado,
+                    motivo: fechas.length ? '' : 'Sin días evaluables en el rango seleccionado'
+                };
+            }
+
+            function nombreModo() {
+                return modoMeta === 'dashboards' ? 'dashboards creados' : 'empresas con dashboard';
+            }
+
+            function nombreModoAcum() {
+                return modoMeta === 'dashboards' ? 'dashboards acumulados' : 'empresas con dashboard acumuladas';
+            }
+
+            /* ---------- Resumen: base de TODAS las tarjetas ---------- */
+            function resumen() {
+                var ds = dashboardsFiltrados();
+                var kpi = filasKpi();
+                var fr = filasRango();
+
+                var suma = 0, verdes = 0, rojos = 0, mejor = null, sesiones = 0;
+                kpi.filas.forEach(function (f) {
+                    suma += f.pct;
+                    if (f.pct >= META_FIJA) verdes++;
+                    else if (f.pct < META_FIJA - 15) rojos++;
+                    if (!mejor || f.conSesion > mejor.conSesion ||
+                        (f.conSesion === mejor.conSesion && f.pct > mejor.pct)) mejor = f;
+                });
+                fr.forEach(function (f) { sesiones += f.sesiones; });
+
+                var promedio = kpi.filas.length ? suma / kpi.filas.length : 0;
+                var ultimoKpi = kpi.filas.length ? kpi.filas[kpi.filas.length - 1] : null;
+                var ultimoRango = fr.length ? fr[fr.length - 1] : null;
+
+                /* Empresas ÚNICAS con ≥1 sesión dentro del rango elegido */
+                var diasRango = {}, unicas = 0;
+                fr.forEach(function (f) { diasRango[f.fecha] = 1; });
+                var vistos = {};
+                ds.forEach(function (d) {
+                    if (vistos[d.codigo]) return;
+                    var pf = (ctrl.datos && ctrl.datos.porCodigo[d.codigo]) || {};
+                    if (Object.keys(diasRango).some(function (f) { return (pf[f] || 0) > 0; })) {
+                        vistos[d.codigo] = 1;
+                        unicas++;
+                    }
+                });
+
+                /* Meta del último día pintado (línea roja) */
+                var metaFinal = 0;
+                if (ultimoRango) metaFinal = modoMeta === 'dashboards' ? ultimoRango.dashAcum : ultimoRango.empAcum;
+                else if (ds.length) metaFinal = modoMeta === 'dashboards' ? ds.length : Object.keys(nombrePorCodigo).length;
+
+                var creadosAntes = 0;
+                var r = rangoFechas();
+                if (r.desde) ds.forEach(function (d) { if (d.fecha < r.desde) creadosAntes++; });
+
+                return {
+                    ds: ds,
+                    dashboards: ds.length,
+                    empresas: ds.reduce(function (set, d) { set[d.codigo] = 1; return set; }, {}),
+                    filasKpi: kpi.filas,
+                    filasRango: fr,
+                    kpi: kpi,
+                    suma: suma,
+                    promedio: promedio,
+                    ultimoKpi: ultimoKpi,
+                    ultimoRango: ultimoRango,
+                    verdes: verdes,
+                    rojos: rojos,
+                    mejor: mejor,
+                    sesiones: sesiones,
+                    unicas: unicas,
+                    metaFinal: metaFinal,
+                    creadosAntes: creadosAntes
+                };
+            }
+
+            /* ---------- Filtros (selección múltiple) ---------- */
+            var FILTROS_MULTI = ['fEmpresa', 'fPais'];
+
+            function cargarOpciones() {
+                function fill(id, arr) {
+                    var sel = $(id);
+                    arr.forEach(function (v) {
+                        var o = document.createElement('option');
+                        o.value = v; o.textContent = v;
+                        sel.appendChild(o);
+                    });
+                }
+                fill('fEmpresa', opciones.empresas);
+                fill('fPais', opciones.paises);
+
+                FILTROS_MULTI.forEach(function (id) {
+                    var sel = $(id);
+                    if (sel && !sel.classList.contains('multi__orig')) construirMulti(sel);
+                });
+            }
+
+            /* Desplegable con casillas + búsqueda: el componente vive en
+               assets/js/multi_filtro.js (RI_MULTI) y lo comparten todas
+               las páginas. */
+            function construirMulti(sel) {
+                if (window.RI_MULTI) RI_MULTI.construir(sel, { conLimpiar: true });
+            }
+
+            function cerrarMultis() {
+                if (window.RI_MULTI) RI_MULTI.cerrarTodos();
+            }
+
+            document.addEventListener('click', function (e) {
+                var t = e.target;
+                if (!t || !t.closest) return;
+                if (!t.closest('.kpi-info')) cerrarInfoFija();
+                if (t.closest('.meta-modos')) return;     // botones del modo: los maneja su click
+                if (t.closest('.meta-hit')) return;       // zona de la gráfica: sólo tooltip
+                if (t.closest('.meta-tip')) return;
+                if (t.closest('.multi')) return;
+                cerrarMultis();
+                ocultarTip();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { cerrarMultis(); cerrarInfoFija(); ocultarTip(); }
+            });
+            window.addEventListener('resize', cerrarInfoFija);
+            window.addEventListener('scroll', cerrarInfoFija, true);
+
+            /* Valores elegidos en un filtro ([] = sin filtro) */
+            function valoresDe(id) {
+                if (window.RI_MULTI) return RI_MULTI.valoresDe(id);
+                var v = $(id) ? $(id).value : "";
+                return v ? [v] : [];
+            }
+
+            function limpiarMulti(id) {
+                if (window.RI_MULTI) { RI_MULTI.limpiar(id); return; }
+                if ($(id)) $(id).value = "";
+            }
+
+            function filtrar() {
+                actualizarEtiquetasFechas();
+                pintarTodo();
+                cargarControl();
+            }
+
+            /* ---------- Tarjetas KPI ---------- */
+            function pintarKpis() {
+                var ctl = resumen();
+                var cargando = ctrl.cargando && !ctrl.datos;
+                var meta = META_FIJA;
+                var nivelDe = function (pct) { return pct >= meta ? 'verde' : (pct >= meta - 15 ? 'amarillo' : 'rojo'); };
+                var semaforo = function (nivel) {
+                    return nivel === 'verde' ? ' kpi-card__value--green'
+                        : nivel === 'amarillo' ? ' kpi-card__value--amber'
+                            : nivel === 'rojo' ? ' kpi-card__value--red' : '';
+                };
+                var empresasN = Object.keys(ctl.empresas).length;
+
+                /* Texto de periodo compartido por las tarjetas de días:
+                   deja claro CUÁNTOS días calendario se cuentan y entre qué
+                   fechas (las del filtro de periodo). */
+                var periodoTxt = ctl.filasKpi.length
+                    ? ' Período evaluado: del ' + fechaCorta(ctl.kpi.inicio) + ' al ' +
+                    fechaCorta(ctl.kpi.fin) + ' (' + num(ctl.filasKpi.length) +
+                    ' días calendario' + (ctl.kpi.porFiltro ? ', según el filtro de fechas' : '') + ').'
+                    : '';
+
+                var info = {
+                    dashboards: 'Dashboards CREADOS hasta el último día del rango (fecha real de creación de cada ' +
+                        'dashboard en la 2ª API). La cantidad es dinámica: cuando se crea un dashboard nuevo, la línea ' +
+                        'roja de la gráfica sube sola. Modo actual de la meta: ' + nombreModoAcum() + '.',
+                    diario: 'KPI de cumplimiento del último día evaluado = (empresas únicas con ≥1 sesión ese día ÷ ' +
+                        nombreModoAcum() + ') × 100, con máximo 100%. Cada empresa cuenta una sola vez por fecha, ' +
+                        'aunque tenga 10 sesiones.' +
+                        (ctl.ultimoKpi ? ' Último día: ' + fechaCorta(ctl.ultimoKpi.fecha) + '.' : ''),
+                    promedio: promedioInfo(ctl),
+                    meta: 'Semáforo diario: verde = ' + meta + '% o más de ' + nombreModoAcum() +
+                        ' con sesión · amarillo = ' + (meta - 15) + '% a ' + (meta - 1) +
+                        '% · rojo = menos de ' + (meta - 15) + '%.',
+                    verdes: 'Días evaluados en los que ingresó al menos el ' + meta + '% de ' + nombreModoAcum() + '.' + periodoTxt,
+                    rojos: 'Días evaluados en los que ingresó menos del ' + (meta - 15) + '% de ' + nombreModoAcum() + '.' + periodoTxt,
+                    mejor: 'Día con más empresas únicas con sesión. Se muestra: empresas con sesión / ' +
+                        nombreModoAcum() + ' ese día.'
+                };
+
+                kpisActuales = [
+                    {
+                        label: 'Dashboards creados',
+                        valor: cargando ? '—' : num(ctl.ultimoRango ? ctl.ultimoRango.dashAcum : ctl.dashboards),
+                        hint: cargando ? 'Meta acumulada' : num(ctl.dashboards) + ' en total · ' + num(empresasN) + ' empresas',
+                        info: info.dashboards
+                    },
+                    {
+                        label: 'KPI diario',
+                        valor: (cargando || !ctl.ultimoKpi) ? '—' : pct2(ctl.ultimoKpi.pct) + '%',
+                        hint: ctl.ultimoKpi ? fechaCorta(ctl.ultimoKpi.fecha) + ' · ' +
+                            num(ctl.ultimoKpi.conSesion) + '/' + num(ctl.ultimoKpi.denom) : 'Sin datos aún',
+                        nivel: (!cargando && ctl.ultimoKpi) ? nivelDe(ctl.ultimoKpi.pct) : null,
+                        info: info.diario
+                    },
+                    {
+                        label: 'KPI promedio de cumplimiento',
+                        valor: cargando ? '—' : pct2(ctl.promedio) + '%',
+                        hint: cargando ? 'Promedio del periodo' : 'De ' + num(ctl.filasKpi.length) + ' días calendario',
+                        nivel: cargando ? null : nivelDe(ctl.promedio),
+                        info: info.promedio,
+                        popAncho: true
+                    },
+                    { label: 'Meta', valor: meta + '%', hint: 'de ' + nombreModoAcum() + ' por día', info: info.meta },
+                    { label: 'Días en verde', valor: cargando ? '—' : num(ctl.verdes), hint: '≥ ' + meta + '% de cumplimiento', info: info.verdes },
+                    { label: 'Días en rojo', valor: cargando ? '—' : num(ctl.rojos), hint: 'Menos del ' + (meta - 15) + '%', rojo: true, info: info.rojos },
+                    {
+                        label: 'Mejor día',
+                        valor: (cargando || !ctl.mejor) ? '—' : num(ctl.mejor.conSesion) + ' / ' + num(ctl.mejor.denom),
+                        hint: ctl.mejor ? fechaCorta(ctl.mejor.fecha) : 'Sin datos',
+                        info: info.mejor
+                    }
+                ];
+
+                infoFija = null;
+                $('kpiGrid').innerHTML = kpisActuales.map(function (k) {
+                    return '<div class="kpi-card kpi-card--info">' +
+                        '<span class="kpi-card__label">' + esc(k.label) +
+                        '<span class="kpi-info">' +
+                        '<button type="button" class="kpi-info__btn" aria-expanded="false" aria-label="Cómo se calcula: ' + esc(k.label) + '">i</button>' +
+                        '<span class="kpi-info__pop' + (k.popAncho ? ' kpi-info__pop--ancho' : '') +
+                        '" role="tooltip">' + (k.popAncho ? escBr(k.info) : esc(k.info)) + '</span>' +
+                        '</span>' +
+                        '</span>' +
+                        '<strong class="kpi-card__value' + (k.rojo ? ' kpi-card__value--red' : semaforo(k.nivel)) + '">' + esc(k.valor) + '</strong>' +
+                        '<span class="kpi-card__hint">' + esc(k.hint) + '</span>' +
+                        '</div>';
+                }).join('');
+                adjuntarInfoKpis();
+
+                if (infoFijaAria) {
+                    Array.prototype.forEach.call($('kpiGrid').querySelectorAll('.kpi-info__btn'), function (b) {
+                        if (b.getAttribute('aria-label') === infoFijaAria) abrirInfo(b.parentNode, true);
+                    });
+                }
+            }
+
+            /* ---------- KPI PROMEDIO: explicación completa (tarjeta "i") ---------- */
+            function promedioInfo(ctl) {
+                var k = ctl.kpi;
+                var n = ctl.filasKpi.length;
+
+                if (!n) return k.motivo || 'No hay días evaluables en el rango seleccionado.';
+
+                var t = [];
+                t.push('KPI PROMEDIO DE CUMPLIMIENTO = suma de los porcentajes diarios ÷ días calendario evaluados.');
+                t.push('1) Período: del ' + fechaCorta(k.inicio) + ' al ' + fechaCorta(k.fin) +
+                    (k.porFiltro
+                        ? ' (fecha inicial elegida en el filtro de periodo)'
+                        : ' (desde la primera creación de dashboard)') + '.');
+                t.push('2) Se evalúan ' + n + ' días calendario, incluidos fines de semana y días sin sesiones: ' +
+                    'esos días computan 0%.');
+                t.push('3) Cada empresa cuenta una sola vez por fecha, aunque realice varias sesiones ese día ' +
+                    '(se identifica por su código de cliente; administradores y configuradores quedan fuera).');
+                t.push('4) Por cada día: (empresas únicas con sesión ÷ ' + nombreModoAcum() + ') × 100.');
+                t.push('5) Cada porcentaje diario tiene un máximo de 100%: nunca se pasa de 100%.');
+                t.push('6) Suma de los porcentajes diarios: ' + pct2(ctl.suma) + '%.');
+                t.push('7) Esa suma se divide entre el total de días: ' + pct2(ctl.suma) + '% ÷ ' + n + '.');
+                t.push('8) KPI promedio = ' + pct2(ctl.promedio) + '%.');
+
+                var notas = ['Cumplimiento mínimo verificable: el indicador se calcula sólo con sesiones ' +
+                    'registradas (empresa + fecha) en la 2ª API. Los días sin registros confirmados se ' +
+                    'contabilizan como 0%, pero la ausencia de registros NO prueba que una empresa no haya ' +
+                    'ingresado: si el historial completo no está disponible, el resultado es provisional.'];
+                if (ctrl.datos && ctrl.datos.tope) {
+                    notas.push('El rango consultado supera el máximo de días por petición, así que sólo se ' +
+                        'evalúan los ' + num((ctrl.datos.fechas || []).length) + ' días más recientes.');
+                }
+                if (k.limitado) {
+                    notas.push('El inicio del período (' + fechaCorta(k.inicioDeseado) +
+                        ') queda fuera del historial disponible: se evaluó desde ' + fechaCorta(k.inicio) + '.');
+                }
+                var rFiltro = rangoFechas();
+                if (!k.porFiltro && rFiltro.desde && k.inicioReal && rFiltro.desde < k.inicioReal) {
+                    notas.push('La fecha inicial del filtro (' + fechaCorta(rFiltro.desde) +
+                        ') es anterior a la primera creación de dashboard (' + fechaCorta(k.inicioReal) +
+                        '), así que el período del KPI empieza en esa creación: antes no existía ningún ' +
+                        'dashboard que evaluar.');
+                }
+                if (RI_API.estadoHoja && RI_API.estadoHoja()) {
+                    notas.push('Hoja de Analytics no disponible en esta carga: la meta y las sesiones ' +
+                        'provienen de la 2ª API.');
+                }
+
+                return t.join('\n') + '\n\n' + notas.join(' ');
+            }
+
+            /* ---------- Explicación de cada KPI (hover, foco o click) ---------- */
+            var infoFija = null;        // tarjeta abierta con click
+            var infoFijaAria = '';      // su identificador, para volver a abrirla si se repinta
+
+            function posicionarInfo(info) {
+                var pop = info.querySelector('.kpi-info__pop');
+                if (!pop) return;
+                var r = info.getBoundingClientRect();
+                var w = pop.offsetWidth || 250;
+                var h = pop.offsetHeight || 70;
+                var doc = document.documentElement;
+                var vw = doc.clientWidth || window.innerWidth;
+                var vh = doc.clientHeight || window.innerHeight;
+                var left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, vw - w - 8));
+                var top = r.bottom + 8;
+                if (top + h > vh - 8) top = r.top - 8 - h;
+                top = Math.max(8, Math.min(top, vh - h - 8));
+                pop.style.left = Math.round(left) + 'px';
+                pop.style.top = Math.round(top) + 'px';
+            }
+
+            function abrirInfo(info, fija) {
+                if (infoFija && infoFija !== info) cerrarInfoFija();
+                posicionarInfo(info);
+                info.classList.add('is-open');
+                var btn = info.querySelector('.kpi-info__btn');
+                if (btn) btn.setAttribute('aria-expanded', 'true');
+                if (fija) {
+                    infoFija = info;
+                    var b = info.querySelector('.kpi-info__btn');
+                    infoFijaAria = b ? b.getAttribute('aria-label') : '';
+                }
+            }
+
+            function cerrarInfo(info) {
+                if (!info || infoFija === info) return;
+                info.classList.remove('is-open');
+                var btn = info.querySelector('.kpi-info__btn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+
+            function cerrarInfoFija() {
+                if (!infoFija) return;
+                var el = infoFija;
+                infoFija = null;
+                infoFijaAria = '';
+                cerrarInfo(el);
+            }
+
+            function adjuntarInfoKpis() {
+                Array.prototype.forEach.call($('kpiGrid').querySelectorAll('.kpi-info'), function (info) {
+                    info.addEventListener('mouseenter', function () { abrirInfo(info, false); });
+                    info.addEventListener('mouseleave', function () { cerrarInfo(info); });
+                    info.addEventListener('focusin', function () { abrirInfo(info, false); });
+                    info.addEventListener('focusout', function () { cerrarInfo(info); });
+                    info.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        cerrarMultis();
+                        if (infoFija === info) cerrarInfoFija();
+                        else abrirInfo(info, true);
+                    });
+                });
+            }
+
+            /* ---------- Gráfica combinada: barras + línea de meta ---------- */
+            /* Techo "bonito" del eje Y: paso 1/2/2.5/5/10 × magnitud */
+            function ejeTop(v) {
+                if (!(v > 0)) return { top: 5, paso: 1 };
+                var mag = Math.pow(10, Math.floor(Math.log(v) / Math.LN10));
+                var pasos = [1, 2, 2.5, 5, 10];
+                for (var i = 0; i < pasos.length; i++) {
+                    var paso = pasos[i] * mag;
+                    var k = Math.ceil(v / paso);
+                    if (k <= 5) return { top: paso * k, paso: paso };
+                }
+                return { top: v * 1.2, paso: v };
+            }
+
+            function pintarGrafica() {
+                var cont = $('chartMeta');
+
+                if (ctrl.cargando && !ctrl.datos) {
+                    cont.innerHTML = '<p class="panel-sub">Cargando actividad diaria…</p>';
+                    $('leyendaMeta').innerHTML = '';
+                    return;
+                }
+                if (ctrl.error && !ctrl.datos) {
+                    cont.innerHTML = '<p class="panel-sub">' + esc(ctrl.error) + '</p>';
+                    $('leyendaMeta').innerHTML = '';
+                    return;
+                }
+
+                var filas = filasRango();
+                if (!filas.length) {
+                    cont.innerHTML = '<p class="panel-sub">' +
+                        (dashboardsFiltrados().length
+                            ? 'Sin días con historial para el rango seleccionado: elige otras fechas en los filtros'
+                            : 'No hay dashboards creados para los filtros seleccionados') + '</p>';
+                    $('leyendaMeta').innerHTML = '';
+                    return;
+                }
+
+                var W = 980, H = 330, padL = 46, padR = 104, padT = 34, padB = 58;
+                var ancho = W - padL - padR, alto = H - padT - padB;
+                var n = filas.length;
+                var paso = ancho / n;
+                var barW = Math.max(3, Math.min(34, paso * 0.62));
+
+                var maximo = 0;
+                filas.forEach(function (f) {
+                    maximo = Math.max(maximo, f.conSesion, f.dashAcum, f.empAcum);
+                });
+                var esc_ = ejeTop(maximo);
+                var y = function (v) { return padT + alto - (v / esc_.top) * alto; };
+
+                var svg = '';
+
+                /* Eje Y. dominant-baseline="central" centra la cifra SOBRE la
+                   línea; el "+4" fijo se caía porque el viewBox escala */
+                for (var g = 0; g <= esc_.top + 0.0001; g += esc_.paso) {
+                    svg += '<line x1="' + padL + '" y1="' + y(g).toFixed(1) + '" x2="' + (W - padR) +
+                        '" y2="' + y(g).toFixed(1) + '" class="ctrl-grid" stroke="rgba(255,255,255,.10)"></line>' +
+                        '<text class="ctrl-eje" x="' + (padL - 9) + '" y="' + y(g).toFixed(1) +
+                        '" dominant-baseline="central" text-anchor="end">' + (g % 1 ? g.toFixed(1) : g) + '</text>';
+                }
+
+                var pasoEtiqueta = Math.max(1, Math.ceil(n / 14));
+                var puntos = [];
+
+                filas.forEach(function (f, i) {
+                    var cx = padL + paso * i + paso / 2;
+                    var xb = (cx - barW / 2).toFixed(1);
+                    var hBarra = (f.conSesion / esc_.top) * alto;
+                    var yBarra = padT + alto - hBarra;
+
+                    /* Barra azul = empresas ÚNICAS con ≥1 sesión ese día */
+                    if (f.conSesion > 0) {
+                        svg += '<rect x="' + xb + '" y="' + yBarra.toFixed(1) + '" width="' + barW.toFixed(1) +
+                            '" height="' + Math.max(hBarra, 3).toFixed(1) + '" rx="3" fill="#2f80ed"></rect>' +
+                            '<text class="ctrl-valor" x="' + cx.toFixed(1) + '" y="' + (yBarra - 7).toFixed(1) +
+                            '" text-anchor="middle">' + f.conSesion + '</text>';
+                    } else {
+                        /* Día sin sesiones: se marca el día con un tachón bajo */
+                        svg += '<rect x="' + xb + '" y="' + (padT + alto - 3).toFixed(1) + '" width="' +
+                            barW.toFixed(1) + '" height="3" rx="1.5" class="meta-base" fill="#1b2a44"></rect>';
+                    }
+
+                    /* Etiquetas del eje X */
+                    if (i % pasoEtiqueta === 0 || i === n - 1) {
+                        svg += '<text class="ctrl-eje" x="' + cx.toFixed(1) + '" y="' + (H - padB + 22) +
+                            '" text-anchor="middle">' + fechaCortaDia(f.fecha) + '</text>' +
+                            '<text class="ctrl-dia" x="' + cx.toFixed(1) + '" y="' + (H - padB + 38) +
+                            '" text-anchor="middle">' + f.dia + '</text>';
+                    }
+
+                    /* Línea roja punteada = meta acumulada del modo elegido */
+                    puntos.push(cx.toFixed(1) + ',' + y(modoMeta === 'dashboards' ? f.dashAcum : f.empAcum).toFixed(1));
+
+                    /* Zona de hover (tooltip) */
+                    svg += '<rect class="meta-hit" data-i="' + i + '" x="' + (padL + paso * i).toFixed(1) +
+                        '" y="' + padT + '" width="' + paso.toFixed(1) + '" height="' + alto +
+                        '" fill="transparent"></rect>';
+                });
+
+                if (puntos.length > 1) {
+                    /* pointer-events="none": la línea va ENCIMA de las zonas
+                       sensibles; si captura el mouse, la columna de abajo no
+                       recibe el mousemove y la burbuja se queda congelada */
+                    svg += '<polyline points="' + puntos.join(' ') + '" fill="none" stroke="#f0333d" ' +
+                        'pointer-events="none" ' +
+                        'stroke-width="2.6" stroke-dasharray="10 7" stroke-linejoin="round" ' +
+                        'stroke-linecap="round"></polyline>';
+                }
+
+                /* Etiqueta de meta al final de la línea */
+                var ultimo = filas[n - 1];
+                var valorMeta = modoMeta === 'dashboards' ? ultimo.dashAcum : ultimo.empAcum;
+                var yMeta = y(valorMeta);
+                svg += '<circle cx="' + (padL + paso * (n - 1) + paso / 2).toFixed(1) + '" cy="' + yMeta.toFixed(1) +
+                    '" r="4.5" fill="#f0333d" pointer-events="none"></circle>' +
+                    '<text class="ctrl-meta" x="' + (W - padR + 8) + '" y="' + Math.max(padT + 12, yMeta + 4).toFixed(1) +
+                    '" pointer-events="none">META ' + valorMeta + '</text>';
+
+                cont.innerHTML =
+                    '<div class="ctrl-chart">' +
+                    '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Empresas con sesión por día contra la meta acumulada de ' +
+                    esc(nombreModo()) + '">' + svg + '</svg>' +
+                    '</div>';
+
+                /* Tooltip: fecha, meta, empresas con sesión y sus nombres */
+                var tip = $('metaTip');
+                var hits = cont.querySelectorAll('.meta-hit');
+                Array.prototype.forEach.call(hits, function (h) {
+                    h.addEventListener('mousemove', function (e) {
+                        mostrarTip(e, filas[+h.getAttribute('data-i')]);
+                    });
+                    h.addEventListener('mouseleave', ocultarTip);
+                });
+                void tip;
+
+                $('leyendaMeta').innerHTML =
+                    '<span><i style="background:#2f80ed"></i>Empresas únicas con ≥1 sesión ese día (1 empresa = 1 vez por fecha)</span>' +
+                    '<span><i class="ctrl-linea"></i>Meta acumulada: ' + esc(nombreModoAcum()) + ' · ' + valorMeta + ' al último día</span>' +
+                    (ultimo.dashAcum > 0
+                        ? '<span>Antes del filtro ya existían ' + num(ultimo.dashAcum) + ' dashboards</span>'
+                        : '');
+            }
+
+            function mostrarTip(e, f) {
+                if (!f) return;
+                var tip = $('metaTip');
+                var nombres = f.nombres.length
+                    ? f.nombres.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('')
+                    : '<span>Sin registros de sesión verificados ese día</span>';
+
+                /* % de cumplimiento del día con el MISMO semáforo de la
+                   tabla: verde ≥ 90%, amarillo ≥ 75%, rojo < 75%.
+                   Sin meta ese día = no había dashboards creados aún. */
+                var nivel = !f.valido ? 'sin'
+                    : (f.pct >= META_FIJA ? 'verde' : (f.pct >= META_FIJA - 15 ? 'amarillo' : 'rojo'));
+                var pctTxt = f.valido ? pct2(f.pct) + '%' : 'Sin meta';
+
+                tip.innerHTML =
+                    '<span class="meta-tip__fecha">' + fechaDia(f.fecha) + ' · ' + esc(f.dia) + '</span>' +
+                    '<div>Dashboards acumulados: <b>' + num(f.dashAcum) + '</b></div>' +
+                    '<div>Empresas con dashboard: <b>' + num(f.empAcum) + '</b></div>' +
+                    '<div>Empresas: <b>' + num(f.conSesion) + ' de ' +
+                    num(modoMeta === 'dashboards' ? f.dashAcum : f.empAcum) + '</b></div>' +
+                    '<div>Cumplimiento del día: <b class="meta-tip__pct--' + nivel + '">' + pctTxt + '</b></div>' +
+                    '<div class="meta-tip__emp">Empresas que ingresaron:<br>' + nombres + '</div>';
+                tip.hidden = false;
+
+                var w = tip.offsetWidth || 280, h = tip.offsetHeight || 160;
+                var vw = document.documentElement.clientWidth || window.innerWidth;
+                var vh = document.documentElement.clientHeight || window.innerHeight;
+                /* Separación del cursor y de los bordes de la ventana */
+                var GAP = 16, BORDE = 10;
+
+                /* Horizontal: a la derecha si cabe; si el cursor está pegado
+                   al borde derecho, la ficha se abre hacia la IZQUIERDA */
+                var x = (e.clientX + GAP + w + BORDE <= vw)
+                    ? e.clientX + GAP
+                    : e.clientX - GAP - w;
+
+                /* Vertical: debajo del cursor si cabe; si está muy abajo,
+                   la ficha se SUBE y queda encima del cursor */
+                var yy = (e.clientY + GAP + h + BORDE <= vh)
+                    ? e.clientY + GAP
+                    : e.clientY - GAP - h;
+
+                /* Ajuste final: nunca sale de la ventana */
+                tip.style.left = Math.max(BORDE, Math.min(x, vw - w - BORDE)) + 'px';
+                tip.style.top = Math.max(BORDE, Math.min(yy, vh - h - BORDE)) + 'px';
+            }
+
+            function ocultarTip() {
+                var tip = $('metaTip');
+                if (tip) tip.hidden = true;
+            }
+
+            /* ---------- Tabla de detalle por fecha ---------- */
+            function pintarTabla() {
+                var thead = $('theadMeta'), tbody = $('tbodyMeta');
+                var ctl = resumen();
+                var filas = ctl.filasRango;
+                var usarDashboards = modoMeta === 'dashboards';
+                var tituloMeta = usarDashboards ? 'Dashboards acumulados' : 'Empresas con dashboard (acum.)';
+
+                thead.innerHTML =
+                    '<tr>' +
+                    '<th>Fecha</th>' +
+                    '<th>' + tituloMeta + '</th>' +
+                    '<th>Empresas únicas con sesión</th>' +
+                    '<th>Empresas verificadas / meta</th>' +
+                    '<th class="meta-left">Empresas que ingresaron</th>' +
+                    '</tr>';
+
+                if (!filas.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">' +
+                        (ctrl.cargando && !ctrl.datos ? 'Cargando datos…'
+                            : (dashboardsFiltrados().length
+                                ? 'Sin días con historial para el rango seleccionado'
+                                : 'No hay dashboards creados para los filtros seleccionados')) +
+                        '</td></tr>';
+                } else {
+                    tbody.innerHTML = filas.map(function (f) {
+                        var nivel = !f.valido ? 'sin'
+                            : (f.pct >= META_FIJA ? 'verde' : (f.pct >= META_FIJA - 15 ? 'amarillo' : 'rojo'));
+                        var rel = f.valido
+                            ? f.conSesion + ' / ' + num(modoMeta === 'dashboards' ? f.dashAcum : f.empAcum)
+                            : '—';
+                        return '<tr>' +
+                            '<td class="tbl-date" title="' + esc(fechaDia(f.fecha)) + '">' +
+                            fechaCortaDia(f.fecha) + ' <span class="tbl-muted">' + esc(f.dia) + '</span></td>' +
+                            '<td class="tbl-num">' + num(usarDashboards ? f.dashAcum : f.empAcum) + '</td>' +
+                            '<td class="tbl-num tbl-strong">' + num(f.conSesion) + '</td>' +
+                            '<td class="ctrl-pct ctrl-' + nivel + ' meta-rel" title="Empresas con sesión ÷ ' + esc(tituloMeta.toLowerCase()) + ' · máximo 100%">' +
+                            rel + '</td>' +
+                            '<td class="meta-nombres">' +
+                            (f.nombres.length ? esc(f.nombres.join('; ')) : 'Sin registros de sesión verificados ese día') +
+                            '</td>' +
+                            '</tr>';
+                    }).join('');
+                }
+
+                var empresasN = Object.keys(ctl.empresas).length;
+                $('conteoRegistros').textContent = num(ctl.dashboards) + ' dashboards · ' + num(empresasN) +
+                    ' empresas · ' + num(filas.length) + ' días';
+                $('badgeDetalle').textContent = 'Meta: ' + nombreModo() + ' · KPI ' + pct2(ctl.promedio) + '%';
+                $('badgeBarras').textContent = 'Meta: ' + nombreModo() + ' · KPI ' + pct2(ctl.promedio) +
+                    '% · ' + num(ctl.filasKpi.length) + ' días evaluados';
+                $('pgInfo').textContent = filas.length ? '1-' + filas.length + ' de ' + filas.length : '0 de 0';
+            }
+
+            function pintarTodo() {
+                /* Una respuesta asíncrona puede terminar después de que el
+                   sidebar haya reemplazado .dash-main por otra vista. */
+                if (!$('kpiGrid') || !$('chartMeta') || !$('tbodyMeta')) return;
+                pintarKpis();
+                pintarGrafica();
+                pintarTabla();
+                actualizarEtiquetasFechas();
+            }
+
+            /* ---------- Modo de la meta (2 botones) ---------- */
+            function setModo(m) {
+                if (m !== 'unicas' && m !== 'dashboards') return;
+                modoMeta = m;
+                $('btnModoEmpresas').classList.toggle('is-on', m === 'unicas');
+                $('btnModoEmpresas').setAttribute('aria-pressed', m === 'unicas' ? 'true' : 'false');
+                $('btnModoDash').classList.toggle('is-on', m === 'dashboards');
+                $('btnModoDash').setAttribute('aria-pressed', m === 'dashboards' ? 'true' : 'false');
+                pintarTodo();
+            }
+
+            /* ---------- Exportación (compartida: PDF y Excel) ---------- */
+            function datosDetalle() {
+                var ctl = resumen();
+                var filas = ctl.filasRango;
+                var r = rangoFechas();
+                var periodo = (r.desde || r.hasta)
+                    ? 'del ' + fechaCorta(r.desde || (filas[0] && filas[0].fecha)) + ' al ' +
+                    fechaCorta(r.hasta || hoyISO())
+                    : 'todo el periodo';
+                return {
+                    archivo: 'meta_diaria_cumplimiento',
+                    titulo: 'Meta diaria de cumplimiento',
+                    subtitulo: periodo + ' · meta: ' + nombreModoAcum() + ' · KPI promedio ' +
+                        pct2(ctl.promedio) + '% en ' + num(ctl.filasKpi.length) + ' días calendario',
+                    resumen: kpisActuales.map(function (k) { return [k.label, k.valor]; }),
+                    columnas: [
+                        { k: 'fechaTxt', t: 'Fecha', w: 18 },
+                        modoMeta === 'dashboards'
+                            ? { k: 'dashAcum', t: 'Dashboards acumulados', w: 24 }
+                            : { k: 'empAcum', t: 'Empresas con dashboard (acum.)', w: 26 },
+                        { k: 'conSesion', t: 'Empresas únicas con sesión', w: 26 },
+                        { k: 'relacion', t: 'Empresas verificadas / meta', w: 26 },
+                        { k: 'nombres', t: 'Empresas que ingresaron', w: 60 }
+                    ],
+                    filas: filas.map(function (f) {
+                        return {
+                            fechaTxt: fechaDia(f.fecha) + ' (' + f.dia + ')',
+                            empAcum: f.empAcum,
+                            dashAcum: f.dashAcum,
+                            conSesion: f.conSesion,
+                            relacion: f.valido
+                                ? f.conSesion + ' / ' + (modoMeta === 'dashboards' ? f.dashAcum : f.empAcum)
+                                : '—',
+                            nombres: f.nombres.length ? f.nombres.join('; ')
+                                : 'Sin registros de sesión verificados ese día'
+                        };
+                    })
+                };
+            }
+
+            window.RI_EXPORT_DATOS = datosDetalle;
+
+            /* ---------- Init ---------- */
+            function init() {
+                adjuntarInfoKpis();      // "i" de la tarjeta mientras carga
+                aplicarPeriodoActual();
+                actualizarEtiquetasFechas();
+
+                RI_API.getEmpresas().catch(function () { return []; }).then(function (emps) {
+                    empresasAll = emps || [];
+                    return RI_API.getReportes();
+                }).then(function (r) {
+                    todas = r.filas;
+                    opciones = r.opciones;
+
+                    /* El filtro de empresa también lista las que sólo trae la 2ª API */
+                    if (empresasAll.length) {
+                        var extras = empresasAll.map(function (e) { return e.nombre; })
+                            .filter(function (n) { return n && opciones.empresas.indexOf(n) === -1; });
+                        if (extras.length) {
+                            opciones.empresas = opciones.empresas.concat(extras).sort();
+                        }
+                    }
+
+                    if (r.actualizado) pintarStamp(r.actualizado);
+                    cargarOpciones();
+
+                    /* Dashboards creados (id, client_code y fecha de creación) */
+                    return RI_API.getDashboards();
+                }).then(function (ds) {
+                    dashboards = ds || [];
+                    construirIndice();
+                    pintarTodo();               // pinta la meta al instante
+                    return cargarControl();     // y pide el historial de sesiones
+                }).catch(function (e) {
+                    console.error('Meta diario:', e);
+                    if ($('tbodyMeta')) $('tbodyMeta').innerHTML = '<tr><td colspan="5" class="tbl-empty">No se pudieron cargar los datos</td></tr>';
+                    if ($('chartMeta')) $('chartMeta').innerHTML = '<p class="panel-sub">Sin datos disponibles</p>';
+                });
+
+                /* Refresco automático: api.js consulta la 2ª API CADA 5
+                   MINUTOS y avisa con `ri:auto`. Se vuelve a pedir la meta
+                   (dashboards nuevos) y el historial de sesiones: una sesión
+                   que entre hoy a cualquier hora aparece sola. */
+                window.addEventListener('ri:auto', function () {
+                    RI_API.getDashboards().then(function (ds) {
+                        dashboards = ds || [];
+                        construirIndice();
+                        pintarTodo();
+                    }).catch(function () { /* lo retoma el siguiente ciclo */ });
+
+                    RI_API.getReportes().then(function (r) {
+                        if (!r) return;
+                        if (r.actualizado) pintarStamp(r.actualizado);
+                        if (r.filas && r.filas.length && r.filas.length !== todas.length) {
+                            todas = r.filas;
+                            construirIndice();
+                            pintarTodo();
+                        }
+                    }).catch(function () { /* lo retoma el siguiente ciclo */ });
+
+                    cargarControl(true);
+                });
+
+                /* Meta fija 90%: se limpia la clave vieja de la meta editable */
+                try { localStorage.removeItem('ri.metaPct'); localStorage.removeItem('ri.metaSesiones'); } catch (e) { /* modo privado */ }
+
+                ['fEmpresa', 'fInicio', 'fFin', 'fPais'].forEach(function (id) {
+                    $(id).addEventListener('change', filtrar);
+                });
+
+                $('btnLimpiar').addEventListener('click', function () {
+                    FILTROS_MULTI.forEach(function (id) { limpiarMulti(id); });
+                    /* El rango NO se vacía: se vuelve al periodo por
+                       defecto (día 1 del mes en curso → hoy). */
+                    aplicarPeriodoActual();
+                    filtrar();
+                });
+
+                $('btnModoEmpresas').addEventListener('click', function () { setModo('unicas'); });
+                $('btnModoDash').addEventListener('click', function () { setModo('dashboards'); });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>
