@@ -46,3 +46,12 @@ Ver [RETIRO_VERSION_ANTERIOR.md](RETIRO_VERSION_ANTERIOR.md).
 **Decisión:** los cambios van en la rama `leads`; nada se sube
 directo a `main`.
 **Por qué:** poder revisar cada paso antes de publicarlo.
+
+## D8 · 11/11/2026 · Qué datos del cliente llegan al navegador
+
+**Decisión:** se conserva `client_name` porque el negocio necesita ver el nombre del
+cliente; se elimina `client_phone` porque el dashboard no lo usa. El teléfono se quita en
+el servidor (`server/marketingReuniones.js`) antes de responder, así nunca llega al
+navegador.
+**Por qué:** no enviar datos personales que la pantalla no necesita.
+**Pendiente:** agregar login para proteger los datos de clientes.

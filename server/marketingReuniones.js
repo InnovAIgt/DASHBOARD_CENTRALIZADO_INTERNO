@@ -7,6 +7,8 @@
  *   - api/marketing/reuniones.js  (función de Vercel, producción)
  *   - server.ts                   (desarrollo local con `npm run dev`)
  *
+ * Antes de responder, quita el teléfono del cliente (client_phone) de cada registro.
+ *
  * Basado en Dashboard-Leds/api/metrics/reuniones.js del repo InnovAIgt/DashboardLeads.
  * Documentación: docs/marketing/README.md
  */
@@ -45,7 +47,44 @@ export async function obtenerPaginaReuniones({ method, offset }) {
   return {
     status: respuesta.status,
     contentType: respuesta.headers.get('content-type') ?? 'application/json',
-    body: await respuesta.text(),
+    body: quitarDatosPersonales(await respuesta.text()),
+  }
+}
+
+/**
+ * Campos de cada registro que NO se envían al navegador.
+ * client_name se conserva a propósito (ver docs/marketing/DECISIONES.md, D8).
+ */
+const CAMPOS_PRIVADOS = ['client_phone']
+const LISTAS_DE_REGISTROS = ['leads', 'reuniones', 'data', 'items', 'results']
+
+/**
+ * Si el texto es JSON válido, quita CAMPOS_PRIVADOS de cada registro
+ * (en la lista principal o en leads/reuniones/data/items/results).
+ * Si no es JSON, lo devuelve tal cual.
+ */
+export function quitarDatosPersonales(texto) {
+  let datos
+  try {
+    datos = JSON.parse(texto)
+  } catch {
+    return texto
+  }
+
+  if (Array.isArray(datos)) {
+    limpiarLista(datos)
+  } else if (datos && typeof datos === 'object') {
+    for (const clave of LISTAS_DE_REGISTROS) {
+      if (Array.isArray(datos[clave])) limpiarLista(datos[clave])
+    }
+  }
+  return JSON.stringify(datos)
+}
+
+function limpiarLista(lista) {
+  for (const registro of lista) {
+    if (!registro || typeof registro !== 'object') continue
+    for (const campo of CAMPOS_PRIVADOS) delete registro[campo]
   }
 }
 

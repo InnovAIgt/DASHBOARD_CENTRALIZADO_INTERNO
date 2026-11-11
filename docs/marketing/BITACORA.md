@@ -45,3 +45,36 @@ ya existía (vite 8 pide esbuild 0.28, el proyecto fija esbuild 0.25). Para las 
 se usó `npm install --legacy-peer-deps`. No se cambió `package.json`. Avisar al equipo.
 
 **Qué no se tocó:** ningún dashboard existente, `vercel.json`, ni Supabase.
+
+**Actualización 11/11/2026:** se probó en local con la llave real (`.env.local`, que Git
+ignora). La conexión respondió 200 con 50 registros.
+
+---
+
+## Paso 3.1 · Quitar el teléfono del cliente en la conexión — 11/11/2026 ✅
+
+**Qué se hizo:**
+- `server/marketingReuniones.js`: antes de responder, quita `client_phone` de cada
+  registro (en la lista principal o en `leads`, `reuniones`, `data`, `items` o `results`).
+  Si la respuesta de Prospekt IA no es JSON, se devuelve tal cual.
+- `client_name` **se conserva**: el negocio necesita ver el nombre del cliente.
+  Ver [DECISIONES.md](DECISIONES.md), D8.
+- Como `api/marketing/reuniones.js` (Vercel) y `server.ts` (local) usan este mismo
+  archivo, el cambio aplica en los dos.
+
+**Pruebas hechas:**
+
+| Prueba | Resultado |
+|---|---|
+| Respuesta que no es JSON → se devuelve igual | ✅ |
+| Datos de ejemplo en lista directa y en `leads`, `reuniones`, `data`, `items`, `results` → quita el teléfono y conserva el nombre | ✅ |
+| Local con la llave real, `offset=0` → código 200, 50 registros | ✅ |
+| Ningún registro trae `client_phone` | ✅ |
+| `client_name` sigue llegando (50 de 50 registros) | ✅ |
+| Los otros 30 campos y las claves `items`, `total`, `limite`, `por_pais`, `total_por_pais` siguen iguales | ✅ |
+| `npm run build` | ✅ |
+
+**Pendiente:** agregar login para proteger los datos de clientes (D8).
+
+**Qué no se tocó:** ningún dashboard existente, `api/marketing/reuniones.js`, `server.ts`,
+`vercel.json`, Supabase ni `package.json`.
