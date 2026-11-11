@@ -109,3 +109,57 @@ lógica de DashboardLeads (pide páginas hasta que una trae menos de 50 y rechaz
 repetidos).
 
 **Qué no se tocó:** ningún archivo de código.
+
+---
+
+## Paso 3.3 · Lógica de la Vista 1 copiada de DashboardLeads — 11/11/2026 ✅
+
+**Qué se hizo:** se creó `src/modulos/marketing/flujo-ventas-v2/` con copias de
+`InnovAIgt/DashboardLeads` (carpeta `Dashboard-Leds/src/`). Cada archivo empieza con el
+comentario `// Copiado de InnovAIgt/DashboardLeads (<ruta original>)`.
+
+| Carpeta | Archivos |
+|---|---|
+| `utils/` | `leads.js`, `analytics.js`, `dates.js` |
+| `types/` | `lead.js` |
+| `hooks/` | `useLeads.js`, `useFilters.js` |
+| `context/` | `FiltersProvider.jsx`, `filtersContext.js` |
+| `services/` | `api.js` |
+| `components/` | `AdvisorDrawer.jsx`, `KpiGrid.jsx`, `LeadDetailModal.jsx`, `LeadTable.jsx`, `MonthDetailModal.jsx`, `charts.jsx`, `ui.jsx`, `FilterBar.jsx` |
+| `views/` | `AnalyticsView.jsx` |
+
+**Únicos cambios respecto al original:**
+- `services/api.js`: la ruta pasa de `/api/metrics/reuniones` a `/api/marketing/reuniones`.
+- `components/FilterBar.jsx`: es nuevo porque en DashboardLeads la barra de filtros vive
+  dentro de `DashboardHome.jsx`, junto con la Vista 2 y el modo demo. Se copiaron sin
+  cambios solo sus piezas (`MONTH_TO_DAY_KEYS`, `MultiSelect`, `MonthToDayFilter`,
+  `FilterBar`), con los imports que usan y un `export` al final.
+
+**No se trajo:** la Vista 2 (`FollowUpView.jsx`), el modo demo (`demoData.js`), el logo ni
+`DashboardHome.jsx`.
+
+**Pruebas hechas:**
+
+| Prueba | Resultado |
+|---|---|
+| Las 17 copias son idénticas al original (salvo la ruta de `api.js`) | ✅ |
+| El bloque copiado en `FilterBar.jsx` es idéntico al de `DashboardHome.jsx` | ✅ |
+| La lógica copiada carga los datos reales (local) | ✅ 1,687 leads, sin ids repetidos |
+| El nombre del cliente llega a la lógica | ✅ 1,686 de 1,687 (1 viene sin nombre) |
+| Calificados + no calificados + sin clasificar = total | ✅ 292 + 1,395 + 0 = 1,687 |
+| Suma por país = total | ✅ GT 902 + SV 785 = 1,687 |
+| Suma por mes = total | ✅ 8 meses (abr a nov 2026) = 1,687 |
+| Suma por asesor = total | ✅ 15 asesores = 1,687 |
+| Partición de estados (en proceso + ganados + perdidos + inválidos) | ✅ 524 + 67 + 1,095 + 1 = 1,687 (diferencia 0) |
+
+**Avisos de calidad de datos** (los da la revisión de conciliación `calculateMetrics`; no
+cambian los totales):
+- 148 leads perdidos **sin motivo** de pérdida.
+- 9 leads con estado **abierto** en la API pero con resultado de venta **cerrado**; se
+  cuentan como abiertos.
+
+**Nota:** en DashboardLeads esa revisión de conciliación existe en la lógica, pero ninguna
+pantalla la usa ni muestra un aviso.
+
+**Qué no se tocó:** el portal (todavía no muestra este módulo), ningún dashboard existente,
+`src/index.css`, `package.json`, `vercel.json` ni Supabase.
