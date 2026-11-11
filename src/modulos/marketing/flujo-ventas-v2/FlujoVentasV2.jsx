@@ -1,68 +1,70 @@
-// Flujo de ventas v2 (prueba) · Vista 1 "Dashboard General" de InnovAIgt/DashboardLeads dentro del portal.
-// Basado en Dashboard-Leds/src/DashboardHome.jsx (DashboardContent) con la misma lógica, pero:
-//   - solo la Vista 1 (sin la Vista 2 de Seguimientos ni las pestañas),
-//   - sin modo demo y sin logo (el portal ya tiene su propio encabezado),
-//   - todo dentro del contenedor .fv2, que encierra los estilos (ver flujo-ventas-v2.css).
-// Documentación: docs/marketing/README.md
-import { useMemo } from 'react'
-import { RefreshCw, Users } from 'lucide-react'
-import { FilterBar } from './components/FilterBar.jsx'
-import { ErrorBanner, LoadingState } from './components/ui.jsx'
+// Flujo de ventas v2 (prueba) · pantalla principal dentro del portal.
+// Lógica (carga de datos, filtros y cálculos): copiada de InnovAIgt/DashboardLeads, en utils/,
+// hooks/, context/ y services/, sin cambios. Diseño visual propio basado en el dashboard de
+// Activaciones (ver pantalla/ y flujo-ventas-v2.css). Documentación: docs/marketing/README.md
+import { useMemo, useState } from 'react'
+import { Users } from 'lucide-react'
 import { FiltersProvider } from './context/FiltersProvider.jsx'
 import { useFilters } from './hooks/useFilters.js'
 import { useLeads } from './hooks/useLeads.js'
-import { applyFilters, FILTER_DEFS, summarize } from './utils/analytics.js'
-import { AnalyticsView } from './views/AnalyticsView.jsx'
+import { summarize } from './utils/analytics.js'
+import { AvisoError, Cargando, Vacio } from './pantalla/comunes.jsx'
+import { aplicarFiltros, hayFiltrosActivos, PERIODO_VACIO } from './pantalla/datos.js'
+import { BarraFiltros } from './pantalla/Filtros.jsx'
+import { VistaGeneral } from './pantalla/VistaGeneral.jsx'
 import './flujo-ventas-v2.css'
 
-const timeFormat = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
+const horaFormato = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
 
-function FlujoVentasV2Content() {
+function EstadoConexion({ cargando, error, actualizado }) {
+  if (error) return <div className="fv2-estado is-error">Sin conexión con Prospekt IA</div>
+  if (cargando && !actualizado) return <div className="fv2-estado is-cargando">Sincronizando…</div>
+  return <div className="fv2-estado">Actualizado: <b>{actualizado ? horaFormato.format(actualizado) : '—'}</b></div>
+}
+
+function FlujoVentasV2Contenido() {
   const api = useLeads()
   const { leads, loading, error } = api
   const filters = useFilters()
+  const [periodo, setPeriodo] = useState(PERIODO_VACIO)
 
-  const filtered = useMemo(() => applyFilters(leads, filters), [leads, filters])
-  const summary = useMemo(() => summarize(filtered), [filtered])
+  const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
+  const summary = useMemo(() => summarize(filtrados), [filtrados])
+  const restablecer = () => {
+    filters.clearFilters()
+    setPeriodo(PERIODO_VACIO)
+  }
 
-  return <div className="min-h-screen bg-canvas text-ink">
-    <header className="border-b border-line bg-surface">
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold tracking-tight">Flujo de ventas v2 (prueba)</h1>
-          <p className="truncate text-xs text-muted">Dashboard general · Guatemala y El Salvador</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={`badge ${error ? 'badge-bad' : loading ? 'badge-neutral' : 'badge-good'}`}>
-            <i className="status-dot" />{error ? 'API sin conexión' : loading ? 'Sincronizando…' : 'API conectada'}
-          </span>
-          {api.lastUpdated && <span className="hidden text-muted sm:inline">Actualizado {timeFormat.format(api.lastUpdated)}</span>}
-          <button type="button" className="btn btn-ghost" onClick={api.reload} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Actualizar
-          </button>
-        </div>
+  return <div className="fv2-pagina">
+    <header className="fv2-encabezado">
+      <div>
+        <div className="fv2-eyebrow">Marketing · Flujo de ventas</div>
+        <h1 className="fv2-titulo">Flujo de ventas <span className="fv2-etiqueta-prueba">v2 · prueba</span></h1>
+        <p className="fv2-subtitulo">Cómo avanzan los leads asignados a cada ejecutivo, de la asignación al cierre · Guatemala y El Salvador.</p>
       </div>
+      <EstadoConexion cargando={loading} error={error} actualizado={api.lastUpdated} />
     </header>
 
-    {leads.length > 0 && <FilterBar leads={leads} filters={filters} filteredCount={filtered.length} />}
+    {leads.length > 0 && <BarraFiltros
+      leads={leads}
+      filters={filters}
+      periodo={periodo}
+      onPeriodo={setPeriodo}
+      onRestablecer={restablecer}
+      filtrados={filtrados.length}
+      cargando={loading}
+      onActualizar={api.reload}
+    />}
 
-    <main className="mx-auto grid max-w-[1440px] gap-4 px-4 py-5 sm:px-6">
-      {error && <ErrorBanner message={error} onRetry={api.reload} />}
-      {loading && !leads.length && <LoadingState />}
-      {leads.length > 0 && <AnalyticsView leads={filtered} summary={summary} showAllFunnel={FILTER_DEFS.every((def) => filters[def.key] == null)} />}
-      {!loading && !error && !leads.length && <div className="card grid place-items-center gap-1 py-12 text-center text-sm text-muted">
-        <Users size={22} /><strong className="text-ink">La API no devolvió leads.</strong><span>Revisa la conexión e inténtalo de nuevo.</span>
-      </div>}
-      <footer className="flex flex-wrap justify-between gap-2 border-t border-line pt-4 text-xs text-muted">
-        <span>Fuente: Prospekt IA · lógica de InnovAIgt/DashboardLeads</span>
-        <span>Actualización automática cada 2 horas</span>
-      </footer>
-    </main>
+    {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
+    {loading && !leads.length && <Cargando />}
+    {leads.length > 0 && <VistaGeneral leads={filtrados} summary={summary} showAllFunnel={!hayFiltrosActivos(filters, periodo)} />}
+    {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}
   </div>
 }
 
 export function FlujoVentasV2() {
   return <div className="fv2">
-    <FiltersProvider><FlujoVentasV2Content /></FiltersProvider>
+    <FiltersProvider><FlujoVentasV2Contenido /></FiltersProvider>
   </div>
 }

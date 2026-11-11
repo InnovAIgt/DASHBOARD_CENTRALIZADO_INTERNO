@@ -55,3 +55,14 @@ el servidor (`server/marketingReuniones.js`) antes de responder, así nunca lleg
 navegador.
 **Por qué:** no enviar datos personales que la pantalla no necesita.
 **Pendiente:** agregar login para proteger los datos de clientes.
+
+## D9 · 11/11/2026 · Lógica de DashboardLeads, diseño propio
+
+**Decisión:** la v2 usa la lógica de DashboardLeads con diseño visual propio basado en el
+estilo del dashboard de Activaciones (sin modificar Activaciones).
+**Cómo:** la lógica copiada (`utils/`, `types/`, `hooks/`, `context/`, `services/`) no se
+toca; las pantallas copiadas de DashboardLeads se reemplazaron por pantallas propias
+(`pantalla/`). Los estilos de Activaciones se copiaron a `flujo-ventas-v2.css` con nombres
+propios (`fv2-`), encerrados para no afectar al resto del portal.
+**Por qué:** que la v2 se vea como parte del portal (tema oscuro, mismos colores y
+componentes que Activaciones) y que no se confunda con DashboardLeads.

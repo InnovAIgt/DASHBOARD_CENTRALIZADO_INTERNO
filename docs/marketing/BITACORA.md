@@ -214,3 +214,70 @@ login para proteger los datos de clientes). No se cambió.
 
 **Qué no se tocó:** `flujo-ventas.html` y su entrada del menú, los demás dashboards,
 `src/index.css`, `package.json`, `vercel.json` ni Supabase.
+
+---
+
+## Paso 3.4b · Rediseño visual con el estilo de Activaciones — 11/11/2026 ✅ (pendiente revisión visual)
+
+**Qué se hizo:**
+- **Diseño:** tema oscuro con los colores de Activaciones (verde `#2f8f76`, amarillo
+  `#c59600`, rojo `#c43c50`, azul `#4f8fd8`, fondo `#151821`, texto `#e8eaf0` / `#8b909e`),
+  sus tarjetas de indicadores, paneles de gráficas, píldoras, tablas y ventanas. Los estilos
+  se **copiaron** a `flujo-ventas-v2.css` con nombres propios (`fv2-`); Activaciones no se
+  modificó. Ya no se usan los estilos claros de DashboardLeads.
+- **Textos propios:** título, subtítulos y "Ganados" en lugar de "Radicados" en toda la
+  pantalla. Se quitó de la pantalla toda mención a DashboardLeads (quedan solo en
+  comentarios del código y en esta documentación).
+- **Indicadores (6, en este orden):** Total leads, Calificados, Ganados (con la conversión
+  general ganados ÷ total como nota), Conversión de calificados (`qualifiedConversion` de
+  `summarize`), Unidades vendidas y Unidades por cierre. No se creó ninguna fórmula nueva.
+- **Filtros (estilo Activaciones):** País con banderas (Todos / GT / SV); Período
+  desde–hasta sobre la fecha de referencia del lead (`leadReferenceDate`: fecha de cierre si
+  es ganado, si no fecha de creación), que reemplaza a "Month to day"; botón "Filtros" con
+  panel de 2 columnas (Asesor / Ejecutivo y Tipo de lead) con buscador, casillas, "Limpiar
+  todo" y "Aplicar"; botón "Volver a filtros por defecto". Por defecto: todos los países y
+  sin límite de período (abrir en el mes actual queda para el Paso 4).
+- **Gráficas nuevas con los mismos datos:** líneas por mes con área tenue, guías suaves y
+  línea guía con recuadro de detalle al pasar el cursor; tarjetas por país con bandera,
+  conversión y barras de leads, **calificados**, ganados y unidades; top 10 ejecutivos con
+  barras horizontales; embudo por mes en tarjetas (leads → calificados → ganados).
+- **Ventanas de detalle** (ejecutivo, mes y lead) en tema oscuro, con el nombre del cliente.
+  Ahora quedan por encima del menú lateral del portal.
+
+**Archivos:**
+- Nuevos en `src/modulos/marketing/flujo-ventas-v2/pantalla/`: `datos.js`, `comunes.jsx`,
+  `Filtros.jsx`, `graficas.jsx`, `Tablas.jsx`, `Ventanas.jsx`, `VistaGeneral.jsx`.
+- Reescritos: `FlujoVentasV2.jsx` y `flujo-ventas-v2.css`.
+- **Borrados** (pantallas copiadas de DashboardLeads que ya no se usan; Git conserva el
+  historial): `components/AdvisorDrawer.jsx`, `components/FilterBar.jsx`,
+  `components/KpiGrid.jsx`, `components/LeadDetailModal.jsx`, `components/LeadTable.jsx`,
+  `components/MonthDetailModal.jsx`, `components/charts.jsx`, `components/ui.jsx` y
+  `views/AnalyticsView.jsx`.
+- **Sin cambios:** la lógica (`utils/`, `types/`, `hooks/`, `context/`, `services/`). Las
+  agrupaciones que vivían dentro de las pantallas borradas (por ejemplo, ejecutivos por país,
+  top 10 y embudo por mes) se movieron **tal cual** a `pantalla/datos.js`, con un comentario
+  que indica de qué archivo y líneas salieron.
+
+**Pruebas hechas:**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Lógica copiada (`applyFilters`) y pantalla nueva (`aplicarFiltros`) dan resultados idénticos | ✅ |
+| Cifras con los datos reales (ver nota) | ✅ 1,690 leads · 293 calificados · 67 ganados · 325 unidades |
+| Sumas por país, por mes, por ejecutivo, embudo "Todos" y resúmenes mensuales = total | ✅ |
+| País: GT + SV = total | ✅ 902 + 788 |
+| Período: la suma de cada mes por separado = total; 01/11–11/11 = mes de noviembre | ✅ |
+| Tipo de lead = calificado → igual a "Calificados" | ✅ |
+| Hoja de estilos del portal: 242 reglas nuevas, todas dentro de `.fv2` / `.fv2-ventana`; animaciones con prefijo `fv2-`; ningún valor existente cambió | ✅ |
+| Archivos de Activaciones y otros dashboards sin cambios (`git status`) | ✅ |
+| Revisión en pantalla | ⏳ pendiente (la hace Keily) |
+
+**Nota sobre las cifras:** en el paso 3.3 la API entregaba 1,687 leads (292 calificados). Al
+probar este paso entrega **1,690** (293 calificados): entraron leads nuevos el 11/11/2026. La
+lógica copiada sin cambios da exactamente las mismas cifras que la pantalla nueva; ganados
+(67) y unidades (325) no cambiaron.
+
+**Qué no se tocó:** `public/dashboards/activaciones/activaciones.html`,
+`public/assets/css/activaciones.css`, `estandar.css`, el Flujo de ventas viejo, los demás
+dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json` ni `vercel.json`.
