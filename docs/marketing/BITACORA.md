@@ -278,6 +278,26 @@ probar este paso entrega **1,690** (293 calificados): entraron leads nuevos el 1
 lógica copiada sin cambios da exactamente las mismas cifras que la pantalla nueva; ganados
 (67) y unidades (325) no cambiaron.
 
+**Ajuste de orden (11/11/2026):** las tarjetas por país (Guatemala / El Salvador) se movieron
+**hasta arriba**, justo debajo de la barra de filtros y antes de los 6 indicadores, como en
+los demás dashboards del centralizado. Cada tarjeta muestra bandera, nombre del país, Total
+leads, Calificados, Ganados, Conversión de calificados y Unidades por cierre (de
+`byCountry`, que usa `summarize` por país; sin fórmulas nuevas) y respeta los filtros activos.
+La gráfica mensual ahora ocupa todo el ancho.
+
+| Prueba del ajuste | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Sin filtros: GT + SV = indicadores (total, calificados y ganados) | ✅ |
+| País = GT: la tarjeta de SV queda en 0 y la de GT = indicadores | ✅ |
+| Tipo = calificado y Período 01/10–31/10: GT + SV = indicadores | ✅ |
+
+**Observación para el Paso 4 (no se cambió):** la "Conversión de calificados" de la lógica
+copiada (`qualifiedConversion` = ganados ÷ calificados) cuenta en "ganados" **todos** los
+ganados, también los que vienen de leads no calificados. Por eso, al filtrar Tipo =
+calificado, el porcentaje baja (por ejemplo, Guatemala pasa de 18.4 % a 12.3 %). Conviene
+confirmar con el ingeniero si debe contar solo los ganados calificados.
+
 **Qué no se tocó:** `public/dashboards/activaciones/activaciones.html`,
 `public/assets/css/activaciones.css`, `estandar.css`, el Flujo de ventas viejo, los demás
 dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json` ni `vercel.json`.

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { formatNumber, formatPercent } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
 import { datosVistaGeneral } from './datos.js'
-import { ComparativaPaises, EmbudoMes, Leyenda, TendenciaMensual, TopEjecutivos } from './graficas.jsx'
+import { EmbudoMes, Leyenda, TarjetasPais, TendenciaMensual, TopEjecutivos } from './graficas.jsx'
 import { ResumenAsesores, ResumenMensual } from './Tablas.jsx'
 import { DetalleAsesor, DetalleMes } from './Ventanas.jsx'
 
@@ -59,16 +59,13 @@ export function VistaGeneral({ leads, summary, showAllFunnel }) {
   const abrirAsesor = (name, country) => setAsesorSel({ name, country, leads, month: null })
 
   return <div className="fv2-vista">
+    <TarjetasPais paises={datos.countries} />
+
     <Indicadores summary={summary} />
 
-    <div className="fv2-fila-graficas">
-      <Panel titulo="Leads, ganados y unidades por mes" subtitulo="Pasa el cursor sobre un mes para ver el detalle. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación." accion={<Leyenda items={SERIES} />}>
-        {datos.months.length ? <TendenciaMensual filas={datos.months} series={SERIES} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
-      </Panel>
-      <Panel titulo="Guatemala vs. El Salvador" subtitulo="Leads, calificados, ganados y unidades por país">
-        <ComparativaPaises paises={datos.countries} />
-      </Panel>
-    </div>
+    <Panel titulo="Leads, ganados y unidades por mes" subtitulo="Pasa el cursor sobre un mes para ver el detalle. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación." accion={<Leyenda items={SERIES} />}>
+      {datos.months.length ? <TendenciaMensual filas={datos.months} series={SERIES} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
+    </Panel>
 
     <Panel titulo="Top 10 ejecutivos por ganados" subtitulo="Ganados / total de leads de cada ejecutivo. Haz clic en un nombre para ver su detalle." accion={<Leyenda items={[{ label: 'Total leads', color: COLORES.azul }, { label: 'Ganados', color: COLORES.verde }]} />}>
       {datos.topGanados.length

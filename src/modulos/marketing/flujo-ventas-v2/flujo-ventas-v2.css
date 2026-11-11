@@ -179,7 +179,6 @@
   .fv2-panel-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--fv2-borde); }
   .fv2-panel-titulo { font-size: 14px; font-weight: 800; color: #fff; }
   .fv2-panel-sub { margin-top: 2px; font-size: 11px; color: var(--fv2-tenue); }
-  .fv2-fila-graficas { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
   .fv2-leyenda { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; font-weight: 700; }
   .fv2-leyenda em { font-style: normal; }
 
@@ -203,18 +202,23 @@
   .fv2-carril { display: block; width: 100%; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, .07); }
   .fv2-relleno { display: block; height: 100%; border-radius: inherit; transition: width .8s cubic-bezier(.2, .75, .2, 1); }
 
-  /* Comparativa por país */
-  .fv2-paises { display: grid; gap: 14px; }
-  .fv2-pais-tarjeta { display: grid; gap: 10px; padding: 16px 20px; background: rgba(26, 29, 39, .85); border: 1px solid var(--fv2-borde); border-radius: 16px; }
+  /* Tarjetas por país (country-sla-card de Activaciones), arriba de los indicadores */
+  .fv2-paises { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .fv2-pais-tarjeta {
+    display: grid; gap: 12px; padding: 16px 20px; background: rgba(26, 29, 39, .85); border: 1px solid var(--fv2-borde);
+    border-radius: 16px; transition: transform .2s cubic-bezier(.16, 1, .3, 1), border-color .2s;
+  }
+  .fv2-pais-tarjeta:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, .2); }
   .fv2-pais-tarjeta > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-  .fv2-pais-nombre { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 900; letter-spacing: .02em; color: #fff; }
-  .fv2-pais-tarjeta > header small { display: block; margin-top: 3px; font-size: 11px; color: var(--fv2-tenue); }
+  .fv2-pais-nombre { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 900; letter-spacing: .02em; color: #fff; }
+  .fv2-pais-nombre .fv2-bandera { width: 28px; height: 20px; }
   .fv2-pais-pct { text-align: right; }
-  .fv2-pais-pct strong { display: block; font-family: var(--fv2-mono); font-size: 26px; font-weight: 900; line-height: 1; color: var(--fv2-verde); }
-  .fv2-pais-pct small { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--fv2-tenue); }
-  .fv2-pais-metricas { display: grid; gap: 7px; }
-  .fv2-pais-metrica { display: grid; grid-template-columns: 6.5rem 1fr 3.2rem; align-items: center; gap: 10px; font-size: 11px; color: var(--fv2-tenue); }
-  .fv2-pais-metrica b { font-family: var(--fv2-mono); text-align: right; color: #fff; }
+  .fv2-pais-pct strong { display: block; font-family: var(--fv2-mono); font-size: 28px; font-weight: 900; line-height: 1; color: var(--fv2-verde); }
+  .fv2-pais-pct small { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--fv2-tenue); }
+  .fv2-pais-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .fv2-pais-datos > div { min-width: 0; padding: 8px 10px; background: rgba(15, 17, 23, .55); border: 1px solid var(--fv2-borde); border-radius: 10px; }
+  .fv2-pais-datos span { display: block; overflow: hidden; font-size: 10px; font-weight: 800; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; color: var(--fv2-tenue); }
+  .fv2-pais-datos b { font-family: var(--fv2-mono); font-size: 18px; font-weight: 900; color: #fff; }
 
   /* Ranking de ejecutivos */
   .fv2-ranking { display: grid; gap: 4px; }
@@ -374,12 +378,12 @@
     .fv2-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 1100px) {
-    .fv2-fila-graficas, .fv2-dos-columnas { grid-template-columns: 1fr; }
+    .fv2-paises, .fv2-dos-columnas { grid-template-columns: 1fr; }
     .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 700px) {
     .fv2-pagina { padding: 16px; }
-    .fv2-kpis, .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fv2-kpis, .fv2-pais-datos, .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fv2-xf-grid { grid-template-columns: 1fr; }
     .fv2-filtros-total { margin-left: 0; }
     .fv2-ranking-fila { grid-template-columns: 1.6rem minmax(0, 7rem) 1fr auto; }

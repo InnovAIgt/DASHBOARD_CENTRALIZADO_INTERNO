@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { formatNumber, formatPercent, monthLabel } from '../utils/analytics.js'
-import { Bandera, CODIGO_PAIS, COLORES } from './comunes.jsx'
+import { Bandera, CODIGO_PAIS, COLORES, formatearRatio } from './comunes.jsx'
 
 export function Leyenda({ items }) {
   return <div className="fv2-leyenda">
@@ -101,43 +101,27 @@ export function TendenciaMensual({ filas, series }) {
   </div>
 }
 
-// ---------- Comparativa por país ----------
-const METRICAS_PAIS = [
-  { key: 'total', label: 'Leads' },
-  { key: 'qualified', label: 'Calificados' },
-  { key: 'won', label: 'Ganados' },
-  { key: 'units', label: 'Unidades' },
-]
-
-export function ComparativaPaises({ paises }) {
-  return <div className="fv2-paises">
-    {paises.map((fila) => {
-      const conversion = fila.total ? fila.won / fila.total : 0
-      return <article key={fila.country} className="fv2-pais-tarjeta">
-        <header>
-          <div>
-            <div className="fv2-pais-nombre"><Bandera pais={fila.country} />{fila.country.toUpperCase()} ({CODIGO_PAIS[fila.country]})</div>
-            <small>{formatNumber(fila.total)} leads · {fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'} u/cierre</small>
-          </div>
-          <div className="fv2-pais-pct">
-            <strong>{formatPercent(fila.won, fila.total)}</strong>
-            <small>conversión</small>
-          </div>
-        </header>
-        <Medidor valor={conversion} max={1} color={COLORES.verde} alto={6} />
-        <div className="fv2-pais-metricas">
-          {METRICAS_PAIS.map((m) => {
-            const max = Math.max(1, ...paises.map((p) => p[m.key]))
-            return <div key={m.key} className="fv2-pais-metrica">
-              <span>{m.label}</span>
-              <Medidor valor={fila[m.key]} max={max} color={fila.country === 'Guatemala' ? COLORES.azul : COLORES.amarillo} />
-              <b>{formatNumber(fila[m.key])}</b>
-            </div>
-          })}
+// ---------- Tarjetas por país (arriba de los indicadores) ----------
+// Cifras de byCountry() = summarize() por país, con los filtros activos. Sin fórmulas nuevas.
+export function TarjetasPais({ paises }) {
+  return <section className="fv2-paises" aria-label="Resultados por país">
+    {paises.map((fila) => <article key={fila.country} className="fv2-pais-tarjeta">
+      <header>
+        <div className="fv2-pais-nombre"><Bandera pais={fila.country} />{fila.country.toUpperCase()} ({CODIGO_PAIS[fila.country]})</div>
+        <div className="fv2-pais-pct">
+          <strong>{formatearRatio(fila.qualifiedConversion)}</strong>
+          <small>Conversión de calificados</small>
         </div>
-      </article>
-    })}
-  </div>
+      </header>
+      <Medidor valor={fila.qualifiedConversion} max={1} color={COLORES.verde} alto={6} />
+      <div className="fv2-pais-datos">
+        <div><span>Total leads</span><b>{formatNumber(fila.total)}</b></div>
+        <div><span>Calificados</span><b style={{ color: COLORES.azulClaro }}>{formatNumber(fila.qualified)}</b></div>
+        <div><span>Ganados</span><b style={{ color: COLORES.verdeClaro }}>{formatNumber(fila.won)}</b></div>
+        <div><span>Unidades por cierre</span><b>{fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'}</b></div>
+      </div>
+    </article>)}
+  </section>
 }
 
 // ---------- Top ejecutivos: total de leads vs. ganados ----------
