@@ -1,6 +1,7 @@
 // Flujo de ventas v2 · gráficas (estilo de las de Activaciones: guías suaves, línea guía punteada
 // al pasar el cursor y recuadro de detalle). Las cifras vienen de pantalla/datos.js.
 import { useEffect, useRef, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { formatNumber, monthLabel } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS, COLORES, formatearRatio } from './comunes.jsx'
 import { tonoPaso } from './datos.js'
@@ -124,7 +125,13 @@ export function GraficaMensual({ filas, onMes }) {
 function DatoPais({ etiqueta, children, onClick }) {
   return <button type="button" className="fv2-pais-dato" onClick={onClick} title={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
     <span>{etiqueta}</span>{children}
+    <VerDetalle />
   </button>
+}
+
+/** Pista "Ver detalle ›" para que se note que el dato se puede cliquear. */
+function VerDetalle() {
+  return <em className="fv2-ver-detalle">Ver detalle<ChevronRight size={12} aria-hidden="true" /></em>
 }
 
 export function TarjetasPais({ paises, onAbrir }) {
@@ -137,6 +144,7 @@ export function TarjetasPais({ paises, onAbrir }) {
           <button type="button" className="fv2-pais-pct" onClick={abrir('conversion')} title="Ver el detalle de la conversión de calificados">
             <strong>{formatearRatio(fila.conversion.ratio)}</strong>
             <small>Conversión de calificados</small>
+            <VerDetalle />
           </button>
         </header>
         <Medidor valor={fila.conversion.ratio} max={1} color={COLORES.azul} alto={6} />

@@ -231,6 +231,12 @@
   .fv2-pais-pct small { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--fv2-tenue); }
   .fv2-pais-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
   .fv2-pais-dato { display: block; min-width: 0; padding: 8px 10px; text-align: left; background: rgba(15, 17, 23, .55); border: 1px solid var(--fv2-borde); border-radius: 10px; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+  .fv2-ver-detalle { display: flex; align-items: center; gap: 2px; margin-top: 4px; font-size: 10px; font-style: normal; font-weight: 800; color: var(--fv2-tenue); transition: color .15s; }
+  .fv2-ver-detalle svg { transition: transform .15s; }
+  .fv2-pais-pct .fv2-ver-detalle { justify-content: flex-end; }
+  .fv2-pais-dato:hover .fv2-ver-detalle, .fv2-pais-pct:hover .fv2-ver-detalle,
+  .fv2-pais-dato:focus-visible .fv2-ver-detalle, .fv2-pais-pct:focus-visible .fv2-ver-detalle { color: var(--fv2-azul-claro); }
+  .fv2-pais-dato:hover .fv2-ver-detalle svg, .fv2-pais-pct:hover .fv2-ver-detalle svg { transform: translateX(2px); }
   .fv2-pais-dato:hover, .fv2-pais-dato:focus-visible { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .22); outline: none; }
   .fv2-pais-datos span { display: block; overflow: hidden; font-size: 10px; font-weight: 800; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; color: var(--fv2-tenue); }
   .fv2-pais-datos b { font-family: var(--fv2-mono); font-size: 18px; font-weight: 900; color: #fff; }

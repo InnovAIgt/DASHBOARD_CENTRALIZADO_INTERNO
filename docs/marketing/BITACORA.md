@@ -680,3 +680,7 @@ Unidades por cierre) ahora se puede cliquear y abre el mismo "Detalle de leads" 
 tarjetas de indicadores quitadas, pero **solo con los leads de ese país** (título, por ejemplo,
 "Ganados · Guatemala"). Las cifras de la ventana salen de los mismos leads que la tarjeta.
 `npm run build` y `npm run lint` ✅.
+
+**Ajuste (12/11/2026) · pista "Ver detalle":** cada dato de las tarjetas por país (y el porcentaje
+de conversión) lleva abajo un texto pequeño "Ver detalle ›"; al pasar el mouse se pone azul y la
+flechita se mueve un poco. `npm run build` y `npm run lint` ✅.
