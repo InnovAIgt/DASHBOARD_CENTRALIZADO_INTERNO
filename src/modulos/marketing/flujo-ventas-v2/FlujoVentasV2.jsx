@@ -123,10 +123,6 @@ function FlujoVentasV2Contenido() {
       document.querySelectorAll('.dashboard-pdf-picker').forEach((el) => { if (!antes.has(el)) el.remove() })
     }
   }, [hayDatos])
-  const restablecer = () => {
-    aplicarPorDefecto()
-    setPeriodo(periodoPorDefecto())
-  }
   const aDMA = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
   const contexto = [
     filters.filterTipoLead == null ? 'Todos los tipos' : filters.filterTipoLead.map(qualificationLabel).join(', '),
@@ -154,7 +150,6 @@ function FlujoVentasV2Contenido() {
         filters={filters}
         periodo={periodo}
         onPeriodo={setPeriodo}
-        onRestablecer={restablecer}
         accion={<button type="button" className="dashboard-pdf-trigger" id={ID_BOTON_PDF} title="Descargar módulos del dashboard en PDF">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />

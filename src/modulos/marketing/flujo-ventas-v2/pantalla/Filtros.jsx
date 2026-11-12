@@ -2,10 +2,10 @@
 // País (Todos / GT / SV) · Período desde–hasta · panel "Filtros" (Asesor y Tipo de lead) ·
 // volver a filtros por defecto · actualizar.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarDays, ChevronDown, Filter, RotateCcw, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Filter, Search, X } from 'lucide-react'
 import { formatNumber } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS } from './comunes.jsx'
-import { conteosDeFiltro, FILTROS_DEL_PANEL, hayFiltrosActivos, opcionesDeFiltro, PAISES } from './datos.js'
+import { conteosDeFiltro, FILTROS_DEL_PANEL, opcionesDeFiltro, PAISES } from './datos.js'
 
 function BotonesPais({ filters }) {
   const seleccion = filters.filterPais
@@ -135,18 +135,15 @@ function PanelFiltros({ leads, filters, periodo }) {
   </div>
 }
 
-export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer, accion }) {
-  const hayFiltros = hayFiltrosActivos(filters, periodo)
+export function BarraFiltros({ leads, filters, periodo, onPeriodo, accion }) {
   return <section className="fv2-filtros-caja">
     <span className="fv2-filtros-eyebrow">Filtros</span>
     <div className="fv2-filtros-barra">
       <BotonesPais filters={filters} />
       <ControlPeriodo periodo={periodo} onCambiar={onPeriodo} />
       <PanelFiltros leads={leads} filters={filters} periodo={periodo} />
-      <button type="button" className="fv2-pildora" onClick={onRestablecer} disabled={!hayFiltros}>
-        <RotateCcw size={13} />Volver a filtros por defecto
-      </button>
-      {/* Botón PDF a la derecha (en el lugar del antiguo contador "N de M leads") */}
+      {/* Botón PDF a la derecha (en el lugar del antiguo contador "N de M leads").
+          "Volver a filtros por defecto" se quitó a pedido (12/11/2026). */}
       <span className="fv2-filtros-accion">{accion}</span>
     </div>
   </section>

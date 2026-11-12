@@ -657,3 +657,7 @@ no se incluye en el commit.
 barra de filtros (solo ocupaba espacio; el total de leads sigue en el indicador "Total leads" y en
 el chip "Leads" de la ventana del PDF). En ese lugar, a la derecha de la barra, queda ahora el
 botón rojo **PDF**. `npm run build` y `npm run lint` ✅.
+
+**Ajuste (12/11/2026) · se quitó "Volver a filtros por defecto":** el botón se eliminó de la
+barra de filtros a pedido. Los filtros por defecto (Calificado + mes actual) se siguen aplicando
+al abrir la v2; para volver a ellos basta recargar la página. `npm run build` y `npm run lint` ✅.
