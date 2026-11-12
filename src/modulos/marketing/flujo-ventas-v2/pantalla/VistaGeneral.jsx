@@ -1,6 +1,6 @@
 // Flujo de ventas v2 · vista general: tarjetas por país, indicadores, gráficas y tablas.
 import { useMemo, useState } from 'react'
-import { formatNumber, formatPercent } from '../utils/analytics.js'
+import { formatNumber } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
 import { conversionCalificados, datosVistaGeneral } from './datos.js'
 import { leadReferenceMonth } from '../utils/leads.js'
@@ -32,29 +32,16 @@ function Indicador({ etiqueta, valor, nota, color, onAbrir }) {
  * 6 indicadores. Las cifras salen de summarize() de la lógica copiada, salvo la conversión de
  * calificados y el desglose de ganados, que salen de conversionCalificados() (corregida, D10).
  */
+// Total leads, Calificados, Ganados y Unidades por cierre ya están en las tarjetas por país, así
+// que aquí solo quedan los que no se repiten (12/11/2026).
 function Indicadores({ summary, conversion, onAbrir }) {
   return <section className="fv2-kpis">
-    <Indicador etiqueta="Total leads" valor={formatNumber(summary.total)} nota={`${formatNumber(summary.open)} abiertos`} onAbrir={() => onAbrir('total')} />
-    <Indicador etiqueta="Calificados" valor={formatNumber(summary.qualified)} color={COLORES.azul} nota={`${formatNumber(summary.unqualified)} no calificados`} onAbrir={() => onAbrir('calificados')} />
-    <Indicador
-      etiqueta="Ganados"
-      valor={formatNumber(summary.won)}
-      color={COLORES.verde}
-      nota={<>{formatNumber(conversion.ganadosCalificados)} de leads calificados · {formatNumber(conversion.ganadosNoCalificados)} de no calificados<br />Conversión general {formatPercent(summary.won, summary.total)}</>}
-      onAbrir={() => onAbrir('ganados')}
-    />
     <Indicador etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.azulClaro} nota={`${formatNumber(conversion.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conversion.calificados)} calificados`} onAbrir={() => onAbrir('conversion')} />
     <Indicador etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} nota="En leads ganados" onAbrir={() => onAbrir('unidades')} />
-    <Indicador
-      etiqueta="Unidades por cierre"
-      valor={summary.won ? formatNumber(Math.round(summary.avgUnits)) : '—'}
-      nota={summary.won ? `${formatNumber(summary.units)} unidades ÷ ${formatNumber(summary.won)} ganados` : 'Sin ganados en la selección'}
-      onAbrir={() => onAbrir('porCierre')}
-    />
   </section>
 }
 
-// Pestaña Resumen (4.0b): tarjetas por país → 6 indicadores → "Leads por mes" → embudo por etapa.
+// Pestaña Resumen (4.0b): tarjetas por país → indicadores (Conversión y Unidades) → "Leads por mes" → embudo por etapa.
 // "Desempeño por ejecutivo", "Resultados por ejecutivo" y "Resultados mensuales" pasaron a la
 // pestaña Ejecutivos (tarjetas). El detalle mensual por país se abre desde la gráfica.
 export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {

@@ -667,3 +667,9 @@ proporción al ancho de la pantalla (con el menú lateral escondido quedaba enor
 columnas muy grandes). Ahora tiene **alto fijo de 240 px** y su ancho se ajusta al espacio
 disponible, así que textos, columnas y línea de ganados mantienen siempre un tamaño normal.
 Mismos datos y mismo recuadro al pasar el cursor. `npm run build` y `npm run lint` ✅.
+
+**Ajuste (12/11/2026) · sin indicadores repetidos:** en el Resumen se quitaron de la fila de
+indicadores **Total leads, Calificados, Ganados y Unidades por cierre**, porque ya aparecen dentro
+de las tarjetas por país. Quedan **Conversión de calificados** y **Unidades vendidas** (2 tarjetas,
+siguen abriendo su "Detalle de leads" al hacer clic). El PDF no cambia. `npm run build` y
+`npm run lint` ✅.
