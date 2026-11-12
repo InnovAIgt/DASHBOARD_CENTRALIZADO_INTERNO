@@ -652,3 +652,8 @@ historial y GT historial con la vista Perdidos; 34 comprobaciones):**
 **Qué no se tocó:** la lógica de cálculo, Activaciones, los archivos compartidos de PDF, el Flujo
 de ventas viejo, `src/index.css`, `package.json`, `vercel.json`, Supabase ni `main`. `.claude/`
 no se incluye en el commit.
+
+**Ajuste (12/11/2026) · botón PDF en lugar del contador:** se quitó el texto "N de M leads" de la
+barra de filtros (solo ocupaba espacio; el total de leads sigue en el indicador "Total leads" y en
+el chip "Leads" de la ventana del PDF). En ese lugar, a la derecha de la barra, queda ahora el
+botón rojo **PDF**. `npm run build` y `npm run lint` ✅.

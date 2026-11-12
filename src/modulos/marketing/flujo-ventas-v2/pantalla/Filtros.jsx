@@ -135,7 +135,7 @@ function PanelFiltros({ leads, filters, periodo }) {
   </div>
 }
 
-export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer, filtrados, accion }) {
+export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer, accion }) {
   const hayFiltros = hayFiltrosActivos(filters, periodo)
   return <section className="fv2-filtros-caja">
     <span className="fv2-filtros-eyebrow">Filtros</span>
@@ -146,8 +146,8 @@ export function BarraFiltros({ leads, filters, periodo, onPeriodo, onRestablecer
       <button type="button" className="fv2-pildora" onClick={onRestablecer} disabled={!hayFiltros}>
         <RotateCcw size={13} />Volver a filtros por defecto
       </button>
-      <span className="fv2-filtros-total"><b>{formatNumber(filtrados)}</b> de {formatNumber(leads.length)} leads</span>
-      {accion}
+      {/* Botón PDF a la derecha (en el lugar del antiguo contador "N de M leads") */}
+      <span className="fv2-filtros-accion">{accion}</span>
     </div>
   </section>
 }
