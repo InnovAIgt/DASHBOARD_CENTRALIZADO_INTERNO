@@ -540,3 +540,10 @@ entran leads no calificados; se ve al quitar el filtro de Tipo de lead.
 **Qué no se tocó:** la lógica copiada, Activaciones, el Flujo de ventas viejo, los demás
 dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json`, `vercel.json`, Supabase ni
 `main`. La carpeta `.claude/` no se incluye en el commit.
+
+**Ajuste (11/11/2026) · ejecutivos sin leads plegados:** para que "Desempeño por ejecutivo" no
+se alargue, los ejecutivos sin leads con los filtros actuales quedan **ocultos por defecto**.
+Al final de la lista aparece el botón "Ver N ejecutivos sin leads en el período", que los
+despliega (en gris, con 0) y cambia a "Ocultar N ejecutivos sin leads". Siguen contando en la
+lista completa del país; solo cambia que se muestran a pedido. `npm run build` y
+`npm run lint` ✅.

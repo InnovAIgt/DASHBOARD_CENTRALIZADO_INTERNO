@@ -245,6 +245,13 @@
   .fv2-desempeno-fila.is-cero:hover { background: transparent; border-color: transparent; }
   .fv2-desempeno-fila.is-cero .fv2-en-linea { font-size: 10.5px; color: var(--fv2-tenue); }
   .fv2-desempeno-barra.is-vacia { width: 100%; background: rgba(255, 255, 255, .04); }
+  .fv2-ver-cero {
+    display: inline-flex; align-items: center; gap: 6px; justify-self: start; margin-top: 6px; padding: 6px 12px;
+    border: 1px dashed var(--fv2-borde-fuerte); border-radius: 8px; background: transparent; font-size: 12px; font-weight: 600; color: var(--fv2-tenue);
+  }
+  .fv2-ver-cero:hover { border-color: rgba(255, 255, 255, .3); color: #fff; }
+  .fv2-ver-cero svg { transition: transform .2s ease; }
+  .fv2-ver-cero svg.is-abierto { transform: rotate(180deg); }
   .fv2-desempeno-venc { justify-self: end; }
   /* Rojo SOLO para lo vencido (D12) */
   .fv2-pildora-vencidos {

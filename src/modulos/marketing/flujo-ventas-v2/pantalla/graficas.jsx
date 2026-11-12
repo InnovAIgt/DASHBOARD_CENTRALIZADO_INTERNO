@@ -1,7 +1,7 @@
 // Flujo de ventas v2 · gráficas (estilo de las de Activaciones: guías suaves, línea guía punteada
 // al pasar el cursor y recuadro de detalle). Las cifras vienen de pantalla/datos.js.
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { formatNumber, monthLabel } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS, COLORES, formatearRatio, PaisChip } from './comunes.jsx'
 import { tonoPaso } from './datos.js'
@@ -139,10 +139,15 @@ export const LEYENDA_EJECUTIVOS = [
 ]
 
 export function DesempenoEjecutivos({ filas, onSeleccionar, onVencidos }) {
+  // Los ejecutivos sin leads van ocultos y se despliegan con un botón, para no alargar la gráfica.
+  const [verCero, setVerCero] = useState(false)
   const max = Math.max(1, ...filas.map((f) => f.total))
+  const enCero = filas.filter((f) => f.sinLeads).length
+  const visibles = verCero ? filas : filas.filter((f) => !f.sinLeads)
   return <div className="fv2-desempeno">
     <div className="fv2-desempeno-cabeza"><span>Ejecutivo</span><span>Leads por resultado</span><span>Leads</span><span>Conv. calif.</span><span>Vencidos</span></div>
-    {filas.map((fila, i) => {
+    {enCero > 0 && enCero === filas.length && !verCero && <p className="fv2-nota">Ningún ejecutivo tiene leads con los filtros actuales.</p>}
+    {visibles.map((fila, i) => {
       const partes = [
         { valor: fila.partes.ganadosCalificados, color: COLORES.verde, label: 'Ganados de calificados' },
         { valor: fila.partes.ganadosNoCalificados, color: VERDE_CLARO, label: 'Ganados de no calificados' },
@@ -188,6 +193,12 @@ export function DesempenoEjecutivos({ filas, onSeleccionar, onVencidos }) {
         <ChevronRight size={14} className="fv2-desempeno-flecha" />
       </div>
     })}
+    {enCero > 0 && <button type="button" className="fv2-ver-cero" aria-expanded={verCero} onClick={() => setVerCero((v) => !v)}>
+      <ChevronDown size={14} className={verCero ? 'is-abierto' : ''} />
+      {verCero
+        ? `Ocultar ${enCero} ${enCero === 1 ? 'ejecutivo' : 'ejecutivos'} sin leads`
+        : `Ver ${enCero} ${enCero === 1 ? 'ejecutivo' : 'ejecutivos'} sin leads en el período`}
+    </button>}
   </div>
 }
 
