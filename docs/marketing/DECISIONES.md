@@ -184,3 +184,38 @@ filas con nota). Las 54 columnas completas quedan en el Excel.
 **Colores:** en el contenido, rojo solo para lo vencido. El encabezado, la píldora y los acentos
 rojos son la marca de la plantilla compartida (D12).
 **Autorizó:** Keily García.
+
+## D16 · 12/11/2026 · Embudo por etapa rediseñado como "Recorrido de los leads"
+
+**Decisión:** la sección "Embudo de ventas por etapa" de la pestaña Resumen se reemplaza por
+**"Recorrido de los leads"**: 6 círculos (uno por etapa) unidos por una línea; sobre cada tramo,
+"−X · Y % pasa"; debajo de cada etapa, una tarjeta con los leads que llegaron, el % del total,
+cuántos esperan hoy ahí (en Cierre: "N ganados · M esperando aquí") y el "Mejor". Arriba, 3
+pastillas: entraron, en camino (todos los abiertos hoy, etapas 1 a 6) y cerrados (ganados). El
+mismo diseño, sin "Mejor" ni aviso, se usa en "Avance por etapa" de la ventana del ejecutivo, que
+ahora ocupa todo el ancho ("Ventas por mes" va debajo).
+**Por qué:** las tarjetas anteriores no comunicaban dónde se frena el embudo.
+**Números:** no se cambió ningún cálculo. Todo sale de `embudoEtapas()` (etapa real estimada,
+D13); la función nueva `recorridoLeads()` (`pantalla/datos.js`) solo los reorganiza. Los % se
+muestran como entero redondeando lo que muestra la ventana de detalle (53.8 % → 54 %).
+**Colores (mismos que la ventana de detalle, D12, sin rojo):** % de paso con `tonoPaso` /
+`LIMITES_PASO`: verde ≥ 75 % · gris 60–74 % · amarillo < 60 %.
+**Pocos datos:** si a la etapa de origen llegaron menos de 5 leads, el tramo va punteado, en gris
+tenue y dice "−X · pocos datos".
+**Dónde se frena:** el tramo con menor % de paso entre los que tienen al menos 5 leads en la etapa
+de origen (más grueso y con halo amarillo; la etapa destino va en amarillo y aparece el aviso
+"Atención: el recorrido se frena entre A y B"). La ventana de detalle de etapa recibe este mismo
+resaltado (se le pasa el dato; su código no cambió). Antes la ventana resaltaba la etapa con
+menor % de entrada sin mínimo de leads. En la ventana del ejecutivo, el tramo resaltado es su
+punto débil (misma regla, D14).
+**Mejor:** exactamente la regla actual de la ventana de detalle (D13): mayor % de paso a la
+siguiente etapa, mínimo 5 leads, incluida Cierre (% que se ganó). Si nadie llega a 5 leads:
+"Mejor: pocos datos". No se agregó la condición de "más de un ejecutivo", para que siempre
+coincida con la ventana.
+**Clic:** en el Resumen abre la ventana de detalle de etapa que ya existía, con los filtros
+activos. En la ventana del ejecutivo, el clic sigue filtrando "Leads del ejecutivo" a los que
+están hoy en esa etapa.
+**Responsive:** por debajo de 900 px el recorrido pasa a vertical (sin desplazamiento horizontal).
+**Pendiente:** la tabla del embudo del PDF (`pantalla/pdf.js`) todavía resalta con la regla
+anterior.
+**Autorizó:** Keily García.

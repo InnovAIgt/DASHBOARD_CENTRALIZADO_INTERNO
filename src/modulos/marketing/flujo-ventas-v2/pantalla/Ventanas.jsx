@@ -10,11 +10,12 @@ import { leadDisplayId } from '../utils/leads.js'
 import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, MiniEtapas, PaisChip } from './comunes.jsx'
 import {
   datosAsesor, datosLead, datosMes, ejecutivosEnEtapa, embudoEtapas, esVencido, estaHoy, ETAPAS, fechaReferencia, iniciales,
-  INDICADORES, leadsDeIndicador, mesesDelPeriodo, mesesEnEtapa, puntoDebil, tonoPaso, ventasPorMes,
+  INDICADORES, leadsDeIndicador, mesesDelPeriodo, mesesEnEtapa, puntoDebil, recorridoLeads, tonoPaso, ventasPorMes,
 } from './datos.js'
 import { diasDesdeCreacion } from './informeDatos.js'
 import { Semaforo } from './Semaforo.jsx'
-import { BarritasMes, EmbudoEtapas } from './graficas.jsx'
+import { BarritasMes } from './graficas.jsx'
+import { RecorridoLeads } from './RecorridoLeads.jsx'
 import { NombreLead, Tabla, TablaLeads } from './Tablas.jsx'
 
 function Ventana({ capa, etiqueta, ancho = 'normal', onCerrar, children }) {
@@ -148,7 +149,7 @@ export function DetalleAsesor({ name, country, leads, month, posicion, equipo, o
   const listaLeads = [...own]
     .filter((l) => (etapaFiltro ? estaHoy(l, etapaFiltro) : pestana.filtro(l)))
     .sort((a, b) => b.apiStage - a.apiStage)
-  const embudoVista = { etapas: embudo.etapas.map((e) => ({ ...e, mejor: null })), mayorCaida: debil?.stage ?? null }
+  const recorrido = useMemo(() => recorridoLeads(embudo), [embudo])
 
   return <>
     <Ventana capa={0} etiqueta={`Detalle de ${name}`} ancho="ancha" onCerrar={onClose}>
@@ -190,8 +191,11 @@ export function DetalleAsesor({ name, country, leads, month, posicion, equipo, o
 
         <div className="fv2-ejec-bloques">
           <section className="fv2-bloque">
-            <h3>Avance por etapa <small>llegaron · % que pasó · están hoy</small></h3>
-            <EmbudoEtapas embudo={embudoVista} onEtapa={(k) => setEtapaFiltro(k)} />
+            <h3>Avance por etapa <small>llegaron · % que pasa · esperando hoy</small></h3>
+            {/* Mismo "Recorrido de los leads" (D16) con los leads de este ejecutivo, sin "Mejor" ni aviso.
+                El tramo resaltado es su punto débil (misma regla: menor % con al menos 5 leads).
+                Clic en una etapa: filtra "Leads del ejecutivo" a los que están hoy en ella (como antes). */}
+            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarAviso={false} onClickEtapa={(k) => setEtapaFiltro(k)} />
             <p className="fv2-nota">
               {debil
                 ? <>Su punto débil: <b className="fv2-texto-amarillo">{debil.label}</b> (pasa {formatearRatio(debil.ratio)}{debil.equipo != null ? `, el equipo pasa ${formatearRatio(debil.equipo)}` : ''}). </>

@@ -2,9 +2,10 @@
 import { useMemo, useState } from 'react'
 import { formatNumber } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
-import { conversionCalificados, datosVistaGeneral, INDICADORES } from './datos.js'
+import { conversionCalificados, datosVistaGeneral, INDICADORES, recorridoLeads } from './datos.js'
 import { leadReferenceMonth } from '../utils/leads.js'
-import { EmbudoEtapas, GraficaMensual, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
+import { GraficaMensual, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
+import { RecorridoLeads } from './RecorridoLeads.jsx'
 import { DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
 function Panel({ titulo, subtitulo, accion, className = '', children }) {
@@ -41,7 +42,7 @@ function Indicadores({ summary, conversion, onAbrir }) {
   </section>
 }
 
-// Pestaña Resumen (4.0b): tarjetas por país → indicadores (Conversión y Unidades) → "Leads por mes" → embudo por etapa.
+// Pestaña Resumen (4.0b): tarjetas por país → indicadores (Conversión y Unidades) → "Leads por mes" → "Recorrido de los leads".
 // "Desempeño por ejecutivo", "Resultados por ejecutivo" y "Resultados mensuales" pasaron a la
 // pestaña Ejecutivos (tarjetas). El detalle mensual por país se abre desde la gráfica.
 export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {
@@ -50,6 +51,10 @@ export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {
   const [etapaSel, setEtapaSel] = useState(null)
   const datos = useMemo(() => datosVistaGeneral(leads), [leads])
   const conversion = useMemo(() => conversionCalificados(leads), [leads])
+  const recorrido = useMemo(() => recorridoLeads(datos.embudo), [datos.embudo])
+  // Decisión A (D16): la ventana de etapa recibe el mismo resaltado amarillo que el recorrido
+  // (menor % de paso con al menos 5 leads), sin cambiar su código: solo se le pasa otro mayorCaida.
+  const embudoVentana = useMemo(() => ({ ...datos.embudo, mayorCaida: recorrido.frenado?.hasta ?? null }), [datos.embudo, recorrido])
   // Detalle mensual de un mes de la gráfica, con el filtro de país actual (Todos, GT o SV).
   const abrirMes = (fila) => setMesSel({ month: fila.month, country: paisFiltro, leads: leads.filter((l) => leadReferenceMonth(l) === fila.month) })
 
@@ -66,18 +71,15 @@ export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {
       {datos.months.length ? <GraficaMensual filas={datos.months} onMes={abrirMes} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
     </Panel>
 
-    <Panel titulo="Embudo de ventas por etapa" subtitulo="Leads que llegaron a cada etapa y % que pasó desde la anterior. La etapa con la mayor caída va en amarillo. Haz clic en una etapa para ver su detalle.">
+    {/* "Recorrido de los leads" (D16): reemplaza al diseño anterior del embudo por etapa. */}
+    <section className="fv2-panel">
       {leads.length
-        ? <EmbudoEtapas embudo={datos.embudo} onEtapa={setEtapaSel} />
+        ? <RecorridoLeads recorrido={recorrido} titulo="Recorrido de los leads" subtitulo="Así avanzan los leads calificados por las 6 etapas de venta" onClickEtapa={setEtapaSel} />
         : <Vacio titulo="Sin leads con los filtros actuales" />}
-      <p className="fv2-nota fv2-nota-pie">
-        Etapa estimada: los leads perdidos se ubican en la última etapa con datos registrados por el vendedor.
-        "Mejor" = ejecutivo con mayor % de paso de esa etapa a la siguiente (mínimo 5 leads; en Cierre, % que se ganó).
-      </p>
-    </Panel>
+    </section>
 
     {indicadorSel && <DetalleLeads {...indicadorSel} onClose={() => setIndicadorSel(null)} />}
-    {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leads} embudo={datos.embudo} contexto={contexto} onClose={() => setEtapaSel(null)} />}
+    {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leads} embudo={embudoVentana} contexto={contexto} onClose={() => setEtapaSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
   </div>
 }

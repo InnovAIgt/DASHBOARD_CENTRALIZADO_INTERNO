@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { formatNumber, monthLabel } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS, COLORES, formatearRatio } from './comunes.jsx'
-import { tonoPaso } from './datos.js'
 
 export const GRIS = '#5b6170'
 
@@ -178,33 +177,5 @@ export function BarritasMes({ meses, onMes, apagado }) {
       </span>
       <small>{monthLabel(m.month)}</small>
     </button>)}
-  </div>
-}
-
-// ---------- Embudo de ventas por etapa (6 cuadritos, estilo rastreo de pedido) ----------
-// Reemplaza al "Embudo por mes" (4.0). Etapa real estimada: ver embudoEtapas en datos.js (D13).
-// Colores (D12): % de paso con tonoPaso; la etapa con la mayor caída va en amarillo.
-export function EmbudoEtapas({ embudo, onEtapa }) {
-  const { etapas, mayorCaida } = embudo
-  return <div className="fv2-rastreo">
-    <div className="fv2-rastreo-linea" aria-hidden="true" />
-    <div className="fv2-rastreo-etapas">
-      {etapas.map((e) => {
-        const caida = e.stage === mayorCaida
-        const tono = e.entrada == null ? 'azul' : caida ? 'amarillo' : tonoPaso(e.entrada)
-        return <button type="button" key={e.stage} className={`fv2-etapa-cuadrito ${caida ? 'is-caida' : ''}`} onClick={() => onEtapa(e.stage)} title={`Ver el detalle de ${e.label}`}>
-          <span className={`fv2-etapa-circulo is-${tono}`}>{e.stage}</span>
-          <span className="fv2-etapa-caja">
-            <strong className="fv2-etapa-titulo">{e.label}</strong>
-            <span className="fv2-etapa-numero">{formatNumber(e.llegaron)}</span>
-            {e.entrada == null
-              ? <span className="fv2-insignia is-neutro">inicio</span>
-              : <span className={`fv2-insignia is-${caida ? 'amarillo' : tonoPaso(e.entrada)}`} title="% que llegó desde la etapa anterior">pasó {formatearRatio(e.entrada)}</span>}
-            <small>{formatNumber(e.hoy)} {e.hoy === 1 ? 'está' : 'están'} hoy aquí</small>
-            {e.mejor && <span className="fv2-etapa-mejor" title="Mayor % de paso a la siguiente etapa (mínimo 5 leads)">Mejor: {e.mejor.name} ({formatearRatio(e.mejor.ratio)})</span>}
-          </span>
-        </button>
-      })}
-    </div>
   </div>
 }

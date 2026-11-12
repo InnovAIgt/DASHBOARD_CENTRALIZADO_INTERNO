@@ -241,14 +241,91 @@
   .fv2-pais-datos span { display: block; overflow: hidden; font-size: 10px; font-weight: 800; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; color: var(--fv2-tenue); }
   .fv2-pais-datos b { font-family: var(--fv2-mono); font-size: 18px; font-weight: 900; color: #fff; }
 
-  .fv2-nota-pie { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
 
 
-  /* Embudo de ventas por etapa: 6 cuadritos tipo rastreo de pedido (4.0) */
-  .fv2-rastreo { position: relative; overflow-x: auto; padding-bottom: 4px; }
-  .fv2-rastreo-linea { position: absolute; top: 13px; left: 14px; right: 14px; height: 2px; background: rgba(255, 255, 255, .12); }
-  .fv2-rastreo-etapas { position: relative; display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 12px; }
-  .fv2-etapa-cuadrito { display: grid; justify-items: start; gap: 10px; padding: 0; border: none; background: none; color: inherit; text-align: left; cursor: pointer; }
+  /* "Recorrido de los leads" (D16): 6 etapas como rastreo de pedido. Colores D12, sin rojo. */
+  .fv2-rec { display: grid; gap: 16px; }
+  .fv2-rec-cabeza { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .fv2-rec-titulo { margin: 0; font-size: 16px; font-weight: 800; color: #fff; }
+  .fv2-rec-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--fv2-tenue); }
+  .fv2-rec-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+  .fv2-rec-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 12px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: rgba(255, 255, 255, .04); font-size: 12px; color: var(--fv2-tenue); }
+  .fv2-rec-chip b { font-family: var(--fv2-mono); font-size: 16px; font-weight: 800; color: #fff; }
+  .fv2-rec-chip.is-azul { background: rgba(79, 143, 216, .12); border-color: rgba(79, 143, 216, .3); color: #9cc3f2; }
+  .fv2-rec-chip.is-verde { background: rgba(47, 143, 118, .14); border-color: rgba(47, 143, 118, .35); color: #7fd3b9; }
+
+  .fv2-rec-pista { --rec-arriba: 34px; --rec-hueco: 14px; position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--rec-hueco); }
+  .fv2-rec-paso { position: relative; display: grid; min-width: 0; }
+  /* Tramos (escritorio): capa encima de la fila de círculos; la línea va del borde de un círculo al siguiente. */
+  .fv2-rec-tramos { position: absolute; inset: 0 0 auto 0; z-index: 1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--rec-hueco); pointer-events: none; }
+  .fv2-rec-celda { position: relative; height: calc(var(--rec-arriba) + 52px); }
+  .fv2-rec-tramo { position: absolute; top: calc(var(--rec-arriba) + 26px); left: calc(50% + 32px); width: calc(100% + var(--rec-hueco) - 64px); height: 0; }
+  .fv2-rec-linea { position: absolute; left: 0; right: 0; top: -2px; height: 4px; border-radius: 99px; background: #7a8094; }
+  .fv2-rec-etiqueta {
+    position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); padding: 2px 8px; border: 1px solid rgba(122, 128, 148, .35); border-radius: 99px;
+    background: rgba(122, 128, 148, .14); font-family: var(--fv2-mono); font-size: 10.5px; font-weight: 800; white-space: nowrap; color: #c3c7d2;
+  }
+  .fv2-rec-tramo.is-verde .fv2-rec-linea { background: #2f8f76; }
+  .fv2-rec-tramo.is-verde .fv2-rec-etiqueta { background: rgba(47, 143, 118, .16); border-color: rgba(47, 143, 118, .4); color: #7fd3b9; }
+  .fv2-rec-tramo.is-amarillo .fv2-rec-linea { background: #c59600; }
+  .fv2-rec-tramo.is-amarillo .fv2-rec-etiqueta { background: #3a3013; border-color: rgba(197, 150, 0, .5); color: #f0d27a; }
+  .fv2-rec-tramo.is-pocos .fv2-rec-linea { top: -1px; height: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .2) 0 6px, transparent 6px 11px); }
+  .fv2-rec-tramo.is-pocos .fv2-rec-etiqueta { border-style: dashed; border-color: rgba(255, 255, 255, .22); background: transparent; color: var(--fv2-tenue); }
+  .fv2-rec-tramo.is-frenado .fv2-rec-linea { top: -3px; height: 6px; box-shadow: 0 0 12px rgba(197, 150, 0, .55); }
+  .fv2-rec-tramo.is-frenado .fv2-rec-etiqueta { box-shadow: 0 0 10px rgba(197, 150, 0, .35); }
+  .fv2-rec-tramo.is-vertical { display: none; }
+
+  .fv2-rec-etapa {
+    display: grid; justify-items: center; align-content: start; gap: 8px; width: 100%; height: 100%; min-width: 0; padding: var(--rec-arriba) 0 0;
+    border: none; background: none; font: inherit; text-align: center; color: inherit;
+  }
+  button.fv2-rec-etapa { cursor: pointer; }
+  button.fv2-rec-etapa:focus-visible { outline: none; }
+  .fv2-rec-circulo {
+    position: relative; z-index: 2; display: grid; place-items: center; width: 52px; height: 52px; border: 2px solid transparent; border-radius: 50%;
+    background: var(--fv2-azul); box-shadow: 0 0 0 5px #161922; color: #fff; transition: transform .18s ease;
+  }
+  .fv2-rec-circulo.is-verde { background: var(--fv2-verde); }
+  .fv2-rec-circulo.is-vacio { border: 2px dashed rgba(255, 255, 255, .25); background: #161922; color: var(--fv2-tenue); }
+  .fv2-rec-circulo.is-amarillo { border-color: #c59600; background: #2b2412; color: #f0d27a; box-shadow: 0 0 0 5px #161922, 0 0 16px rgba(197, 150, 0, .4); }
+  button.fv2-rec-etapa:hover .fv2-rec-circulo, button.fv2-rec-etapa:focus-visible .fv2-rec-circulo { transform: scale(1.06); }
+  .fv2-rec-nombre { min-height: 2.5em; font-size: 13px; font-weight: 800; line-height: 1.25; color: #fff; }
+  .fv2-rec-nombre.is-amarillo { color: #f0d27a; }
+  .fv2-rec-tarjeta {
+    display: grid; justify-items: center; align-content: start; gap: 6px; width: 100%; min-width: 0; padding: 14px 10px 12px;
+    background: rgba(26, 29, 39, .75); border: 1px solid var(--fv2-borde); border-radius: 12px; transition: border-color .18s ease, background .18s ease;
+  }
+  .fv2-rec-tarjeta.is-frenado { border-color: rgba(197, 150, 0, .55); }
+  button.fv2-rec-etapa:hover .fv2-rec-tarjeta, button.fv2-rec-etapa:focus-visible .fv2-rec-tarjeta { border-color: rgba(255, 255, 255, .25); background: rgba(36, 40, 55, .9); }
+  .fv2-rec-numero { font-family: var(--fv2-mono); font-size: 26px; font-weight: 800; line-height: 1; color: #fff; }
+  .fv2-rec-tarjeta > small { font-size: 11.5px; color: var(--fv2-tenue); }
+  .fv2-rec-pastilla { max-width: 100%; padding: 3px 9px; border-radius: 99px; background: rgba(255, 255, 255, .06); font-size: 11px; font-weight: 700; line-height: 1.35; color: var(--fv2-tenue); }
+  .fv2-rec-pastilla.is-azul { background: rgba(79, 143, 216, .16); color: #9cc3f2; }
+  .fv2-rec-pastilla.is-verde { background: rgba(47, 143, 118, .18); color: #7fd3b9; }
+  .fv2-rec-mejor {
+    max-width: 100%; overflow: hidden; padding: 3px 8px; border: 1px solid rgba(226, 194, 90, .25); border-radius: 6px; background: rgba(226, 194, 90, .1);
+    font-size: 10.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; color: #e2c25a;
+  }
+  .fv2-rec-mejor.is-pocos { border-color: transparent; background: none; font-weight: 600; color: var(--fv2-tenue); }
+  .fv2-rec-ver { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-style: normal; font-weight: 700; color: var(--fv2-azul-claro); }
+  .fv2-rec-ver svg { transition: transform .15s; }
+  button.fv2-rec-etapa:hover .fv2-rec-ver svg { transform: translateX(2px); }
+
+  .fv2-rec-leyenda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0; font-size: 11.5px; color: var(--fv2-tenue); }
+  .fv2-rec-leyenda > span:first-child { font-weight: 700; color: var(--fv2-texto); }
+  .fv2-rec-leyenda i { display: inline-block; width: 18px; height: 4px; margin-right: 6px; border-radius: 99px; vertical-align: middle; background: #7a8094; }
+  .fv2-rec-leyenda i.is-verde { background: #2f8f76; }
+  .fv2-rec-leyenda i.is-amarillo { background: #c59600; }
+  .fv2-rec-leyenda i.is-pocos { height: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .35) 0 4px, transparent 4px 7px); }
+  .fv2-rec-aviso { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 14px; padding: 12px 14px; border: 1px solid rgba(197, 150, 0, .3); border-radius: 12px; background: rgba(197, 150, 0, .08); }
+  .fv2-rec-aviso.is-neutro { border-color: var(--fv2-borde); background: rgba(255, 255, 255, .03); }
+  .fv2-rec-aviso > p { flex: 1 1 320px; margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--fv2-texto); }
+  .fv2-rec-aviso b { color: #fff; }
+  .fv2-rec-aviso b.fv2-texto-amarillo { color: #f0d27a; }
+  .fv2-rec-aviso-icono { flex-shrink: 0; margin-top: 2px; color: #f0d27a; }
+  .fv2-rec-aviso-clic { max-width: 240px; font-size: 11.5px; color: var(--fv2-tenue); }
+
+  /* Círculo de etapa: solo lo usa ya la cabecera de la ventana de detalle de etapa. */
   .fv2-etapa-circulo {
     display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 4px var(--fv2-caja);
     background: #3a3f4d; font-family: var(--fv2-mono); font-size: 12px; font-weight: 800; color: #fff;
@@ -258,16 +335,6 @@
   .fv2-etapa-circulo.is-amarillo { background: var(--fv2-amarillo); }
   .fv2-etapa-circulo.is-neutro { background: #4a4f5c; }
   .fv2-etapa-circulo.is-grande { flex-shrink: 0; width: 42px; height: 42px; box-shadow: none; font-size: 16px; }
-  .fv2-etapa-caja {
-    display: grid; justify-items: start; align-content: start; gap: 6px; width: 100%; height: 100%; padding: 12px;
-    background: rgba(26, 29, 39, .75); border: 1px solid var(--fv2-borde); border-radius: 12px; transition: border-color .18s ease, background .18s ease;
-  }
-  .fv2-etapa-cuadrito:hover .fv2-etapa-caja, .fv2-etapa-cuadrito:focus-visible .fv2-etapa-caja { border-color: rgba(255, 255, 255, .25); background: rgba(36, 40, 55, .9); }
-  .fv2-etapa-cuadrito.is-caida .fv2-etapa-caja { border-color: rgba(197, 150, 0, .55); }
-  .fv2-etapa-titulo { font-size: 12.5px; font-weight: 800; color: #fff; }
-  .fv2-etapa-numero { font-family: var(--fv2-mono); font-size: 26px; font-weight: 800; line-height: 1; color: #fff; }
-  .fv2-etapa-caja > small { font-size: 11px; color: var(--fv2-tenue); }
-  .fv2-etapa-mejor { padding: 3px 8px; border-radius: 6px; background: rgba(79, 143, 216, .12); border: 1px solid rgba(79, 143, 216, .25); font-size: 10.5px; font-weight: 700; color: var(--fv2-azul-claro); }
 
   /* Ventana de etapa */
   .fv2-etapa-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
@@ -555,10 +622,10 @@
 
   /* ---------- Ventana del ejecutivo (4.0b) ---------- */
   .fv2-metrica small { display: block; margin-top: 2px; font-size: 10.5px; color: var(--fv2-tenue); }
-  .fv2-ejec-bloques { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
-  .fv2-ejec-bloques .fv2-rastreo-etapas { grid-template-columns: repeat(6, minmax(104px, 1fr)); gap: 8px; }
-  .fv2-ejec-bloques .fv2-etapa-numero { font-size: 20px; }
-  .fv2-ejec-bloques .fv2-etapa-caja { padding: 9px; }
+  /* "Avance por etapa" a todo el ancho y "Ventas por mes" debajo (D16). */
+  .fv2-ejec-bloques { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .fv2-ejec-bloques .fv2-rec-pista { --rec-hueco: 10px; }
+  .fv2-ejec-bloques .fv2-rec-numero { font-size: 22px; }
   .fv2-bloque-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
   .fv2-bloque-cabeza > h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 0; font-size: 13px; font-weight: 800; color: #fff; }
   .fv2-bloque-cabeza > h3 small { font-size: 11px; font-weight: 500; color: var(--fv2-tenue); }
@@ -573,9 +640,24 @@
   }
   @media (max-width: 1100px) {
     .fv2-paises, .fv2-dos-columnas, .fv2-ejec-bloques { grid-template-columns: 1fr; }
-    .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros, .fv2-rastreo-etapas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .fv2-rastreo-linea { display: none; }
+    .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .fv2-etapa-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  /* Recorrido vertical: círculo a la izquierda, tarjeta a la derecha, tramo entre una etapa y otra. */
+  @media (max-width: 899px) {
+    .fv2-rec-tramos { display: none; }
+    .fv2-rec-pista { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .fv2-rec-etapa { grid-template-columns: 52px minmax(0, 1fr); justify-items: stretch; column-gap: 14px; row-gap: 6px; padding: 0; text-align: left; }
+    .fv2-rec-circulo { grid-row: 1 / span 2; align-self: start; }
+    .fv2-rec-nombre { min-height: 0; align-self: center; }
+    .fv2-rec-tarjeta { justify-items: start; }
+    .fv2-rec-tramo.is-vertical { position: static; display: block; width: auto; height: auto; padding: 10px 0 12px 66px; }
+    .fv2-rec-tramo.is-vertical .fv2-rec-linea { left: 24px; right: auto; top: 58px; bottom: 6px; width: 4px; height: auto; }
+    .fv2-rec-tramo.is-vertical.is-frenado .fv2-rec-linea { left: 23px; top: 58px; width: 6px; height: auto; }
+    .fv2-rec-tramo.is-vertical.is-pocos .fv2-rec-linea { left: 25px; top: 58px; width: 2px; height: auto; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .2) 0 6px, transparent 6px 11px); }
+    .fv2-rec-tramo.is-vertical .fv2-rec-etiqueta { position: static; display: inline-block; transform: none; }
+    .fv2-rec-chips { margin-left: 0; }
+    .fv2-rec-aviso-clic { max-width: none; }
   }
   @media (max-width: 700px) {
     .fv2-pagina { padding: 16px; }

@@ -246,6 +246,35 @@ export function puntoDebil(embudoPropio, embudoEquipo, minimo = 5) {
   return { stage: peor.stage, label: peor.label, ratio: peor.entrada, equipo: embudoEquipo.etapas[peor.stage - 1]?.entrada ?? null }
 }
 
+/**
+ * "Recorrido de los leads" (D16). No calcula nada nuevo: reorganiza el resultado de embudoEtapas().
+ * - Tramo A → B: perdieron = llegaron a A − llegaron a B; % de paso = salida de A (= pasaron de A ÷
+ *   llegaron a A; los que pasan de A son justo los que llegan a B). Color con tonoPaso (LIMITES_PASO).
+ *   Si a A llegaron menos de `minimo` leads → "pocos datos" (sin color).
+ * - Tramo donde más se frena: el de menor % de paso entre los que tienen al menos `minimo` leads en A
+ *   (empate → el primero). `frenado.hasta` es la etapa destino (la que va en amarillo).
+ * - Pastillas: entraron = llegaron a Asignación · enCamino = abiertos hoy en las etapas 1 a 6 ·
+ *   cerrados = ganados (los que "pasaron" Cierre).
+ */
+export function recorridoLeads(embudo, minimo = 5) {
+  const { etapas } = embudo
+  const tramos = etapas.slice(0, -1).map((a, i) => {
+    const b = etapas[i + 1]
+    const pocos = a.llegaron < minimo
+    return { desde: a.stage, hasta: b.stage, llegaron: a.llegaron, pasaron: a.pasaron, perdieron: a.llegaron - b.llegaron, ratio: a.salida, pocos, tono: pocos ? 'pocos' : tonoPaso(a.salida) }
+  })
+  const candidatos = tramos.filter((t) => !t.pocos && t.ratio != null)
+  const frenado = candidatos.length ? candidatos.reduce((min, t) => (t.ratio < min.ratio ? t : min)) : null
+  return {
+    etapas,
+    tramos,
+    frenado,
+    entraron: etapas[0]?.llegaron ?? 0,
+    enCamino: etapas.reduce((suma, e) => suma + e.hoy, 0),
+    cerrados: etapas[etapas.length - 1]?.pasaron ?? 0,
+  }
+}
+
 /** Por mes del período (más reciente primero): llegaron, pasaron y % de paso en la etapa k. */
 export function mesesEnEtapa(leads, k) {
   const meses = [...new Set(leads.map(leadReferenceMonth).filter(Boolean))].sort((a, b) => b.localeCompare(a))

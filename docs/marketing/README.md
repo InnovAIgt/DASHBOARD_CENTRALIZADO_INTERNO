@@ -46,7 +46,8 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css` | Estilos propios (tema oscuro basado en Activaciones), encerrados en `.fv2` |
 | `src/modulos/marketing/flujo-ventas-v2/utils/`, `types/`, `hooks/`, `context/`, `services/` | **Lógica copiada** de InnovAIgt/DashboardLeads, sin cambios (carga de datos, filtros y cálculos) |
 | `…/pantalla/datos.js` | Cálculos de la pantalla: período, conversión de calificados corregida, agrupaciones |
-| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, "Leads por mes" y embudo por etapa |
+| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, "Leads por mes" y "Recorrido de los leads" |
+| `…/pantalla/RecorridoLeads.jsx` | "Recorrido de los leads": las 6 etapas como rastreo de pedido (Resumen y ventana del ejecutivo) |
 | `…/pantalla/Ejecutivos.jsx` | Pestaña Ejecutivos: "Resultados por ejecutivo" en tarjetas |
 | `…/pantalla/Tablas.jsx` | Tabla y tabla de leads que usan las ventanas |
 | `…/pantalla/Filtros.jsx` | Barra de filtros (país, período, panel Filtros) |
@@ -62,7 +63,7 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 ## Pestañas
 
 Debajo de los filtros: **Resumen** (tarjetas por país, 2 indicadores —Conversión de calificados
-y Unidades vendidas—, "Leads por mes" y embudo por etapa) · **Ejecutivos** (tarjetas por ejecutivo) · **Informe detallado**. La zona de filtros
+y Unidades vendidas—, "Leads por mes" y "Recorrido de los leads") · **Ejecutivos** (tarjetas por ejecutivo) · **Informe detallado**. La zona de filtros
 y pestañas queda fija arriba: la v2 se desplaza dentro de su propio contenedor (alto de la
 pantalla menos la barra del portal). La pestaña elegida se recuerda mientras la página esté abierta.
 
@@ -93,11 +94,16 @@ completo está en el Excel). Archivo: `Reporte_flujo_ventas_<GT|SV|GT-SV>_<desde
 Al abrir: todos los países, **Tipo de lead = Calificado** y **Período = del día 1 del mes
 hasta hoy**.
 
-## Embudo de ventas por etapa (pestaña Resumen)
+## Recorrido de los leads (pestaña Resumen, DECISIONES D16)
 
-Seis cuadritos (Asignación → Reunión → Demo → Envío de propuesta → Seguimiento → Cierre) con:
-leads que llegaron, % que pasó desde la etapa anterior, cuántos están hoy en esa etapa y
-"Mejor: ejecutivo (xx %)". La etapa con la mayor caída va en amarillo. Respeta los filtros.
+Seis círculos unidos por una línea (Asignación → Reunión → Demo → Envío de propuesta →
+Seguimiento → Cierre). Sobre cada tramo: "−X · Y % pasa", con color según el % de paso (verde
+≥ 75 %, gris 60–74 %, amarillo < 60 %; punteado = pocos datos, menos de 5 leads). Debajo de cada
+etapa: leads que llegaron, % del total, cuántos esperan hoy ahí y "Mejor: ★ ejecutivo · xx %".
+Arriba: entraron · en camino (abiertos hoy) · cerrados (ganados). El tramo donde más se frena
+(menor % con al menos 5 leads) va resaltado en amarillo, con un aviso. Respeta los filtros.
+Componente: `pantalla/RecorridoLeads.jsx`; datos: `recorridoLeads()` en `pantalla/datos.js`.
+También se usa en "Avance por etapa" de la ventana del ejecutivo (sin "Mejor").
 
 - **Etapa estimada** (DECISIONES D13): los leads perdidos se ubican en la última etapa con
   datos registrados por el vendedor; los ganados llegan a Cierre; los abiertos están en su

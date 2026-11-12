@@ -684,3 +684,39 @@ tarjetas de indicadores quitadas, pero **solo con los leads de ese país** (tít
 **Ajuste (12/11/2026) · pista "Ver detalle":** cada dato de las tarjetas por país (y el porcentaje
 de conversión) lleva abajo un texto pequeño "Ver detalle ›"; al pasar el mouse se pone azul y la
 flechita se mueve un poco. `npm run build` y `npm run lint` ✅.
+
+## 12/11/2026 · Cambios solicitados: "Recorrido de los leads"
+
+**Qué se cambió:**
+- La sección "Embudo de ventas por etapa" de la pestaña Resumen se reemplazó por **"Recorrido
+  de los leads"** (DECISIONES D16): 6 círculos con ícono unidos por una línea; sobre cada tramo
+  "−X · Y % pasa" con color por % de paso (verde / gris / amarillo; punteado = pocos datos);
+  tarjeta por etapa con llegaron, % del total, "esperando aquí" (en Cierre: ganados y esperando)
+  y "Mejor: ★ ejecutivo · %"; 3 pastillas (entraron · en camino · cerrados); leyenda de colores y
+  aviso "el recorrido se frena entre A y B". Clic (o Enter/Espacio) en una etapa → abre la misma
+  ventana de detalle de etapa que ya existía.
+- La ventana de detalle de etapa recibe el mismo resaltado amarillo que la vista nueva (menor %
+  con al menos 5 leads); su código no cambió.
+- Ventana del ejecutivo: "Avance por etapa" usa el mismo diseño, sin "Mejor" ni aviso, con su
+  punto débil resaltado; ahora ocupa todo el ancho y "Ventas por mes" va debajo. El clic sigue
+  filtrando "Leads del ejecutivo".
+- Pantallas de menos de 900 px: el recorrido pasa a vertical.
+- Se quitó el diseño anterior (`EmbudoEtapas` y sus estilos), que ya no se usaba en ningún lado.
+
+**Archivos:** `pantalla/RecorridoLeads.jsx` (nuevo), `pantalla/datos.js` (función nueva
+`recorridoLeads`, sin cambiar cálculos), `pantalla/VistaGeneral.jsx`, `pantalla/Ventanas.jsx`
+(solo la ventana del ejecutivo), `pantalla/graficas.jsx` (se quitó `EmbudoEtapas`),
+`flujo-ventas-v2.css` (estilos `.fv2-rec-`), `docs/marketing/` (README, DECISIONES D16, esta
+bitácora).
+
+**Pruebas:**
+- Script de comparación con datos reales (1,691 leads) en 5 combinaciones de filtros (GT y SV
+  calificados 01–12/11/2026, filtros por defecto, historial completo y GT todos los tipos
+  ago–nov): llegaron, pasaron, % de paso, esperando aquí y "Mejor" de cada etapa coinciden con lo
+  que muestra la ventana de detalle (pestañas Por mes, Por ejecutivo y Leads en esta etapa);
+  cerrados = ganados; en camino = abiertos; tramo resaltado = punto débil en la ventana de cada
+  ejecutivo. **0 fallas.**
+- Con 01/11–12/11/2026 · Guatemala · Calificado: 13 → 7 → 6 → 6 → 1 → 0; se frena entre Envío
+  de propuesta y Seguimiento (1 de 6).
+- `npm run build` y `npm run lint` ✅. Las pruebas visuales en el navegador quedan a cargo de
+  Keily.
