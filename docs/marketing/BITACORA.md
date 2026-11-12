@@ -441,3 +441,14 @@ cambian `FlujoVentasV2.jsx` (pestañas) y `flujo-ventas-v2.css`.
 **Qué no se tocó:** la lógica copiada, Activaciones (solo se leyó), el Flujo de ventas viejo,
 los demás dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json`, `vercel.json`,
 Supabase ni `main`. La carpeta `.claude/` no se incluye en el commit.
+
+**Ajuste (11/11/2026) · formato de la tarjeta, como en los demás dashboards:** el informe va
+dentro de una tarjeta con el mismo formato que el "Informe detallado" de Activaciones: arriba,
+en rojo pequeño, "Auditoría y exportación comercial"; título "Informe detallado de leads";
+descripción de los filtros que se aplican; pastilla roja "Mostrando N leads"; botón rojo
+"⬇ Descargar Excel" (estilo estándar del portal, `estandar.css`) y buscador a todo el ancho.
+Se quitó el encabezado suelto ("Marketing · Flujo de ventas v2 / Informe detallado / Todo el
+detalle…"). No se quitó nada más: vistas rápidas, columnas, tabla, orden, páginas, ficha y
+Excel siguen igual. Estilos copiados a `flujo-ventas-v2.css`; Activaciones y `estandar.css` no
+se modificaron. `npm run build` y `npm run lint` ✅; hoja de estilos del portal sin reglas
+globales nuevas ✅.

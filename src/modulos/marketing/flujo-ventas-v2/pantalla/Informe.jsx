@@ -1,6 +1,6 @@
 // Flujo de ventas v2 · pestaña "Informe detallado" (respeta los filtros de arriba).
 import { useMemo, useState } from 'react'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, FileSpreadsheet, Search } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { formatNumber, PIPELINE_STAGES, qualificationLabel } from '../utils/analytics.js'
 import { Calificacion, CODIGO_PAIS, EstadoLead, PaisChip } from './comunes.jsx'
 import { descargarInforme } from './excel.js'
@@ -116,17 +116,24 @@ export function Informe({ leads, filters, periodo }) {
     }
   }
 
+  // Tarjeta con el mismo formato que el "Informe detallado" de Activaciones.
   return <section className="fv2-informe">
     <header className="fv2-informe-cabeza">
-      <div>
-        <div className="fv2-eyebrow">Marketing · Flujo de ventas v2</div>
-        <h2 className="fv2-informe-titulo">Informe detallado</h2>
-        <p className="fv2-subtitulo">Todo el detalle de cada lead, respetando los filtros de arriba. Elige una vista para ir directo a lo que importa.</p>
+      <div className="fv2-informe-eyebrow">Auditoría y exportación comercial</div>
+      <h2 className="fv2-informe-titulo">Informe detallado de leads</h2>
+      <p className="fv2-informe-desc">Consulta comercial completa. Se aplican automáticamente los filtros seleccionados en el encabezado general (País, Período, Ejecutivo y Tipo de lead).</p>
+      <div className="fv2-informe-acciones">
+        <span className="fv2-informe-cuenta">Mostrando {formatNumber(filas.length)} leads</span>
+        <button type="button" className="fv2-btn-excel" onClick={descargar} disabled={descargando || !filas.length} title="Descarga lo que se ve: vista rápida, filtros, búsqueda y columnas visibles">
+          {descargando ? 'Preparando…' : 'Descargar Excel'}
+        </button>
       </div>
-      <button type="button" className="fv2-btn-excel" onClick={descargar} disabled={descargando || !filas.length} title="Descarga lo que se ve: vista rápida, filtros, búsqueda y columnas visibles">
-        <FileSpreadsheet size={15} />{descargando ? 'Preparando…' : 'Descargar Excel'}
-      </button>
     </header>
+
+    <div className="fv2-buscador fv2-informe-buscar">
+      <Search size={16} aria-hidden="true" />
+      <input type="text" placeholder="Buscar dentro de los leads filtrados por cliente, código, ejecutivo, producto o rubro…" value={busqueda} onChange={(e) => cambiar(() => setBusqueda(e.target.value))} aria-label="Buscar en el informe" />
+    </div>
 
     <div className="fv2-vistas" role="tablist" aria-label="Vistas rápidas">
       {VISTAS.map((v) => <button type="button" key={v.key} role="tab" aria-selected={vistaKey === v.key}
@@ -135,12 +142,8 @@ export function Informe({ leads, filters, periodo }) {
       </button>)}
     </div>
 
-    <div className="fv2-panel fv2-informe-panel">
+    <div className="fv2-informe-panel">
       <div className="fv2-informe-herramientas">
-        <div className="fv2-buscador">
-          <Search size={15} aria-hidden="true" />
-          <input type="text" placeholder="Buscar cliente, código, ejecutivo, producto…" value={busqueda} onChange={(e) => cambiar(() => setBusqueda(e.target.value))} aria-label="Buscar en el informe" />
-        </div>
         <div className="fv2-columnas" role="group" aria-label="Columnas visibles">
           <span>Columnas:</span>
           {GRUPOS.map((g) => <button type="button" key={g.key} aria-pressed={grupos.has(g.key)} className={`fv2-columna-btn ${grupos.has(g.key) ? 'is-activa' : ''}`} onClick={() => alternarGrupo(g.key)}>{g.label}</button>)}
