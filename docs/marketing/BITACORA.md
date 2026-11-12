@@ -359,3 +359,14 @@ calificados) y `leadsDeIndicador` (listas de la ventana "Detalle de leads").
 **Qué no se tocó:** la lógica copiada (`utils/`, `types/`, `hooks/`, `context/`,
 `services/`), Activaciones, el Flujo de ventas viejo, los demás dashboards, `src/index.css`,
 `PortalLayout.tsx`, `package.json` ni `vercel.json`.
+
+**Ajuste (11/11/2026) · aviso de consulta como en el resto del portal:** mientras se consulta
+la API se muestra, debajo del subtítulo, la misma pastilla que usan los demás dashboards
+(`.std-sync` de `public/assets/js/estandar.js` y `estandar.css`, la de SIMs): borde rojo
+suave, spinner y el texto "Consultando la API…", que a los 2.5 segundos cambia a
+"Consultando la API… puede tardar hasta un minuto". Al terminar muestra "Actualizado: HH:MM"
+(o "Sin conexión con Prospekt IA" si falla) en el mismo lugar. El botón de actualizar queda a
+la derecha del encabezado, sin girar, para no mostrar dos spinners. El estilo se **copió** a
+`flujo-ventas-v2.css` (`.fv2-consultando`); `estandar.js` y `estandar.css` no se modificaron.
+Pruebas: `npm run build` y `npm run lint` ✅; hoja de estilos del portal: reglas nuevas solo
+dentro de `.fv2`, animaciones `fv2-`, ningún valor existente cambió ✅.

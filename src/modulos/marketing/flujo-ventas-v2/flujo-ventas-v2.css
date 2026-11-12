@@ -69,8 +69,21 @@
   }
   .fv2-estado::before { content: ""; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: var(--fv2-verde); }
   .fv2-estado b { font-weight: 600; }
-  .fv2-encabezado-acciones { display: flex; align-items: center; gap: 10px; }
-  .fv2-actualizando { font-size: 12px; font-weight: 700; color: var(--fv2-azul-claro); }
+  .fv2-encabezado .fv2-estado { margin-top: 10px; }
+  /* Pastilla "Consultando la API…": copia de .std-sync.std-sync-busy de estandar.css (no se modificó) */
+  .fv2-consultando {
+    display: inline-flex; align-items: center; gap: 9px; width: auto; max-width: max-content;
+    margin: 10px 0 0; padding: 7px 14px 7px 12px;
+    border: 1px solid rgba(196, 60, 80, .45); border-radius: 999px; background: rgba(217, 95, 110, .12);
+    box-shadow: 0 0 0 4px rgba(217, 95, 110, .07);
+    font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--fv2-texto);
+    animation: fv2-consulta-brillo 1.6s ease-in-out infinite;
+  }
+  .fv2-consultando::before {
+    content: ''; flex-shrink: 0; width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(217, 95, 110, .35); border-top-color: var(--fv2-rosa);
+    animation: fv2-girar .8s linear infinite;
+  }
   .fv2-estado.is-error { color: var(--fv2-rosa); background: rgba(196, 60, 80, .1); border-color: rgba(196, 60, 80, .35); }
   .fv2-estado.is-error::before { background: var(--fv2-rojo); }
 
@@ -418,3 +431,4 @@
 @keyframes fv2-panel-baja { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fv2-ventana-entra { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
 @keyframes fv2-girar { to { transform: rotate(360deg); } }
+@keyframes fv2-consulta-brillo { 50% { border-color: rgba(217, 95, 110, .75); box-shadow: 0 0 0 5px rgba(217, 95, 110, .12); } }
