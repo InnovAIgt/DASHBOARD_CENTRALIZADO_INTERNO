@@ -1,6 +1,6 @@
 // Flujo de ventas v2 · gráficas (estilo de las de Activaciones: guías suaves, línea guía punteada
 // al pasar el cursor y recuadro de detalle). Las cifras vienen de pantalla/datos.js.
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatNumber, monthLabel } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS, COLORES, formatearRatio } from './comunes.jsx'
 import { tonoPaso } from './datos.js'
@@ -41,24 +41,37 @@ export const SERIES_MES = [
   { key: 'won', label: 'Ganados (escala derecha)', color: COLORES.verde, linea: true },
 ]
 
+// Alto fijo (240 px) y ancho medido del contenedor: así los textos y las columnas tienen siempre
+// el mismo tamaño, sin agrandarse cuando la pantalla es ancha (antes se escalaba con el ancho).
 export function GraficaMensual({ filas, onMes }) {
   const [hover, setHover] = useState(null)
-  const w = 720
-  const h = 280
+  const cajaRef = useRef(null)
+  const [ancho, setAncho] = useState(720)
+  useEffect(() => {
+    const caja = cajaRef.current
+    if (!caja || typeof ResizeObserver === 'undefined') return undefined
+    const medir = () => setAncho(Math.max(360, Math.round(caja.clientWidth)))
+    medir()
+    const obs = new ResizeObserver(medir)
+    obs.observe(caja)
+    return () => obs.disconnect()
+  }, [])
+  const w = ancho
+  const h = 240
   const pad = { top: 22, right: 48, bottom: 30, left: 48 }
   const anchoUtil = w - pad.left - pad.right
   const altoUtil = h - pad.top - pad.bottom
   const maxLeads = topeEje(Math.max(1, ...filas.map((f) => f.total)))
   const maxGanados = topeEje(Math.max(1, ...filas.map((f) => f.won)))
   const grupo = anchoUtil / Math.max(filas.length, 1)
-  const anchoCol = Math.min(46, grupo * 0.56)
+  const anchoCol = Math.min(42, grupo * 0.5)
   const xCentro = (i) => pad.left + grupo * i + grupo / 2
   const yLeads = (v) => pad.top + altoUtil - (v / maxLeads) * altoUtil
   const yGanados = (v) => pad.top + altoUtil - (v / maxGanados) * altoUtil
   const base = pad.top + altoUtil
   const linea = filas.map((f, i) => `${xCentro(i)},${yGanados(f.won)}`).join(' ')
 
-  return <div className="fv2-grafica-mes">
+  return <div className="fv2-grafica-mes" ref={cajaRef}>
     <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Leads calificados y no calificados por mes, con la línea de ganados">
       {[0, 1, 2, 3, 4].map((i) => {
         const y = pad.top + altoUtil * (i / 4)

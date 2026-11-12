@@ -198,7 +198,7 @@
 
   /* Gráfica por mes: columnas apiladas + línea de ganados con escala propia */
   .fv2-grafica-mes { position: relative; width: 100%; }
-  .fv2-grafica-mes svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .fv2-grafica-mes svg { display: block; width: 100%; height: 240px; overflow: visible; }
   .fv2-columna { transform-origin: center bottom; transform-box: fill-box; animation: fv2-crecer-y .85s var(--fv2-curva) both; animation-delay: calc(var(--fv2-i, 0) * 45ms); transition: opacity .18s ease; }
   .fv2-linea { stroke-dasharray: 1; stroke-dashoffset: 0; animation: fv2-dibujar 1.2s .3s ease both; }
   .fv2-tooltip {

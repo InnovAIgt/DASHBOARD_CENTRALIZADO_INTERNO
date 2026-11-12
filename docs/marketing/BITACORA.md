@@ -661,3 +661,9 @@ botón rojo **PDF**. `npm run build` y `npm run lint` ✅.
 **Ajuste (12/11/2026) · se quitó "Volver a filtros por defecto":** el botón se eliminó de la
 barra de filtros a pedido. Los filtros por defecto (Calificado + mes actual) se siguen aplicando
 al abrir la v2; para volver a ellos basta recargar la página. `npm run build` y `npm run lint` ✅.
+
+**Ajuste (12/11/2026) · gráfica "Leads por mes" más compacta:** antes la gráfica crecía en
+proporción al ancho de la pantalla (con el menú lateral escondido quedaba enorme: números y
+columnas muy grandes). Ahora tiene **alto fijo de 240 px** y su ancho se ajusta al espacio
+disponible, así que textos, columnas y línea de ganados mantienen siempre un tamaño normal.
+Mismos datos y mismo recuadro al pasar el cursor. `npm run build` y `npm run lint` ✅.
