@@ -142,15 +142,9 @@ export const PortalLayout: React.FC = () => {
           archivo: '/dashboards/marketing/mailing-campanas.html'
         },
         {
-          id: 'flujo-ventas',
-          label: 'Flujo de ventas',
-          hasData: true,
-          archivo: '/dashboards/marketing/flujo-ventas.html'
-        },
-        {
-          // Flujo de ventas v2 en prueba (docs/marketing/README.md). Se muestra con FlujoVentasV2, no con un archivo HTML.
+          // Reemplazo del Flujo de ventas anterior. El HTML viejo se conserva como respaldo.
           id: 'flujo-ventas-v2',
-          label: 'Flujo de ventas v2 (prueba)',
+          label: 'Flujo de ventas',
           hasData: true
         }
       ]
@@ -325,7 +319,7 @@ export const PortalLayout: React.FC = () => {
       );
     }
 
-    // Marketing · Flujo de ventas v2 (prueba): componente React del módulo src/modulos/marketing/flujo-ventas-v2
+    // Marketing · Flujo de ventas: componente React del módulo src/modulos/marketing/flujo-ventas-v2
     if (currentItem.id === 'flujo-ventas-v2') {
       return <FlujoVentasV2 />;
     }

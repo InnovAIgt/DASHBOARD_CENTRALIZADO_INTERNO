@@ -750,5 +750,26 @@ bitácora).
 | `npm run lint` y `npm run build` | ✅ |
 | Revisión visual, tamaños móvil/escritorio y clics en navegador | ⏳ el portal requiere iniciar sesión; pendiente revisión de Keily |
 
-**Sin commit ni push** hasta que Keily revise y apruebe. No se modificaron PDF, dashboard viejo,
-Activaciones, Supabase ni `main`; `.claude/` se mantiene fuera de los cambios.
+**Estado posterior:** Keily aprobó la ficha y los cambios se integraron a `main` mediante el PR #1.
+No se modificaron PDF, dashboard viejo, Activaciones ni Supabase en ese paso; `.claude/` quedó
+fuera de los cambios.
+
+---
+
+## 12/11/2026 · Retiro del Flujo de ventas anterior del menú
+
+**Cambio preparado:**
+- El menú de MARKETING tendrá una sola entrada **"Flujo de ventas"**, que abre la v2; se quita la
+  entrada anterior y la etiqueta temporal "(prueba)".
+- Se conserva `public/dashboards/marketing/flujo-ventas.html` en el repositorio como respaldo. No
+  se borran el CSS, las variables antiguas de marketing, Supabase, el robot ni el servidor de RRSS.
+- Documentación actualizada en README, DECISIONES D18 y RETIRO_VERSION_ANTERIOR.
+
+**Pendiente de integrar:** este cambio está en una rama nueva basada en `main`, porque el PR #1 se
+integró con squash y la rama `leads` conserva la historia anterior. Keily deberá subir la rama y
+abrir un PR para integrarlo.
+
+**Bloqueo de datos en producción:** al probar `/api/marketing/reuniones?offset=0`, Vercel respondió
+`RED_API_KEY no está configurada en el servidor`. El cambio de menú no resuelve esa configuración;
+la v2 no cargará leads hasta que la variable esté asignada al entorno de producción y se
+redepliegue.

@@ -250,3 +250,13 @@ se ordenan en una cuadrícula 2 × 2.
 **Límites:** la ficha solo cambia la pestaña Ejecutivos del navegador y la ventana del ejecutivo
 que abre. No cambia el PDF, su tabla de ejecutivos, el dashboard viejo, Supabase ni Activaciones.
 La revisión visual final queda a cargo de Keily antes de publicar.
+
+## D18 · 12/11/2026 · Retirar el dashboard anterior del menú
+
+**Decisión:** la entrada única **"Flujo de ventas"** del menú MARKETING abre la v2. Se quita la
+entrada del dashboard anterior y el nombre temporal "(prueba)". El archivo HTML viejo se conserva
+en el repositorio como respaldo; no se borra en este cambio.
+
+**Estado:** cambio preparado en una rama basada en `main` para que se integre por PR. Al momento de
+prepararlo, el endpoint de producción respondió que `RED_API_KEY` no está configurada; por eso la
+v2 puede abrir sin cargar leads hasta que la variable esté disponible y se redepliegue.
