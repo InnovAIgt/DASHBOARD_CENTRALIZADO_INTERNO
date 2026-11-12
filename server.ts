@@ -2,8 +2,10 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 
-dotenv.config();
+// Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
+dotenv.config({ path: ['.env.local', '.env'] });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +18,19 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static assets from public directly with correct MIME types
 app.use(express.static(path.resolve(__dirname, 'public')));
+
+// Marketing · Flujo de ventas v2: conexión segura con Prospekt IA (docs/marketing/README.md).
+// En Vercel esta misma ruta la atiende api/marketing/reuniones.js.
+app.all('/api/marketing/reuniones', async (req, res) => {
+  const resultado = await obtenerPaginaReuniones({
+    method: req.method,
+    offset: typeof req.query.offset === 'string' ? req.query.offset : undefined,
+  });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {

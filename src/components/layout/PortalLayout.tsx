@@ -12,6 +12,7 @@ import { GeneratorView } from '../views/GeneratorView';
 import { HistoryView } from '../views/HistoryView';
 import { UsersView } from '../views/UsersView';
 import { RegionStatusBar } from './RegionStatusBar';
+import { FlujoVentasV2 } from '../../modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx';
 
 interface NavSectionDef {
   id: string;
@@ -53,6 +54,9 @@ export const PortalLayout: React.FC = () => {
   const [isSecretsModalOpen, setIsSecretsModalOpen] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
   const [bankSubView, setBankSubView] = useState<string>('overview');
+  // Flujo de ventas v2: el menú lateral se esconde y se asoma al acercar el mouse al borde izquierdo.
+  // Solo aplica en esa página; los demás dashboards no cambian (estilos en flujo-ventas-v2.css).
+  const [menuAsomado, setMenuAsomado] = useState(false);
 
   useEffect(() => {
     if (isLightMode) {
@@ -73,6 +77,7 @@ export const PortalLayout: React.FC = () => {
 
   const handleSelectItem = (item: { id: string; archivo?: string; isCustomReact?: boolean; reactView?: string }, sectionId: string) => {
     setActivePage(item.id);
+    setMenuAsomado(false);
     if (item.reactView) setBankSubView(item.reactView);
     if (!expandedSections.has(sectionId)) {
       setExpandedSections(prev => new Set(prev).add(sectionId));
@@ -141,6 +146,12 @@ export const PortalLayout: React.FC = () => {
           label: 'Flujo de ventas',
           hasData: true,
           archivo: '/dashboards/marketing/flujo-ventas.html'
+        },
+        {
+          // Flujo de ventas v2 en prueba (docs/marketing/README.md). Se muestra con FlujoVentasV2, no con un archivo HTML.
+          id: 'flujo-ventas-v2',
+          label: 'Flujo de ventas v2 (prueba)',
+          hasData: true
         }
       ]
     },
@@ -314,6 +325,11 @@ export const PortalLayout: React.FC = () => {
       );
     }
 
+    // Marketing · Flujo de ventas v2 (prueba): componente React del módulo src/modulos/marketing/flujo-ventas-v2
+    if (currentItem.id === 'flujo-ventas-v2') {
+      return <FlujoVentasV2 />;
+    }
+
     // If it has an external dashboard file (like mailing-campanas.html)
     if (currentItem.archivo) {
       return (
@@ -336,8 +352,19 @@ export const PortalLayout: React.FC = () => {
     );
   };
 
+  const menuOculto = activePage === 'flujo-ventas-v2';
+
   return (
-    <div className="portal-app">
+    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''}`}>
+      {/* Flujo de ventas v2: franja invisible en el borde izquierdo que hace asomar el menú */}
+      {menuOculto && (
+        <div
+          className="fv2-zona-menu"
+          onMouseEnter={() => setMenuAsomado(true)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Mobile backdrop */}
       {isMobileSidebarOpen && (
         <div
@@ -347,7 +374,10 @@ export const PortalLayout: React.FC = () => {
       )}
 
       {/* ============ SIDEBAR ============ */}
-      <aside className={`portal-sidebar ${isMobileSidebarOpen ? 'open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside
+        className={`portal-sidebar ${isMobileSidebarOpen ? 'open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}
+        onMouseLeave={menuOculto ? () => setMenuAsomado(false) : undefined}
+      >
         {/* Header with Logo */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
