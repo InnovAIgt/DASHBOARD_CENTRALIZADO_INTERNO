@@ -9,7 +9,7 @@ import { useFilters } from './hooks/useFilters.js'
 import { useLeads } from './hooks/useLeads.js'
 import { summarize } from './utils/analytics.js'
 import { AvisoError, Vacio } from './pantalla/comunes.jsx'
-import { aplicarFiltros, hayFiltrosActivos, PERIODO_VACIO } from './pantalla/datos.js'
+import { aplicarFiltros, periodoPorDefecto, sinFiltros } from './pantalla/datos.js'
 import { BarraFiltros } from './pantalla/Filtros.jsx'
 import { VistaGeneral } from './pantalla/VistaGeneral.jsx'
 import './flujo-ventas-v2.css'
@@ -42,13 +42,14 @@ function FlujoVentasV2Contenido() {
   const api = useLeads()
   const { leads, loading, error } = api
   const filters = useFilters()
-  const [periodo, setPeriodo] = useState(PERIODO_VACIO)
+  // Por defecto (R11): todos los países y del día 1 del mes actual hasta hoy.
+  const [periodo, setPeriodo] = useState(() => periodoPorDefecto())
 
   const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
   const summary = useMemo(() => summarize(filtrados), [filtrados])
   const restablecer = () => {
     filters.clearFilters()
-    setPeriodo(PERIODO_VACIO)
+    setPeriodo(periodoPorDefecto())
   }
 
   return <div className="fv2-pagina">
@@ -74,7 +75,7 @@ function FlujoVentasV2Contenido() {
     />}
 
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
-    {leads.length > 0 && <VistaGeneral leads={filtrados} summary={summary} showAllFunnel={!hayFiltrosActivos(filters, periodo)} />}
+    {leads.length > 0 && <VistaGeneral leads={filtrados} summary={summary} showAllFunnel={sinFiltros(filters, periodo)} />}
     {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}
   </div>
 }

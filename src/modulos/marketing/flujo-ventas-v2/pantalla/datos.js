@@ -13,7 +13,15 @@ import { buildStageFunnel, leadReferenceDate, leadReferenceMonth } from '../util
 import { toDate } from '../utils/dates.js'
 
 export const PAISES = COUNTRIES
+/** Sin límite de período (todo el historial). */
 export const PERIODO_VACIO = { desde: '', hasta: '' }
+
+const aFechaISO = (fecha) => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+
+/** Período por defecto (requisito R11): del día 1 del mes actual hasta hoy. */
+export function periodoPorDefecto(hoy = new Date()) {
+  return { desde: aFechaISO(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), hasta: aFechaISO(hoy) }
+}
 
 // Filtros que van dentro del panel "Filtros" (columnas con buscador y casillas).
 export const FILTROS_DEL_PANEL = FILTER_DEFS.filter((def) => ['filterEjecutivo', 'filterTipoLead'].includes(def.key))
@@ -40,8 +48,14 @@ export function aplicarFiltros(leads, filters, periodo, skipKey) {
   return filtrarPorPeriodo(applyFilters(leads, filters, skipKey), periodo.desde, periodo.hasta)
 }
 
-export function hayFiltrosActivos(filters, periodo) {
-  return FILTER_DEFS.some((def) => filters[def.key] != null) || Boolean(periodo.desde || periodo.hasta)
+/** ¿Los filtros son distintos a los de por defecto (todos los países, mes actual hasta hoy)? */
+export function hayFiltrosActivos(filters, periodo, defecto = periodoPorDefecto()) {
+  return FILTER_DEFS.some((def) => filters[def.key] != null) || periodo.desde !== defecto.desde || periodo.hasta !== defecto.hasta
+}
+
+/** Sin ningún filtro ni período: el embudo agrega el grupo "Todos" (como en la lógica copiada). */
+export function sinFiltros(filters, periodo) {
+  return FILTER_DEFS.every((def) => filters[def.key] == null) && !periodo.desde && !periodo.hasta
 }
 
 // ---------- Opciones y conteos de cada filtro ----------

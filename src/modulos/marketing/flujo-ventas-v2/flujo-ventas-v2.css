@@ -113,7 +113,8 @@
   .fv2-periodo-limpiar { display: inline-flex; padding: 4px; border: none; border-radius: 6px; background: transparent; color: var(--fv2-tenue); }
   .fv2-periodo-limpiar:hover { background: var(--fv2-elevado); color: #fff; }
 
-  .fv2-ancla-filtros { position: relative; }
+  /* El panel se ubica respecto a la caja de filtros (no al botón) para que nunca se salga del portal */
+  .fv2-ancla-filtros { position: static; }
   .fv2-btn-filtros {
     display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--fv2-borde-fuerte);
     border-radius: 10px; background: var(--fv2-tarjeta); color: #fff; font-size: 13px; font-weight: 700; transition: all .18s ease;
@@ -124,7 +125,7 @@
   .fv2-btn-filtros.is-abierto .fv2-chevron { transform: rotate(180deg); }
 
   .fv2-xf-panel {
-    position: absolute; top: calc(100% + 10px); left: 0; z-index: 60; width: 640px; max-width: calc(100vw - 48px);
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 60; width: auto;
     background: var(--fv2-caja); border: 1px solid var(--fv2-borde-fuerte); border-radius: 14px; padding: 18px;
     box-shadow: 0 24px 50px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .04);
     animation: fv2-panel-baja .18s cubic-bezier(.16, 1, .3, 1);

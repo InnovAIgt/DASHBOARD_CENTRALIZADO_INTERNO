@@ -370,3 +370,21 @@ la derecha del encabezado, sin girar, para no mostrar dos spinners. El estilo se
 `flujo-ventas-v2.css` (`.fv2-consultando`); `estandar.js` y `estandar.css` no se modificaron.
 Pruebas: `npm run build` y `npm run lint` ✅; hoja de estilos del portal: reglas nuevas solo
 dentro de `.fv2`, animaciones `fv2-`, ningún valor existente cambió ✅.
+
+**Ajuste (11/11/2026) · filtros:**
+- **Período por defecto = mes actual hasta hoy** (requisito R11, adelantado del Paso 4): la v2
+  abre con Período del día 1 del mes hasta hoy, y "Volver a filtros por defecto" regresa a ese
+  período (y a todos los países). La ✕ del Período lo quita para ver todo el historial. Esto
+  reemplaza el "sin límite de período" que se había decidido en el paso 3.4b. El grupo "Todos"
+  del embudo solo aparece cuando no hay ningún filtro ni período (`sinFiltros`).
+- **Panel "Filtros" completo:** medía 640 px desde el botón y se salía por la derecha del
+  portal, así que no se veían la columna "Tipo de lead" ni los botones "Limpiar todo" /
+  "Aplicar". Ahora ocupa el ancho de la caja de filtros.
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Período por defecto (11/11/2026): 01/11/2026 → 11/11/2026; solo aparece noviembre y todos los leads tienen su fecha de referencia dentro del período | ✅ 195 leads · 23 calificados · 1 ganado |
+| Por país y por ejecutivo suman el total del período | ✅ |
+| "Volver a filtros por defecto" desactivado en el período por defecto y activo al cambiarlo | ✅ |
+| Sin período (✕) se ve todo el historial | ✅ 1,693 leads |

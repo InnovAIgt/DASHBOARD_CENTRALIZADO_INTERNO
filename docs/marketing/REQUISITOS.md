@@ -29,7 +29,7 @@ Leyenda: ✅ se puede con los datos actuales · ⚠️ se puede con ajustes · �
 | R8 | Embudo por vendedor (dónde se le pierden los leads) | ✅ | Existe en DashboardLeads (detalle por asesor) |
 | R9 | Quién es mejor en cada etapa | ⚠️ | Se calcula con R4 + R8 |
 | R10 | Filtros por país y por vendedor | ✅ | |
-| R11 | Abrir en el **mes actual**, con opción de cambiar fechas | ⚠️ | Ajuste de filtro por defecto |
+| R11 | Abrir en el **mes actual**, con opción de cambiar fechas | ✅ | Hecho en el paso 3.4c: la v2 abre del día 1 del mes hasta hoy; el Período se puede cambiar o quitar |
 | R12 | Las cifras deben cuadrar | ✅ | DashboardLeads ya verifica la partición de estados |
 | R13 | Resultados por vendedor: citas cumplidas, cotizaciones enviadas, cierres | ⚠️ | Salen de las etapas alcanzadas |
 

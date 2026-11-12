@@ -29,7 +29,7 @@ function ControlPeriodo({ periodo, onCambiar }) {
     <input type="date" className="fv2-fecha" aria-label="Desde" value={periodo.desde} max={periodo.hasta || undefined} onChange={(e) => onCambiar({ ...periodo, desde: e.target.value })} />
     <span className="fv2-periodo-guion">—</span>
     <input type="date" className="fv2-fecha" aria-label="Hasta" value={periodo.hasta} min={periodo.desde || undefined} onChange={(e) => onCambiar({ ...periodo, hasta: e.target.value })} />
-    {(periodo.desde || periodo.hasta) && <button type="button" className="fv2-periodo-limpiar" title="Quitar período" onClick={() => onCambiar({ desde: '', hasta: '' })}><X size={14} /></button>}
+    {(periodo.desde || periodo.hasta) && <button type="button" className="fv2-periodo-limpiar" title="Quitar el período (ver todo el historial)" aria-label="Quitar el período" onClick={() => onCambiar({ desde: '', hasta: '' })}><X size={14} /></button>}
   </div>
 }
 
