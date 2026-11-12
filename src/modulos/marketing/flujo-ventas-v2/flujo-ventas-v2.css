@@ -431,7 +431,8 @@
   }
   .fv2-btn-excel::before { content: '⬇'; }
   .fv2-btn-excel:not(:disabled):hover { border-color: var(--fv2-rosa); background: var(--fv2-rojo-hover); }
-  .fv2-informe-buscar { width: 100%; }
+  /* flex: none — dentro de la tarjeta (columna) el "flex: 1 1 320px" del buscador se volvía 320px de alto */
+  .fv2-informe-buscar { flex: none; width: 100%; }
   .fv2-informe-buscar svg { left: 14px; }
   .fv2-informe-buscar input { padding: 11px 16px 11px 42px; background: rgba(15, 17, 23, .85); border: 1px solid rgba(255, 255, 255, .16); font-size: 13px; }
   .fv2-vistas { display: flex; flex-wrap: wrap; gap: 8px; }

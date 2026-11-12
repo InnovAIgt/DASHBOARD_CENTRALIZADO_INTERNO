@@ -452,3 +452,8 @@ detalle…"). No se quitó nada más: vistas rápidas, columnas, tabla, orden, p
 Excel siguen igual. Estilos copiados a `flujo-ventas-v2.css`; Activaciones y `estandar.css` no
 se modificaron. `npm run build` y `npm run lint` ✅; hoja de estilos del portal sin reglas
 globales nuevas ✅.
+
+**Corrección (11/11/2026) · espacio vacío bajo el buscador:** el buscador heredaba
+`flex: 1 1 320px` (pensado para filas horizontales); dentro de la tarjeta, que acomoda todo en
+columna, eso lo volvía de 320 px de **alto**, con la lupa flotando en medio. Se fijó
+`flex: none` solo para el buscador del informe. `npm run build` y `npm run lint` ✅.
