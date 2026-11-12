@@ -48,7 +48,7 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `…/pantalla/datos.js` | Cálculos de la pantalla: período, conversión de calificados corregida, agrupaciones |
 | `…/pantalla/VistaGeneral.jsx`, `graficas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, "Leads por mes" y "Recorrido de los leads" |
 | `…/pantalla/RecorridoLeads.jsx` | "Recorrido de los leads": las 6 etapas como rastreo de pedido (Resumen y ventana del ejecutivo) |
-| `…/pantalla/Ejecutivos.jsx` | Pestaña Ejecutivos: "Resultados por ejecutivo" en tarjetas |
+| `…/pantalla/Ejecutivos.jsx` | Pestaña Ejecutivos: fichas de coaching comparadas con el equipo (D17) |
 | `…/pantalla/Tablas.jsx` | Tabla y tabla de leads que usan las ventanas |
 | `…/pantalla/Filtros.jsx` | Barra de filtros (país, período, panel Filtros) |
 | `…/pantalla/Ventanas.jsx` | Ventanas de detalle (indicadores, ejecutivo, mes y ficha del lead) |
@@ -70,10 +70,12 @@ pantalla menos la barra del portal). La pestaña elegida se recuerda mientras la
 - Clic en cualquier dato de una tarjeta de país (conversión, Total leads, Calificados, Ganados,
   Unidades por cierre) → Detalle de leads de ese dato, solo con los leads de ese país.
 - Clic en un mes de "Leads por mes" → Detalle mensual de ese mes con el filtro de país actual.
-- **Ejecutivos:** una tarjeta por ejecutivo (todos los del país; los que no tienen leads en el
-  período van al final y apagados) con la conversión de calificados en un círculo (verde ≥ 20 %,
-  azul 10–20 %, amarillo < 10 %; provisional, D14), ventas, unidades, vencidos y ventas por mes.
-  Clic en la tarjeta → Detalle del ejecutivo; clic en una barrita → Detalle mensual del ejecutivo.
+- **Ejecutivos:** fichas de ancho completo ordenadas para coaching. Cada ficha compara citas,
+  propuestas y ganados del vendedor con el equipo (ambos países, mismo período y tipo de lead);
+  muestra su avance por etapa, brecha principal, seguimientos vencidos, acciones y ranking de
+  ventas. Clic en un paso o acción → detalle del ejecutivo con los leads correspondientes.
+  Los ejecutivos sin leads en el período aparecen en una franja aparte. El PDF conserva su tabla
+  actual de ejecutivos (D17).
 
 ## Descarga en PDF
 

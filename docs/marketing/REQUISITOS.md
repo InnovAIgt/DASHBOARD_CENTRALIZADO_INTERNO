@@ -26,12 +26,12 @@ Leyenda: ✅ se puede con los datos actuales · ⚠️ se puede con ajustes · �
 | R5 | Etapas como "cuadritos", tipo rastreo de pedido | ⚠️ | Es diseño de pantalla |
 | R6 | **Tiempo** en cada etapa | ⏳ | La API da la etapa actual; revisar si `stage_feedback_json` trae fechas por etapa (Paso 2). Si no, guardar historial propio |
 | R7 | Semáforo verde / amarillo / rojo por tiempo | ⏳ | Depende de R6 y de que se definan los días meta por etapa |
-| R8 | Embudo por vendedor (dónde se le pierden los leads) | ✅ | Existe en DashboardLeads (detalle por asesor) |
-| R9 | Quién es mejor en cada etapa | ⚠️ | Se calcula con R4 + R8 |
+| R8 | Embudo por vendedor (dónde se le pierden los leads) | ✅ | Ficha de coaching por ejecutivo, con comparación frente al equipo |
+| R9 | Quién es mejor en cada etapa | ✅ | Se conserva en el Recorrido de los leads; la ficha indica el paso débil del ejecutivo frente al equipo |
 | R10 | Filtros por país y por vendedor | ✅ | |
 | R11 | Abrir en el **mes actual**, con opción de cambiar fechas | ✅ | Hecho en el paso 3.4c: la v2 abre del día 1 del mes hasta hoy; el Período se puede cambiar o quitar |
 | R12 | Las cifras deben cuadrar | ✅ | DashboardLeads ya verifica la partición de estados |
-| R13 | Resultados por vendedor: citas cumplidas, cotizaciones enviadas, cierres | ⚠️ | Salen de las etapas alcanzadas |
+| R13 | Resultados por vendedor: citas cumplidas, cotizaciones enviadas, cierres | ✅ | Se muestran en la ficha; citas y propuestas salen de las etapas alcanzadas, cierres de ganados calificados |
 
 ## Definiciones pendientes (a confirmar con el ingeniero)
 

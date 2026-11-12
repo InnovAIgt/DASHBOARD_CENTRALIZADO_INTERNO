@@ -426,7 +426,15 @@ export function fichaCoaching(leadsFicha, leadsEquipo, base = []) {
     const conversion = conversionCalificados(own)
     const { pasos, debil } = pasosVsEquipo(embudo, embudoEquipo)
     const res = resultadosDe(embudo, conversion)
-    const resultados = Object.fromEntries(Object.entries(res).map(([k, r]) => [k, { ...r, equipo: resultadosEquipo[k].ratio, pts: puntos(r.ratio, resultadosEquipo[k].ratio) }]))
+    const resultados = Object.fromEntries(Object.entries(res).map(([k, r]) => {
+      const resultadoEquipo = resultadosEquipo[k]
+      return [k, {
+        ...r,
+        equipo: resultadoEquipo.ratio,
+        equipoDen: resultadoEquipo.den,
+        pts: r.den && resultadoEquipo.den ? puntos(r.ratio, resultadoEquipo.ratio) : null,
+      }]
+    }))
     const vencidos = own.filter(esVencido).length
     const enCamino = embudo.etapas.reduce((s, e) => s + e.hoy, 0)
     const estado = conversion.calificados < MINIMO_LEADS ? 'pocos' : debil && debil.pts <= -UMBRAL_APOYO_PTS ? 'apoyo' : 'bien'

@@ -9,8 +9,9 @@ import { formatDate, toDate } from '../utils/dates.js'
 import { leadDisplayId } from '../utils/leads.js'
 import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, MiniEtapas, PaisChip } from './comunes.jsx'
 import {
-  datosAsesor, datosLead, datosMes, ejecutivosEnEtapa, embudoEtapas, esVencido, estaHoy, ETAPAS, fechaReferencia, iniciales,
-  INDICADORES, leadsDeIndicador, mesesDelPeriodo, mesesEnEtapa, puntoDebil, recorridoLeads, tonoPaso, ventasPorMes,
+  datosAsesor, datosLead, datosMes, descripcionFiltro, ejecutivosEnEtapa, embudoEtapas, esVencido, estaHoy, ETAPAS, fechaReferencia,
+  iniciales, INDICADORES, leadsDelFiltro, leadsDeIndicador, mesesDelPeriodo, mesesEnEtapa, pctEntero, pasosVsEquipo,
+  recorridoLeads, tonoPaso, ventasPorMes,
 } from './datos.js'
 import { diasDesdeCreacion } from './informeDatos.js'
 import { Semaforo } from './Semaforo.jsx'
@@ -207,8 +208,8 @@ export function DetalleAsesor({ name, country, leads, month, posicion, ranking, 
             <h3>Avance por etapa <small>llegaron · % que pasa · esperando hoy</small></h3>
             {/* Mismo "Recorrido de los leads" (D16) con los leads de este ejecutivo, sin "Mejor" ni aviso.
                 El tramo resaltado es su punto débil frente al equipo (D17).
-                Clic en una etapa: filtra "Leads del ejecutivo" a los que están hoy en ella (como antes). */}
-            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarAviso={false} onClickEtapa={(k) => setFiltro({ tipo: 'hoyEnEtapa', etapa: k })} />
+                Clic en una etapa: filtra los leads que llegaron a esa etapa. */}
+            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarAviso={false} onClickEtapa={(k) => setFiltro({ tipo: 'llegaron', etapa: k })} />
             <p className="fv2-nota">
               {debil
                 ? <>Su punto débil: <b className="fv2-texto-amarillo">{debil.nombre}</b> (pasa {pctEntero(debil.ratio)} %, el equipo {pctEntero(debil.equipo)} %: {debil.pts} pts). </>

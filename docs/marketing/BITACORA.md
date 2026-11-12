@@ -720,3 +720,35 @@ bitácora).
   de propuesta y Seguimiento (1 de 6).
 - `npm run build` y `npm run lint` ✅. Las pruebas visuales en el navegador quedan a cargo de
   Keily.
+
+---
+
+## Paso 4.3 · Fichas de coaching por ejecutivo (D17) — 12/11/2026 ✅ (revisión visual pendiente)
+
+**Qué se hizo:**
+- Se reemplazaron las tarjetas de "Resultados por ejecutivo" por fichas de ancho completo con
+  estado, indicadores, resultados vs. equipo, 5 pasos de etapa, acciones de esta semana, ranking
+  y botón para abrir el detalle.
+- El equipo de referencia conserva el período y el tipo de lead activos, pero incluye ambos
+  países y todos los ejecutivos. El filtro por país o vendedor sigue limitando las fichas visibles.
+- En el detalle, clicar un paso filtra los leads que llegaron a esa etapa, incluso si ya avanzaron.
+  Los botones de acción abren los filtros correspondientes.
+- Los estilos nuevos usan `.fv2-coach-`; por debajo de 1,100 px los paneles se apilan y en
+  pantallas pequeñas los indicadores quedan en una cuadrícula 2 × 2.
+- Se corrigió el uso de imports faltantes en `Ventanas.jsx`. El PDF y su tabla de ejecutivos no
+  se modificaron.
+
+**Pruebas hechas con la API local (1,698 leads en 34 páginas):**
+
+| Prueba | Resultado |
+|---|---|
+| Métricas de citas, propuestas y ganados contra el embudo | ✅ |
+| Filtros de leads que llegaron, que siguen hoy, que no pasaron y vencidos | ✅ |
+| Todos, Guatemala y El Salvador; historial, último mes y mes previo | ✅ 9 combinaciones |
+| Filtro por vendedor; el referente mantiene ambos países y todos los vendedores | ✅ |
+| Aserciones sobre cálculos y filtros | ✅ 2,962 |
+| `npm run lint` y `npm run build` | ✅ |
+| Revisión visual, tamaños móvil/escritorio y clics en navegador | ⏳ el portal requiere iniciar sesión; pendiente revisión de Keily |
+
+**Sin commit ni push** hasta que Keily revise y apruebe. No se modificaron PDF, dashboard viejo,
+Activaciones, Supabase ni `main`; `.claude/` se mantiene fuera de los cambios.

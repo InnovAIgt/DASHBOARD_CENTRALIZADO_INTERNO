@@ -88,6 +88,10 @@ function FlujoVentasV2Contenido() {
 
   const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
   const summary = useMemo(() => summarize(filtrados), [filtrados])
+  // El referente de coaching siempre incluye ambos países y ejecutivos, pero conserva
+  // el mismo período y tipo de lead que la selección visible.
+  const filtrosEquipo = useMemo(() => ({ ...filters, filterPais: null, filterEjecutivo: null }), [filters])
+  const leadsEquipo = useMemo(() => aplicarFiltros(leads, filtrosEquipo, periodo), [leads, filtrosEquipo, periodo])
   // Ejecutivos de la pestaña Ejecutivos: todos los del país elegido, sin importar período ni tipo.
   const baseEjecutivos = useMemo(() => listaEjecutivos(leads, filters), [leads, filters])
   const paisFiltro = filters.filterPais?.length === 1 ? filters.filterPais[0] : null
@@ -165,7 +169,7 @@ function FlujoVentasV2Contenido() {
 
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
     {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} contexto={contexto} paisFiltro={paisFiltro} />}
-    {leads.length > 0 && pestana === 'ejecutivos' && <Ejecutivos leads={filtrados} baseEjecutivos={baseEjecutivos} />}
+    {leads.length > 0 && pestana === 'ejecutivos' && <Ejecutivos leads={filtrados} leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo}
       vistaKey={informeVista} setVistaKey={setInformeVista} busqueda={informeBusqueda} setBusqueda={setInformeBusqueda} />}
     {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}

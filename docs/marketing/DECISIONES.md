@@ -219,3 +219,34 @@ están hoy en esa etapa.
 **Pendiente:** la tabla del embudo del PDF (`pantalla/pdf.js`) todavía resalta con la regla
 anterior.
 **Autorizó:** Keily García.
+
+## D17 · 12/11/2026 · Fichas de coaching por ejecutivo
+
+**Decisión:** la pestaña Ejecutivos muestra una ficha de ancho completo por vendedor, con estado
+(Necesita apoyo, Va bien o Pocos datos), indicadores, resultados comparados con el equipo,
+avance por etapa y acciones de esta semana.
+
+**Cálculos:**
+- El equipo de referencia incluye Guatemala y El Salvador, sin filtrar por vendedor ni país, pero
+  conserva el mismo período y tipo de lead elegidos en la pantalla.
+- Citas cumplidas = leads que llegaron a Reunión ÷ leads que llegaron a Asignación. Propuestas
+  enviadas = leads que llegaron a Envío de propuesta ÷ leads que llegaron a Asignación. Ganados =
+  ganados calificados ÷ calificados recibidos.
+- Los pasos comparan el porcentaje de paso del ejecutivo con el del equipo. No se comparan pasos
+  con menos de 5 leads en su etapa de origen. El punto débil es el paso con la brecha negativa más
+  grande; "Necesita apoyo" requiere una brecha de 10 puntos o más. Con menos de 5 calificados, el
+  estado es "Pocos datos"; si no hay brecha negativa comparable, "Va bien".
+- El ranking cuenta ganados calificados en el equipo; los empates comparten posición. Las acciones
+  destacan seguimientos vencidos, la etapa con más leads esperando hoy (mínimo 3) y el punto débil
+  frente al equipo (o "Mantener el ritmo").
+- Clic en un paso filtra en el detalle los leads que llegaron a esa etapa, incluidos los que ya
+  avanzaron, no solo los que siguen abiertos ahí. Las acciones filtrables llevan a los leads que
+  requieren seguimiento.
+
+**Alcance visual:** las fichas y sus estilos usan el prefijo `fv2-coach-`, dentro del contenedor
+`.fv2`. Por debajo de 1,100 px los tres paneles se apilan; por debajo de 700 px los indicadores
+se ordenan en una cuadrícula 2 × 2.
+
+**Límites:** la ficha solo cambia la pestaña Ejecutivos del navegador y la ventana del ejecutivo
+que abre. No cambia el PDF, su tabla de ejecutivos, el dashboard viejo, Supabase ni Activaciones.
+La revisión visual final queda a cargo de Keily antes de publicar.
