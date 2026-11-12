@@ -333,6 +333,154 @@ export function tarjetasEjecutivos(leads, base = []) {
   }
 }
 
+// ---------- Pestaña "Ejecutivos": Ficha de coaching (DECISIONES D17) ----------
+// No cambia ningún cálculo: usa embudoEtapas (etapa real estimada), conversionCalificados (D10),
+// summarize (unidades), esVencido, tonoPaso y ejecutivosEnEtapa ("Mejor"). Lo nuevo es comparar
+// cada ejecutivo con el EQUIPO y elegir el paso débil y las acciones.
+
+/** % entero que se muestra en pantalla: redondea lo que muestra la ventana (1 decimal). 53.8 % → 54. */
+export const pctEntero = (ratio) => Math.round(Number(((ratio || 0) * 100).toFixed(1)))
+/** Diferencia en puntos entre dos %, con los mismos números enteros que se ven en pantalla. */
+const puntos = (a, b) => (a == null || b == null ? null : pctEntero(a) - pctEntero(b))
+const MINIMO_LEADS = 5
+/** "Necesita apoyo" si el paso débil está 10 puntos o más por debajo del equipo. */
+export const UMBRAL_APOYO_PTS = 10
+/** Nombres cortos de las etapas para los pasos ("Demo → Propuesta"). */
+export const ETAPAS_CORTAS = ['Asignación', 'Reunión', 'Demo', 'Propuesta', 'Seguimiento', 'Cierre']
+
+/** Leads de un ejecutivo según el filtro de un clic de la ficha (ventana del ejecutivo, D17). */
+export const FILTROS_EJECUTIVO = {
+  vencidos: { descripcion: () => 'Seguimientos vencidos', filtro: () => esVencido },
+  hoyEnEtapa: { descripcion: (k) => `Hoy en ${ETAPAS[k - 1]}`, filtro: (k) => (l) => estaHoy(l, k) },
+  noPasaron: { descripcion: (k) => `Llegaron a ${ETAPAS[k - 1]} y no pasaron a ${ETAPAS[k] ?? 'ganado'}`, filtro: (k) => (l) => llego(l, k) && !paso(l, k) },
+  llegaron: { descripcion: (k) => `Llegaron a ${ETAPAS[k - 1]}`, filtro: (k) => (l) => llego(l, k) },
+}
+export const leadsDelFiltro = (leads, f) => leads.filter(FILTROS_EJECUTIVO[f.tipo].filtro(f.etapa))
+export const descripcionFiltro = (f) => FILTROS_EJECUTIVO[f.tipo].descripcion(f.etapa)
+
+/**
+ * Resultados (R13) sobre los mismos leads que el Recorrido y la ventana:
+ * citas cumplidas = llegaron a Reunión ÷ llegaron a Asignación · propuestas enviadas = llegaron a
+ * Envío de propuesta ÷ llegaron a Asignación · cierres = conversión de calificados (D10).
+ */
+function resultadosDe(embudo, conversion) {
+  const base = embudo.etapas[0].llegaron
+  const r = (num, den) => ({ num, den, ratio: den ? num / den : 0 })
+  return {
+    citas: r(embudo.etapas[1].llegaron, base),
+    propuestas: r(embudo.etapas[3].llegaron, base),
+    cierres: r(conversion.ganadosCalificados, conversion.calificados),
+  }
+}
+
+/**
+ * Paso débil (D17, reemplaza la regla de D14): entre los pasos con al menos 5 leads en la etapa de
+ * origen, el que está más por debajo del equipo (en puntos). null si ninguno está por debajo.
+ */
+export function pasosVsEquipo(embudoPropio, embudoEquipo, minimo = MINIMO_LEADS) {
+  const pasos = embudoPropio.etapas.slice(0, -1).map((e, i) => {
+    const eq = embudoEquipo.etapas[i]
+    const pocos = e.llegaron < minimo
+    return {
+      desde: e.stage, hasta: e.stage + 1, nombre: `${ETAPAS_CORTAS[i]} → ${ETAPAS_CORTAS[i + 1]}`,
+      llegaron: e.llegaron, pasaron: e.pasaron, ratio: e.salida, equipo: eq.salida, pocos,
+      pts: pocos ? null : puntos(e.salida, eq.salida),
+    }
+  })
+  const bajo = pasos.filter((p) => p.pts != null && p.pts < 0)
+  const debil = bajo.length ? bajo.reduce((min, p) => (p.pts < min.pts ? p : min)) : null
+  return { pasos, debil }
+}
+
+/** Ranking de ventas (ganados de calificados) en el equipo; los empates comparten número. */
+function rankingVentas(porEjecutivoEquipo) {
+  const ventas = [...porEjecutivoEquipo.values()].map((g) => conversionCalificados(g).ganadosCalificados)
+  return (v) => ({ n: 1 + ventas.filter((x) => x > v).length, m: ventas.length, estrella: v > 0 && !ventas.some((x) => x > v) })
+}
+
+const agruparPorEjecutivo = (leads) => {
+  const grupos = new Map()
+  for (const l of leads) {
+    if (!l.asesor) continue
+    if (!grupos.has(l.asesor)) grupos.set(l.asesor, [])
+    grupos.get(l.asesor).push(l)
+  }
+  return grupos
+}
+
+/**
+ * Fichas de coaching. EQUIPO = `leadsEquipo` (los dos países, mismo período y tipo de lead; sin
+ * filtro de país ni de ejecutivo). Las fichas salen de `leadsFicha` (respetan todos los filtros).
+ * `base` = ejecutivos del país/selección (listaEjecutivos) para la franja "Sin leads".
+ */
+export function fichaCoaching(leadsFicha, leadsEquipo, base = []) {
+  const embudoEquipo = embudoEtapas(leadsEquipo)
+  const convEquipo = conversionCalificados(leadsEquipo)
+  const porEjecEquipo = agruparPorEjecutivo(leadsEquipo)
+  const ranking = rankingVentas(porEjecEquipo)
+  const resultadosEquipo = resultadosDe(embudoEquipo, convEquipo)
+  const paisDe = new Map(base.map((e) => [e.name, e.country]))
+
+  const fichas = [...agruparPorEjecutivo(leadsFicha).entries()].map(([name, own]) => {
+    const embudo = embudoEtapas(own)
+    const conversion = conversionCalificados(own)
+    const { pasos, debil } = pasosVsEquipo(embudo, embudoEquipo)
+    const res = resultadosDe(embudo, conversion)
+    const resultados = Object.fromEntries(Object.entries(res).map(([k, r]) => [k, { ...r, equipo: resultadosEquipo[k].ratio, pts: puntos(r.ratio, resultadosEquipo[k].ratio) }]))
+    const vencidos = own.filter(esVencido).length
+    const enCamino = embudo.etapas.reduce((s, e) => s + e.hoy, 0)
+    const estado = conversion.calificados < MINIMO_LEADS ? 'pocos' : debil && debil.pts <= -UMBRAL_APOYO_PTS ? 'apoyo' : 'bien'
+
+    // Qué hacer esta semana (máximo 3, en este orden).
+    const acciones = []
+    if (vencidos > 0) {
+      acciones.push({ clave: 'vencidos', tono: 'rojo', titulo: `Contactar ${vencidos} ${vencidos === 1 ? 'seguimiento vencido' : 'seguimientos vencidos'}`, texto: 'Se pasaron de la fecha acordada con el cliente', filtro: { tipo: 'vencidos' }, cuantos: vencidos })
+    }
+    const detenida = embudo.etapas.slice(0, 5).reduce((max, e) => (e.hoy > (max?.hoy ?? 0) ? e : max), null) // empate → la más temprana
+    if (detenida && detenida.hoy >= 3) {
+      acciones.push({ clave: 'mover', tono: 'amarillo', titulo: `Mover ${detenida.hoy} leads detenidos en ${detenida.label}`, texto: 'Es donde más leads tiene esperando hoy', filtro: { tipo: 'hoyEnEtapa', etapa: detenida.stage }, cuantos: detenida.hoy })
+    }
+    if (debil) {
+      const mejor = ejecutivosEnEtapa(leadsEquipo, debil.desde).find((f) => !f.pocos) ?? null
+      const aprender = mejor && mejor.name !== name ? ` · aprender de ${mejor.name}, el mejor en ese paso` : ''
+      acciones.push({ clave: 'reforzar', tono: 'amarillo', titulo: `Reforzar ${debil.nombre}`, texto: `Pasa ${pctEntero(debil.ratio)} % y el equipo ${pctEntero(debil.equipo)} %${aprender}`, filtro: { tipo: 'noPasaron', etapa: debil.desde }, cuantos: debil.llegaron - debil.pasaron })
+    } else {
+      acciones.push({ clave: 'ritmo', tono: 'verde', titulo: 'Mantener el ritmo', texto: 'Igual o arriba del equipo en todas las etapas con datos', filtro: null })
+    }
+
+    return {
+      name, iniciales: iniciales(name), country: paisDe.get(name) ?? own[0]?.pais, leads: own,
+      calificados: conversion.calificados, ventas: conversion.ganadosCalificados, conversion,
+      unidades: summarize(own).units, enCamino, vencidos, ranking: ranking(conversion.ganadosCalificados),
+      resultados, pasos, debil, estado, acciones: acciones.slice(0, 3),
+    }
+  })
+
+  // Orden: Necesita apoyo (mayor brecha primero) → Va bien (más ventas) → Pocos datos.
+  const grupo = { apoyo: 0, bien: 1, pocos: 2 }
+  fichas.sort((a, b) => grupo[a.estado] - grupo[b.estado]
+    || (a.estado === 'apoyo' ? a.debil.pts - b.debil.pts : b.ventas - a.ventas)
+    || b.calificados - a.calificados || a.name.localeCompare(b.name))
+
+  const conFicha = new Set(fichas.map((f) => f.name))
+  const sinLeads = base.filter((e) => !conFicha.has(e.name)).sort((a, b) => a.name.localeCompare(b.name)).map((e) => ({ ...e, iniciales: iniciales(e.name) }))
+
+  return {
+    fichas,
+    sinLeads,
+    equipo: {
+      embudo: embudoEquipo,
+      conversion: convEquipo,
+      ventas: convEquipo.ganadosCalificados,
+      calificados: convEquipo.calificados,
+      ratio: convEquipo.ratio,
+      unidades: summarize(leadsEquipo).units,
+      vencidos: leadsEquipo.filter(esVencido).length,
+      ejecutivos: porEjecEquipo.size,
+    },
+  }
+}
+
 // ---------- Ventana "Detalle de leads" (al cliquear un indicador) ----------
 export const INDICADORES = {
   total: { titulo: 'Total leads', descripcion: 'Todos los leads con los filtros activos.', filtro: () => true },

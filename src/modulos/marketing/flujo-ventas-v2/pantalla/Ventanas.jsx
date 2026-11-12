@@ -131,25 +131,36 @@ const PESTANAS_LEADS = [
   { key: 'vencidos', label: 'Vencidos', filtro: esVencido, rojo: true },
 ]
 
-export function DetalleAsesor({ name, country, leads, month, posicion, equipo, onClose }) {
+/**
+ * @param equipo        { ratio, embudo } del EQUIPO (GT + SV, D17) para "equipo: X %" y el punto débil
+ * @param ranking       { n, m, estrella } "#N de M en ventas" (D17); si no viene, se usa `posicion` como antes
+ * @param filtroInicial opcional (D17): { tipo: 'vencidos' | 'hoyEnEtapa' | 'noPasaron' | 'llegaron', etapa }.
+ *                      Sin él la ventana funciona como antes.
+ */
+export function DetalleAsesor({ name, country, leads, month, posicion, ranking, equipo, filtroInicial = null, onClose }) {
   const [leadSel, setLeadSel] = useState(null)
   const [mesSel, setMesSel] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(month ?? '')
   const [selectedType, setSelectedType] = useState('')
   const [pestanaLeads, setPestanaLeads] = useState('abiertos')
-  const [etapaFiltro, setEtapaFiltro] = useState(null)
+  // Filtro de la lista "Leads del ejecutivo": el de la ficha (D17) o el clic en una etapa del Avance.
+  const [filtro, setFiltro] = useState(filtroInicial)
   const [verPronostico, setVerPronostico] = useState(false)
   useVentana(onClose, leadSel || mesSel, () => { setLeadSel(null); setMesSel(null) })
   const { availableMonths, own, summary, forecast, advisorCountry, conversion } = datosAsesor({ name, country, leads, selectedMonth, selectedType })
   const embudo = useMemo(() => embudoEtapas(own), [own])
-  const debil = equipo?.embudo ? puntoDebil(embudo, equipo.embudo) : null
+  // Punto débil (D17, cambia D14): el paso más por debajo del equipo, con al menos 5 leads.
+  const debil = useMemo(() => (equipo?.embudo ? pasosVsEquipo(embudo, equipo.embudo).debil : null), [embudo, equipo])
   const meses = useMemo(() => ventasPorMes(own, mesesDelPeriodo(own)), [own])
   const vencidos = own.filter(esVencido).length
   const pestana = PESTANAS_LEADS.find((p) => p.key === pestanaLeads)
-  const listaLeads = [...own]
-    .filter((l) => (etapaFiltro ? estaHoy(l, etapaFiltro) : pestana.filtro(l)))
+  const listaLeads = (filtro ? leadsDelFiltro(own, filtro) : own.filter(pestana.filtro))
     .sort((a, b) => b.apiStage - a.apiStage)
-  const recorrido = useMemo(() => recorridoLeads(embudo), [embudo])
+  // El tramo amarillo del Recorrido es el punto débil (D17, cambia D16).
+  const recorrido = useMemo(() => {
+    const r = recorridoLeads(embudo)
+    return { ...r, frenado: debil ? r.tramos.find((t) => t.desde === debil.desde) ?? null : null }
+  }, [embudo, debil])
 
   return <>
     <Ventana capa={0} etiqueta={`Detalle de ${name}`} ancho="ancha" onCerrar={onClose}>
@@ -157,7 +168,9 @@ export function DetalleAsesor({ name, country, leads, month, posicion, equipo, o
         <span className="fv2-avatar is-grande">{iniciales(name)}</span>
         <div className="fv2-ventana-titulos">
           <div className="fv2-eyebrow">Detalle del ejecutivo</div>
-          <h2>{name} {advisorCountry && <PaisChip pais={advisorCountry} />} {posicion && <span className={`fv2-posicion ${posicion === 1 ? 'is-primero' : ''}`}>{posicion === 1 ? '★ ' : ''}#{posicion} del equipo</span>}</h2>
+          <h2>{name} {advisorCountry && <PaisChip pais={advisorCountry} />} {ranking
+            ? <span className={`fv2-posicion ${ranking.estrella ? 'is-primero' : ''}`}>{ranking.estrella ? '★ ' : ''}#{ranking.n} de {ranking.m} en ventas</span>
+            : posicion && <span className={`fv2-posicion ${posicion === 1 ? 'is-primero' : ''}`}>{posicion === 1 ? '★ ' : ''}#{posicion} del equipo</span>}</h2>
         </div>
         <div className="fv2-ventana-filtros">
           <label><span>Mes</span>
@@ -193,13 +206,15 @@ export function DetalleAsesor({ name, country, leads, month, posicion, equipo, o
           <section className="fv2-bloque">
             <h3>Avance por etapa <small>llegaron · % que pasa · esperando hoy</small></h3>
             {/* Mismo "Recorrido de los leads" (D16) con los leads de este ejecutivo, sin "Mejor" ni aviso.
-                El tramo resaltado es su punto débil (misma regla: menor % con al menos 5 leads).
+                El tramo resaltado es su punto débil frente al equipo (D17).
                 Clic en una etapa: filtra "Leads del ejecutivo" a los que están hoy en ella (como antes). */}
-            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarAviso={false} onClickEtapa={(k) => setEtapaFiltro(k)} />
+            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarAviso={false} onClickEtapa={(k) => setFiltro({ tipo: 'hoyEnEtapa', etapa: k })} />
             <p className="fv2-nota">
               {debil
-                ? <>Su punto débil: <b className="fv2-texto-amarillo">{debil.label}</b> (pasa {formatearRatio(debil.ratio)}{debil.equipo != null ? `, el equipo pasa ${formatearRatio(debil.equipo)}` : ''}). </>
-                : 'Sin datos suficientes para señalar un punto débil (se necesitan al menos 5 leads en la etapa anterior). '}
+                ? <>Su punto débil: <b className="fv2-texto-amarillo">{debil.nombre}</b> (pasa {pctEntero(debil.ratio)} %, el equipo {pctEntero(debil.equipo)} %: {debil.pts} pts). </>
+                : equipo?.embudo
+                  ? 'Igual o arriba del equipo en todas las etapas con datos (se comparan los pasos con al menos 5 leads). '
+                  : ''}
               Clic en una etapa para ver sus leads.
             </p>
           </section>
@@ -216,18 +231,19 @@ export function DetalleAsesor({ name, country, leads, month, posicion, equipo, o
           <div className="fv2-bloque-cabeza">
             <h3>Leads del ejecutivo <small>{formatNumber(own.length)} en esta selección</small></h3>
             <div className="fv2-vistas">
-              {etapaFiltro && <button type="button" className="fv2-vista-pildora is-activa" onClick={() => setEtapaFiltro(null)} title="Quitar filtro de etapa">
-                Hoy en {ETAPAS[etapaFiltro - 1]} ✕
+              {filtro && <button type="button" className="fv2-vista-pildora is-activa fv2-filtrado" onClick={() => setFiltro(null)}
+                aria-label={`Quitar filtro: ${descripcionFiltro(filtro)}`} title="Quitar filtro">
+                Filtrado: {descripcionFiltro(filtro)}<span className="fv2-vista-cuenta">{formatNumber(listaLeads.length)}</span> ✕ Quitar filtro
               </button>}
               {PESTANAS_LEADS.map((p) => <button type="button" key={p.key}
-                className={`fv2-vista-pildora ${!etapaFiltro && pestanaLeads === p.key ? 'is-activa' : ''}`}
-                onClick={() => { setEtapaFiltro(null); setPestanaLeads(p.key) }}>
+                className={`fv2-vista-pildora ${!filtro && pestanaLeads === p.key ? 'is-activa' : ''}`}
+                onClick={() => { setFiltro(null); setPestanaLeads(p.key) }}>
                 {p.label}<span className={`fv2-vista-cuenta ${p.rojo ? 'is-rojo' : ''}`}>{formatNumber(own.filter(p.filtro).length)}</span>
               </button>)}
             </div>
           </div>
           <Tabla columnas={['Cliente', 'Etapa', 'Calificación', 'Estado', 'Próxima gestión', 'Último comentario', { label: 'Unid.', num: true }, '']}
-            vacio={listaLeads.length ? null : 'Sin leads en esta pestaña.'} className="fv2-tabla-ventana">
+            vacio={listaLeads.length ? null : filtro ? 'Sin leads con este filtro.' : 'Sin leads en esta pestaña.'} className="fv2-tabla-ventana">
             {listaLeads.map((lead) => {
               const comentario = leadComments(lead)[0]
               return <tr key={lead.id}>

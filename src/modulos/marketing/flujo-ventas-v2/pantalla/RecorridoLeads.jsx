@@ -5,10 +5,10 @@
 // Se usa en la pestaña Resumen y en "Avance por etapa" de la ventana del ejecutivo (sin "Mejor").
 import { CalendarDays, Check, ChevronRight, Monitor, Phone, Send, TriangleAlert, UserPlus } from 'lucide-react'
 import { formatNumber } from '../utils/analytics.js'
+import { pctEntero } from './datos.js'
 
 const ICONOS = [UserPlus, CalendarDays, Monitor, Send, Phone, Check]
 // Se redondea lo que muestra la ventana (1 decimal, formatearRatio) para que nunca difieran: 53.8 % → 54 %.
-export const pctEntero = (ratio) => Math.round(Number(((ratio || 0) * 100).toFixed(1)))
 const pct = (ratio) => `${pctEntero(ratio)} %`
 
 function textoTramo(t) {
