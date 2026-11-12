@@ -598,3 +598,15 @@ SV ago–nov; 48 comprobaciones):**
 **Qué no se tocó:** la lógica copiada, Activaciones, el Flujo de ventas viejo, los demás
 dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json`, `vercel.json`, Supabase ni
 `main`. La carpeta `.claude/` no se incluye en el commit.
+
+**Ajuste (11/11/2026) · menú lateral escondido en la v2:** mientras está abierto "Flujo de
+ventas v2 (prueba)", el menú lateral del portal se esconde y el dashboard usa todo el ancho. Al
+acercar el mouse al borde izquierdo (hay una marca discreta) el menú se asoma encima del
+dashboard; al alejar el mouse, se esconde solo. Al elegir otra página del menú, todo vuelve a la
+normalidad. En pantallas angostas no cambia nada (el portal ya usa su botón ☰).
+- `PortalLayout.tsx`: pone la clase `fv2-menu-oculto` en `.portal-app` solo en esa página, una
+  franja invisible en el borde izquierdo y la clase `is-menu-asomado` al acercar el mouse.
+- Estilos al final de `flujo-ventas-v2.css`, todos condicionados a `.portal-app.fv2-menu-oculto`:
+  sin esa clase no aplican, así que los demás dashboards se ven igual. `src/index.css` no se tocó.
+- `npm run build` y `npm run lint` ✅; hoja de estilos del portal: las únicas reglas nuevas fuera
+  de `.fv2` dependen de `.fv2-menu-oculto`; ningún valor existente cambió ✅.
