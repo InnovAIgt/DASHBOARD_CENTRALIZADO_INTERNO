@@ -119,24 +119,35 @@ export function GraficaMensual({ filas, onMes }) {
 // ---------- Tarjetas por país (arriba de los indicadores) ----------
 // total, calificados, ganados y unidades por cierre: byCountry() = summarize() por país.
 // Conversión de calificados: corregida (conversionCalificados, D10).
-export function TarjetasPais({ paises }) {
+// Cada dato de la tarjeta se puede cliquear: abre el "Detalle de leads" de ese dato, solo con los
+// leads de ese país (antes lo hacían las tarjetas de indicadores repetidas, 12/11/2026).
+function DatoPais({ etiqueta, children, onClick }) {
+  return <button type="button" className="fv2-pais-dato" onClick={onClick} title={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
+    <span>{etiqueta}</span>{children}
+  </button>
+}
+
+export function TarjetasPais({ paises, onAbrir }) {
   return <section className="fv2-paises" aria-label="Resultados por país">
-    {paises.map((fila) => <article key={fila.country} className="fv2-pais-tarjeta">
-      <header>
-        <div className="fv2-pais-nombre"><Bandera pais={fila.country} />{fila.country.toUpperCase()} ({CODIGO_PAIS[fila.country]})</div>
-        <div className="fv2-pais-pct">
-          <strong>{formatearRatio(fila.conversion.ratio)}</strong>
-          <small>Conversión de calificados</small>
+    {paises.map((fila) => {
+      const abrir = (clave) => () => onAbrir?.(clave, fila.country)
+      return <article key={fila.country} className="fv2-pais-tarjeta">
+        <header>
+          <div className="fv2-pais-nombre"><Bandera pais={fila.country} />{fila.country.toUpperCase()} ({CODIGO_PAIS[fila.country]})</div>
+          <button type="button" className="fv2-pais-pct" onClick={abrir('conversion')} title="Ver el detalle de la conversión de calificados">
+            <strong>{formatearRatio(fila.conversion.ratio)}</strong>
+            <small>Conversión de calificados</small>
+          </button>
+        </header>
+        <Medidor valor={fila.conversion.ratio} max={1} color={COLORES.azul} alto={6} />
+        <div className="fv2-pais-datos">
+          <DatoPais etiqueta="Total leads" onClick={abrir('total')}><b>{formatNumber(fila.total)}</b></DatoPais>
+          <DatoPais etiqueta="Calificados" onClick={abrir('calificados')}><b style={{ color: COLORES.azulClaro }}>{formatNumber(fila.qualified)}</b></DatoPais>
+          <DatoPais etiqueta="Ganados" onClick={abrir('ganados')}><b style={{ color: COLORES.verdeClaro }}>{formatNumber(fila.won)}</b></DatoPais>
+          <DatoPais etiqueta="Unidades por cierre" onClick={abrir('porCierre')}><b>{fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'}</b></DatoPais>
         </div>
-      </header>
-      <Medidor valor={fila.conversion.ratio} max={1} color={COLORES.azul} alto={6} />
-      <div className="fv2-pais-datos">
-        <div><span>Total leads</span><b>{formatNumber(fila.total)}</b></div>
-        <div><span>Calificados</span><b style={{ color: COLORES.azulClaro }}>{formatNumber(fila.qualified)}</b></div>
-        <div><span>Ganados</span><b style={{ color: COLORES.verdeClaro }}>{formatNumber(fila.won)}</b></div>
-        <div><span>Unidades por cierre</span><b>{fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'}</b></div>
-      </div>
-    </article>)}
+      </article>
+    })}
   </section>
 }
 

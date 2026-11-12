@@ -225,11 +225,13 @@
   .fv2-pais-tarjeta > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .fv2-pais-nombre { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 900; letter-spacing: .02em; color: #fff; }
   .fv2-pais-nombre .fv2-bandera { width: 28px; height: 20px; }
-  .fv2-pais-pct { text-align: right; }
+  .fv2-pais-pct { padding: 4px 6px; margin: -4px -6px; text-align: right; background: none; border: 1px solid transparent; border-radius: 10px; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+  .fv2-pais-pct:hover, .fv2-pais-pct:focus-visible { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .18); outline: none; }
   .fv2-pais-pct strong { display: block; font-family: var(--fv2-mono); font-size: 28px; font-weight: 900; line-height: 1; color: var(--fv2-azul-claro); }
   .fv2-pais-pct small { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--fv2-tenue); }
   .fv2-pais-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  .fv2-pais-datos > div { min-width: 0; padding: 8px 10px; background: rgba(15, 17, 23, .55); border: 1px solid var(--fv2-borde); border-radius: 10px; }
+  .fv2-pais-dato { display: block; min-width: 0; padding: 8px 10px; text-align: left; background: rgba(15, 17, 23, .55); border: 1px solid var(--fv2-borde); border-radius: 10px; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+  .fv2-pais-dato:hover, .fv2-pais-dato:focus-visible { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .22); outline: none; }
   .fv2-pais-datos span { display: block; overflow: hidden; font-size: 10px; font-weight: 800; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; color: var(--fv2-tenue); }
   .fv2-pais-datos b { font-family: var(--fv2-mono); font-size: 18px; font-weight: 900; color: #fff; }
 

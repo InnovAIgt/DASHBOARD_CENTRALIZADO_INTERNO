@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react'
 import { formatNumber } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
-import { conversionCalificados, datosVistaGeneral } from './datos.js'
+import { conversionCalificados, datosVistaGeneral, INDICADORES } from './datos.js'
 import { leadReferenceMonth } from '../utils/leads.js'
 import { EmbudoEtapas, GraficaMensual, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
 import { DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
@@ -54,7 +54,11 @@ export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {
   const abrirMes = (fila) => setMesSel({ month: fila.month, country: paisFiltro, leads: leads.filter((l) => leadReferenceMonth(l) === fila.month) })
 
   return <div className="fv2-vista">
-    <TarjetasPais paises={datos.countries} />
+    <TarjetasPais paises={datos.countries} onAbrir={(clave, pais) => setIndicadorSel({
+      clave,
+      leads: leads.filter((lead) => lead.pais === pais),
+      titulo: `${INDICADORES[clave].titulo} · ${pais}`,
+    })} />
 
     <Indicadores summary={summary} conversion={conversion} onAbrir={(clave) => setIndicadorSel({ clave, leads })} />
 

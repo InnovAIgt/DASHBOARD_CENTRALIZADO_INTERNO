@@ -673,3 +673,10 @@ indicadores **Total leads, Calificados, Ganados y Unidades por cierre**, porque 
 de las tarjetas por país. Quedan **Conversión de calificados** y **Unidades vendidas** (2 tarjetas,
 siguen abriendo su "Detalle de leads" al hacer clic). El PDF no cambia. `npm run build` y
 `npm run lint` ✅.
+
+**Ajuste (12/11/2026) · datos de las tarjetas por país con detalle:** cada dato de las tarjetas
+de Guatemala y El Salvador (conversión de calificados, Total leads, Calificados, Ganados y
+Unidades por cierre) ahora se puede cliquear y abre el mismo "Detalle de leads" que tenían las
+tarjetas de indicadores quitadas, pero **solo con los leads de ese país** (título, por ejemplo,
+"Ganados · Guatemala"). Las cifras de la ventana salen de los mismos leads que la tarjeta.
+`npm run build` y `npm run lint` ✅.

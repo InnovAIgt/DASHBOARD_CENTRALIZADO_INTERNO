@@ -61,11 +61,13 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 
 ## Pestañas
 
-Debajo de los filtros: **Resumen** (tarjetas por país, 6 indicadores, "Leads por mes" y embudo
-por etapa) · **Ejecutivos** (tarjetas por ejecutivo) · **Informe detallado**. La zona de filtros
+Debajo de los filtros: **Resumen** (tarjetas por país, 2 indicadores —Conversión de calificados
+y Unidades vendidas—, "Leads por mes" y embudo por etapa) · **Ejecutivos** (tarjetas por ejecutivo) · **Informe detallado**. La zona de filtros
 y pestañas queda fija arriba: la v2 se desplaza dentro de su propio contenedor (alto de la
 pantalla menos la barra del portal). La pestaña elegida se recuerda mientras la página esté abierta.
 
+- Clic en cualquier dato de una tarjeta de país (conversión, Total leads, Calificados, Ganados,
+  Unidades por cierre) → Detalle de leads de ese dato, solo con los leads de ese país.
 - Clic en un mes de "Leads por mes" → Detalle mensual de ese mes con el filtro de país actual.
 - **Ejecutivos:** una tarjeta por ejecutivo (todos los del país; los que no tienen leads en el
   período van al final y apagados) con la conversión de calificados en un círculo (verde ≥ 20 %,
@@ -89,7 +91,7 @@ completo está en el Excel). Archivo: `Reporte_flujo_ventas_<GT|SV|GT-SV>_<desde
 ## Filtros por defecto
 
 Al abrir: todos los países, **Tipo de lead = Calificado** y **Período = del día 1 del mes
-hasta hoy**. "Volver a filtros por defecto" regresa a eso.
+hasta hoy**.
 
 ## Embudo de ventas por etapa (pestaña Resumen)
 
