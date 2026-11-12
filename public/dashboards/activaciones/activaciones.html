@@ -233,6 +233,60 @@
         </div>
       </section>
 
+      <!-- 3 CUADRITOS DE CONTROL DE RADIOS (TOTAL, EN PROCESO, ENTREGADOS) -->
+      <section class="radios-kpi-row" style="margin-bottom: 16px;">
+        <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #c59600;"></span>
+          CONTROL Y ENTREGA DE RADIOS DEL PERÍODO
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+          <!-- 1: Total Radios -->
+          <div class="country-sla-card is-clickable" onclick="navigateToEtapasFilter({ estado: 'todos' })" title="Clic para ver todas las radicaciones en la tabla" style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; transition: all 0.2s;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em;">Total de Radios</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Todas las radicaciones que abarca el período</div>
+              </div>
+              <div style="font-size: 28px; font-weight: 900; color: #fff; font-family: var(--font-mono); line-height: 1;" id="kpiTotalRadios">—</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
+              <span>Suma total de equipos</span>
+              <span style="color: #7fb0f0; font-weight: 700;">Ver tabla ↗</span>
+            </div>
+          </div>
+
+          <!-- 2: Radios en Proceso -->
+          <div class="country-sla-card is-clickable" onclick="navigateToEtapasFilter({ estado: 'en_proceso' })" title="Clic para ver radicaciones en proceso" style="background: rgba(26, 29, 39, 0.85); border: 1px solid rgba(79,143,216,0.3); border-radius: 16px; padding: 16px 20px; transition: all 0.2s;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: #4f8fd8; text-transform: uppercase; letter-spacing: 0.05em;">Radios en Proceso</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Radicaciones en proceso activo</div>
+              </div>
+              <div style="font-size: 28px; font-weight: 900; color: #4f8fd8; font-family: var(--font-mono); line-height: 1;" id="kpiRadiosEnProceso">—</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
+              <span>En configuración y entrega</span>
+              <span style="color: #4f8fd8; font-weight: 700;">Ver en proceso ↗</span>
+            </div>
+          </div>
+
+          <!-- 3: Radios Entregados -->
+          <div class="country-sla-card is-clickable" onclick="navigateToEtapasFilter({ estado: 'finalizada' })" title="Clic para ver radicaciones finalizadas" style="background: rgba(26, 29, 39, 0.85); border: 1px solid rgba(47,143,118,0.3); border-radius: 16px; padding: 16px 20px; transition: all 0.2s;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: #3f9c85; text-transform: uppercase; letter-spacing: 0.05em;">Radios Entregados</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Radicaciones finalizadas con éxito</div>
+              </div>
+              <div style="font-size: 28px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono); line-height: 1;" id="kpiRadiosEntregados">—</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
+              <span>Equipos entregados al cliente</span>
+              <span style="color: #2f8f76; font-weight: 700;">Ver finalizadas ↗</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- EXACT 4 KPI ROW (CLICKABLE -> GO TO ETAPAS TABLE) -->
       <section class="kpi-row-exact">
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'todos', sla: 'todos' })" title="Clic para ver todas las radicaciones en la tabla">
@@ -474,15 +528,16 @@
           <table class="custom-table" id="radicacionesTable">
             <thead style="position: sticky; top: 0; background: #151821; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
               <tr>
-                <th style="width: 11%;">Pre-Oferta</th>
-                <th style="width: 25%;">Cliente / Razón Social</th>
-                <th style="width: 6%; text-align: center;">País</th>
-                <th style="width: 11%; text-align: center;">Negocio</th>
-                <th style="width: 6%; text-align: center;">Radios</th>
-                <th style="width: 16%;">Etapa Actual</th>
+                <th style="width: 10%;">Pre-Oferta</th>
+                <th style="width: 22%;">Cliente / Razón Social</th>
+                <th style="width: 5%; text-align: center;">País</th>
+                <th style="width: 9%; text-align: center;">Negocio</th>
+                <th style="width: 14%; text-align: center;">Tipo de Inventario</th>
+                <th style="width: 11%; text-align: center;">Radios Entregados</th>
+                <th style="width: 13%;">Etapa Actual</th>
                 <th style="width: 8%; text-align: center;">Estado</th>
                 <th style="width: 8%; text-align: center;">Condición SLA</th>
-                <th style="width: 9%; text-align: right;">Acción</th>
+                <th style="width: 8%; text-align: right;">Acción</th>
               </tr>
             </thead>
             <tbody id="radicacionesTbody">
@@ -517,12 +572,28 @@
           <!-- Rendered by JS -->
         </div>
 
-        <!-- TOP 10 CLIENTES CON MÁS RADIOS Y VENDEDOR ENCARGADO -->
+        <!-- DISTRIBUCIÓN POR TIPO DE INVENTARIO ENTREGADO -->
+        <div style="margin-top: 24px;">
+          <div class="panel-header" style="margin-bottom: 12px;">
+            <div>
+              <div class="hero-eyebrow" style="color: #4f8fd8;">MODALIDAD DE ENTREGA Y EQUIPOS</div>
+              <div class="panel-title">Distribución por Tipo de Inventario Entregado al Cliente</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Desglose según la modalidad contractual registrada en la API (Comodato, Arriendo, Financiado, Propiedad Cliente y Modelos B800 / Estándar)
+              </div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;" id="inventoryTypeCardsGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- TOP 10 CLIENTES CON MÁS RADIOS Y TIPO DE INVENTARIO -->
         <div style="margin-top: 24px;">
           <div class="panel-header" style="margin-bottom: 12px;">
             <div>
               <div class="hero-eyebrow" style="color: #c59600;">RANKING COMERCIAL</div>
-              <div class="panel-title">Top 10 Clientes con Mayor Compra / Contratación de Radios</div>
+              <div class="panel-title">Top 10 Clientes con Mayor Demanda y Tipo de Inventario Entregado</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
                 Filtrado dinámicamente según el rango de fechas y filtros seleccionados
               </div>
@@ -533,16 +604,50 @@
             <table class="custom-table" id="topClientsTable">
               <thead>
                 <tr>
-                  <th style="text-align: center; width: 70px;"># Rank</th>
+                  <th style="text-align: center; width: 60px;"># Rank</th>
                   <th>Cliente / Razón Social</th>
                   <th>Vendedor Encargado</th>
-                  <th style="text-align: center;">País</th>
-                  <th style="text-align: center;">Línea Negocio</th>
-                  <th style="text-align: center;">Radios</th>
-                  <th style="text-align: center;">Radicaciones</th>
+                  <th style="text-align: center; width: 60px;">País</th>
+                  <th style="text-align: center; width: 110px;">Línea Negocio</th>
+                  <th style="text-align: center; width: 180px;">Tipo de Inventario Entregado</th>
+                  <th style="text-align: center; width: 130px;">Radios Entregados</th>
+                  <th style="text-align: center; width: 90px;">Radicaciones</th>
                 </tr>
               </thead>
               <tbody id="topClientsTbody">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- AUDITORÍA DE ENTREGAS POR CLIENTE Y RADICACIÓN -->
+        <div style="margin-top: 24px;">
+          <div class="panel-header" style="margin-bottom: 12px;">
+            <div>
+              <div class="hero-eyebrow" style="color: #2f8f76;">AUDITORÍA DE ENTREGAS</div>
+              <div class="panel-title">Detalle de Inventario y Radios Entregados por Cliente</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Relación individual de cada radicación, indicando qué inventario se entregó al cliente y cuántos radios fueron completados
+              </div>
+            </div>
+          </div>
+
+          <div class="table-scroll-container" style="max-height: 380px;">
+            <table class="custom-table" id="inventoryDetailTable">
+              <thead>
+                <tr>
+                  <th style="width: 10%;">Pre-Oferta</th>
+                  <th style="width: 25%;">Cliente / Razón Social</th>
+                  <th style="width: 6%; text-align: center;">País</th>
+                  <th style="width: 11%; text-align: center;">Línea Negocio</th>
+                  <th style="width: 15%; text-align: center;">Tipo de Inventario</th>
+                  <th style="width: 13%; text-align: center;">Modelo de Radio</th>
+                  <th style="width: 11%; text-align: center;">Radios Entregados</th>
+                  <th style="width: 9%; text-align: center;">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryDetailTbody">
                 <!-- Dynamically rendered -->
               </tbody>
             </table>
@@ -605,15 +710,16 @@
           <table class="custom-table" id="tableActInforme" style="width: 100%; table-layout: fixed; border-collapse: collapse;">
             <thead style="position: sticky; top: 0; background: #151821; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
               <tr>
-                <th style="width: 11%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Pre-Oferta</th>
-                <th style="width: 25%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Cliente / Razón Social</th>
-                <th style="width: 6%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">País</th>
-                <th style="width: 11%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Negocio</th>
-                <th style="width: 6%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Radios</th>
-                <th style="width: 16%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Etapa Actual</th>
+                <th style="width: 10%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Pre-Oferta</th>
+                <th style="width: 22%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Cliente / Razón Social</th>
+                <th style="width: 5%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">País</th>
+                <th style="width: 9%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Negocio</th>
+                <th style="width: 14%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Tipo de Inventario</th>
+                <th style="width: 11%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Radios Entregados</th>
+                <th style="width: 13%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Etapa Actual</th>
                 <th style="width: 8%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Estado</th>
                 <th style="width: 8%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Condición SLA</th>
-                <th style="width: 9%; padding: 10px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: #8b909e;">Acción</th>
+                <th style="width: 8%; padding: 10px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: #8b909e;">Acción</th>
               </tr>
             </thead>
             <tbody id="rowsActInforme">
@@ -630,7 +736,15 @@
           </div>
           <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
             <span style="color: #8b909e;">Total Radios:</span>
-            <strong id="actInformeTotalRadios" style="color: #3f9c85; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+            <strong id="actInformeTotalRadios" style="color: #fff; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(47,143,118,0.12); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(47,143,118,0.3); font-size: 12px;">
+            <span style="color: #3f9c85;">Radios Entregados:</span>
+            <strong id="actInformeRadiosEntregados" style="color: #2f8f76; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(79,143,216,0.12); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(79,143,216,0.3); font-size: 12px;">
+            <span style="color: #7fb0f0;">Radios en Proceso:</span>
+            <strong id="actInformeRadiosEnProceso" style="color: #4f8fd8; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
           </div>
           <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
             <span style="color: #8b909e;">En Tiempo SLA:</span>
@@ -713,35 +827,35 @@
           <div style="font-size: 18px; font-weight: 900; color: #fff;" id="detClientName">Cliente</div>
           <div style="font-size: 12px; color: var(--text-muted);" id="detSubheader">Pre-Oferta #0000</div>
         </div>
-        <button class="close-btn" id="btnCloseDetailModal">✕</button>
+        <button type="button" class="close-btn" id="btnCloseDetailModal" onclick="closeDetailModal()" title="Cerrar ficha técnica">✕</button>
       </div>
 
       <div style="padding: 24px;">
         <!-- Specs Grid -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; background: rgba(255, 255, 255,0.7); padding: 14px; border-radius: 14px; border: 1px solid var(--border-color);">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.04); padding: 14px; border-radius: 14px; border: 1px solid var(--border-color);">
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">País:</span>
-            <strong style="display: block; font-size: 13px;" id="detPais">-</strong>
+            <strong style="display: block; font-size: 13px; color: #fff;" id="detPais">-</strong>
           </div>
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Línea de Negocio:</span>
             <strong style="display: block; font-size: 13px; color: #7fb0f0;" id="detNegocio">-</strong>
           </div>
           <div>
-            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Cantidad de Radios:</span>
-            <strong style="display: block; font-size: 13px; color: #fff;" id="detRadios">-</strong>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Radios Entregados / Totales:</span>
+            <strong style="display: block; font-size: 13px; color: #2f8f76;" id="detRadios">-</strong>
           </div>
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Vendedor Encargado:</span>
-            <strong style="display: block; font-size: 12px;" id="detVendedor">-</strong>
+            <strong style="display: block; font-size: 12px; color: #fff;" id="detVendedor">-</strong>
           </div>
           <div>
-            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Contratación / Plazo:</span>
-            <strong style="display: block; font-size: 12px;" id="detContrato">-</strong>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Tipo de Inventario / Plazo:</span>
+            <strong style="display: block; font-size: 12px; color: #fff;" id="detContrato">-</strong>
           </div>
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Horas Laborales Globales (8am-6pm):</span>
-            <strong style="display: block; font-size: 13px;" id="detHoursText">-</strong>
+            <strong style="display: block; font-size: 13px; color: #fff;" id="detHoursText">-</strong>
           </div>
         </div>
 
@@ -997,13 +1111,78 @@
       .toUpperCase();
   }
 
+  function getInventoryType(item) {
+    if (!item || typeof item !== "object") return "SIN ESPECIFICAR";
+    const raw = String(item.tipoContratacion || item._altTipeqp || "").trim().toUpperCase();
+    return raw || "SIN ESPECIFICAR";
+  }
+
+  function getRadioModel(item) {
+    if (!item || typeof item !== "object") return "Estándar";
+    if (item._altModelo) return item._altModelo;
+    if (item.b800 === true) return "Radio B800";
+    return "Radio Estándar";
+  }
+
+  function getTotalRadiosCount(item) {
+    return Number(item && item.cantidad) || 0;
+  }
+
+  function getRadiosEntregadosCount(item) {
+    if (!item) return 0;
+    return item.estado === "finalizada" ? (Number(item.cantidad) || 0) : 0;
+  }
+
+  function getRadiosEnProcesoCount(item) {
+    if (!item) return 0;
+    return item.estado === "en_proceso" ? (Number(item.cantidad) || 0) : 0;
+  }
+
+  function formatRadiosEntregaCell(item) {
+    const total = getTotalRadiosCount(item);
+    const entregados = getRadiosEntregadosCount(item);
+    if (item.estado === "finalizada") {
+      return `
+        <strong style="font-family: var(--font-mono); font-size: 13px; color: #2f8f76;">${entregados} / ${total}</strong>
+        <div style="font-size: 9px; color: #3f9c85; font-weight: 700;">✓ Entregados</div>
+      `;
+    }
+    if (item.estado === "cancelada") {
+      return `
+        <strong style="font-family: var(--font-mono); font-size: 13px; color: #d95f6e;">0 / ${total}</strong>
+        <div style="font-size: 9px; color: #d95f6e; font-weight: 700;">Cancelada</div>
+      `;
+    }
+    return `
+      <strong style="font-family: var(--font-mono); font-size: 13px; color: #7fb0f0;">0 / ${total}</strong>
+      <div style="font-size: 9px; color: #8b909e; font-weight: 600;">${total} en proceso</div>
+    `;
+  }
+
+  function getInventoryBadgeHtml(invType) {
+    const t = String(invType || "SIN ESPECIFICAR").toUpperCase();
+    let bg = "rgba(255,255,255,0.07)";
+    let fg = "#cbd5e1";
+    let border = "rgba(255,255,255,0.14)";
+    if (t === "COMODATO") {
+      bg = "rgba(79,143,216,0.14)"; fg = "#7fb0f0"; border = "rgba(79,143,216,0.32)";
+    } else if (t === "ARRIENDO") {
+      bg = "rgba(47,143,118,0.14)"; fg = "#3f9c85"; border = "rgba(47,143,118,0.32)";
+    } else if (t === "FINANCIADO") {
+      bg = "rgba(197,150,0,0.14)"; fg = "#e0b52e"; border = "rgba(197,150,0,0.32)";
+    } else if (t === "PROPIEDAD CLIENTE") {
+      bg = "rgba(139,92,246,0.16)"; fg = "#a78bfa"; border = "rgba(139,92,246,0.35)";
+    } else if (t === "BACKUP") {
+      bg = "rgba(196,60,80,0.14)"; fg = "#d95f6e"; border = "rgba(196,60,80,0.32)";
+    }
+    return `<span style="font-size: 10px; font-weight: 800; color: ${fg}; background: ${bg}; border: 1px solid ${border}; padding: 2px 8px; border-radius: 5px; display: inline-block; white-space: nowrap;">${t}</span>`;
+  }
+
   async function completeMissingCompanyNames(items) {
     items.forEach(item => {
       const existingName = getCompanyName(item);
       if (existingName) item.empresa = existingName;
     });
-    const missingNames = items.filter(item => !getCompanyName(item));
-    if (!missingNames.length) return;
 
     try {
       const response = await fetch(CLIENT_NAMES_API_URL, { cache: "no-store" });
@@ -1014,20 +1193,33 @@
       if (!Array.isArray(rows)) throw new Error("la fuente de altas no devolvió una lista");
 
       const companyByCode = new Map();
+      const equipByCode = new Map();
       rows.forEach(row => {
         if (!row || typeof row !== "object") return;
         const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
         const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
         if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
+        if (code) {
+          if (!equipByCode.has(code)) equipByCode.set(code, []);
+          equipByCode.get(code).push(row);
+        }
       });
 
       items.forEach(item => {
+        const code = getClientCode(item);
         const existingName = getCompanyName(item);
-        const company = existingName || companyByCode.get(getClientCode(item)) || "";
+        const company = existingName || companyByCode.get(code) || "";
         if (company) item.empresa = company;
+
+        const matches = equipByCode.get(code);
+        if (matches && matches.length) {
+          const exact = matches.find(m => Number(m.cnteqp) === Number(item.cantidad)) || matches[0];
+          if (exact.nomeqp) item._altModelo = String(exact.nomeqp).trim();
+          if (!item.tipoContratacion && exact.tipeqp) item._altTipeqp = String(exact.tipeqp).trim().toUpperCase();
+        }
       });
     } catch (error) {
-      console.warn("No se pudieron completar los nombres de empresa desde la fuente de altas:", error.message);
+      console.warn("No se pudieron completar datos adicionales desde la fuente de altas:", error.message);
     }
 
     items.forEach(item => {
@@ -1639,7 +1831,12 @@
       const gtCountEl = document.getElementById("gtGlobalOkCount");
       if (gtCountEl) gtCountEl.innerText = `${gtOk} de ${gtItems.length}`;
 
-      // 4 KPIs Principales
+      // 3 KPIs de Radios (Total, En proceso, Entregados)
+      const totalRadios = filteredData.reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
+      const radiosEnProceso = filteredData.reduce((sum, i) => sum + getRadiosEnProcesoCount(i), 0);
+      const radiosEntregados = filteredData.reduce((sum, i) => sum + getRadiosEntregadosCount(i), 0);
+
+      // 4 KPIs Principales de Radicaciones
       const total = filteredData.length;
       const enProceso = filteredData.filter(i => i.estado === "en_proceso").length;
       const finalizadas = filteredData.filter(i => i.estado === "finalizada").length;
@@ -1649,6 +1846,10 @@
         const el = document.getElementById(id);
         if (el) el.innerText = val;
       };
+
+      setElText("kpiTotalRadios", totalRadios.toLocaleString("es-GT"));
+      setElText("kpiRadiosEnProceso", radiosEnProceso.toLocaleString("es-GT"));
+      setElText("kpiRadiosEntregados", radiosEntregados.toLocaleString("es-GT"));
 
       setElText("kpiTotalExact", total);
       setElText("kpiTotalFootnote", `${total} radicaciones encontradas · Clic para ver ↗`);
@@ -2091,7 +2292,7 @@
     if (displayList.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
             <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
             <div style="font-size: 14px; font-weight: 700; color: #fff;">No se encontraron radicaciones</div>
             <div style="font-size: 11px; margin-top: 4px;">Intenta ajustar la búsqueda o los filtros aplicados.</div>
@@ -2129,7 +2330,7 @@
 
       const clientName = getCompanyName(item);
       const preOfertaStr = item.preOferta || "S/N";
-      const radiosCount = item.cantidad || 0;
+      const invType = getInventoryType(item);
       const vendedor = item.vendedor || "-";
       const codigo = item.codigo || "-";
 
@@ -2154,7 +2355,11 @@
             </span>
           </td>
           <td style="text-align: center;">
-            <strong style="font-family: var(--font-mono); font-size: 13px; color: #fff;">${radiosCount}</strong>
+            ${getInventoryBadgeHtml(invType)}
+            <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${getRadioModel(item)}</div>
+          </td>
+          <td style="text-align: center;">
+            ${formatRadiosEntregaCell(item)}
           </td>
           <td>
             <div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stageDesc}</div>
@@ -2168,7 +2373,7 @@
             ${slaBadgeHtml}
           </td>
           <td style="text-align: right;">
-            <button type="button" class="action-btn" onclick="openDetailModal('\')" title="Ver ficha técnica y auditoría" style="padding: 4px 8px; font-size: 11px;">
+            <button type="button" class="action-btn" onclick="openDetailModal('${preOfertaStr}')" title="Ver ficha técnica y auditoría" style="padding: 4px 8px; font-size: 11px;">
               Ver Auditoría ↗
             </button>
           </td>
@@ -2180,7 +2385,9 @@
 
   function renderCategoriasTab() {
       const grid = document.getElementById("categoryCardsGrid");
+      const invGrid = document.getElementById("inventoryTypeCardsGrid");
       const tbody = document.getElementById("topClientsTbody");
+      const detailTbody = document.getElementById("inventoryDetailTbody");
       if (!grid) return;
 
       const categories = ["ADICION", "VENTA NUEVA", "RENOVACION"];
@@ -2189,9 +2396,21 @@
       categories.forEach(cat => {
         const catItems = filteredData.filter(i => i.negocio === cat);
         const totalRadicaciones = catItems.length;
-        const totalRadios = catItems.reduce((acc, i) => acc + (i.cantidad || 0), 0);
+        const totalRadios = catItems.reduce((acc, i) => acc + getTotalRadiosCount(i), 0);
+        const deliveredRadios = catItems.reduce((acc, i) => acc + getRadiosEntregadosCount(i), 0);
         const enProc = catItems.filter(i => i.estado === "en_proceso").length;
         const fin = catItems.filter(i => i.estado === "finalizada").length;
+
+        const invCounts = {};
+        catItems.forEach(i => {
+          const t = getInventoryType(i);
+          invCounts[t] = (invCounts[t] || 0) + getTotalRadiosCount(i);
+        });
+        const invBreakdownHtml = Object.entries(invCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([k, v]) => `<span style="font-size: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: #cbd5e1;">${k}: <strong style="color:#fff;">${v}</strong></span>`)
+          .join(" ") || '<span style="font-size:10px; color:var(--text-muted);">Sin movimientos</span>';
 
         const isSelected = currentFilter.catQuickFilter === cat;
 
@@ -2207,18 +2426,26 @@
             </div>
             <div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 8px;">${cat}</div>
 
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px;">
-              <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
-                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Total Radios</div>
-                <div style="font-size: 22px; font-weight: 900; color: #fff; font-family: var(--font-mono);">${totalRadios}</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;">
+              <div style="background: rgba(255,255,255,0.03); padding: 9px; border-radius: 8px;">
+                <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Total Radios</div>
+                <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);">${totalRadios}</div>
               </div>
-              <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
-                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Radicaciones</div>
-                <div style="font-size: 22px; font-weight: 900; color: #7fb0f0; font-family: var(--font-mono);">${totalRadicaciones}</div>
+              <div style="background: rgba(47,143,118,0.08); border: 1px solid rgba(47,143,118,0.2); padding: 9px; border-radius: 8px;">
+                <div style="font-size: 9px; color: #3f9c85; text-transform: uppercase;">Entregados</div>
+                <div style="font-size: 20px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono);">${deliveredRadios}</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.03); padding: 9px; border-radius: 8px;">
+                <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Radicaciones</div>
+                <div style="font-size: 20px; font-weight: 900; color: #7fb0f0; font-family: var(--font-mono);">${totalRadicaciones}</div>
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+              ${invBreakdownHtml}
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
               <span>En proceso: <strong style="color: #7fb0f0;">${enProc}</strong></span>
               <span>Finalizadas: <strong style="color: #3f9c85;">${fin}</strong></span>
             </div>
@@ -2228,22 +2455,67 @@
 
       grid.innerHTML = cardsHtml;
 
-      // Top 10 Clientes usando filteredData
+      // Render Distribución por Tipo de Inventario Entregado
+      if (invGrid) {
+        const invMap = {};
+        filteredData.forEach(item => {
+          const invType = getInventoryType(item);
+          if (!invMap[invType]) {
+            invMap[invType] = { type: invType, radicaciones: 0, radios: 0, entregados: 0, enProceso: 0 };
+          }
+          invMap[invType].radicaciones += 1;
+          invMap[invType].radios += getTotalRadiosCount(item);
+          invMap[invType].entregados += getRadiosEntregadosCount(item);
+          invMap[invType].enProceso += getRadiosEnProcesoCount(item);
+        });
+
+        const invList = Object.values(invMap).sort((a, b) => b.radios - a.radios);
+        if (invList.length === 0) {
+          invGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Sin inventario registrado en el período seleccionado.</div>`;
+        } else {
+          invGrid.innerHTML = invList.map(inv => `
+            <div style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 14px; padding: 14px 16px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                ${getInventoryBadgeHtml(inv.type)}
+                <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${inv.radicaciones} rad.</span>
+              </div>
+              <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px;">
+                <div>
+                  <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Radios Entregados</div>
+                  <div style="font-size: 22px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono);">${inv.entregados} <span style="font-size: 12px; color: #8b909e; font-weight: 600;">/ ${inv.radios}</span></div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 10px; color: var(--text-muted);">En proceso</div>
+                  <div style="font-size: 14px; font-weight: 800; color: #7fb0f0; font-family: var(--font-mono);">${inv.enProceso}</div>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+      }
+
+      // Top 10 Clientes usando filteredData (con Tipo de Inventario y Radios Entregados)
       if (tbody) {
         const clientMap = {};
         filteredData.forEach(item => {
-          const client = getCompanyName(item);
+          const client = getCompanyName(item) || "SIN NOMBRE";
+          const invType = getInventoryType(item);
           if (!clientMap[client]) {
             clientMap[client] = {
               cliente: client,
               vendedor: item.vendedor || "-",
               pais: item.pais || "GT",
-              negocio: item.negocio || "-",
+              negocios: new Set(),
+              inventarios: new Set(),
               radios: 0,
+              entregados: 0,
               radicaciones: 0
             };
           }
-          clientMap[client].radios += (item.cantidad || 0);
+          if (item.negocio) clientMap[client].negocios.add(item.negocio);
+          if (invType) clientMap[client].inventarios.add(invType);
+          clientMap[client].radios += getTotalRadiosCount(item);
+          clientMap[client].entregados += getRadiosEntregadosCount(item);
           clientMap[client].radicaciones += 1;
         });
 
@@ -2254,7 +2526,7 @@
         if (top10.length === 0) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
                 No se registraron radicaciones en el período o filtros seleccionados.
               </td>
             </tr>
@@ -2264,19 +2536,67 @@
           top10.forEach((c, idx) => {
             const rank = idx + 1;
             const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+            const invBadges = Array.from(c.inventarios).map(t => getInventoryBadgeHtml(t)).join(" ");
+            const negLabel = Array.from(c.negocios).join(" / ") || "-";
             topRows += `
               <tr>
                 <td style="text-align: center; font-weight: 800; font-size: 13px;">${medal}</td>
                 <td><strong style="color: #fff;">${c.cliente}</strong></td>
                 <td><span style="color: #8b909e; font-size: 11px;">${c.vendedor}</span></td>
                 <td style="text-align: center;"><span class="badge badge-${c.pais.toLowerCase()}">${c.pais}</span></td>
-                <td style="text-align: center;"><span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${c.negocio}</span></td>
-                <td style="text-align: center;"><strong style="color: #c59600; font-family: var(--font-mono); font-size: 14px;">${c.radios}</strong></td>
+                <td style="text-align: center;"><span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${negLabel}</span></td>
+                <td style="text-align: center;"><div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">${invBadges}</div></td>
+                <td style="text-align: center;">
+                  <strong style="color: #2f8f76; font-family: var(--font-mono); font-size: 14px;">${c.entregados}</strong>
+                  <span style="color: #8b909e; font-family: var(--font-mono); font-size: 11px;"> / ${c.radios}</span>
+                </td>
                 <td style="text-align: center;"><span style="font-family: var(--font-mono);">${c.radicaciones}</span></td>
               </tr>
             `;
           });
           tbody.innerHTML = topRows;
+        }
+      }
+
+      // Tabla de Detalle de Inventario Entregado por Radicación
+      if (detailTbody) {
+        if (filteredData.length === 0) {
+          detailTbody.innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                No se encontraron radicaciones en el período seleccionado.
+              </td>
+            </tr>
+          `;
+        } else {
+          detailTbody.innerHTML = filteredData.map(item => {
+            const clientName = getCompanyName(item) || "SIN NOMBRE";
+            const invType = getInventoryType(item);
+            const modelo = getRadioModel(item);
+            const pre = item.preOferta || "S/N";
+            return `
+              <tr>
+                <td>
+                  <strong style="color: #fff; font-family: var(--font-mono); font-size: 12px;">#${pre}</strong>
+                  <div style="font-size: 10px; color: var(--text-muted);">${formatDateDisplay(item.fecha)}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #fff; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientName}">${clientName}</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">${item.codigo || '-'} · ${item.vendedor || '-'}</div>
+                </td>
+                <td style="text-align: center;"><span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span></td>
+                <td style="text-align: center;"><span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${item.negocio || '-'}</span></td>
+                <td style="text-align: center;">${getInventoryBadgeHtml(invType)}</td>
+                <td style="text-align: center;"><span style="font-size: 11px; color: #cbd5e1;">${modelo}</span></td>
+                <td style="text-align: center;">${formatRadiosEntregaCell(item)}</td>
+                <td style="text-align: center;">
+                  <span class="badge-status status-${item.estado || 'en_proceso'}">
+                    ${item.estado === 'finalizada' ? 'Finalizada' : item.estado === 'cancelada' ? 'Cancelada' : 'En proceso'}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join("");
         }
       }
     }
@@ -2391,7 +2711,8 @@
                 <div style="font-size: 10px; color: var(--text-muted);">${item.vendedor || '-'}</div>
               </td>
               <td style="text-align: center;"><span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span></td>
-              <td style="text-align: center;">${item.cantidad || 0}</td>
+              <td style="text-align: center;">${getInventoryBadgeHtml(getInventoryType(item))}</td>
+              <td style="text-align: center;">${formatRadiosEntregaCell(item)}</td>
               <td style="font-size: 10px;">${startStr}</td>
               <td style="font-size: 10px;">${endStr}</td>
               <td style="text-align: center;"><strong style="color: ${colorHex}; font-family: var(--font-mono);">${hStr}</strong></td>
@@ -2416,7 +2737,8 @@
                     <th>Pre-Oferta</th>
                     <th>Cliente / Vendedor</th>
                     <th style="text-align: center;">País</th>
-                    <th style="text-align: center;">Radios</th>
+                    <th style="text-align: center;">Tipo Inventario</th>
+                    <th style="text-align: center;">Radios Entregados</th>
                     <th>Fecha Inicio</th>
                     <th>Fecha Fin</th>
                     <th style="text-align: center;">Horas Laborales</th>
@@ -2462,20 +2784,18 @@
         if (el) el.innerText = val;
       };
 
-      setEl("detModalTitle", `Radicación Pre-Oferta #${item.preOferta}`);
-      setEl("detClientName", getCompanyName(item));
-      setEl("detVendedor", item.vendedor || "-");
-      setEl("detCodigo", item.codigo || "-");
-      setEl("detNegocio", item.negocio || "-");
-      setEl("detCantidad", item.cantidad || 0);
-      setEl("detPlazo", item.plazo ? `${item.plazo} meses` : "-");
-      setEl("detTipoContrato", item.tipoContratacion || "-");
+      const totalR = getTotalRadiosCount(item);
+      const entR = getRadiosEntregadosCount(item);
+      const invType = getInventoryType(item);
+      const modelo = getRadioModel(item);
 
-      const badgeCountry = document.getElementById("detBadgeCountry");
-      if (badgeCountry) {
-        badgeCountry.className = `badge badge-${(item.pais || 'GT').toLowerCase()}`;
-        badgeCountry.innerText = item.pais || 'GT';
-      }
+      setEl("detClientName", getCompanyName(item) || "SIN NOMBRE");
+      setEl("detSubheader", `Pre-Oferta #${item.preOferta || "S/N"} · Código ${item.codigo || "-"} · ${formatDateDisplay(item.fecha)}`);
+      setEl("detPais", item.pais === "SV" ? "🇸🇻 El Salvador (SV)" : "🇬🇹 Guatemala (GT)");
+      setEl("detVendedor", item.vendedor || "-");
+      setEl("detNegocio", item.negocio || "-");
+      setEl("detRadios", `${entR} entregados / ${totalR} totales`);
+      setEl("detContrato", `${invType} (${modelo})${item.plazo ? ` · ${item.plazo} meses` : ""}`);
 
       const totalH = getProcessTotalHours(item);
       setEl("detHoursText", `${formatHours(totalH)} computadas (Lunes a Viernes 8am-6pm)`);
@@ -2577,13 +2897,17 @@
       badge.textContent = `Mostrando ${list.length} radicaciones`;
     }
 
-    const totalRadios = list.reduce((sum, r) => sum + (Number(r.cantidad) || 0), 0);
+    const totalRadios = list.reduce((sum, r) => sum + getTotalRadiosCount(r), 0);
+    const radiosEntregados = list.reduce((sum, r) => sum + getRadiosEntregadosCount(r), 0);
+    const radiosEnProceso = list.reduce((sum, r) => sum + getRadiosEnProcesoCount(r), 0);
     const totalEnTiempo = list.filter(r => getItemSlaCondition(r) === 'en_tiempo').length;
     const totalVencidas = list.filter(r => ['vencidas_etapa', 'vencidas_global'].includes(getItemSlaCondition(r))).length;
 
     const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setT("actInformeTotalRadicaciones", list.length);
     setT("actInformeTotalRadios", totalRadios);
+    setT("actInformeRadiosEntregados", radiosEntregados);
+    setT("actInformeRadiosEnProceso", radiosEnProceso);
     setT("actInformeTotalEnTiempo", totalEnTiempo);
     setT("actInformeTotalVencidas", totalVencidas);
 
@@ -2592,7 +2916,7 @@
     if (list.length === 0) {
       rowsEl.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
             <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
             <div style="font-weight: 700; color: #fff;">No se encontraron radicaciones con los filtros seleccionados</div>
             <div style="font-size: 11px; margin-top: 4px;">Intenta ajustar la búsqueda o los criterios de filtrado.</div>
@@ -2629,7 +2953,7 @@
 
       const clientName = getCompanyName(item);
       const preOfertaStr = item.preOferta || "S/N";
-      const radiosCount = item.cantidad || 0;
+      const invType = getInventoryType(item);
       const vendedor = item.vendedor || "-";
       const codigo = item.codigo || "-";
 
@@ -2654,7 +2978,11 @@
             </span>
           </td>
           <td style="text-align: center;">
-            <strong style="font-family: var(--font-mono); font-size: 13px; color: #fff;">${radiosCount}</strong>
+            ${getInventoryBadgeHtml(invType)}
+            <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${getRadioModel(item)}</div>
+          </td>
+          <td style="text-align: center;">
+            ${formatRadiosEntregaCell(item)}
           </td>
           <td>
             <div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stageDesc}</div>
@@ -2741,7 +3069,8 @@
       { header: '#', width: 6 }, { header: 'Fecha', width: 13 }, { header: 'País', width: 13 },
       { header: 'Pre-Oferta', width: 12 }, { header: 'Cliente / Razón Social', width: 44 },
       { header: 'Código', width: 14 }, { header: 'Vendedor', width: 26 },
-      { header: 'Línea de Negocio', width: 17 }, { header: 'Radios', width: 10 },
+      { header: 'Línea de Negocio', width: 17 }, { header: 'Tipo de Inventario', width: 20 },
+      { header: 'Radios Totales', width: 14 }, { header: 'Radios Entregados', width: 16 },
       { header: 'Etapa Actual', width: 34 }, { header: 'Estado', width: 14 },
       { header: 'Condición SLA', width: 22 }
     ];
@@ -2774,7 +3103,7 @@
       cell.value = c.header;
       cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
-      const center = ['#', 'Fecha', 'País', 'Pre-Oferta', 'Radios', 'Estado', 'Condición SLA'].includes(c.header);
+      const center = ['#', 'Fecha', 'País', 'Pre-Oferta', 'Tipo de Inventario', 'Radios Totales', 'Radios Entregados', 'Estado', 'Condición SLA'].includes(c.header);
       cell.alignment = { vertical: 'middle', horizontal: center ? 'center' : 'left', indent: center ? 0 : 1 };
     });
     hr.height = 26;
@@ -2792,7 +3121,8 @@
         item.pais === 'SV' ? 'El Salvador' : item.pais === 'GT' ? 'Guatemala' : (item.pais || ''),
         item.preOferta ? Number(item.preOferta) || String(item.preOferta) : '',
         getCompanyName(item), item.codigo || '', item.vendedor || '', item.negocio || '',
-        Number(item.cantidad) || 0, etapa, estadoTxt(item.estado), slaTxt(cond)
+        getInventoryType(item), getTotalRadiosCount(item), getRadiosEntregadosCount(item),
+        etapa, estadoTxt(item.estado), slaTxt(cond)
       ];
       row.height = 20;
       const zebra = idx % 2 === 1;
@@ -2803,15 +3133,16 @@
         cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
         if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
       }
-      [1, 2, 3, 4, 9, 11, 12].forEach(c => { row.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' }; });
+      [1, 2, 3, 4, 9, 10, 11, 13, 14].forEach(c => { row.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' }; });
       row.getCell(1).font = { name: 'Calibri', size: 11, color: { argb: 'FF64748B' } };
       row.getCell(2).numFmt = 'dd/mm/yyyy';
       row.getCell(2).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
       row.getCell(3).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF047857' } };
       row.getCell(4).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-      row.getCell(9).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-      row.getCell(11).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor(item.estado) } };
-      row.getCell(12).font = { name: 'Calibri', size: 11, bold: true, color: { argb: slaColor(cond) } };
+      row.getCell(10).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(11).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF15803D' } };
+      row.getCell(13).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor(item.estado) } };
+      row.getCell(14).font = { name: 'Calibri', size: 11, bold: true, color: { argb: slaColor(cond) } };
     });
 
     const ws2 = wb.addWorksheet('Resumen por negocio', {
@@ -2921,7 +3252,7 @@
     }
 
     let csv = '\uFEFF';
-    csv += 'Pre-Oferta;Fecha Radicación;Cliente / Razón Social;Código Cliente;Vendedor;País;Línea Negocio;Cantidad Radios;Etapa Actual;Fase Número;Estado;Condición SLA\r\n';
+    csv += 'Pre-Oferta;Fecha Radicación;Cliente / Razón Social;Código Cliente;Vendedor;País;Línea Negocio;Tipo de Inventario;Radios Totales;Radios Entregados;Etapa Actual;Fase Número;Estado;Condición SLA\r\n';
     list.forEach(item => {
       const slaCond = getItemSlaCondition(item);
       const slaDesc = slaCond === 'vencidas_global' ? 'Vencida Global (>104h)' : (slaCond === 'vencidas_etapa' ? 'Vencida Etapa' : (slaCond === 'por_vencer' ? 'Por Vencer' : 'En Tiempo'));
@@ -2931,7 +3262,7 @@
         `"#${item.preOferta || ''}"`, `"${formatDateDisplay(item.fecha)}"`,
         `"${getCompanyName(item).replace(/"/g, '""')}"`, `"${item.codigo || ''}"`,
         `"${(item.vendedor || '').replace(/"/g, '""')}"`, `"${item.pais || 'GT'}"`,
-        `"${item.negocio || ''}"`, `"${item.cantidad || 0}"`, `"${stageName}"`,
+        `"${item.negocio || ''}"`, `"${getInventoryType(item)}"`, `"${getTotalRadiosCount(item)}"`, `"${getRadiosEntregadosCount(item)}"`, `"${stageName}"`,
         `"${stageNum}"`, `"${item.estado || ''}"`, `"${slaDesc}"`
       ];
       csv += row.join(';') + '\r\n';
@@ -3037,7 +3368,7 @@
       }
       return `<tr><td><b>#${esc(item.preOferta || 'S/N')}</b></td><td><b>${esc(getCompanyName(item))}</b></td>
         <td class="c">${esc(item.pais || 'GT')}</td><td class="c">${esc(item.negocio || '-')}</td>
-        <td class="c">${esc(item.cantidad || 0)}</td><td>${stage}</td><td class="c">${esc(item.estado || '')}</td>
+        <td class="c">${esc(getInventoryType(item))}</td><td class="c">${getRadiosEntregadosCount(item)} / ${getTotalRadiosCount(item)}</td><td>${stage}</td><td class="c">${esc(item.estado || '')}</td>
         <td class="c"><span class="badge ${bClass}">${bText}</span></td></tr>`;
     }).join('');
     const periodo = `${currentFilter.dateFrom || 'inicio'} al ${currentFilter.dateTo || 'hoy'}`;
@@ -3162,7 +3493,7 @@
   </section>
   <section data-pdf-module="informe">
   <h2>5. Detalle completo de radicaciones (${total} registros)</h2>
-  <table><thead><tr><th>Pre-Oferta</th><th>Cliente / Razón Social</th><th class="c">País</th><th class="c">Línea Negocio</th><th class="c">Radios</th><th>Etapa Actual</th><th class="c">Estado</th><th class="c">Condición SLA</th></tr></thead><tbody>${detalleRows}</tbody></table>
+  <table><thead><tr><th>Pre-Oferta</th><th>Cliente / Razón Social</th><th class="c">País</th><th class="c">Línea Negocio</th><th class="c">Tipo Inventario</th><th class="c">Radios Entregados</th><th>Etapa Actual</th><th class="c">Estado</th><th class="c">Condición SLA</th></tr></thead><tbody>${detalleRows}</tbody></table>
   </section>
   </div>
 </body>
@@ -3284,7 +3615,25 @@
       });
     }
 
-    // 8. Buscador en Informe Detallado de Activaciones
+    // 8. Buscador en Tabla de Etapas y en Informe Detallado
+    const etapasSearch = document.getElementById("etapasTableSearch");
+    const btnClearEtapas = document.getElementById("btnClearEtapasSearch");
+    if (etapasSearch) {
+      etapasSearch.addEventListener("input", (e) => {
+        tableSearchText = (e.target.value || "").trim();
+        if (btnClearEtapas) btnClearEtapas.style.display = tableSearchText ? "inline-flex" : "none";
+        renderRadicacionesTable();
+      });
+    }
+    if (btnClearEtapas) {
+      btnClearEtapas.addEventListener("click", () => {
+        tableSearchText = "";
+        if (etapasSearch) etapasSearch.value = "";
+        btnClearEtapas.style.display = "none";
+        renderRadicacionesTable();
+      });
+    }
+
     const actInfSearch = document.getElementById("actInformeSearchInput");
     if (actInfSearch) {
       actInfSearch.addEventListener("input", (e) => {
@@ -3292,6 +3641,16 @@
         renderActInformeDetallado();
       });
     }
+
+    // Cerrar modales al hacer clic fuera del contenido
+    ["stageModalBackdrop", "detailModalBackdrop"].forEach(id => {
+      const backdrop = document.getElementById(id);
+      if (backdrop) {
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) backdrop.classList.remove("is-open");
+        });
+      }
+    });
 
     // 9. Botones Exportar en Activaciones
     const btnActExExcel = document.getElementById("btnActExportExcel");

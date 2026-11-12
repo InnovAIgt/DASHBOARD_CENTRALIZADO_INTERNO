@@ -433,6 +433,45 @@ export const PortalLayout: React.FC = () => {
 
         {/* Sidebar Footer */}
         <div className="portal-sidebar-footer">
+          {/* User profile card */}
+          <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-red-600/80 text-white font-bold text-xs flex items-center justify-center border border-red-400/40">
+                F
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-slate-100 leading-tight">F</div>
+                <div className="text-[10px] text-slate-400">Administrador</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {/* Theme Toggle (Dark / Light) */}
+              <button
+                type="button"
+                onClick={() => setIsLightMode(prev => !prev)}
+                className="p-1.5 rounded-md hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                title={isLightMode ? 'Cambiar a Modo Oscuro' : 'Cambiar a Modo Claro'}
+              >
+                {isLightMode ? (
+                  <Moon className="w-3.5 h-3.5 text-slate-400" />
+                ) : (
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                )}
+              </button>
+
+              {/* Secrets Vercel & APIs button */}
+              <button
+                type="button"
+                onClick={() => setIsSecretsModalOpen(true)}
+                className="p-1.5 rounded-md hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
+                title="Variables de entorno para Vercel y Webhooks"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-red-500" />
+              </button>
+            </div>
+          </div>
+
           <div className="footer-tagline">
             <strong>Conexión en movimiento.</strong>
             RED Intelfon · v1.0.0
@@ -448,62 +487,22 @@ export const PortalLayout: React.FC = () => {
         </div>
       </aside>
 
-      {/* ============ MAIN CONTENT ============ */}
+      {/* Floating mobile toggle button */}
+      <button
+        type="button"
+        className="fixed top-3 left-3 z-80 md:hidden bg-slate-900/90 text-white p-2.5 rounded-lg border border-white/15 shadow-xl backdrop-blur-md"
+        onClick={() => setIsMobileSidebarOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      {/* ============ MAIN CONTENT (Full Viewport, No Topbar Row) ============ */}
       <div className="portal-main">
-        {/* Topbar */}
-        <header className="portal-topbar">
-          <button
-            type="button"
-            className="mobile-toggle"
-            onClick={() => setIsMobileSidebarOpen(true)}
-            aria-label="Abrir menú"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-
-          <div className="topbar-right">
-            {/* Secrets Vercel & APIs button */}
-            <button
-              type="button"
-              onClick={() => setIsSecretsModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-white/10 hover:border-red-500/50 bg-white/5 hover:bg-red-500/10 text-xs font-semibold text-slate-200 hover:text-white transition-all"
-              title="Variables de entorno para Vercel y Webhooks"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-red-500" />
-              <span className="hidden sm:inline">Secrets Vercel</span>
-            </button>
-
-            {/* Theme Toggle (Dark / Light) */}
-            <button
-              type="button"
-              onClick={() => setIsLightMode(prev => !prev)}
-              className="p-2 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              title={isLightMode ? 'Cambiar a Modo Oscuro' : 'Cambiar a Modo Claro'}
-            >
-              {isLightMode ? (
-                <Moon className="w-4 h-4 text-slate-400" />
-              ) : (
-                <Sun className="w-4 h-4 text-amber-400" />
-              )}
-            </button>
-
-            {/* User chip */}
-            <div className="user-chip">
-              <div className="user-avatar">
-                F
-              </div>
-              <div className="user-info">
-                <div className="name">F</div>
-                <div className="role">Administrador</div>
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* Dynamic Portal Canvas */}
         <main className="portal-content">
           {renderActiveContent()}
