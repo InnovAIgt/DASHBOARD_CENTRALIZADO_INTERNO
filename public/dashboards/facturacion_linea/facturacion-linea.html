@@ -112,17 +112,14 @@
             </svg>
           </button>
 
-          <!-- PANEL DESPLEGABLE CON CHECKLIST TIPO EXCEL (Screenshot 4) -->
+          <!-- PANEL DESPLEGABLE CON CHECKLIST TIPO EXCEL -->
           <div class="xf-panel hidden" id="xfPanel">
-            <div class="xf-grid">
+            <div class="xf-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px;">
               <!-- COLUMNA 1: LÍNEA DE NEGOCIO -->
               <div class="xf-col" id="xfColLineas"></div>
 
-              <!-- COLUMNA 2: FACTURA (Todas, Cíclica, Manuales) -->
+              <!-- COLUMNA 2: TIPO DE FACTURA (Cíclica, Manuales, Refacturación) -->
               <div class="xf-col" id="xfColFacturas"></div>
-
-              <!-- COLUMNA 3: REFACTURACIÓN (Todas, Sí, No) -->
-              <div class="xf-col" id="xfColRefacturacion"></div>
             </div>
 
             <!-- PIE DEL PANEL DE FILTROS -->
@@ -181,6 +178,12 @@
       </div>
 
       <div class="kpi">
+        <div class="kpi-label">Clientes facturados</div>
+        <div class="kpi-value is-warn" id="totalClientsCount">0</div>
+        <div class="kpi-sub" id="clientsSub">Total clientes únicos</div>
+      </div>
+
+      <div class="kpi">
         <div class="kpi-label">Monto facturado</div>
         <div class="kpi-value is-info" id="totalAmount">$0.00</div>
         <div class="kpi-sub">Total de documentos</div>
@@ -198,6 +201,9 @@
         <div class="kpi-sub"><span id="overdueCount">0 vencidas</span> · <span id="overdueBadge">Vencido: $0.00</span></div>
       </div>
     </section>
+
+    <!-- RESUMEN DE CLIENTES Y FACTURAS POR LÍNEA DE NEGOCIO -->
+    <div id="linesSummaryContainer"></div>
 
     <!-- GRÁFICA DE CÍRCULO (DONUT) Y BARRAS MENSUALES -->
     <section class="bill-grid">
@@ -395,24 +401,18 @@
 
   const FACTURA_OPTIONS = [
     { label: 'Cíclica', value: 'CICLICA' },
-    { label: 'Manuales', value: 'CICLICA MANUAL' }
-  ];
-
-  const REFACTURACION_OPTIONS = [
-    { label: 'Sí', value: 'S' },
-    { label: 'No', value: 'N' }
+    { label: 'Manuales', value: 'CICLICA MANUAL' },
+    { label: 'Refacturación', value: 'REFACTURACION' }
   ];
 
   // ESTADO DE FILTROS DEL DASHBOARD
   let currentCountry = 'SV'; // 'ALL' | 'GT' | 'SV'
   let currentCurrency = 'USD'; // 'USD' | 'GTQ'
   let selectedLines = ['DATARED', 'INFRA', 'RADIO']; // Inicialmente DATARED
-  let selectedFacturas = ['CICLICA', 'CICLICA MANUAL'];
-  let selectedRefacturacion = ['S', 'N'];
+  let selectedFacturas = ['CICLICA', 'CICLICA MANUAL', 'REFACTURACION'];
   
   let searchLineasText = '';
   let searchFacturasText = '';
-  let searchRefactText = '';
   
   let rawRecords = [];
   const invoiceSearchIndex = new WeakMap();
@@ -589,7 +589,7 @@
     const from = $('dateFrom') ? $('dateFrom').value : '';
     const to = $('dateTo') ? $('dateTo').value : '';
 
-    if (selectedLines.length === 0 || selectedFacturas.length === 0 || selectedRefacturacion.length === 0) {
+    if (selectedLines.length === 0 || selectedFacturas.length === 0) {
       return [];
     }
 
@@ -604,16 +604,14 @@
         return false;
       }
 
-      // 2. Tipo de emisión (CICLICA / CICLICA MANUAL)
-      if (row.tipo_emision) {
-        const te = String(row.tipo_emision).toUpperCase();
-        if (!selectedFacturas.includes(te)) return false;
-      }
+      // 2. Tipo de Factura (Cíclica, Manuales, Refacturación)
+      const isRefact = String(row.es_refacturacion || '').toUpperCase().startsWith('S');
+      const te = String(row.tipo_emision || 'CICLICA').toUpperCase();
 
-      // 3. Refacturación (S / N)
-      if (row.es_refacturacion) {
-        const ref = String(row.es_refacturacion).toUpperCase().startsWith('S') ? 'S' : 'N';
-        if (!selectedRefacturacion.includes(ref)) return false;
+      if (isRefact) {
+        if (!selectedFacturas.includes('REFACTURACION')) return false;
+      } else {
+        if (!selectedFacturas.includes(te)) return false;
       }
 
       // 4. Fechas
@@ -636,29 +634,68 @@
     });
   }
 
-  // BARRAS MENSUALES
-  function renderMonthBars(months) {
-    const values = Object.values(months);
-    const max = Math.max(...values.map((v) => v.total), 1);
+  // BARRAS MENSUALES (BARRA DE FAJAS: PAGADO EN VERDE, VENCIDO EN ROJO, PENDIENTE ACTUAL EN AMARILLO)
+  function renderMonthBars(monthsList) {
     const monthBars = $('monthBars');
     if (!monthBars) return;
 
-    const entries = Object.entries(months).sort();
-
-    if (entries.length === 0) {
+    if (!monthsList || monthsList.length === 0) {
       monthBars.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Sin datos en el período</span>';
       return;
     }
 
-    monthBars.innerHTML = entries.map(([month, val], idx) => `
-      <div class="bill-bar">
-        <label>${month}</label>
-        <div class="bill-track">
-          <div class="bill-fill gx-bar-h" style="width:${Math.max((val.total / max) * 100, 3)}%;--gx-i:${idx};"></div>
-        </div>
-        <b>${money(val.total, currentCurrency)}</b>
+    const max = Math.max(...monthsList.map((v) => v.total), 1);
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth();
+
+    monthBars.innerHTML = `
+      <div class="bill-bars-legend" style="display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:11px;color:var(--text-muted);flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;gap:5px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#2f8f76;display:inline-block;"></span>
+          <span style="color:#e8eaf0;">Pagado</span>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:5px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#c59600;display:inline-block;"></span>
+          <span style="color:#e8eaf0;">Pendiente (mes actual)</span>
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:5px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#c43c50;display:inline-block;"></span>
+          <span style="color:#e8eaf0;">Vencido (meses anteriores)</span>
+        </span>
       </div>
-    `).join('');
+      <div class="bill-bars-list" style="display:grid;gap:14px;">
+        ${monthsList.map((mo) => {
+          const isPast = mo.year < curYear || (mo.year === curYear && mo.monthNum < curMonth);
+          const totalWidthPct = Math.min((mo.total / max) * 100, 100);
+          const paidSharePct = mo.total > 0 ? (mo.pagado / mo.total) * 100 : 0;
+          const pendingSharePct = mo.total > 0 ? (mo.saldo / mo.total) * 100 : 0;
+          const pendingColor = isPast ? '#c43c50' : '#c59600';
+          const pendingLabel = isPast ? 'Vencido' : 'Pendiente';
+
+          return `
+            <div class="bill-bar" style="display:grid;grid-template-columns:110px 1fr 125px;align-items:center;gap:12px;">
+              <div style="display:flex;flex-direction:column;line-height:1.25;">
+                <label style="color:#ffffff;font-weight:700;font-size:13px;letter-spacing:0.05em;">${mo.label}</label>
+                <span style="font-size:10.5px;color:var(--text-muted);font-family:var(--font-mono);">${mo.count} ${mo.count === 1 ? 'factura' : 'facturas'}</span>
+              </div>
+              <div class="bill-track" style="height:12px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;border:1px solid rgba(255,255,255,0.06);" title="${mo.label} | Total: ${money(mo.total, currentCurrency)} | Pagado: ${money(mo.pagado, currentCurrency)} | ${pendingLabel}: ${money(mo.saldo, currentCurrency)}">
+                <div style="display:flex;height:100%;width:${Math.max(totalWidthPct, 2)}%;">
+                  ${paidSharePct > 0 ? `<div style="width:${paidSharePct}%;background:#2f8f76;height:100%;transition:width 0.3s;" title="Pagado: ${money(mo.pagado, currentCurrency)} (${paidSharePct.toFixed(1)}%)"></div>` : ''}
+                  ${pendingSharePct > 0 ? `<div style="width:${pendingSharePct}%;background:${pendingColor};height:100%;transition:width 0.3s;" title="${pendingLabel}: ${money(mo.saldo, currentCurrency)} (${pendingSharePct.toFixed(1)}%)"></div>` : ''}
+                </div>
+              </div>
+              <div style="text-align:right;line-height:1.25;">
+                <b style="font-family:var(--font-mono);font-size:13px;color:#ffffff;display:block;">${money(mo.total, currentCurrency)}</b>
+                <span style="font-size:10px;font-family:var(--font-mono);color:${isPast && mo.saldo > 0 ? '#d95f6e' : 'var(--text-muted)'};">
+                  ${mo.saldo > 0 ? `${pendingLabel}: ${money(mo.saldo, currentCurrency)}` : '100% Pagado'}
+                </span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   // RENDER GENERAL DEL DASHBOARD
@@ -670,6 +707,11 @@
     let overdueAmount = 0;
     let overdueCount = 0;
     const asOf = new Date();
+    
+    // Conteo de clientes únicos en total y desglose por línea de negocio
+    const allUniqueClients = new Set();
+    const lineMap = {};
+
     list.forEach(row => {
       const rowTotal = Number(row.total) || 0;
       const rowBalance = Number(row.saldo) || 0;
@@ -680,6 +722,22 @@
         overdueCount++;
         overdueAmount += rowBalance;
       }
+
+      const cli = (row.cliente || row.codigo || '').trim();
+      if (cli) allUniqueClients.add(cli);
+
+      const line = row.linea_negocio || 'SIN LÍNEA';
+      if (!lineMap[line]) {
+        lineMap[line] = {
+          line,
+          clients: new Set(),
+          invoices: 0,
+          total: 0
+        };
+      }
+      if (cli) lineMap[line].clients.add(cli);
+      lineMap[line].invoices++;
+      lineMap[line].total += rowTotal;
     });
     const paid = total - balance;
     const pendingDue = Math.max(balance - overdueAmount, 0);
@@ -687,12 +745,45 @@
     const safeText = (id, val) => { const el = $(id); if (el) el.textContent = val; };
 
     safeText('invoiceCount', list.length.toLocaleString('es-SV'));
+    safeText('totalClientsCount', allUniqueClients.size.toLocaleString('es-SV'));
+    safeText('clientsSub', `${allUniqueClients.size} clientes únicos`);
     safeText('totalAmount', money(total));
     safeText('paidAmount', money(paid));
     safeText('balanceAmount', money(balance));
     safeText('paidCount', `${paidCount} facturas saldadas`);
     safeText('overdueCount', `${overdueCount} vencidas`);
     safeText('overdueBadge', `Vencido: ${money(overdueAmount)}`);
+
+    // Resumen de Clientes y Facturas por línea de negocio
+    const linesSummaryEl = $('linesSummaryContainer');
+    if (linesSummaryEl) {
+      const lineKeys = Object.keys(lineMap);
+      if (lineKeys.length === 0) {
+        linesSummaryEl.innerHTML = '';
+      } else {
+        linesSummaryEl.innerHTML = `
+          <div style="background:var(--panel, #151821);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Clientes por línea:</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              ${lineKeys.map(k => `
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:5px 12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;">
+                  <strong style="color:#ffffff;">${k}</strong>
+                  <span style="color:#2f8f76;font-weight:700;">${lineMap[k].clients.size} clientes</span>
+                  <span style="color:var(--text-muted);font-size:11px;">(${lineMap[k].invoices} fact.)</span>
+                </div>
+              `).join('')}
+              <div style="background:rgba(196,60,80,0.14);border:1px solid rgba(196,60,80,0.32);border-radius:8px;padding:5px 12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;">
+                <strong style="color:#d95f6e;">TOTAL</strong>
+                <span style="color:#ffffff;font-weight:700;">${allUniqueClients.size} clientes</span>
+                <span style="color:#d95f6e;font-size:11px;">(${list.length} fact.)</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
 
     // Actualización del Gráfico de Círculo / Donut
     const paidPct = total ? (paid / total) * 100 : 0;
@@ -703,7 +794,6 @@
     if (donut) {
       const pStart = paidPct;
       const oStart = pStart + pendingPct;
-      // Tonos de la guía: verde pagado, amarillo pendiente, rojo vencido; resto = pista sobria
       donut.style.background = `conic-gradient(
         #2f8f76 0% ${paidPct}%,
         #c59600 ${pStart}% ${oStart}%,
@@ -721,17 +811,43 @@
     const tooltip = $('donutTooltip');
     if (tooltip) tooltip.textContent = `Saldo pendiente: ${money(balance)}`;
 
-    // Agrupación mensual
-    const monthly = {};
+    // Agrupación mensual cronológica ordenada según el calendario
+    const monthlyMap = new Map();
     list.forEach((row) => {
       const date = parseDate(row.fecha);
       if (!date || Number.isNaN(date.getTime())) return;
-      const key = invoiceMonthFormatter.format(date).replace('.', '').toUpperCase();
-      if (!monthly[key]) monthly[key] = { total: 0, count: 0 };
-      monthly[key].total += Number(row.total) || 0;
-      monthly[key].count += 1;
+
+      const y = date.getFullYear();
+      const m = date.getMonth();
+      const sortKey = `${y}-${String(m + 1).padStart(2, '0')}`;
+
+      if (!monthlyMap.has(sortKey)) {
+        const shortName = invoiceMonthFormatter.format(date).replace('.', '').toUpperCase();
+        monthlyMap.set(sortKey, {
+          sortKey,
+          year: y,
+          monthNum: m,
+          label: shortName,
+          total: 0,
+          saldo: 0,
+          pagado: 0,
+          count: 0
+        });
+      }
+
+      const mEntry = monthlyMap.get(sortKey);
+      const rowTot = Number(row.total) || 0;
+      const rowSal = Number(row.saldo) || 0;
+      const rowPag = Math.max(rowTot - rowSal, 0);
+
+      mEntry.total += rowTot;
+      mEntry.saldo += rowSal;
+      mEntry.pagado += rowPag;
+      mEntry.count += 1;
     });
-    renderMonthBars(monthly);
+
+    const monthlySorted = Array.from(monthlyMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+    renderMonthBars(monthlySorted);
     if (currentModule === 'informe') renderInformeDetallado();
 
     // Tabla de documentos
@@ -775,7 +891,6 @@
   function renderChecklistCols() {
     renderColLineas();
     renderColFacturas();
-    renderColRefact();
   }
 
   function renderColLineas() {
@@ -917,74 +1032,6 @@
     });
   }
 
-  function renderColRefact() {
-    const col = $('xfColRefacturacion');
-    if (!col) return;
-
-    const allowed = REFACTURACION_OPTIONS;
-    const filtered = allowed.filter(r => r.label.toLowerCase().includes(searchRefactText.toLowerCase()));
-    const allChecked = allowed.every(r => selectedRefacturacion.includes(r.value));
-    const someChecked = allowed.some(r => selectedRefacturacion.includes(r.value));
-
-    col.innerHTML = `
-      <div class="xf-col-head">
-        <span class="xf-col-title">Refacturación</span>
-        <span class="xf-col-count">${selectedRefacturacion.length}/${allowed.length}</span>
-      </div>
-      <div class="xf-search-box">
-        <svg class="xf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" class="xf-search-input" id="searchRefactInput" placeholder="Buscar..." value="${escapeHTML(searchRefactText)}">
-      </div>
-      <div class="xf-list">
-        <label class="xf-item select-all">
-          <input type="checkbox" class="xf-checkbox" id="chkAllRefact" ${allChecked ? 'checked' : ''}>
-          <span>(Seleccionar todo)</span>
-        </label>
-        ${filtered.map(opt => {
-          const isChecked = selectedRefacturacion.includes(opt.value);
-          return `
-            <label class="xf-item">
-              <input type="checkbox" class="xf-checkbox chk-ref" data-val="${opt.value}" ${isChecked ? 'checked' : ''}>
-              <span>${opt.label}</span>
-            </label>
-          `;
-        }).join('')}
-      </div>
-    `;
-
-    const chkAll = $('chkAllRefact');
-    if (chkAll) {
-      chkAll.indeterminate = !allChecked && someChecked;
-      chkAll.addEventListener('change', (e) => {
-        selectedRefacturacion = e.target.checked ? allowed.map(a => a.value) : [];
-        renderColRefact();
-      });
-    }
-
-    const searchInp = $('searchRefactInput');
-    if (searchInp) {
-      searchInp.addEventListener('input', (e) => {
-        searchRefactText = e.target.value;
-        renderColRefact();
-        const ref = $('searchRefactInput');
-        if (ref) { ref.focus(); ref.setSelectionRange(ref.value.length, ref.value.length); }
-      });
-    }
-
-    col.querySelectorAll('.chk-ref').forEach(chk => {
-      chk.addEventListener('change', (e) => {
-        const val = e.target.getAttribute('data-val');
-        if (e.target.checked) {
-          if (!selectedRefacturacion.includes(val)) selectedRefacturacion.push(val);
-        } else {
-          selectedRefacturacion = selectedRefacturacion.filter(x => x !== val);
-        }
-        renderColRefact();
-      });
-    });
-  }
 
   // BINDING DE EVENTOS
   
@@ -1580,9 +1627,6 @@
           return option ? option.label : value;
         }).join(', ')
         : 'Ninguno';
-      const refactTxt = selectedRefacturacion.length
-        ? selectedRefacturacion.map(value => value === 'S' ? 'Sí' : 'No').join(', ')
-        : 'Ninguno';
       const searchTerms = [
         $('query') && $('query').value.trim() ? `Búsqueda: ${$('query').value.trim()}` : '',
         informeSearchText ? `Búsqueda del informe: ${informeSearchText}` : ''
@@ -1655,7 +1699,7 @@
         <div>
           <div class="eyebrow">RED INTELFON · TELECOMUNICACIONES · FINANZAS</div>
           <div class="title">Reporte de Facturación por Línea</div>
-          <div class="filtro">Filtros aplicados: <b>${esc(periodo)}</b> | País: <b>${esc(operacion)}</b> | Líneas: <b>${esc(lineasSel)}</b> | Tipo: <b>${esc(typesTxt)}</b> | Refacturación: <b>${esc(refactTxt)}</b> | Moneda: <b>${esc(ctx.monedaTxt)}</b>${searchTerms.length ? ` | ${esc(searchTerms.join(' | '))}` : ''}</div>
+          <div class="filtro">Filtros aplicados: <b>${esc(periodo)}</b> | País: <b>${esc(operacion)}</b> | Líneas: <b>${esc(lineasSel)}</b> | Tipo: <b>${esc(typesTxt)}</b> | Moneda: <b>${esc(ctx.monedaTxt)}</b>${searchTerms.length ? ` | ${esc(searchTerms.join(' | '))}` : ''}</div>
         </div>
       </div>
       <div class="head-right">
@@ -1819,10 +1863,8 @@
         const allowed = BUSINESS_CONFIG[currentCountry] || BUSINESS_CONFIG.ALL;
         selectedLines = [...allowed];
         selectedFacturas = FACTURA_OPTIONS.map(f => f.value);
-        selectedRefacturacion = REFACTURACION_OPTIONS.map(r => r.value);
         searchLineasText = '';
         searchFacturasText = '';
-        searchRefactText = '';
         renderChecklistCols();
         fetchInvoices();
       });
@@ -1929,7 +1971,6 @@
           : currentCountry === 'GT' ? 'Guatemala (GT)' : 'El Salvador (SV)';
         const lineLabels = selectedLines.map(line => line);
         const invoiceLabels = selectedLabels(FACTURA_OPTIONS, selectedFacturas);
-        const rebillLabels = selectedLabels(REFACTURACION_OPTIONS, selectedRefacturacion);
         const from = $('dateFrom') ? $('dateFrom').value : '';
         const to = $('dateTo') ? $('dateTo').value : '';
         return [
@@ -1937,7 +1978,6 @@
           { label: 'Período', value: `${dateLabel(from)} – ${dateLabel(to)}` },
           { label: 'Líneas', value: selectedSummary(lineLabels), tooltip: `Líneas: ${lineLabels.join(', ') || 'Ninguna'}` },
           { label: 'Tipo', value: selectedSummary(invoiceLabels), tooltip: `Tipo de factura: ${invoiceLabels.join(', ') || 'Ninguna'}` },
-          { label: 'Refacturación', value: selectedSummary(rebillLabels), tooltip: `Refacturación: ${rebillLabels.join(', ') || 'Ninguna'}` },
           { label: 'Moneda', value: currentCurrency },
           { label: 'Facturas', value: `${getInformeData().length}` }
         ];
