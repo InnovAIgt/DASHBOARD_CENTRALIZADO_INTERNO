@@ -401,6 +401,75 @@
   .fv2-comentario-caja strong { font-size: 11px; color: var(--fv2-tenue); }
   .fv2-comentario-caja p { margin: 3px 0 0; font-size: 12px; line-height: 1.5; white-space: pre-wrap; color: var(--fv2-texto); }
 
+  /* ---------- Pestañas (act-mod-btn de Activaciones) ---------- */
+  .fv2-pestanas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .fv2-pestana {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 9px; background: var(--fv2-caja); color: #fff; font-size: 13px; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .25); transition: all .2s cubic-bezier(.16, 1, .3, 1);
+  }
+  .fv2-pestana:hover { background: var(--fv2-tarjeta); border-color: var(--fv2-rojo); transform: translateY(-1px); }
+  .fv2-pestana.is-activa { background: var(--fv2-rojo); border-color: var(--fv2-rojo); box-shadow: 0 4px 14px rgba(196, 60, 80, .45); }
+
+  /* ---------- Informe detallado ---------- */
+  .fv2-informe { display: grid; gap: 14px; }
+  .fv2-informe-cabeza { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+  .fv2-informe-titulo { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.02em; color: #fff; }
+  .fv2-btn-excel {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 10px;
+    border: 1px solid rgba(47, 143, 118, .45); background: rgba(47, 143, 118, .14); color: #e6f4ef; font-size: 13px; font-weight: 800;
+    transition: all .2s cubic-bezier(.16, 1, .3, 1);
+  }
+  .fv2-btn-excel svg { color: var(--fv2-verde-claro); }
+  .fv2-btn-excel:not(:disabled):hover { background: rgba(47, 143, 118, .3); border-color: var(--fv2-verde-claro); transform: translateY(-1px); }
+  .fv2-vistas { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fv2-vista-pildora {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--fv2-borde-fuerte);
+    border-radius: 999px; background: var(--fv2-tarjeta); color: var(--fv2-texto); font-size: 12.5px; font-weight: 700; transition: all .18s ease;
+  }
+  .fv2-vista-pildora:hover { background: var(--fv2-elevado); }
+  .fv2-vista-pildora.is-activa { background: rgba(79, 143, 216, .16); border-color: rgba(79, 143, 216, .6); color: #fff; box-shadow: 0 0 0 3px rgba(79, 143, 216, .12); }
+  .fv2-vista-cuenta { padding: 1px 8px; border-radius: 999px; font-family: var(--fv2-mono); font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, .08); color: var(--fv2-texto); }
+  .fv2-vista-cuenta.is-azul { background: rgba(79, 143, 216, .18); color: var(--fv2-azul-claro); }
+  .fv2-vista-cuenta.is-verde { background: rgba(47, 143, 118, .18); color: var(--fv2-verde-claro); }
+  .fv2-vista-cuenta.is-rojo { background: rgba(196, 60, 80, .18); color: var(--fv2-rosa); }
+  .fv2-vista-cuenta.is-amarillo { background: rgba(197, 150, 0, .18); color: #e0b52e; }
+  .fv2-informe-panel { gap: 12px; padding: 14px; }
+  .fv2-informe-herramientas { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .fv2-informe-herramientas .fv2-buscador { flex: 0 1 420px; }
+  .fv2-columnas { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; color: var(--fv2-tenue); }
+  .fv2-columna-btn { padding: 6px 10px; border: 1px solid var(--fv2-borde); border-radius: 8px; background: transparent; color: var(--fv2-tenue); font-size: 11.5px; font-weight: 600; transition: all .15s ease; }
+  .fv2-columna-btn.is-activa { background: var(--fv2-elevado); border-color: var(--fv2-borde-fuerte); color: #fff; }
+  .fv2-columna-btn:hover { border-color: rgba(255, 255, 255, .3); }
+  .fv2-informe-tabla { max-height: 66vh; }
+  .fv2-informe-tabla .fv2-tabla td { white-space: nowrap; }
+  .fv2-informe-tabla .fv2-tabla td.is-largo { white-space: normal; }
+  .fv2-informe-tabla thead tr:first-child th { top: 0; height: 30px; padding-top: 6px; padding-bottom: 6px; }
+  .fv2-informe-tabla thead tr:nth-child(2) th { top: 30px; }
+  .fv2-informe-grupos th { border-left: 1px solid var(--fv2-borde); background: #11141c; color: var(--fv2-azul-claro); text-align: center; }
+  .fv2-orden { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: none; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; white-space: nowrap; }
+  .fv2-orden:hover { color: #fff; }
+  .fv2-fila-clic { cursor: pointer; }
+  .fv2-mono { font-family: var(--fv2-mono); font-size: 11.5px; }
+  .fv2-recorte { display: -webkit-box; min-width: 14rem; max-width: 22rem; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--fv2-tenue); }
+  .fv2-etapa-celda { display: grid; gap: 4px; }
+  .fv2-etapa-celda small { font-size: 11px; color: var(--fv2-tenue); }
+  .fv2-minietapas { display: flex; gap: 3px; }
+  .fv2-minietapas i { width: 13px; height: 5px; border-radius: 2px; background: rgba(255, 255, 255, .1); }
+  .fv2-minietapas i.is-hecha { background: var(--fv2-azul); }
+  .fv2-minietapas i.is-ganado { background: var(--fv2-verde); }
+  .fv2-semaforo { display: inline-flex; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--fv2-borde); background: rgba(255, 255, 255, .05); font-size: 11px; font-weight: 700; color: var(--fv2-tenue); }
+  .fv2-semaforo.is-vencida { background: rgba(196, 60, 80, .16); border-color: rgba(196, 60, 80, .4); color: var(--fv2-rosa); }
+  .fv2-semaforo.is-hoy { background: rgba(197, 150, 0, .16); border-color: rgba(197, 150, 0, .4); color: #e0b52e; }
+  .fv2-semaforo.is-a_tiempo { background: rgba(47, 143, 118, .16); border-color: rgba(47, 143, 118, .4); color: var(--fv2-verde-claro); }
+  .fv2-informe-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 11.5px; color: var(--fv2-tenue); }
+  .fv2-paginacion { display: inline-flex; align-items: center; gap: 8px; }
+  .fv2-semaforo-leyenda { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .fv2-semaforo-leyenda i { display: inline-block; width: 8px; height: 8px; margin-right: -6px; border-radius: 50%; }
+  .fv2-semaforo-leyenda i.is-vencida { background: var(--fv2-rosa); }
+  .fv2-semaforo-leyenda i.is-hoy { background: var(--fv2-amarillo); }
+  .fv2-semaforo-leyenda i.is-a_tiempo { background: var(--fv2-verde); }
+
   /* ---------- Pantallas más angostas ---------- */
   @media (max-width: 1280px) {
     .fv2-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }

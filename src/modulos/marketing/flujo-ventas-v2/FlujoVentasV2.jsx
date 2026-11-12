@@ -11,7 +11,13 @@ import { summarize } from './utils/analytics.js'
 import { AvisoError, Vacio } from './pantalla/comunes.jsx'
 import { aplicarFiltros, periodoPorDefecto, sinFiltros } from './pantalla/datos.js'
 import { BarraFiltros } from './pantalla/Filtros.jsx'
+import { Informe } from './pantalla/Informe.jsx'
 import { VistaGeneral } from './pantalla/VistaGeneral.jsx'
+
+const PESTANAS = [
+  { key: 'resumen', label: 'Resumen' },
+  { key: 'informe', label: 'Informe detallado' },
+]
 import './flujo-ventas-v2.css'
 
 const horaFormato = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
@@ -44,6 +50,7 @@ function FlujoVentasV2Contenido() {
   const filters = useFilters()
   // Por defecto (R11): todos los países y del día 1 del mes actual hasta hoy.
   const [periodo, setPeriodo] = useState(() => periodoPorDefecto())
+  const [pestana, setPestana] = useState('resumen')
 
   const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
   const summary = useMemo(() => summarize(filtrados), [filtrados])
@@ -74,8 +81,14 @@ function FlujoVentasV2Contenido() {
       filtrados={filtrados.length}
     />}
 
+    {leads.length > 0 && <nav className="fv2-pestanas" role="tablist" aria-label="Secciones del Flujo de ventas">
+      {PESTANAS.map((p) => <button type="button" key={p.key} role="tab" aria-selected={pestana === p.key}
+        className={`fv2-pestana ${pestana === p.key ? 'is-activa' : ''}`} onClick={() => setPestana(p.key)}>{p.label}</button>)}
+    </nav>}
+
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
-    {leads.length > 0 && <VistaGeneral leads={filtrados} summary={summary} showAllFunnel={sinFiltros(filters, periodo)} />}
+    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} showAllFunnel={sinFiltros(filters, periodo)} />}
+    {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo} />}
     {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}
   </div>
 }

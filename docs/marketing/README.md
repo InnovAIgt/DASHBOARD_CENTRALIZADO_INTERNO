@@ -40,10 +40,41 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | Archivo | Qué hace |
 |---|---|
 | `api/marketing/reuniones.js` | Función de Vercel: el "mesero" que llama a Prospekt IA con la llave escondida |
-| `server/marketingReuniones.js` | La misma lógica, compartida para que también funcione en local (`npm run dev`) |
+| `server/marketingReuniones.js` | La misma lógica, compartida para que también funcione en local (`npm run dev`); quita el teléfono del cliente antes de responder |
+| `src/components/layout/PortalLayout.tsx` | Entrada "Flujo de ventas v2 (prueba)" del menú (MARKETING) |
+| `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` | Pantalla principal: encabezado, filtros y pestañas **Resumen** / **Informe detallado** |
+| `src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css` | Estilos propios (tema oscuro basado en Activaciones), encerrados en `.fv2` |
+| `src/modulos/marketing/flujo-ventas-v2/utils/`, `types/`, `hooks/`, `context/`, `services/` | **Lógica copiada** de InnovAIgt/DashboardLeads, sin cambios (carga de datos, filtros y cálculos) |
+| `…/pantalla/datos.js` | Cálculos de la pantalla: período, conversión de calificados corregida, agrupaciones |
+| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx`, `Tablas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, gráficas y tablas |
+| `…/pantalla/Filtros.jsx` | Barra de filtros (país, período, panel Filtros) |
+| `…/pantalla/Ventanas.jsx` | Ventanas de detalle (indicadores, ejecutivo, mes y ficha del lead) |
+| `…/pantalla/comunes.jsx` | Piezas visuales comunes (banderas, insignias, avisos) |
+| `…/pantalla/Informe.jsx` | Pestaña Informe detallado: vistas rápidas, tabla, buscador, orden, páginas |
+| `…/pantalla/informeDatos.js` | Columnas del informe (campos de la API por grupo), vistas rápidas y semáforo |
+| `…/pantalla/excel.js` | Botón "Descargar Excel": misma plantilla y método que el Excel de Activaciones |
 | `docs/marketing/` | Esta documentación |
 
-*(La tabla se irá completando en cada paso.)*
+## Informe detallado
+
+Pestaña con todo el detalle de cada lead, respetando los filtros de arriba (país, período,
+ejecutivo y tipo de lead).
+
+- **Vistas rápidas:** Todos · Pipeline abierto · Ganados · Perdidos · Seguimientos vencidos
+  (lead abierto con la próxima gestión antes de hoy) · Sin motivo de pérdida.
+- **Columnas por grupo** (se muestran u ocultan con "Columnas"): Cliente, Responsable,
+  Calificación, Avance, Fechas, Propuesta, Resultado y Comentarios (oculto por defecto).
+  Qué campo de la API va en cada columna y cuáles quedan fuera: [DECISIONES.md](DECISIONES.md), D11.
+- **Semáforo de la próxima gestión** (solo leads abiertos): rojo = vencida, amarillo = hoy,
+  verde = a tiempo.
+- Buscador, orden al hacer clic en cualquier encabezado, 50 filas por página y clic en una fila
+  para abrir la ficha.
+- **Descargar Excel:** descarga lo que se ve (vista rápida, filtros, búsqueda y columnas
+  visibles) con la plantilla del Excel de Activaciones: hoja "Informe detallado" y hoja
+  "Filtros aplicados". ExcelJS 4.4.0 se carga desde el CDN solo al pulsar el botón (no está en
+  `package.json`); si no carga, se descarga un CSV. Nombre:
+  `Informe_flujo_ventas_<GT|SV|GT-SV>_<desde>_<hasta>.xlsx`. Incluye el nombre del cliente y
+  nunca el teléfono.
 
 ## Configuración necesaria
 

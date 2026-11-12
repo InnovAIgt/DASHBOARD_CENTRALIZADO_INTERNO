@@ -388,3 +388,56 @@ dentro de `.fv2`, animaciones `fv2-`, ningún valor existente cambió ✅.
 | Por país y por ejecutivo suman el total del período | ✅ |
 | "Volver a filtros por defecto" desactivado en el período por defecto y activo al cambiarlo | ✅ |
 | Sin período (✕) se ve todo el historial | ✅ 1,693 leads |
+
+---
+
+## Paso 4.1 · Informe detallado — 11/11/2026 ✅ (pendiente revisión visual)
+
+**Qué se hizo:**
+- **Pestañas** debajo de los filtros: **Resumen** (todo lo anterior) e **Informe detallado**.
+  Las dos respetan los filtros de arriba (país, período, ejecutivo y tipo de lead).
+- **Vistas rápidas** (píldoras con conteo): Todos · Pipeline abierto · Ganados · Perdidos ·
+  Seguimientos vencidos · Sin motivo de pérdida. "Vencidos" y "Sin motivo" usan las mismas
+  reglas de `calculateMetrics` de la lógica copiada.
+- **Tabla** con 54 columnas en 8 grupos (Cliente, Responsable, Calificación, Avance, Fechas,
+  Propuesta, Resultado y Comentarios, este último oculto por defecto), con botones "Columnas",
+  minibarra de las 6 etapas, semáforo de la próxima gestión (rojo vencida, amarillo hoy, verde a
+  tiempo; solo leads abiertos), textos largos recortados (completos al pasar el cursor),
+  buscador, orden por cualquier columna, 50 filas por página y clic en una fila para abrir la
+  ficha. Qué campo va en cada columna y cuáles quedan fuera: DECISIONES D11.
+- **Descargar Excel** (sin botón de PDF): misma plantilla y método que el Excel de
+  Activaciones, replicados en `pantalla/excel.js` (Activaciones no se modificó). ExcelJS 4.4.0
+  desde el CDN, respaldo en CSV, hoja "Informe detallado" + hoja "Filtros aplicados". Descarga
+  lo que se ve (vista, filtros, búsqueda y columnas visibles). Nombre:
+  `Informe_flujo_ventas_<GT|SV|GT-SV>_<desde>_<hasta>.xlsx`. Incluye el nombre del cliente y
+  nunca el teléfono.
+
+**Inventario de campos de la API** (11/11/2026, 1,693 leads; ver D11): 29 campos de primer
+nivel; `stage_feedback_json` con las etapas 2 a 6 (y en 26 leads algunos campos sueltos en la
+raíz, formato antiguo); `propuesta_json` con `rubro` y `resumen_general`; `seguimiento_json` no
+es JSON: es una nota de texto libre en 222 leads y viene vacío en el resto.
+
+**Archivos:** nuevos `pantalla/Informe.jsx`, `pantalla/informeDatos.js` y `pantalla/excel.js`;
+cambian `FlujoVentasV2.jsx` (pestañas) y `flujo-ventas-v2.css`.
+
+**Pruebas hechas (datos reales):**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Ningún registro trae `client_phone` y ninguna columna es de teléfono | ✅ |
+| Todos = Total leads · Pipeline abierto = abiertos · Ganados = indicador Ganados | ✅ |
+| Perdidos, Seguimientos vencidos y Sin motivo de pérdida = `calculateMetrics` | ✅ |
+| Por defecto (mes actual): 195 · 152 abiertos · 1 ganado · 42 perdidos · 40 vencidos · 0 sin motivo | ✅ |
+| Todo el historial: 1,693 · 527 · 67 · 1,098 · 82 · 148 | ✅ |
+| También con País = GT y con Tipo = calificado en octubre | ✅ |
+| Excel (generado con ExcelJS 4.4.0 en una carpeta de pruebas aparte): en las 6 vistas, filas del Excel = filas de la tabla = conteo de la píldora; columnas = # + columnas visibles | ✅ |
+| Excel: fechas como fecha `dd/mm/yyyy`, título azul marino, 4 filas congeladas, autofiltro, hoja "Filtros aplicados", nombre del cliente en todas las filas | ✅ |
+| CSV de respaldo: BOM UTF-8 y una línea por lead | ✅ |
+| El CDN de ExcelJS 4.4.0 responde | ✅ |
+| Hoja de estilos del portal: reglas nuevas solo dentro de `.fv2`; animaciones `fv2-`; ningún valor existente cambió | ✅ |
+| Revisión en pantalla y descarga desde el navegador | ⏳ pendiente (la hace Keily) |
+
+**Qué no se tocó:** la lógica copiada, Activaciones (solo se leyó), el Flujo de ventas viejo,
+los demás dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json`, `vercel.json`,
+Supabase ni `main`. La carpeta `.claude/` no se incluye en el commit.
