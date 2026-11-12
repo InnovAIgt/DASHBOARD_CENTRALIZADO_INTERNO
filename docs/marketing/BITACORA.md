@@ -610,3 +610,45 @@ normalidad. En pantallas angostas no cambia nada (el portal ya usa su botón ☰
   sin esa clase no aplican, así que los demás dashboards se ven igual. `src/index.css` no se tocó.
 - `npm run build` y `npm run lint` ✅; hoja de estilos del portal: las únicas reglas nuevas fuera
   de `.fv2` dependen de `.fv2-menu-oculto`; ningún valor existente cambió ✅.
+
+---
+
+## Paso 4.2 · Descarga en PDF con la plantilla de Activaciones — 12/11/2026 ✅ (pendiente revisión en pantalla y del PDF)
+
+**Qué se hizo:**
+- Botón rojo **PDF** (clase `dashboard-pdf-trigger`, igual que Activaciones) junto a la barra de
+  filtros, en la zona fija: visible en Resumen, Ejecutivos e Informe detallado.
+- Ventana "¿Qué módulos deseas incluir?": la genera la herramienta compartida
+  (`openModulePicker`), igual que en Activaciones. Chips: País, Período, Tipo de lead, Ejecutivos
+  y Leads. Módulos: 01 Resumen, 02 Ejecutivos, 03 Informe detallado (todos marcados).
+- Reporte con la plantilla de Activaciones (`pantalla/pdf.js`): encabezado con logo, "RED
+  INTELFON · MARKETING", "Reporte de Flujo de Ventas", filtros, fecha de emisión, píldora
+  "Conversión de calificados" y "Módulos incluidos". Detalle de módulos en DECISIONES D15.
+- La vista rápida y la búsqueda del Informe ahora se guardan mientras la página esté abierta
+  (se conservan al cambiar de pestaña) y son las que usa el PDF.
+- Nombre: `Reporte_flujo_ventas_<GT|SV|GT-SV>_<desde>_<hasta>.pdf`.
+
+**Archivos:** nuevo `pantalla/pdf.js`; cambian `FlujoVentasV2.jsx` (botón, carga de la herramienta,
+estado del Informe), `pantalla/Filtros.jsx` (espacio para el botón) y `pantalla/Informe.jsx`
+(vista y búsqueda vienen de la pantalla principal). Los archivos compartidos de PDF y
+Activaciones no se modificaron.
+
+**Pruebas hechas (HTML del reporte con los datos reales; 3 casos: por defecto, todo el
+historial y GT historial con la vista Perdidos; 34 comprobaciones):**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Plantilla: report-shell, encabezado, título, eyebrow, module-summary | ✅ |
+| Píldora y KPIs del PDF = pantalla (p. ej. historial: 1,694 · 296 calificados · 67 ganados · 325 unidades · 14.5 %) | ✅ |
+| Resumen en 2 páginas; Ejecutivos con todos (incluidos los de 0) + fila Equipo; Informe con 10 columnas | ✅ |
+| Informe = vista rápida elegida; tope de 300 filas con nota (historial: 1,694 → 300; GT Perdidos: 625 → 300) | ✅ |
+| Con 1, 2 o 3 módulos solo aparecen los elegidos | ✅ |
+| Sin teléfono; en el contenido, rojo solo para lo vencido | ✅ |
+| Archivos compartidos y logo se sirven desde el portal (`/assets/...` responden 200) | ✅ |
+| Activaciones, `dashboard-pdf.js`, `dashboard-pdf-logo.js`, `dashboard-pdf.css` sin cambios (`git status`) | ✅ |
+| Ventana y descarga del PDF en el navegador | ⏳ pendiente (la revisa Keily) |
+
+**Qué no se tocó:** la lógica de cálculo, Activaciones, los archivos compartidos de PDF, el Flujo
+de ventas viejo, `src/index.css`, `package.json`, `vercel.json`, Supabase ni `main`. `.claude/`
+no se incluye en el commit.

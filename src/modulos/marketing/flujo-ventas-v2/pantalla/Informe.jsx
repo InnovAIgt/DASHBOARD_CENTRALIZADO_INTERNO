@@ -48,10 +48,9 @@ function textoFiltros({ filters, periodo, vista, busqueda, grupos, total }) {
   ]
 }
 
-export function Informe({ leads, filters, periodo }) {
-  const [vistaKey, setVistaKey] = useState('todos')
+// 4.2: la vista rápida y la búsqueda vienen de FlujoVentasV2 (se recuerdan entre pestañas y las usa el PDF).
+export function Informe({ leads, filters, periodo, vistaKey, setVistaKey, busqueda, setBusqueda }) {
   const [grupos, setGrupos] = useState(() => new Set(GRUPOS.filter((g) => g.visible).map((g) => g.key)))
-  const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState({ key: 'fCreacion', dir: 'desc' })
   const [pagina, setPagina] = useState(0)
   const [leadSel, setLeadSel] = useState(null)

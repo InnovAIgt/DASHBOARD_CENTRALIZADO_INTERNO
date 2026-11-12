@@ -56,6 +56,7 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `…/pantalla/Semaforo.jsx` | Píldora de la próxima gestión con semáforo (informe y ventana de etapa) |
 | `…/pantalla/informeDatos.js` | Columnas del informe (campos de la API por grupo), vistas rápidas y semáforo |
 | `…/pantalla/excel.js` | Botón "Descargar Excel": misma plantilla y método que el Excel de Activaciones |
+| `…/pantalla/pdf.js` | Botón "PDF": carga la herramienta compartida del portal (`dashboard-pdf.js`) y arma el reporte con la plantilla de Activaciones |
 | `docs/marketing/` | Esta documentación |
 
 ## Pestañas
@@ -70,6 +71,20 @@ pantalla menos la barra del portal). La pestaña elegida se recuerda mientras la
   período van al final y apagados) con la conversión de calificados en un círculo (verde ≥ 20 %,
   azul 10–20 %, amarillo < 10 %; provisional, D14), ventas, unidades, vencidos y ventas por mes.
   Clic en la tarjeta → Detalle del ejecutivo; clic en una barrita → Detalle mensual del ejecutivo.
+
+## Descarga en PDF
+
+Botón rojo **PDF** junto a la barra de filtros (visible en las 3 pestañas). Abre la misma ventana
+de Activaciones ("¿Qué módulos deseas incluir?") con los filtros aplicados en chips y 3 módulos:
+**01 Resumen** (países, indicadores, leads por mes y embudo por etapa), **02 Ejecutivos** (una
+fila por ejecutivo, incluidos los de 0, y total del equipo) y **03 Informe detallado** (la vista
+rápida y la búsqueda elegidas en la pestaña Informe; 10 columnas; máximo 300 filas, el detalle
+completo está en el Excel). Archivo: `Reporte_flujo_ventas_<GT|SV|GT-SV>_<desde>_<hasta>.pdf`.
+
+- Usa **tal cual** la herramienta compartida del portal: `public/assets/js/dashboard-pdf.js`,
+  `dashboard-pdf-logo.js` y `public/assets/css/dashboard-pdf.css`. La v2 los agrega a la página
+  una sola vez al abrirse y llama a `window.DashboardPdf.openModulePicker`, como Activaciones.
+- Nunca incluye el teléfono del cliente. Rojo en el contenido solo para lo vencido.
 
 ## Filtros por defecto
 

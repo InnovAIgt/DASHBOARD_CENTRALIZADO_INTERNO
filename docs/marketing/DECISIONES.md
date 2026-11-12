@@ -165,3 +165,22 @@ ganó), solo entre ejecutivos con al menos 5 leads que llegaron a ella; empate �
 - Tarjetas: "N ventas" = ganados de calificados; orden por ventas, luego todos los ganados,
   luego calificados.
 **Autorizó:** Keily García.
+
+## D15 · 12/11/2026 · PDF con la herramienta y la plantilla de Activaciones
+
+**Decisión:** la v2 descarga su PDF con la **misma herramienta compartida** del portal
+(`public/assets/js/dashboard-pdf.js`, `dashboard-pdf-logo.js` y `public/assets/css/dashboard-pdf.css`),
+sin copiarla ni modificarla, y con la **misma plantilla** de reporte que Activaciones (replicada
+en `pantalla/pdf.js`). Solo cambian los módulos, la lógica y los datos.
+**Cómo se carga en React sin tocar el portal:** al abrirse, la v2 agrega esos 3 archivos a la
+página (una sola vez, con identificador) y llama a `window.DashboardPdf.openModulePicker`. Al
+salir de la v2 se quita su ventana de módulos. Activaciones vive en su propio iframe con su propia
+copia, así que no se ve afectado.
+**Contenido:** 01 Resumen (2 páginas: países + indicadores + leads por mes; embudo por etapa),
+02 Ejecutivos (todos, incluidos los de 0, con fila de equipo), 03 Informe detallado (vista
+rápida y búsqueda de la pestaña Informe; 10 columnas en A4 horizontal: cliente, ejecutivo, país,
+calificación, etapa, estado, creación, próxima gestión, unidades y resultado/motivo; tope de 300
+filas con nota). Las 54 columnas completas quedan en el Excel.
+**Colores:** en el contenido, rojo solo para lo vencido. El encabezado, la píldora y los acentos
+rojos son la marca de la plantilla compartida (D12).
+**Autorizó:** Keily García.
