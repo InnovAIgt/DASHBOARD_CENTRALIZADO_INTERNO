@@ -1,4 +1,4 @@
-// Flujo de ventas v2 (prueba) · pantalla principal dentro del portal.
+// Flujo de ventas v2 · pantalla principal dentro del portal.
 // Lógica (carga de datos, filtros y cálculos): copiada de InnovAIgt/DashboardLeads, en utils/,
 // hooks/, context/ y services/, sin cambios. Diseño visual propio basado en el dashboard de
 // Activaciones (ver pantalla/ y flujo-ventas-v2.css). Documentación: docs/marketing/README.md
@@ -138,7 +138,7 @@ function FlujoVentasV2Contenido() {
     <header className="fv2-encabezado">
       <div>
         <div className="fv2-eyebrow">Marketing · Flujo de ventas</div>
-        <h1 className="fv2-titulo">Flujo de ventas <span className="fv2-etiqueta-prueba">v2 · prueba</span></h1>
+        <h1 className="fv2-titulo">Flujo de ventas</h1>
         <p className="fv2-subtitulo">Cómo avanzan los leads asignados a cada ejecutivo, de la asignación al cierre · Guatemala y El Salvador.</p>
         <EstadoConsulta cargando={loading} error={error} actualizado={api.lastUpdated} />
       </div>
