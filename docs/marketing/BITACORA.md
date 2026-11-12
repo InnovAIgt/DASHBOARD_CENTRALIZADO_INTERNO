@@ -463,3 +463,80 @@ Facturación por línea (`facturacion-linea.html`, solo se leyó), la pastilla "
 filtrados" y el botón rojo de Excel van a la **derecha del título**, en la misma fila (antes
 estaban debajo de la descripción). En pantallas angostas bajan solos debajo del título.
 `npm run build` y `npm run lint` ✅.
+
+---
+
+## Paso 4.0 · Mejoras sin saturar — 11/11/2026 ✅ (pendiente revisión visual)
+
+**Qué se hizo (solo la lista pedida):**
+1. **Filtros por defecto:** Tipo de lead = Calificado y Período = mes actual (día 1 a hoy).
+   "Volver a filtros por defecto" regresa a eso.
+2. **Ejecutivos en cero:** "Desempeño por ejecutivo" muestra a todos los ejecutivos del país
+   elegido (sin importar período ni tipo; si se eligieron ejecutivos en Filtros, solo esos).
+   Quien no tiene leads con los filtros actuales aparece al final, en gris, con 0.
+3. **Embudo de ventas por etapa** (6 cuadritos tipo rastreo de pedido) **en el lugar de
+   "Embudo por mes"**: llegaron, % que pasó desde la anterior, están hoy aquí y "Mejor". La
+   etapa con la mayor caída va en amarillo. Nota en pantalla: "Etapa estimada: los leads
+   perdidos se ubican en la última etapa con datos registrados por el vendedor" (D13). Clic →
+   ventana de la etapa con 4 datos (llegaron, % que pasó a la siguiente, están hoy aquí con los
+   vencidos en rojo, mejor ejecutivo) y pestañas Por mes, Por ejecutivo (menos de 5 leads =
+   "pocos datos", al final) y Leads en esta etapa (clic abre la ficha).
+4. **Mejor en cada etapa:** mayor % de paso a la siguiente etapa con al menos 5 leads (D13).
+5. **Dos verdes** en la barra de cada ejecutivo: verde fuerte = ganados de calificados, verde
+   claro = ganados de no calificados (leyenda y recuadro al pasar el cursor actualizados).
+6. **Píldora roja de seguimientos vencidos** en cada ejecutivo (solo si hay); clic abre el
+   detalle con esos leads. Misma regla de la lógica copiada (abierto + `isOverdue`).
+7. **Regla de colores** (D12), solo en los datos.
+
+**Lo que se quitó:** únicamente la sección "Embudo por mes" (y su cálculo
+`monthlyFunnelGroups` en `pantalla/datos.js`). Ninguna otra sección desapareció: tarjetas por
+país, 6 indicadores y sus ventanas, "Leads por mes", "Desempeño por ejecutivo", "Resultados por
+ejecutivo", los 2 "Resultados mensuales" y las ventanas de asesor, mes y lead siguen igual y en
+el mismo orden.
+
+**Cambios de color (D12):**
+
+| Elemento | Antes | Ahora |
+|---|---|---|
+| Insignia del estado "Perdido" (tablas, ventanas, informe) | rojo | gris |
+| Conteo de la vista rápida "Perdidos" | rojo | gris |
+| Recuadro "Motivo de pérdida" en la ficha del lead | rojo | gris |
+| Métrica "Conversión de calificados" en las ventanas de ejecutivo y mes | rosa (rojo claro) | azul claro |
+| Indicador "Conversión de calificados" | amarillo | azul claro |
+| Métrica "Unidades vendidas" en las ventanas | amarillo | gris |
+| % y barra de conversión en las tarjetas por país | verde | azul |
+| Píldoras de conversión (desempeño y tablas) | verde/amarillo según umbral | azul |
+| Rojo que se queda | — | seguimientos vencidos, próxima gestión vencida, error de conexión y la marca del portal |
+
+**Pendiente (anotado):** botón "Descargar Excel" de la ventana de etapa (para la 4.1).
+
+**Archivos:** `pantalla/datos.js` (filtros por defecto, `LIMITES_PASO`, `etapaAlcanzada`,
+`embudoEtapas`, `ejecutivosEnEtapa`, `mesesEnEtapa`, `listaEjecutivos`, `esVencido`,
+`partesEjecutivo` en 4 partes), `graficas.jsx` (`EmbudoEtapas`, desempeño), `Ventanas.jsx`
+(`DetalleEtapa`), `VistaGeneral.jsx`, `FlujoVentasV2.jsx`, `comunes.jsx`, `informeDatos.js`,
+`Informe.jsx`, nuevo `Semaforo.jsx` y `flujo-ventas-v2.css`.
+
+**Pruebas hechas (datos reales; 5 casos: por defecto, calificados historial, todos historial,
+GT octubre y un solo ejecutivo):**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Asignación = Total leads; cada etapa ≤ la anterior; Cierre = ganados + abiertos en Cierre; en Cierre "pasaron" = ganados | ✅ |
+| Σ "están hoy aquí" = abiertos; Σ vencidos por etapa = `calculateMetrics.vencidos` | ✅ |
+| Ningún perdido llega a Cierre en el embudo | ✅ |
+| En las 6 etapas: Σ por ejecutivo y Σ por mes (llegaron y pasaron) = embudo | ✅ |
+| "Mejor" = mayor % de paso entre quienes tienen ≥ 5 leads | ✅ |
+| Ejecutivos: lista = todos los del país; los de 0 al final (por defecto hoy: 6 con leads + 9 en 0) | ✅ |
+| Verde fuerte + verde claro = Ganados = nota de la tarjeta (historial: 43 + 24 = 67) | ✅ |
+| Cada ejecutivo: sus 4 partes = sus leads | ✅ |
+| Σ píldoras de vencidos = vista "Seguimientos vencidos" = `calculateMetrics.vencidos` | ✅ |
+| Hoja de estilos del portal: reglas nuevas solo dentro de `.fv2`; ningún valor existente cambió | ✅ |
+| Revisión en pantalla | ⏳ pendiente (la hace Keily) |
+
+**Nota:** con el filtro por defecto (solo calificados) el verde claro siempre es 0, porque no
+entran leads no calificados; se ve al quitar el filtro de Tipo de lead.
+
+**Qué no se tocó:** la lógica copiada, Activaciones, el Flujo de ventas viejo, los demás
+dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json`, `vercel.json`, Supabase ni
+`main`. La carpeta `.claude/` no se incluye en el commit.

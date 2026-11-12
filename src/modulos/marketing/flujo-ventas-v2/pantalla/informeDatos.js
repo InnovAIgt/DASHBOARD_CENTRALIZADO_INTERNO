@@ -71,7 +71,7 @@ export const VISTAS = [
   { key: 'todos', label: 'Todos', tono: 'neutro', filtro: () => true },
   { key: 'abierto', label: 'Pipeline abierto', tono: 'azul', filtro: isOpen },
   { key: 'ganados', label: 'Ganados', tono: 'verde', filtro: isWon },
-  { key: 'perdidos', label: 'Perdidos', tono: 'rojo', filtro: (lead) => lead.estado === 'perdido' },
+  { key: 'perdidos', label: 'Perdidos', tono: 'neutro', filtro: (lead) => lead.estado === 'perdido' },
   { key: 'vencidos', label: 'Seguimientos vencidos', tono: 'rojo', filtro: (lead) => isOpen(lead) && isOverdue(lead.proximaGestion) },
   { key: 'sinMotivo', label: 'Sin motivo de pérdida', tono: 'amarillo', filtro: (lead) => lead.estado === 'perdido' && !lead.motivo },
 ]

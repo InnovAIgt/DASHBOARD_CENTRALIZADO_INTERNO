@@ -2,8 +2,9 @@
 // al pasar el cursor y recuadro de detalle). Las cifras vienen de pantalla/datos.js.
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { formatNumber, formatPercent, monthLabel } from '../utils/analytics.js'
+import { formatNumber, monthLabel } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS, COLORES, formatearRatio, PaisChip } from './comunes.jsx'
+import { tonoPaso } from './datos.js'
 
 export const GRIS = '#5b6170'
 
@@ -21,10 +22,9 @@ export function Medidor({ valor, max, color, alto = 7 }) {
   </span>
 }
 
-/** Píldora de conversión de calificados: verde desde 10 %, amarilla si es mayor a 0. */
+/** Píldora de conversión de calificados: azul (información neutral, regla de colores D12). */
 export function PildoraCalificados({ ratio }) {
-  const tono = ratio >= 0.1 ? 'verde' : ratio > 0 ? 'amarillo' : 'neutro'
-  return <span className={`fv2-insignia is-${tono}`} title="Conversión de calificados: ganados calificados ÷ calificados">{formatearRatio(ratio)}</span>
+  return <span className="fv2-insignia is-azul" title="Conversión de calificados: ganados calificados ÷ calificados">{formatearRatio(ratio)}</span>
 }
 
 /** Tope "redondo" para un eje: 5, 10, 20, 25, 50, 100, 200, 250… */
@@ -116,7 +116,7 @@ export function TarjetasPais({ paises }) {
           <small>Conversión de calificados</small>
         </div>
       </header>
-      <Medidor valor={fila.conversion.ratio} max={1} color={COLORES.verde} alto={6} />
+      <Medidor valor={fila.conversion.ratio} max={1} color={COLORES.azul} alto={6} />
       <div className="fv2-pais-datos">
         <div><span>Total leads</span><b>{formatNumber(fila.total)}</b></div>
         <div><span>Calificados</span><b style={{ color: COLORES.azulClaro }}>{formatNumber(fila.qualified)}</b></div>
@@ -128,24 +128,43 @@ export function TarjetasPais({ paises }) {
 }
 
 // ---------- Desempeño por ejecutivo (barras del embudo del Flujo de ventas viejo) ----------
+// 4.0: el verde se divide en dos (calificados / no calificados), píldora roja de seguimientos
+// vencidos (solo si hay) y los ejecutivos sin leads en el período o país aparecen al final en 0.
+export const VERDE_CLARO = '#8fd3bf'
 export const LEYENDA_EJECUTIVOS = [
-  { label: 'Ganados', color: COLORES.verde },
+  { label: 'Ganados de calificados', color: COLORES.verde },
+  { label: 'Ganados de no calificados', color: VERDE_CLARO },
   { label: 'Calificados sin ganar', color: COLORES.azul },
   { label: 'No calificados sin ganar', color: GRIS },
 ]
 
-export function DesempenoEjecutivos({ filas, onSeleccionar }) {
+export function DesempenoEjecutivos({ filas, onSeleccionar, onVencidos }) {
   const max = Math.max(1, ...filas.map((f) => f.total))
   return <div className="fv2-desempeno">
-    <div className="fv2-desempeno-cabeza"><span>Ejecutivo</span><span>Leads por resultado</span><span>Leads</span><span>Conv. calif.</span></div>
+    <div className="fv2-desempeno-cabeza"><span>Ejecutivo</span><span>Leads por resultado</span><span>Leads</span><span>Conv. calif.</span><span>Vencidos</span></div>
     {filas.map((fila, i) => {
       const partes = [
-        { valor: fila.partes.ganados, color: COLORES.verde, label: 'Ganados' },
+        { valor: fila.partes.ganadosCalificados, color: COLORES.verde, label: 'Ganados de calificados' },
+        { valor: fila.partes.ganadosNoCalificados, color: VERDE_CLARO, label: 'Ganados de no calificados' },
         { valor: fila.partes.calificadosSinGanar, color: COLORES.azul, label: 'Calificados sin ganar' },
         { valor: fila.partes.noCalificadosSinGanar, color: GRIS, label: 'No calificados sin ganar' },
       ]
       const ancho = Math.max((fila.total / max) * 100, fila.total ? 4 : 0)
-      return <button type="button" key={fila.name} className="fv2-desempeno-fila" onClick={() => onSeleccionar(fila.name, fila.country)} title={`Ver detalle de ${fila.name}`}>
+      const detalle = partes.map((p) => `${p.label}: ${formatNumber(p.valor)}`).join('\n')
+      if (fila.sinLeads) {
+        return <div key={fila.name} className="fv2-desempeno-fila is-cero" title={`${fila.name}: sin leads con los filtros actuales`}>
+          <span className="fv2-desempeno-nombre"><strong>{fila.name}</strong><span className="fv2-en-linea"><PaisChip pais={fila.country} /> sin leads en el período</span></span>
+          <span className="fv2-desempeno-pista"><span className="fv2-desempeno-barra is-vacia" /></span>
+          <span className="fv2-desempeno-total">0</span>
+          <span className="fv2-desempeno-conv"><span className="fv2-insignia is-neutro">—</span></span>
+          <span className="fv2-desempeno-venc" />
+          <span />
+        </div>
+      }
+      return <div key={fila.name} className="fv2-desempeno-fila" role="button" tabIndex={0}
+        onClick={() => onSeleccionar(fila.name, fila.country)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSeleccionar(fila.name, fila.country) } }}
+        title={`Ver detalle de ${fila.name}\n${detalle}`}>
         <span className="fv2-desempeno-nombre">
           <strong>{fila.name}</strong>
           <PaisChip pais={fila.country} />
@@ -159,40 +178,43 @@ export function DesempenoEjecutivos({ filas, onSeleccionar }) {
         </span>
         <span className="fv2-desempeno-total">{formatNumber(fila.total)}</span>
         <span className="fv2-desempeno-conv"><PildoraCalificados ratio={fila.conversion.ratio} /></span>
+        <span className="fv2-desempeno-venc">
+          {fila.vencidos.length > 0 && <button type="button" className="fv2-pildora-vencidos"
+            onClick={(e) => { e.stopPropagation(); onVencidos(fila) }}
+            title={`Ver los ${fila.vencidos.length} seguimientos vencidos de ${fila.name}`}>
+            {formatNumber(fila.vencidos.length)} vencidos
+          </button>}
+        </span>
         <ChevronRight size={14} className="fv2-desempeno-flecha" />
-      </button>
+      </div>
     })}
   </div>
 }
 
-// ---------- Embudo por mes: Leads → Calificados → Ganados ----------
-// El % de "Ganados" es la conversión de calificados corregida (ganados calificados ÷ calificados).
-export function EmbudoMes({ grupo }) {
-  const s = grupo.summary
-  const pasos = [
-    { label: 'Leads', valor: s.total, color: COLORES.azul },
-    { label: 'Calificados', valor: s.qualified, color: COLORES.azulClaro, pct: formatPercent(s.qualified, s.total) },
-    { label: 'Ganados', valor: s.won, color: COLORES.verde, pct: formatearRatio(grupo.conversion.ratio), ayuda: 'Conversión de calificados: ganados calificados ÷ calificados' },
-  ]
-  return <article className={`fv2-embudo ${grupo.key === 'all' ? 'is-total' : ''}`}>
-    <header>
-      <strong>{grupo.label}</strong>
-      <span>{formatNumber(s.total)} leads</span>
-    </header>
-    <div className="fv2-embudo-pasos">
-      {pasos.map((p) => <div key={p.label} className="fv2-embudo-paso">
-        <div className="fv2-embudo-texto">
-          <span>{p.label}</span>
-          <b>{formatNumber(p.valor)}</b>
-          {p.pct && <small title={p.ayuda}>{p.pct}</small>}
-        </div>
-        <Medidor valor={p.valor} max={Math.max(1, s.total)} color={p.color} alto={8} />
-      </div>)}
+// ---------- Embudo de ventas por etapa (6 cuadritos, estilo rastreo de pedido) ----------
+// Reemplaza al "Embudo por mes" (4.0). Etapa real estimada: ver embudoEtapas en datos.js (D13).
+// Colores (D12): % de paso con tonoPaso; la etapa con la mayor caída va en amarillo.
+export function EmbudoEtapas({ embudo, onEtapa }) {
+  const { etapas, mayorCaida } = embudo
+  return <div className="fv2-rastreo">
+    <div className="fv2-rastreo-linea" aria-hidden="true" />
+    <div className="fv2-rastreo-etapas">
+      {etapas.map((e) => {
+        const caida = e.stage === mayorCaida
+        const tono = e.entrada == null ? 'azul' : caida ? 'amarillo' : tonoPaso(e.entrada)
+        return <button type="button" key={e.stage} className={`fv2-etapa-cuadrito ${caida ? 'is-caida' : ''}`} onClick={() => onEtapa(e.stage)} title={`Ver el detalle de ${e.label}`}>
+          <span className={`fv2-etapa-circulo is-${tono}`}>{e.stage}</span>
+          <span className="fv2-etapa-caja">
+            <strong className="fv2-etapa-titulo">{e.label}</strong>
+            <span className="fv2-etapa-numero">{formatNumber(e.llegaron)}</span>
+            {e.entrada == null
+              ? <span className="fv2-insignia is-neutro">inicio</span>
+              : <span className={`fv2-insignia is-${caida ? 'amarillo' : tonoPaso(e.entrada)}`} title="% que llegó desde la etapa anterior">pasó {formatearRatio(e.entrada)}</span>}
+            <small>{formatNumber(e.hoy)} {e.hoy === 1 ? 'está' : 'están'} hoy aquí</small>
+            {e.mejor && <span className="fv2-etapa-mejor" title="Mayor % de paso a la siguiente etapa (mínimo 5 leads)">Mejor: {e.mejor.name} ({formatearRatio(e.mejor.ratio)})</span>}
+          </span>
+        </button>
+      })}
     </div>
-    <footer>
-      <span>Ganados <b>{formatNumber(s.won)}</b></span>
-      <span>Unidades <b>{formatNumber(grupo.units)}</b></span>
-      <span>{grupo.key === 'all' ? 'Conversión general' : 'Conversión general del mes'} <b>{formatPercent(s.won, s.total)}</b></span>
-    </footer>
-  </article>
+  </div>
 }

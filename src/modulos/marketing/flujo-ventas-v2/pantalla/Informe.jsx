@@ -4,14 +4,11 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Search } from 'lucide-re
 import { formatNumber, PIPELINE_STAGES, qualificationLabel } from '../utils/analytics.js'
 import { Calificacion, CODIGO_PAIS, EstadoLead, PaisChip } from './comunes.jsx'
 import { descargarInforme } from './excel.js'
-import { buscarFilas, COLUMNAS, conteoVistas, filasInforme, GRUPOS, ordenarFilas, semaforo, textoCelda, VISTAS } from './informeDatos.js'
+import { buscarFilas, COLUMNAS, conteoVistas, filasInforme, GRUPOS, ordenarFilas, textoCelda, VISTAS } from './informeDatos.js'
+import { Semaforo } from './Semaforo.jsx'
 import { DetalleLead } from './Ventanas.jsx'
 
 const POR_PAGINA = 50
-const fechaHora = new Intl.DateTimeFormat('es-SV', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-const hora = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
-const dm = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
-const tieneHora = (d) => d.getHours() !== 0 || d.getMinutes() !== 0
 const hoyISO = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -22,15 +19,6 @@ function MiniEtapas({ etapa, ganado }) {
   return <span className="fv2-minietapas" aria-label={`Etapa ${etapa} de 6`}>
     {[1, 2, 3, 4, 5, 6].map((n) => <i key={n} className={n <= etapa ? (ganado ? 'is-ganado' : 'is-hecha') : ''} />)}
   </span>
-}
-
-function Semaforo({ lead, fecha }) {
-  if (!fecha) return <span className="fv2-tenue">—</span>
-  const s = semaforo(lead)
-  const texto = s === 'vencida' ? `Vencida · ${dm(fecha)}`
-    : s === 'hoy' ? `Hoy${tieneHora(fecha) ? ` · ${hora.format(fecha)}` : ''}`
-      : tieneHora(fecha) ? fechaHora.format(fecha) : textoCelda({ tipo: 'fecha' }, fecha)
-  return <span className={`fv2-semaforo is-${s}`} title={s === 'cerrado' ? 'Lead cerrado' : undefined}>{texto}</span>
 }
 
 function Celda({ col, fila }) {

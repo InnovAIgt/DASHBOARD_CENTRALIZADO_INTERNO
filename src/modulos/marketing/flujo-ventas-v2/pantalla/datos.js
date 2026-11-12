@@ -7,10 +7,20 @@
 // Lo único nuevo es el filtro de Período (reemplaza "Month to day" en pantalla).
 import {
   applyFilters, buildForecast, byAdvisor, byCountry, byMonth, COUNTRIES, FILTER_DEFS,
-  isQualified, isWon, leadComments, leadUnits, monthLabel, PIPELINE_STAGES, stageDistribution, summarize,
+  isOpen, isQualified, isWon, leadComments, leadUnits, PIPELINE_STAGES, stageDistribution, summarize,
 } from '../utils/analytics.js'
 import { buildStageFunnel, leadReferenceDate, leadReferenceMonth } from '../utils/leads.js'
-import { toDate } from '../utils/dates.js'
+import { isOverdue, toDate } from '../utils/dates.js'
+
+/**
+ * Regla de colores de los datos (DECISIONES D12). Límites PROVISIONALES hasta que el ingeniero
+ * los defina: % de paso < bajo → amarillo (atención) · ≥ bueno → verde · en medio → gris.
+ */
+export const LIMITES_PASO = { bajo: 0.6, bueno: 0.75 }
+export const tonoPaso = (ratio) => (ratio == null ? 'neutro' : ratio >= LIMITES_PASO.bueno ? 'verde' : ratio < LIMITES_PASO.bajo ? 'amarillo' : 'neutro')
+
+/** Filtros por defecto (paso 4.0): Tipo de lead = Calificado (+ Período = mes actual hasta hoy). */
+export const FILTROS_POR_DEFECTO = { filterTipoLead: ['calificado'] }
 
 export const PAISES = COUNTRIES
 /** Sin límite de período (todo el historial). */
@@ -48,14 +58,10 @@ export function aplicarFiltros(leads, filters, periodo, skipKey) {
   return filtrarPorPeriodo(applyFilters(leads, filters, skipKey), periodo.desde, periodo.hasta)
 }
 
-/** ¿Los filtros son distintos a los de por defecto (todos los países, mes actual hasta hoy)? */
+/** ¿Los filtros son distintos a los de por defecto (todos los países, Calificado, mes actual hasta hoy)? */
 export function hayFiltrosActivos(filters, periodo, defecto = periodoPorDefecto()) {
-  return FILTER_DEFS.some((def) => filters[def.key] != null) || periodo.desde !== defecto.desde || periodo.hasta !== defecto.hasta
-}
-
-/** Sin ningún filtro ni período: el embudo agrega el grupo "Todos" (como en la lógica copiada). */
-export function sinFiltros(filters, periodo) {
-  return FILTER_DEFS.every((def) => filters[def.key] == null) && !periodo.desde && !periodo.hasta
+  const distinto = (def) => JSON.stringify(filters[def.key] ?? null) !== JSON.stringify(FILTROS_POR_DEFECTO[def.key] ?? null)
+  return FILTER_DEFS.some(distinto) || periodo.desde !== defecto.desde || periodo.hasta !== defecto.hasta
 }
 
 // ---------- Opciones y conteos de cada filtro ----------
@@ -97,23 +103,138 @@ export function conversionCalificados(leads) {
 }
 
 /**
- * Partes de la barra de cada ejecutivo. Algunos ganados vienen de leads no calificados, así que
- * para que las 3 partes sumen el total sin contar a nadie dos veces:
- *   ganados (todos) + calificados sin ganar + no calificados sin ganar = total de leads.
+ * Partes de la barra de cada ejecutivo (4.0: el verde se divide en dos). Para que las 4 partes
+ * sumen el total sin contar a nadie dos veces:
+ *   ganados de calificados + ganados de no calificados + calificados sin ganar
+ *   + no calificados sin ganar = total de leads.
  */
 export function partesEjecutivo(leads) {
   return {
-    ganados: leads.filter(isWon).length,
+    ganadosCalificados: leads.filter((lead) => isWon(lead) && isQualified(lead)).length,
+    ganadosNoCalificados: leads.filter((lead) => isWon(lead) && !isQualified(lead)).length,
     calificadosSinGanar: leads.filter((lead) => isQualified(lead) && !isWon(lead)).length,
     noCalificadosSinGanar: leads.filter((lead) => !isQualified(lead) && !isWon(lead)).length,
   }
 }
 
-/** Todos los ejecutivos, ordenados por ganados y luego por calificados (byAdvisor de la lógica copiada). */
-export function desempenoEjecutivos(leads) {
-  return byAdvisor(leads)
-    .map((row) => ({ ...row, partes: partesEjecutivo(row.leads), conversion: conversionCalificados(row.leads) }))
+/**
+ * Seguimientos vencidos: leads abiertos cuya próxima gestión ya pasó. Misma regla que "vencidos"
+ * de calculateMetrics (lógica copiada): OPEN_STATES + isOverdue(proximaGestion).
+ */
+export const esVencido = (lead) => isOpen(lead) && isOverdue(lead.proximaGestion)
+
+/**
+ * Ejecutivos que deben aparecer en "Desempeño por ejecutivo" (4.0): todos los que tienen leads en
+ * el país elegido, sin importar el período ni el tipo de lead. Si se eligieron ejecutivos en el
+ * panel Filtros, solo esos. País de cada uno = el más frecuente en sus leads.
+ */
+export function listaEjecutivos(todosLosLeads, filters) {
+  const paises = new Map()
+  for (const lead of todosLosLeads) {
+    if (filters.filterPais != null && !filters.filterPais.includes(lead.pais)) continue
+    if (filters.filterEjecutivo != null && !filters.filterEjecutivo.includes(lead.asesor)) continue
+    if (!lead.asesor) continue
+    const conteo = paises.get(lead.asesor) ?? new Map()
+    conteo.set(lead.pais, (conteo.get(lead.pais) ?? 0) + 1)
+    paises.set(lead.asesor, conteo)
+  }
+  return [...paises.entries()].map(([name, conteo]) => ({ name, country: [...conteo.entries()].sort((a, b) => b[1] - a[1])[0][0] }))
+}
+
+/**
+ * Todos los ejecutivos (byAdvisor de la lógica copiada), ordenados por ganados y luego por
+ * calificados. Los de `base` que no tengan leads con los filtros actuales se agregan al final con 0.
+ */
+export function desempenoEjecutivos(leads, base = []) {
+  const conLeads = byAdvisor(leads)
+    .map((row) => ({ ...row, partes: partesEjecutivo(row.leads), conversion: conversionCalificados(row.leads), vencidos: row.leads.filter(esVencido) }))
     .sort((a, b) => b.won - a.won || b.qualified - a.qualified || a.name.localeCompare(b.name))
+  const nombres = new Set(conLeads.map((row) => row.name))
+  const enCero = base
+    .filter((e) => !nombres.has(e.name))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((e) => ({ ...e, leads: [], total: 0, won: 0, qualified: 0, partes: partesEjecutivo([]), conversion: conversionCalificados([]), vencidos: [], sinLeads: true }))
+  return [...conLeads, ...enCero]
+}
+
+// ---------- Embudo de 6 etapas (4.0, reemplaza "Embudo por mes") ----------
+// ETAPA REAL ESTIMADA (DECISIONES D13). En la API todos los leads perdidos quedan en la etapa 6
+// (Cierre) sin importar dónde se perdieron, así que la etapa actual (buildStageFunnel de la lógica
+// copiada) no sirve para ver dónde se caen. Se estima la etapa alcanzada así:
+//   ganados → 6 · abiertos → su etapa actual (opportunity_stage) ·
+//   perdidos → la última etapa 2 a 5 con datos registrados en stage_feedback_json (si no hay, 1).
+// Un lead que se saltó una etapa (p. ej. no requería demo) cuenta como que pasó por ella.
+export const ETAPAS = PIPELINE_STAGES
+const tieneDatosEtapa = (lead, n) => {
+  const v = lead.raw?.stage_feedback_json?.[String(n)]
+  return (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0) || (typeof v === 'string' && v.trim() !== '')
+}
+export function etapaAlcanzada(lead) {
+  if (isWon(lead)) return 6
+  if (lead.estado !== 'perdido') return Number.isFinite(lead.apiStage) ? lead.apiStage : 1
+  let maxima = 1
+  for (let n = 2; n <= 5; n++) if (tieneDatosEtapa(lead, n)) maxima = n
+  return maxima
+}
+/** ¿El lead llegó a la etapa k? */
+export const llego = (lead, k) => etapaAlcanzada(lead) >= k
+/** ¿Pasó de la etapa k a la siguiente? En la etapa 6 (Cierre), "pasar" = ganarse. */
+export const paso = (lead, k) => (k >= 6 ? isWon(lead) : etapaAlcanzada(lead) >= k + 1)
+/** Leads que están HOY en la etapa k: abiertos con esa etapa actual. */
+export const estaHoy = (lead, k) => isOpen(lead) && lead.apiStage === k
+
+/** Por ejecutivo en una etapa: llegaron, pasaron y % de paso (salida). < 5 leads = "pocos datos". */
+export function ejecutivosEnEtapa(leads, k, minimo = 5) {
+  const grupos = new Map()
+  for (const lead of leads) {
+    if (!llego(lead, k)) continue
+    const g = grupos.get(lead.asesor) ?? { name: lead.asesor, paises: new Map(), llegaron: 0, pasaron: 0 }
+    g.llegaron++
+    if (paso(lead, k)) g.pasaron++
+    g.paises.set(lead.pais, (g.paises.get(lead.pais) ?? 0) + 1)
+    grupos.set(lead.asesor, g)
+  }
+  const filas = [...grupos.values()].map((g) => ({
+    name: g.name,
+    country: [...g.paises.entries()].sort((a, b) => b[1] - a[1])[0]?.[0],
+    llegaron: g.llegaron,
+    pasaron: g.pasaron,
+    ratio: g.llegaron ? g.pasaron / g.llegaron : 0,
+    pocos: g.llegaron < minimo,
+  }))
+  const orden = (a, b) => b.ratio - a.ratio || b.llegaron - a.llegaron || String(a.name).localeCompare(String(b.name))
+  return [...filas.filter((f) => !f.pocos).sort(orden), ...filas.filter((f) => f.pocos).sort((a, b) => b.llegaron - a.llegaron || orden(a, b))]
+}
+
+/**
+ * Embudo de las 6 etapas. Por etapa: llegaron, % de entrada (desde la anterior), pasaron y % de
+ * salida (a la siguiente), cuántos están hoy y cuántos de ellos con gestión vencida, y el mejor
+ * ejecutivo (mayor % de salida con al menos 5 leads que llegaron; empate → más leads).
+ * La "mayor caída" es la etapa 2 a 6 con el menor % de entrada.
+ */
+export function embudoEtapas(leads) {
+  const etapas = ETAPAS.map((label, i) => {
+    const k = i + 1
+    const llegaron = leads.filter((l) => llego(l, k)).length
+    const pasaron = leads.filter((l) => llego(l, k) && paso(l, k)).length
+    const hoy = leads.filter((l) => estaHoy(l, k))
+    const mejor = ejecutivosEnEtapa(leads, k).find((f) => !f.pocos) ?? null
+    return { stage: k, label, llegaron, pasaron, salida: llegaron ? pasaron / llegaron : null, hoy: hoy.length, hoyVencidos: hoy.filter(esVencido).length, mejor }
+  })
+  etapas.forEach((e, i) => { e.entrada = i === 0 ? null : etapas[i - 1].llegaron ? e.llegaron / etapas[i - 1].llegaron : null })
+  const candidatas = etapas.filter((e) => e.entrada != null)
+  const mayorCaida = candidatas.length ? candidatas.reduce((min, e) => (e.entrada < min.entrada ? e : min)).stage : null
+  return { etapas, mayorCaida }
+}
+
+/** Por mes del período (más reciente primero): llegaron, pasaron y % de paso en la etapa k. */
+export function mesesEnEtapa(leads, k) {
+  const meses = [...new Set(leads.map(leadReferenceMonth).filter(Boolean))].sort((a, b) => b.localeCompare(a))
+  return meses.map((month) => {
+    const delMes = leads.filter((l) => leadReferenceMonth(l) === month && llego(l, k))
+    const pasaron = delMes.filter((l) => paso(l, k)).length
+    return { month, llegaron: delMes.length, pasaron, ratio: delMes.length ? pasaron / delMes.length : null }
+  })
 }
 
 // ---------- Ventana "Detalle de leads" (al cliquear un indicador) ----------
@@ -124,6 +245,7 @@ export const INDICADORES = {
   conversion: { titulo: 'Conversión de calificados', descripcion: 'Los leads calificados; se marcan los que ganaron (ganados calificados ÷ calificados).', filtro: isQualified, marca: 'gano' },
   unidades: { titulo: 'Unidades vendidas', descripcion: 'Los leads ganados con sus unidades.', filtro: isWon },
   porCierre: { titulo: 'Unidades por cierre', descripcion: 'Los leads ganados con sus unidades (unidades ÷ ganados).', filtro: isWon },
+  vencidos: { titulo: 'Seguimientos vencidos', descripcion: 'Leads abiertos cuya próxima gestión ya pasó.', filtro: esVencido },
 }
 
 /** Fecha que se muestra en la lista: la de referencia de la lógica copiada (cierre si es ganado; si no, creación). */
@@ -142,9 +264,9 @@ export function leadsDeIndicador(clave, leads) {
 // por `ejecutivos` (todos, ver desempenoEjecutivos) y a meses, países y embudo se les agrega la
 // conversión de calificados corregida; los meses llevan además `noCalificados` = leads − calificados
 // (incluye "sin clasificar"), para que las columnas apiladas sumen los leads del mes.
-export const unitsFor = (rows) => rows.reduce((totalUnits, lead) => totalUnits + leadUnits(lead), 0)
-
-export function datosVistaGeneral(leads, showAllFunnel) {
+// En 4.0: se quitó `monthlyFunnelGroups` (el "Embudo por mes" se reemplazó por embudoEtapas) y
+// `ejecutivos` recibe la lista base para mostrar en 0 a quien no tenga leads.
+export function datosVistaGeneral(leads, baseEjecutivos = []) {
   const months = byMonth(leads).map((month) => {
     const monthLeads = leads.filter((lead) => leadReferenceMonth(lead) === month.month)
     return { ...month, noCalificados: month.total - month.qualified, conversion: conversionCalificados(monthLeads) }
@@ -162,18 +284,6 @@ export function datosVistaGeneral(leads, showAllFunnel) {
     ...row,
     conversion: conversionCalificados(leads.filter((lead) => lead.pais === row.country)),
   }))
-  const monthlyFunnelGroups = [
-    ...(showAllFunnel ? [{ key: 'all', label: 'Todos', leads }] : []),
-    ...months.map(({ month }) => ({
-      key: month,
-      label: monthLabel(month, 'long'),
-      leads: leads.filter((lead) => leadReferenceMonth(lead) === month),
-    })),
-  ].map((group) => {
-    const groupSummary = summarize(group.leads)
-    const wonLeads = group.leads.filter((lead) => lead.estado === 'ganado')
-    return { ...group, summary: groupSummary, units: unitsFor(wonLeads), conversion: conversionCalificados(group.leads) }
-  })
   const monthlyCountryTables = COUNTRIES.map((country) => {
     const countryLeads = leads.filter((lead) => lead.pais === country)
     const countryMonths = byMonth(countryLeads).map((month) => {
@@ -183,8 +293,9 @@ export function datosVistaGeneral(leads, showAllFunnel) {
     const countrySummary = summarize(countryLeads)
     return { country, months: countryMonths, summary: countrySummary }
   })
-  const ejecutivos = desempenoEjecutivos(leads)
-  return { months, advisors, advisorsByCountry, countries, monthlyFunnelGroups, monthlyCountryTables, ejecutivos }
+  const ejecutivos = desempenoEjecutivos(leads, baseEjecutivos)
+  const embudo = embudoEtapas(leads)
+  return { months, advisors, advisorsByCountry, countries, monthlyCountryTables, ejecutivos, embudo }
 }
 
 // ---------- Ventana: detalle del ejecutivo ----------

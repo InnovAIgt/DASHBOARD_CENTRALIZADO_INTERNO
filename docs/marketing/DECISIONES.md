@@ -113,3 +113,35 @@ de `propuesta_json`. Detalle en BITACORA, paso 4.1.
 **Formato antiguo:** 26 leads traen algunos campos sueltos en la raíz de `stage_feedback_json`;
 para los campos que existen en una sola etapa se usan como respaldo.
 **Autorizó:** Keily García.
+
+## D12 · 11/11/2026 · Regla de colores de los datos
+
+**Decisión:** rojo `#c43c50` solo para lo crítico que necesita acción (seguimientos vencidos y
+próxima gestión vencida); amarillo `#c59600` para atención (etapa con la mayor caída, % de paso
+< 60 %, gestión para hoy, perdidos sin motivo); verde `#2f8f76` para lo que va bien (% de paso
+≥ 75 %, ganados, gestión a tiempo); azul `#4f8fd8` / gris para información neutral
+(calificados, % normales de 60 a 74 %, perdidos).
+**Límites PROVISIONALES:** 60 % y 75 %, en la constante `LIMITES_PASO` de
+`pantalla/datos.js`, hasta que el ingeniero los defina.
+**Alcance:** solo los datos. El rojo de la marca del portal (botones activos, pestañas,
+casillas, Aplicar, Excel, títulos pequeños, "Mostrando N leads", aviso de consulta) se queda, y
+el error de conexión con Prospekt IA sigue en rojo.
+**Autorizó:** Keily García.
+
+## D13 · 11/11/2026 · Embudo con etapa real estimada (B)
+
+**Decisión:** Embudo con etapa real estimada (B); pendiente pedir a Prospekt IA un campo con la
+etapa en que se perdió el lead y las fechas de cada cambio de etapa.
+**Por qué:** en la API los 1,098 leads perdidos aparecen en la etapa 6 (Cierre) sin importar
+dónde se perdieron; con la etapa actual (`buildStageFunnel`) el embudo casi no mostraba caídas.
+**Cómo (en `pantalla/datos.js`, `etapaAlcanzada`):** ganados → 6; abiertos → su etapa actual;
+perdidos → la última etapa de la 2 a la 5 con datos registrados en `stage_feedback_json` (si
+no hay, 1). Un lead que se saltó una etapa (p. ej. no requería demo) cuenta como que pasó por
+ella. En pantalla, bajo el embudo: "Etapa estimada: los leads perdidos se ubican en la última
+etapa con datos registrados por el vendedor".
+**Perdidos por etapa estimada (11/11/2026):** 1 Asignación 391 · 2 Reunión 537 · 3 Demo 7 ·
+4 Envío de propuesta 73 · 5 Seguimiento 90 = 1,098. La etapa 3 tiene datos en solo 27 leads
+(la demo es opcional) y la 5 en 237.
+**Mejor en cada etapa:** mayor % de paso de esa etapa a la siguiente (en Cierre, % que se
+ganó), solo entre ejecutivos con al menos 5 leads que llegaron a ella; empate → más leads.
+**Autorizó:** Keily García.

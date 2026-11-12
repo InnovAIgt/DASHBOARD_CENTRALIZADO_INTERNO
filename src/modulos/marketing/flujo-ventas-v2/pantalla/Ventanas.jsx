@@ -5,10 +5,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CalendarClock, CheckCircle2, Eye, MessageSquareText, Search, TrendingUp, UserRound, X } from 'lucide-react'
 import { formatNumber, formatPercent, isWon, leadUnits, monthLabel, PIPELINE_STAGES } from '../utils/analytics.js'
-import { formatDate } from '../utils/dates.js'
+import { formatDate, toDate } from '../utils/dates.js'
 import { leadDisplayId } from '../utils/leads.js'
 import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, PaisChip } from './comunes.jsx'
-import { datosAsesor, datosLead, datosMes, fechaReferencia, INDICADORES, leadsDeIndicador } from './datos.js'
+import { datosAsesor, datosLead, datosMes, ejecutivosEnEtapa, estaHoy, ETAPAS, fechaReferencia, INDICADORES, leadsDeIndicador, mesesEnEtapa, tonoPaso } from './datos.js'
+import { diasDesdeCreacion } from './informeDatos.js'
+import { Semaforo } from './Semaforo.jsx'
 import { Medidor } from './graficas.jsx'
 import { NombreLead, Tabla, TablaLeads } from './Tablas.jsx'
 
@@ -60,7 +62,7 @@ function useVentana(onCerrar, hija, cerrarHija) {
 // ---------- Detalle de leads (al cliquear un indicador) ----------
 const fechaCorta = new Intl.DateTimeFormat('es-SV', { day: '2-digit', month: 'short', year: 'numeric' })
 
-export function DetalleLeads({ clave, leads, onClose }) {
+export function DetalleLeads({ clave, leads, titulo, onClose }) {
   const [leadSel, setLeadSel] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   useVentana(onClose, leadSel, () => setLeadSel(null))
@@ -78,8 +80,8 @@ export function DetalleLeads({ clave, leads, onClose }) {
     'Fecha', { label: 'Unidades', num: true }, 'Ficha']
 
   return <>
-    <Ventana capa={0} etiqueta={`Detalle de ${indicador.titulo}`} ancho="ancha" onCerrar={onClose}>
-      <CabezaVentana eyebrow="Detalle de leads" titulo={indicador.titulo} subtitulo={`${indicador.descripcion} Respeta los filtros activos.`} onCerrar={onClose} />
+    <Ventana capa={0} etiqueta={`Detalle de ${titulo ?? indicador.titulo}`} ancho="ancha" onCerrar={onClose}>
+      <CabezaVentana eyebrow="Detalle de leads" titulo={titulo ?? indicador.titulo} subtitulo={`${indicador.descripcion} Respeta los filtros activos.`} onCerrar={onClose} />
       <div className="fv2-ventana-cuerpo">
         <div className="fv2-detalle-barra">
           <div className="fv2-buscador">
@@ -149,8 +151,8 @@ export function DetalleAsesor({ name, country, leads, month, onClose }) {
           <Metrica etiqueta="Leads" valor={formatNumber(summary.total)} color={COLORES.azul} />
           <Metrica etiqueta="Calificados" valor={formatNumber(summary.qualified)} color={COLORES.azulClaro} />
           <Metrica etiqueta="Ganados" valor={formatNumber(summary.won)} color={COLORES.verde} />
-          <Metrica etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} color={COLORES.amarillo} />
-          <Metrica etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.rosa} />
+          <Metrica etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} color={COLORES.tenue} />
+          <Metrica etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.azulClaro} />
         </div>
 
         <div className="fv2-dos-columnas">
@@ -219,8 +221,8 @@ export function DetalleMes({ month, country, leads, onClose }) {
           <Metrica etiqueta="Calificados" valor={formatNumber(summary.qualified)} color={COLORES.azulClaro} />
           <Metrica etiqueta="No calificados" valor={formatNumber(summary.unqualified)} color={COLORES.tenue} />
           <Metrica etiqueta="Ganados" valor={formatNumber(summary.won)} color={COLORES.verde} />
-          <Metrica etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.rosa} />
-          <Metrica etiqueta="Unidades vendidas" valor={formatNumber(units)} color={COLORES.amarillo} />
+          <Metrica etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.azulClaro} />
+          <Metrica etiqueta="Unidades vendidas" valor={formatNumber(units)} color={COLORES.tenue} />
         </div>
         <p className="fv2-nota">
           Ganados: {formatNumber(conversion.ganadosCalificados)} de leads calificados · {formatNumber(conversion.ganadosNoCalificados)} de no calificados.
@@ -305,4 +307,122 @@ export function DetalleLead({ lead, onClose }) {
       </section>
     </div>
   </Ventana>
+}
+
+// ---------- Etapa del embudo (4.0) ----------
+// 4 datos arriba + pestañas Por mes / Por ejecutivo / Leads en esta etapa. Etapa real estimada y
+// colores según datos.js (DECISIONES D12 y D13). El "Descargar Excel" de esta ventana queda para después.
+function BarraDoble({ llegaron, pasaron, max, tono }) {
+  const a = max ? (llegaron / max) * 100 : 0
+  const b = max ? (pasaron / max) * 100 : 0
+  return <span className="fv2-barra-doble">
+    <i className="is-llegaron" style={{ width: `${a}%` }} />
+    <i className={`is-pasaron is-${tono}`} style={{ width: `${b}%` }} />
+  </span>
+}
+
+export function DetalleEtapa({ etapa, leads, embudo, contexto, onClose }) {
+  const [pestana, setPestana] = useState('mes')
+  const [leadSel, setLeadSel] = useState(null)
+  useVentana(onClose, leadSel, () => setLeadSel(null))
+  const e = embudo.etapas[etapa - 1]
+  const anterior = embudo.etapas[etapa - 2]
+  const siguiente = ETAPAS[etapa] // no existe en Cierre: ahí "pasar" = ganarse
+  const caida = embudo.mayorCaida === etapa
+  const meses = useMemo(() => mesesEnEtapa(leads, etapa), [leads, etapa])
+  const ejecutivos = useMemo(() => ejecutivosEnEtapa(leads, etapa), [leads, etapa])
+  const enEtapa = useMemo(() => leads.filter((l) => estaHoy(l, etapa))
+    .sort((a, b) => (diasDesdeCreacion(b) ?? 0) - (diasDesdeCreacion(a) ?? 0)), [leads, etapa])
+  const maxMes = Math.max(1, ...meses.map((m) => m.llegaron))
+  const maxEjec = Math.max(1, ...ejecutivos.map((f) => f.llegaron))
+  const verbo = siguiente ? 'pasaron' : 'se ganaron'
+  const tonoCirculo = e.entrada == null ? 'azul' : caida ? 'amarillo' : tonoPaso(e.entrada)
+  const columnas = (primera) => [primera, `Llegaron · ${verbo}`, { label: 'Llegaron', num: true }, { label: siguiente ? 'Pasaron' : 'Ganados', num: true }, { label: '% de paso', num: true }]
+
+  return <>
+    <Ventana capa={0} etiqueta={`Detalle de la etapa ${e.label}`} ancho="ancha" onCerrar={onClose}>
+      <header className="fv2-ventana-cabeza">
+        <span className={`fv2-etapa-circulo is-grande is-${tonoCirculo}`}>{etapa}</span>
+        <div className="fv2-ventana-titulos">
+          <div className="fv2-ventana-sub">Etapa {etapa} de 6 · {contexto}</div>
+          <h2>{e.label}</h2>
+        </div>
+        <button type="button" className="fv2-cerrar" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
+      </header>
+
+      <div className="fv2-ventana-cuerpo">
+        <div className="fv2-etapa-datos">
+          <div className="fv2-etapa-dato">
+            <span>Llegaron</span>
+            <strong>{formatNumber(e.llegaron)}</strong>
+            <small>{anterior ? `de ${formatNumber(anterior.llegaron)} en ${anterior.label}` : 'inicio del embudo'}</small>
+          </div>
+          <div className="fv2-etapa-dato">
+            <span>{siguiente ? `Pasaron a ${siguiente}` : 'Se ganaron'}</span>
+            <strong className={`is-${tonoPaso(e.salida)}`}>{e.salida == null ? '—' : formatearRatio(e.salida)}</strong>
+            <small>{formatNumber(e.pasaron)} de {formatNumber(e.llegaron)}</small>
+          </div>
+          <div className="fv2-etapa-dato">
+            <span>Están hoy aquí</span>
+            <strong>{formatNumber(e.hoy)}</strong>
+            {e.hoyVencidos > 0
+              ? <small className="is-rojo">{formatNumber(e.hoyVencidos)} con gestión vencida</small>
+              : <small>ninguno con gestión vencida</small>}
+          </div>
+          <div className="fv2-etapa-dato is-mejor">
+            <span>Mejor en esta etapa</span>
+            {e.mejor
+              ? <><strong>{e.mejor.name}</strong><small>{formatearRatio(e.mejor.ratio)} de paso · {formatNumber(e.mejor.llegaron)} leads</small></>
+              : <><strong>—</strong><small>Nadie tiene al menos 5 leads en esta etapa</small></>}
+          </div>
+        </div>
+
+        <div className="fv2-ventana-pestanas" role="tablist">
+          {[['mes', 'Por mes'], ['ejecutivo', 'Por ejecutivo'], ['leads', `Leads en esta etapa (${formatNumber(enEtapa.length)})`]].map(([k, l]) =>
+            <button type="button" key={k} role="tab" aria-selected={pestana === k} className={pestana === k ? 'is-activa' : ''} onClick={() => setPestana(k)}>{l}</button>)}
+        </div>
+
+        {pestana === 'mes' && <>
+          <Tabla columnas={columnas('Mes')} vacio={meses.length ? null : 'Sin meses con leads en el período.'}>
+            {meses.map((m) => <tr key={m.month}>
+              <td className="fv2-fuerte fv2-capital">{monthLabel(m.month, 'long')}</td>
+              <td className="fv2-celda-barra"><BarraDoble llegaron={m.llegaron} pasaron={m.pasaron} max={maxMes} tono={tonoPaso(m.ratio)} /></td>
+              <td className="num">{formatNumber(m.llegaron)}</td>
+              <td className="num">{formatNumber(m.pasaron)}</td>
+              <td className="num">{m.ratio == null ? '—' : <span className={`fv2-insignia is-${tonoPaso(m.ratio)}`}>{formatearRatio(m.ratio)}</span>}</td>
+            </tr>)}
+          </Tabla>
+          <p className="fv2-nota">
+            Barra clara = llegaron a {e.label} · barra fuerte = {siguiente ? `pasaron a ${siguiente}` : 'se ganaron'}.
+            Verde ≥ 75 % · gris 60–74 % · amarillo &lt; 60 % (atención). Los meses salen del Período elegido arriba; para comparar meses amplía el Período.
+          </p>
+        </>}
+
+        {pestana === 'ejecutivo' && <>
+          <Tabla columnas={columnas('Ejecutivo')} vacio={ejecutivos.length ? null : 'Ningún ejecutivo tiene leads en esta etapa.'}>
+            {ejecutivos.map((f) => <tr key={f.name} className={f.pocos ? 'fv2-fila-pocos' : ''}>
+              <td><span className="fv2-doble"><span className="fv2-fuerte">{f.name}</span><small>{f.country}{f.pocos ? ' · pocos datos' : ''}</small></span></td>
+              <td className="fv2-celda-barra"><BarraDoble llegaron={f.llegaron} pasaron={f.pasaron} max={maxEjec} tono={f.pocos ? 'neutro' : tonoPaso(f.ratio)} /></td>
+              <td className="num">{formatNumber(f.llegaron)}</td>
+              <td className="num">{formatNumber(f.pasaron)}</td>
+              <td className="num"><span className={`fv2-insignia is-${f.pocos ? 'neutro' : tonoPaso(f.ratio)}`}>{formatearRatio(f.ratio)}</span></td>
+            </tr>)}
+          </Tabla>
+          <p className="fv2-nota">De mejor a peor % de paso. Con menos de 5 leads en esta etapa van al final como "pocos datos" y no compiten por "Mejor".</p>
+        </>}
+
+        {pestana === 'leads' && <Tabla columnas={['Cliente', 'Ejecutivo', 'País', { label: 'Días desde creación', num: true }, 'Próxima gestión']}
+          vacio={enEtapa.length ? null : 'No hay leads abiertos en esta etapa hoy.'}>
+          {enEtapa.map((lead) => <tr key={lead.id} className="fv2-fila-clic" onClick={() => setLeadSel(lead)} title="Abrir la ficha del lead">
+            <td><NombreLead lead={lead} /></td>
+            <td>{lead.asesor}</td>
+            <td><PaisChip pais={lead.pais} /></td>
+            <td className="num">{formatNumber(diasDesdeCreacion(lead) ?? 0)}</td>
+            <td><Semaforo lead={lead} fecha={toDate(lead.proximaGestion)} /></td>
+          </tr>)}
+        </Tabla>}
+      </div>
+    </Ventana>
+    {leadSel && <DetalleLead lead={leadSel} onClose={() => setLeadSel(null)} />}
+  </>
 }

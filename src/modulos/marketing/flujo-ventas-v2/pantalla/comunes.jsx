@@ -46,7 +46,8 @@ export function Insignia({ tono = 'neutro', children, title }) {
   return <span className={`fv2-insignia is-${tono}`} title={title}>{children}</span>
 }
 
-const TONO_ESTADO = { activo: 'azul', en_espera: 'neutro', detenido: 'amarillo', ganado: 'verde', perdido: 'rojo', invalido: 'neutro' }
+// Regla de colores (DECISIONES D12): el rojo es solo para lo vencido; "Perdido" es información (gris).
+const TONO_ESTADO = { activo: 'azul', en_espera: 'neutro', detenido: 'amarillo', ganado: 'verde', perdido: 'neutro', invalido: 'neutro' }
 export function EstadoLead({ estado }) {
   return <Insignia tono={TONO_ESTADO[estado]}>{stateLabel(estado)}</Insignia>
 }
@@ -55,10 +56,10 @@ export function Calificacion({ tipo }) {
   return <Insignia tono={tipo === 'calificado' ? 'azul' : 'neutro'}>{qualificationLabel(tipo)}</Insignia>
 }
 
-/** Píldora de conversión: verde desde 10 %, amarilla si es mayor a 0 (mismo criterio que antes). */
+/** Píldora de conversión general (ganados ÷ total): azul, información neutral (regla de colores D12). */
 export function PildoraConversion({ ganados, total }) {
   const valor = total ? ganados / total : 0
-  return <Insignia tono={valor >= 0.1 ? 'verde' : valor > 0 ? 'amarillo' : 'neutro'}>{formatearRatio(valor)}</Insignia>
+  return <Insignia tono="azul">{formatearRatio(valor)}</Insignia>
 }
 
 export function Vacio({ titulo, texto }) {

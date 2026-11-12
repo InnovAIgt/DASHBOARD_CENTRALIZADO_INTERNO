@@ -7,9 +7,9 @@ import { RefreshCw, Users } from 'lucide-react'
 import { FiltersProvider } from './context/FiltersProvider.jsx'
 import { useFilters } from './hooks/useFilters.js'
 import { useLeads } from './hooks/useLeads.js'
-import { summarize } from './utils/analytics.js'
+import { qualificationLabel, summarize } from './utils/analytics.js'
 import { AvisoError, Vacio } from './pantalla/comunes.jsx'
-import { aplicarFiltros, periodoPorDefecto, sinFiltros } from './pantalla/datos.js'
+import { aplicarFiltros, FILTROS_POR_DEFECTO, listaEjecutivos, periodoPorDefecto } from './pantalla/datos.js'
 import { BarraFiltros } from './pantalla/Filtros.jsx'
 import { Informe } from './pantalla/Informe.jsx'
 import { VistaGeneral } from './pantalla/VistaGeneral.jsx'
@@ -48,16 +48,31 @@ function FlujoVentasV2Contenido() {
   const api = useLeads()
   const { leads, loading, error } = api
   const filters = useFilters()
-  // Por defecto (R11): todos los países y del día 1 del mes actual hasta hoy.
+  // Por defecto: todos los países, Tipo de lead = Calificado (4.0) y del día 1 del mes actual hasta hoy (R11).
   const [periodo, setPeriodo] = useState(() => periodoPorDefecto())
   const [pestana, setPestana] = useState('resumen')
+  const { setFilter, clearFilters } = filters
+  const aplicarPorDefecto = () => {
+    clearFilters()
+    for (const [clave, valor] of Object.entries(FILTROS_POR_DEFECTO)) setFilter(clave, valor)
+  }
+  // El contexto de filtros (lógica copiada) arranca vacío; al abrir se aplica el filtro por defecto una vez.
+  useEffect(() => { aplicarPorDefecto() }, []) // solo al abrir
 
   const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
   const summary = useMemo(() => summarize(filtrados), [filtrados])
+  // Ejecutivos de "Desempeño por ejecutivo": todos los del país elegido, sin importar período ni tipo.
+  const baseEjecutivos = useMemo(() => listaEjecutivos(leads, filters), [leads, filters])
   const restablecer = () => {
-    filters.clearFilters()
+    aplicarPorDefecto()
     setPeriodo(periodoPorDefecto())
   }
+  const aDMA = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
+  const contexto = [
+    filters.filterTipoLead == null ? 'Todos los tipos' : filters.filterTipoLead.map(qualificationLabel).join(', '),
+    periodo.desde || periodo.hasta ? `${aDMA(periodo.desde) || 'inicio'} – ${aDMA(periodo.hasta) || 'hoy'}` : 'Todo el historial',
+    filters.filterPais == null ? 'Todos los países' : filters.filterPais.join(', '),
+  ].join(' · ')
 
   return <div className="fv2-pagina">
     <header className="fv2-encabezado">
@@ -87,7 +102,7 @@ function FlujoVentasV2Contenido() {
     </nav>}
 
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
-    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} showAllFunnel={sinFiltros(filters, periodo)} />}
+    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} baseEjecutivos={baseEjecutivos} contexto={contexto} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo} />}
     {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}
   </div>

@@ -3,9 +3,9 @@ import { useMemo, useState } from 'react'
 import { formatNumber, formatPercent } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
 import { conversionCalificados, datosVistaGeneral } from './datos.js'
-import { DesempenoEjecutivos, EmbudoMes, GraficaMensual, LEYENDA_EJECUTIVOS, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
+import { DesempenoEjecutivos, EmbudoEtapas, GraficaMensual, LEYENDA_EJECUTIVOS, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
 import { ResumenAsesores, ResumenMensual } from './Tablas.jsx'
-import { DetalleAsesor, DetalleLeads, DetalleMes } from './Ventanas.jsx'
+import { DetalleAsesor, DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
 function Panel({ titulo, subtitulo, accion, className = '', children }) {
   return <section className={`fv2-panel ${className}`}>
@@ -43,7 +43,7 @@ function Indicadores({ summary, conversion, onAbrir }) {
       nota={<>{formatNumber(conversion.ganadosCalificados)} de leads calificados · {formatNumber(conversion.ganadosNoCalificados)} de no calificados<br />Conversión general {formatPercent(summary.won, summary.total)}</>}
       onAbrir={() => onAbrir('ganados')}
     />
-    <Indicador etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.amarillo} nota={`${formatNumber(conversion.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conversion.calificados)} calificados`} onAbrir={() => onAbrir('conversion')} />
+    <Indicador etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.azulClaro} nota={`${formatNumber(conversion.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conversion.calificados)} calificados`} onAbrir={() => onAbrir('conversion')} />
     <Indicador etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} nota="En leads ganados" onAbrir={() => onAbrir('unidades')} />
     <Indicador
       etiqueta="Unidades por cierre"
@@ -54,33 +54,40 @@ function Indicadores({ summary, conversion, onAbrir }) {
   </section>
 }
 
-export function VistaGeneral({ leads, summary, showAllFunnel }) {
+export function VistaGeneral({ leads, summary, baseEjecutivos, contexto }) {
   const [asesorSel, setAsesorSel] = useState(null)
   const [mesSel, setMesSel] = useState(null)
-  const [indicadorSel, setIndicadorSel] = useState(null)
-  const datos = useMemo(() => datosVistaGeneral(leads, showAllFunnel), [leads, showAllFunnel])
+  const [indicadorSel, setIndicadorSel] = useState(null) // { clave, leads, titulo? }
+  const [etapaSel, setEtapaSel] = useState(null)
+  const datos = useMemo(() => datosVistaGeneral(leads, baseEjecutivos), [leads, baseEjecutivos])
   const conversion = useMemo(() => conversionCalificados(leads), [leads])
   const abrirAsesor = (name, country) => setAsesorSel({ name, country, leads, month: null })
 
   return <div className="fv2-vista">
     <TarjetasPais paises={datos.countries} />
 
-    <Indicadores summary={summary} conversion={conversion} onAbrir={setIndicadorSel} />
+    <Indicadores summary={summary} conversion={conversion} onAbrir={(clave) => setIndicadorSel({ clave, leads })} />
 
     <Panel titulo="Leads por mes" subtitulo="Columnas: calificados + no calificados = leads del mes. Línea: ganados, con su escala a la derecha. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación." accion={<Leyenda items={SERIES_MES} />}>
       {datos.months.length ? <GraficaMensual filas={datos.months} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
     </Panel>
 
-    <Panel titulo="Desempeño por ejecutivo" subtitulo="Todos los ejecutivos, ordenados por ganados y luego por calificados. La barra reparte sus leads por resultado. Haz clic en un ejecutivo para ver su detalle." accion={<Leyenda items={LEYENDA_EJECUTIVOS} />}>
+    <Panel titulo="Desempeño por ejecutivo" subtitulo="Ordenados por ganados y luego por calificados; quien no tuvo leads en el período o país aparece al final en 0. Haz clic en un ejecutivo para ver su detalle." accion={<Leyenda items={LEYENDA_EJECUTIVOS} />}>
       {datos.ejecutivos.length
-        ? <DesempenoEjecutivos filas={datos.ejecutivos} onSeleccionar={abrirAsesor} />
+        ? <DesempenoEjecutivos filas={datos.ejecutivos} onSeleccionar={abrirAsesor}
+          onVencidos={(fila) => setIndicadorSel({ clave: 'vencidos', leads: fila.leads, titulo: `Seguimientos vencidos · ${fila.name}` })} />
         : <Vacio titulo="Sin ejecutivos con los filtros actuales" />}
+      <p className="fv2-nota fv2-nota-pie">Píldora azul: conversión de calificados. Píldora roja: seguimientos vencidos (leads abiertos con la próxima gestión ya pasada); clic para verlos.</p>
     </Panel>
 
-    <Panel titulo="Embudo por mes" subtitulo={showAllFunnel ? 'Leads → calificados → ganados en cada mes, más el total general. El % de ganados es la conversión de calificados.' : 'Solo los meses con leads según los filtros activos. El % de ganados es la conversión de calificados.'}>
-      {datos.months.length
-        ? <div className="fv2-embudos">{datos.monthlyFunnelGroups.map((grupo) => <EmbudoMes key={grupo.key} grupo={grupo} />)}</div>
-        : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver el embudo mensual." />}
+    <Panel titulo="Embudo de ventas por etapa" subtitulo="Leads que llegaron a cada etapa y % que pasó desde la anterior. La etapa con la mayor caída va en amarillo. Haz clic en una etapa para ver su detalle.">
+      {leads.length
+        ? <EmbudoEtapas embudo={datos.embudo} onEtapa={setEtapaSel} />
+        : <Vacio titulo="Sin leads con los filtros actuales" />}
+      <p className="fv2-nota fv2-nota-pie">
+        Etapa estimada: los leads perdidos se ubican en la última etapa con datos registrados por el vendedor.
+        "Mejor" = ejecutivo con mayor % de paso de esa etapa a la siguiente (mínimo 5 leads; en Cierre, % que se ganó).
+      </p>
     </Panel>
 
     <Panel titulo="Resultados por ejecutivo" subtitulo="Agrupados por país. Haz clic en un ejecutivo para ver sus leads, etapas y pronóstico.">
@@ -95,7 +102,8 @@ export function VistaGeneral({ leads, summary, showAllFunnel }) {
       <ResumenMensual grupo={grupo} onMes={(country, fila) => setMesSel({ country, month: fila.month, leads: fila.leads })} />
     </Panel>)}
 
-    {indicadorSel && <DetalleLeads clave={indicadorSel} leads={leads} onClose={() => setIndicadorSel(null)} />}
+    {indicadorSel && <DetalleLeads {...indicadorSel} onClose={() => setIndicadorSel(null)} />}
+    {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leads} embudo={datos.embudo} contexto={contexto} onClose={() => setEtapaSel(null)} />}
     {asesorSel && <DetalleAsesor {...asesorSel} onClose={() => setAsesorSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
   </div>

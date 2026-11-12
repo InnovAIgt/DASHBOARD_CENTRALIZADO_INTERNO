@@ -227,7 +227,7 @@
   .fv2-pais-nombre { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 900; letter-spacing: .02em; color: #fff; }
   .fv2-pais-nombre .fv2-bandera { width: 28px; height: 20px; }
   .fv2-pais-pct { text-align: right; }
-  .fv2-pais-pct strong { display: block; font-family: var(--fv2-mono); font-size: 28px; font-weight: 900; line-height: 1; color: var(--fv2-verde); }
+  .fv2-pais-pct strong { display: block; font-family: var(--fv2-mono); font-size: 28px; font-weight: 900; line-height: 1; color: var(--fv2-azul-claro); }
   .fv2-pais-pct small { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--fv2-tenue); }
   .fv2-pais-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
   .fv2-pais-datos > div { min-width: 0; padding: 8px 10px; background: rgba(15, 17, 23, .55); border: 1px solid var(--fv2-borde); border-radius: 10px; }
@@ -236,11 +236,23 @@
 
   /* Desempeño por ejecutivo (barras del embudo del Flujo de ventas viejo) */
   .fv2-desempeno { display: grid; gap: 2px; }
-  .fv2-desempeno-cabeza, .fv2-desempeno-fila { display: grid; grid-template-columns: minmax(0, 13rem) minmax(120px, 1fr) 4.2rem 6rem 14px; align-items: center; gap: 14px; }
+  .fv2-desempeno-cabeza, .fv2-desempeno-fila { display: grid; grid-template-columns: minmax(0, 13rem) minmax(120px, 1fr) 4.2rem 6rem 7rem 14px; align-items: center; gap: 14px; }
   .fv2-desempeno-cabeza { padding: 0 12px 8px; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--fv2-tenue); }
-  .fv2-desempeno-cabeza span:nth-child(3), .fv2-desempeno-cabeza span:nth-child(4) { text-align: right; }
-  .fv2-desempeno-fila { width: 100%; padding: 7px 12px; border: 1px solid transparent; border-radius: 13px; background: transparent; text-align: left; transition: background .18s ease, border-color .18s ease; }
-  .fv2-desempeno-fila:hover { background: rgba(36, 40, 55, .7); border-color: var(--fv2-borde); }
+  .fv2-desempeno-cabeza span:nth-child(n+3) { text-align: right; }
+  .fv2-desempeno-fila { width: 100%; padding: 7px 12px; border: 1px solid transparent; border-radius: 13px; background: transparent; text-align: left; cursor: pointer; transition: background .18s ease, border-color .18s ease; }
+  .fv2-desempeno-fila:hover, .fv2-desempeno-fila:focus-visible { background: rgba(36, 40, 55, .7); border-color: var(--fv2-borde); }
+  .fv2-desempeno-fila.is-cero { cursor: default; opacity: .55; }
+  .fv2-desempeno-fila.is-cero:hover { background: transparent; border-color: transparent; }
+  .fv2-desempeno-fila.is-cero .fv2-en-linea { font-size: 10.5px; color: var(--fv2-tenue); }
+  .fv2-desempeno-barra.is-vacia { width: 100%; background: rgba(255, 255, 255, .04); }
+  .fv2-desempeno-venc { justify-self: end; }
+  /* Rojo SOLO para lo vencido (D12) */
+  .fv2-pildora-vencidos {
+    padding: 4px 9px; border: 1px solid rgba(196, 60, 80, .45); border-radius: 99px; background: rgba(196, 60, 80, .16);
+    color: var(--fv2-rosa); font-size: 11px; font-weight: 800; white-space: nowrap; transition: background .15s ease;
+  }
+  .fv2-pildora-vencidos:hover { background: rgba(196, 60, 80, .3); color: #fff; }
+  .fv2-nota-pie { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
   .fv2-desempeno-nombre { display: grid; gap: 3px; min-width: 0; }
   .fv2-desempeno-nombre strong { overflow: hidden; font-size: 12.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; color: var(--fv2-texto); }
   .fv2-desempeno-pista { display: block; min-width: 0; }
@@ -254,22 +266,63 @@
   .fv2-desempeno-flecha { color: var(--fv2-tenue); }
   .fv2-barra-h { transform-origin: left center; animation: fv2-crecer-x .9s var(--fv2-curva) both; animation-delay: calc(var(--fv2-i, 0) * 45ms); }
 
-  /* Embudo por mes */
-  .fv2-embudos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-  .fv2-embudo { display: flex; flex-direction: column; gap: 12px; padding: 14px; background: rgba(26, 29, 39, .75); border: 1px solid var(--fv2-borde); border-radius: 14px; transition: all .2s; }
-  .fv2-embudo:hover { border-color: rgba(196, 60, 80, .5); background: rgba(36, 40, 55, .9); transform: translateY(-2px); }
-  .fv2-embudo.is-total { border-color: rgba(79, 143, 216, .35); background: rgba(79, 143, 216, .08); }
-  .fv2-embudo > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-  .fv2-embudo > header strong { font-size: 13px; font-weight: 800; color: #fff; text-transform: capitalize; }
-  .fv2-embudo > header span { font-family: var(--fv2-mono); font-size: 11px; color: var(--fv2-tenue); }
-  .fv2-embudo-pasos { display: grid; gap: 9px; }
+  /* Pasos del embudo dentro de la ventana del ejecutivo (barras simples) */
   .fv2-embudo-paso { display: grid; gap: 4px; }
   .fv2-embudo-texto { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--fv2-tenue); }
   .fv2-embudo-texto b { margin-left: auto; font-family: var(--fv2-mono); font-size: 13px; color: #fff; }
   .fv2-embudo-texto small { min-width: 3.4rem; font-family: var(--fv2-mono); font-size: 10px; text-align: right; color: var(--fv2-azul-claro); }
-  .fv2-embudo > footer { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
-  .fv2-embudo > footer span { display: inline-flex; gap: 5px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, .04); border: 1px solid var(--fv2-borde); font-size: 10px; color: var(--fv2-tenue); }
-  .fv2-embudo > footer b { font-family: var(--fv2-mono); color: #fff; }
+
+  /* Embudo de ventas por etapa: 6 cuadritos tipo rastreo de pedido (4.0) */
+  .fv2-rastreo { position: relative; overflow-x: auto; padding-bottom: 4px; }
+  .fv2-rastreo-linea { position: absolute; top: 13px; left: 14px; right: 14px; height: 2px; background: rgba(255, 255, 255, .12); }
+  .fv2-rastreo-etapas { position: relative; display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 12px; }
+  .fv2-etapa-cuadrito { display: grid; justify-items: start; gap: 10px; padding: 0; border: none; background: none; color: inherit; text-align: left; cursor: pointer; }
+  .fv2-etapa-circulo {
+    display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 4px var(--fv2-caja);
+    background: #3a3f4d; font-family: var(--fv2-mono); font-size: 12px; font-weight: 800; color: #fff;
+  }
+  .fv2-etapa-circulo.is-azul { background: var(--fv2-azul); }
+  .fv2-etapa-circulo.is-verde { background: var(--fv2-verde); }
+  .fv2-etapa-circulo.is-amarillo { background: var(--fv2-amarillo); }
+  .fv2-etapa-circulo.is-neutro { background: #4a4f5c; }
+  .fv2-etapa-circulo.is-grande { flex-shrink: 0; width: 42px; height: 42px; box-shadow: none; font-size: 16px; }
+  .fv2-etapa-caja {
+    display: grid; justify-items: start; align-content: start; gap: 6px; width: 100%; height: 100%; padding: 12px;
+    background: rgba(26, 29, 39, .75); border: 1px solid var(--fv2-borde); border-radius: 12px; transition: border-color .18s ease, background .18s ease;
+  }
+  .fv2-etapa-cuadrito:hover .fv2-etapa-caja, .fv2-etapa-cuadrito:focus-visible .fv2-etapa-caja { border-color: rgba(255, 255, 255, .25); background: rgba(36, 40, 55, .9); }
+  .fv2-etapa-cuadrito.is-caida .fv2-etapa-caja { border-color: rgba(197, 150, 0, .55); }
+  .fv2-etapa-titulo { font-size: 12.5px; font-weight: 800; color: #fff; }
+  .fv2-etapa-numero { font-family: var(--fv2-mono); font-size: 26px; font-weight: 800; line-height: 1; color: #fff; }
+  .fv2-etapa-caja > small { font-size: 11px; color: var(--fv2-tenue); }
+  .fv2-etapa-mejor { padding: 3px 8px; border-radius: 6px; background: rgba(79, 143, 216, .12); border: 1px solid rgba(79, 143, 216, .25); font-size: 10.5px; font-weight: 700; color: var(--fv2-azul-claro); }
+
+  /* Ventana de etapa */
+  .fv2-etapa-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .fv2-etapa-dato { display: grid; gap: 3px; min-width: 0; padding: 12px 14px; background: rgba(26, 29, 39, .75); border: 1px solid var(--fv2-borde); border-radius: 12px; }
+  .fv2-etapa-dato > span { font-size: 11px; font-weight: 700; color: var(--fv2-tenue); }
+  .fv2-etapa-dato > strong { overflow: hidden; font-family: var(--fv2-mono); font-size: 22px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+  .fv2-etapa-dato > strong.is-verde { color: var(--fv2-verde-claro); }
+  .fv2-etapa-dato > strong.is-amarillo { color: #e0b52e; }
+  .fv2-etapa-dato > small { font-size: 11px; color: var(--fv2-tenue); }
+  .fv2-etapa-dato > small.is-rojo { font-weight: 700; color: var(--fv2-rosa); }
+  .fv2-etapa-dato.is-mejor { background: rgba(79, 143, 216, .1); border-color: rgba(79, 143, 216, .3); }
+  .fv2-etapa-dato.is-mejor > span { color: var(--fv2-azul-claro); }
+  .fv2-etapa-dato.is-mejor > strong { font-family: inherit; font-size: 16px; }
+  .fv2-ventana-pestanas { display: flex; gap: 4px; border-bottom: 1px solid var(--fv2-borde); }
+  .fv2-ventana-pestanas button { margin-bottom: -1px; padding: 10px 16px; border: none; border-bottom: 2px solid transparent; background: none; font-size: 13px; font-weight: 600; color: var(--fv2-tenue); }
+  .fv2-ventana-pestanas button:hover { color: #fff; }
+  .fv2-ventana-pestanas button.is-activa { border-bottom-color: var(--fv2-azul); color: #fff; }
+  .fv2-celda-barra { width: 45%; min-width: 160px; }
+  .fv2-barra-doble { position: relative; display: block; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, .05); }
+  .fv2-barra-doble i { position: absolute; left: 0; top: 0; display: block; height: 100%; border-radius: 99px; transition: width .8s cubic-bezier(.2, .75, .2, 1); }
+  .fv2-barra-doble i.is-llegaron { background: rgba(79, 143, 216, .35); }
+  .fv2-barra-doble i.is-pasaron { top: 3px; height: 6px; }
+  .fv2-barra-doble i.is-pasaron.is-verde { background: var(--fv2-verde); }
+  .fv2-barra-doble i.is-pasaron.is-amarillo { background: var(--fv2-amarillo); }
+  .fv2-barra-doble i.is-pasaron.is-neutro { background: var(--fv2-azul-claro); }
+  .fv2-fila-pocos td { opacity: .6; }
+  .fv2-capital { text-transform: capitalize; }
 
   /* ---------- Tablas (custom-table) ---------- */
   .fv2-tabla-caja { width: 100%; max-height: 520px; overflow: auto; background: rgba(15, 17, 23, .4); border: 1px solid var(--fv2-borde); border-radius: 14px; }
@@ -396,7 +449,8 @@
   .fv2-dato span { color: var(--fv2-tenue); }
   .fv2-dato strong { font-weight: 600; text-align: right; color: #fff; }
   .fv2-comentario-caja { padding: 10px 12px; background: rgba(15, 17, 23, .6); border: 1px solid var(--fv2-borde); border-radius: 10px; }
-  .fv2-comentario-caja.is-perdida { background: rgba(196, 60, 80, .08); border-color: rgba(196, 60, 80, .3); }
+  /* Regla de colores (D12): un lead perdido es información, no algo vencido → gris */
+  .fv2-comentario-caja.is-perdida { background: rgba(255, 255, 255, .04); border-color: var(--fv2-borde-fuerte); }
   .fv2-comentario-caja strong { font-size: 11px; color: var(--fv2-tenue); }
   .fv2-comentario-caja p { margin: 3px 0 0; font-size: 12px; line-height: 1.5; white-space: pre-wrap; color: var(--fv2-texto); }
 
@@ -489,7 +543,9 @@
   }
   @media (max-width: 1100px) {
     .fv2-paises, .fv2-dos-columnas { grid-template-columns: 1fr; }
-    .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros, .fv2-rastreo-etapas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .fv2-rastreo-linea { display: none; }
+    .fv2-etapa-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 700px) {
     .fv2-pagina { padding: 16px; }
@@ -497,7 +553,7 @@
     .fv2-xf-grid { grid-template-columns: 1fr; }
     .fv2-filtros-total { margin-left: 0; }
     .fv2-desempeno-cabeza { display: none; }
-    .fv2-desempeno-fila { grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+    .fv2-desempeno-fila { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; }
     .fv2-desempeno-pista { grid-column: 1 / -1; grid-row: 2; }
     .fv2-desempeno-flecha { display: none; }
     .fv2-ventana-cabeza, .fv2-ventana-cuerpo { padding-left: 14px; padding-right: 14px; }

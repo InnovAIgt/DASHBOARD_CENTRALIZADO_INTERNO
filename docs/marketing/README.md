@@ -51,9 +51,43 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `…/pantalla/Ventanas.jsx` | Ventanas de detalle (indicadores, ejecutivo, mes y ficha del lead) |
 | `…/pantalla/comunes.jsx` | Piezas visuales comunes (banderas, insignias, avisos) |
 | `…/pantalla/Informe.jsx` | Pestaña Informe detallado: vistas rápidas, tabla, buscador, orden, páginas |
+| `…/pantalla/Semaforo.jsx` | Píldora de la próxima gestión con semáforo (informe y ventana de etapa) |
 | `…/pantalla/informeDatos.js` | Columnas del informe (campos de la API por grupo), vistas rápidas y semáforo |
 | `…/pantalla/excel.js` | Botón "Descargar Excel": misma plantilla y método que el Excel de Activaciones |
 | `docs/marketing/` | Esta documentación |
+
+## Filtros por defecto
+
+Al abrir: todos los países, **Tipo de lead = Calificado** y **Período = del día 1 del mes
+hasta hoy**. "Volver a filtros por defecto" regresa a eso.
+
+## Embudo de ventas por etapa (pestaña Resumen)
+
+Seis cuadritos (Asignación → Reunión → Demo → Envío de propuesta → Seguimiento → Cierre) con:
+leads que llegaron, % que pasó desde la etapa anterior, cuántos están hoy en esa etapa y
+"Mejor: ejecutivo (xx %)". La etapa con la mayor caída va en amarillo. Respeta los filtros.
+
+- **Etapa estimada** (DECISIONES D13): los leads perdidos se ubican en la última etapa con
+  datos registrados por el vendedor; los ganados llegan a Cierre; los abiertos están en su
+  etapa actual.
+- **Mejor en cada etapa:** el ejecutivo con mayor % de paso de esa etapa a la siguiente (en
+  Cierre, % que se ganó), contando solo a quienes tienen al menos 5 leads en ella.
+- Clic en una etapa → ventana con llegaron, % que pasó a la siguiente, están hoy aquí (y
+  cuántos con gestión vencida) y el mejor ejecutivo, más las pestañas **Por mes**,
+  **Por ejecutivo** y **Leads en esta etapa**.
+
+## Regla de colores de los datos (DECISIONES D12)
+
+| Color | Para qué |
+|---|---|
+| Rojo `#c43c50` | Solo lo crítico: seguimientos vencidos y próxima gestión vencida |
+| Amarillo `#c59600` | Atención: etapa con la mayor caída, % de paso bajo (< 60 %), gestión para hoy, perdidos sin motivo |
+| Verde `#2f8f76` | Va bien: % de paso ≥ 75 %, ganados, gestión a tiempo |
+| Azul `#4f8fd8` / gris | Información neutral: calificados, % normales (60–74 %), perdidos |
+
+Los límites (60 % y 75 %) están en `LIMITES_PASO` (`pantalla/datos.js`) y son provisionales.
+El rojo de la marca del portal (botones activos, pestañas, Excel, títulos pequeños, aviso de
+consulta) y el error de conexión no cambian.
 
 ## Informe detallado
 
