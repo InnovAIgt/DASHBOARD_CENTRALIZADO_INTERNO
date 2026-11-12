@@ -457,3 +457,9 @@ globales nuevas ✅.
 `flex: 1 1 320px` (pensado para filas horizontales); dentro de la tarjeta, que acomoda todo en
 columna, eso lo volvía de 320 px de **alto**, con la lupa flotando en medio. Se fijó
 `flex: none` solo para el buscador del informe. `npm run build` y `npm run lint` ✅.
+
+**Ajuste (11/11/2026) · lugar del botón de Excel:** como en el Informe detallado de
+Facturación por línea (`facturacion-linea.html`, solo se leyó), la pastilla "Mostrando N leads
+filtrados" y el botón rojo de Excel van a la **derecha del título**, en la misma fila (antes
+estaban debajo de la descripción). En pantallas angostas bajan solos debajo del título.
+`npm run build` y `npm run lint` ✅.

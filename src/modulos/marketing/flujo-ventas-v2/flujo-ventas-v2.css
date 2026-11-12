@@ -420,7 +420,8 @@
   .fv2-informe-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--fv2-rojo); }
   .fv2-informe-titulo { margin: 2px 0 0; font-size: 20px; font-weight: 800; color: #fff; }
   .fv2-informe-desc { margin: 4px 0 0; font-size: 12px; color: var(--fv2-tenue); }
-  .fv2-informe-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+  .fv2-informe-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+  .fv2-informe-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .fv2-informe-cuenta {
     padding: 6px 14px; border: 1px solid rgba(196, 60, 80, .32); border-radius: 9999px; background: rgba(196, 60, 80, .14);
     font-family: var(--fv2-mono); font-size: 12px; font-weight: 800; color: var(--fv2-rosa);

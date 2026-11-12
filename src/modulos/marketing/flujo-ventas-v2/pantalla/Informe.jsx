@@ -118,12 +118,15 @@ export function Informe({ leads, filters, periodo }) {
 
   // Tarjeta con el mismo formato que el "Informe detallado" de Activaciones.
   return <section className="fv2-informe">
+    {/* Como el Informe detallado de Facturación: título a la izquierda; pastilla y Excel a la derecha */}
     <header className="fv2-informe-cabeza">
-      <div className="fv2-informe-eyebrow">Auditoría y exportación comercial</div>
-      <h2 className="fv2-informe-titulo">Informe detallado de leads</h2>
-      <p className="fv2-informe-desc">Consulta comercial completa. Se aplican automáticamente los filtros seleccionados en el encabezado general (País, Período, Ejecutivo y Tipo de lead).</p>
+      <div>
+        <div className="fv2-informe-eyebrow">Auditoría y exportación comercial</div>
+        <h2 className="fv2-informe-titulo">Informe detallado de leads</h2>
+        <p className="fv2-informe-desc">Consulta comercial completa. Se aplican automáticamente los filtros seleccionados en el encabezado general (País, Período, Ejecutivo y Tipo de lead).</p>
+      </div>
       <div className="fv2-informe-acciones">
-        <span className="fv2-informe-cuenta">Mostrando {formatNumber(filas.length)} leads</span>
+        <span className="fv2-informe-cuenta">Mostrando {formatNumber(filas.length)} leads filtrados</span>
         <button type="button" className="fv2-btn-excel" onClick={descargar} disabled={descargando || !filas.length} title="Descarga lo que se ve: vista rápida, filtros, búsqueda y columnas visibles">
           {descargando ? 'Preparando…' : 'Descargar Excel'}
         </button>
