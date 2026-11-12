@@ -3,9 +3,9 @@ import { useMemo, useState } from 'react'
 import { formatNumber, formatPercent } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
 import { conversionCalificados, datosVistaGeneral } from './datos.js'
-import { DesempenoEjecutivos, EmbudoEtapas, GraficaMensual, LEYENDA_EJECUTIVOS, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
-import { ResumenAsesores, ResumenMensual } from './Tablas.jsx'
-import { DetalleAsesor, DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
+import { leadReferenceMonth } from '../utils/leads.js'
+import { EmbudoEtapas, GraficaMensual, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
+import { DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
 function Panel({ titulo, subtitulo, accion, className = '', children }) {
   return <section className={`fv2-panel ${className}`}>
@@ -54,30 +54,25 @@ function Indicadores({ summary, conversion, onAbrir }) {
   </section>
 }
 
-export function VistaGeneral({ leads, summary, baseEjecutivos, contexto }) {
-  const [asesorSel, setAsesorSel] = useState(null)
+// Pestaña Resumen (4.0b): tarjetas por país → 6 indicadores → "Leads por mes" → embudo por etapa.
+// "Desempeño por ejecutivo", "Resultados por ejecutivo" y "Resultados mensuales" pasaron a la
+// pestaña Ejecutivos (tarjetas). El detalle mensual por país se abre desde la gráfica.
+export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {
   const [mesSel, setMesSel] = useState(null)
   const [indicadorSel, setIndicadorSel] = useState(null) // { clave, leads, titulo? }
   const [etapaSel, setEtapaSel] = useState(null)
-  const datos = useMemo(() => datosVistaGeneral(leads, baseEjecutivos), [leads, baseEjecutivos])
+  const datos = useMemo(() => datosVistaGeneral(leads), [leads])
   const conversion = useMemo(() => conversionCalificados(leads), [leads])
-  const abrirAsesor = (name, country) => setAsesorSel({ name, country, leads, month: null })
+  // Detalle mensual de un mes de la gráfica, con el filtro de país actual (Todos, GT o SV).
+  const abrirMes = (fila) => setMesSel({ month: fila.month, country: paisFiltro, leads: leads.filter((l) => leadReferenceMonth(l) === fila.month) })
 
   return <div className="fv2-vista">
     <TarjetasPais paises={datos.countries} />
 
     <Indicadores summary={summary} conversion={conversion} onAbrir={(clave) => setIndicadorSel({ clave, leads })} />
 
-    <Panel titulo="Leads por mes" subtitulo="Columnas: calificados + no calificados = leads del mes. Línea: ganados, con su escala a la derecha. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación." accion={<Leyenda items={SERIES_MES} />}>
-      {datos.months.length ? <GraficaMensual filas={datos.months} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
-    </Panel>
-
-    <Panel titulo="Desempeño por ejecutivo" subtitulo="Ordenados por ganados y luego por calificados; quien no tuvo leads en el período o país aparece al final en 0. Haz clic en un ejecutivo para ver su detalle." accion={<Leyenda items={LEYENDA_EJECUTIVOS} />}>
-      {datos.ejecutivos.length
-        ? <DesempenoEjecutivos filas={datos.ejecutivos} onSeleccionar={abrirAsesor}
-          onVencidos={(fila) => setIndicadorSel({ clave: 'vencidos', leads: fila.leads, titulo: `Seguimientos vencidos · ${fila.name}` })} />
-        : <Vacio titulo="Sin ejecutivos con los filtros actuales" />}
-      <p className="fv2-nota fv2-nota-pie">Píldora azul: conversión de calificados. Píldora roja: seguimientos vencidos (leads abiertos con la próxima gestión ya pasada); clic para verlos.</p>
+    <Panel titulo="Leads por mes" subtitulo="Columnas: calificados + no calificados = leads del mes. Línea: ganados, con su escala a la derecha. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación. Clic en un mes para ver su detalle." accion={<Leyenda items={SERIES_MES} />}>
+      {datos.months.length ? <GraficaMensual filas={datos.months} onMes={abrirMes} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
     </Panel>
 
     <Panel titulo="Embudo de ventas por etapa" subtitulo="Leads que llegaron a cada etapa y % que pasó desde la anterior. La etapa con la mayor caída va en amarillo. Haz clic en una etapa para ver su detalle.">
@@ -90,21 +85,8 @@ export function VistaGeneral({ leads, summary, baseEjecutivos, contexto }) {
       </p>
     </Panel>
 
-    <Panel titulo="Resultados por ejecutivo" subtitulo="Agrupados por país. Haz clic en un ejecutivo para ver sus leads, etapas y pronóstico.">
-      <ResumenAsesores grupos={datos.advisorsByCountry} onAsesor={abrirAsesor} />
-    </Panel>
-
-    {datos.monthlyCountryTables.map((grupo) => <Panel
-      key={grupo.country}
-      titulo={`Resultados mensuales · ${grupo.country}`}
-      subtitulo={`${grupo.months.length} meses · ${formatNumber(grupo.summary.total)} leads · ${formatNumber(grupo.summary.won)} ganados. Haz clic en un mes para ver su detalle.`}
-    >
-      <ResumenMensual grupo={grupo} onMes={(country, fila) => setMesSel({ country, month: fila.month, leads: fila.leads })} />
-    </Panel>)}
-
     {indicadorSel && <DetalleLeads {...indicadorSel} onClose={() => setIndicadorSel(null)} />}
     {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leads} embudo={datos.embudo} contexto={contexto} onClose={() => setEtapaSel(null)} />}
-    {asesorSel && <DetalleAsesor {...asesorSel} onClose={() => setAsesorSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
   </div>
 }

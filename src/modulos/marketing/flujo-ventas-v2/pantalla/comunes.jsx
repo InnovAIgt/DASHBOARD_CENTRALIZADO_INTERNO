@@ -56,10 +56,11 @@ export function Calificacion({ tipo }) {
   return <Insignia tono={tipo === 'calificado' ? 'azul' : 'neutro'}>{qualificationLabel(tipo)}</Insignia>
 }
 
-/** Píldora de conversión general (ganados ÷ total): azul, información neutral (regla de colores D12). */
-export function PildoraConversion({ ganados, total }) {
-  const valor = total ? ganados / total : 0
-  return <Insignia tono="azul">{formatearRatio(valor)}</Insignia>
+/** Minibarra de las 6 etapas (verde si el lead se ganó, azul si sigue en proceso). */
+export function MiniEtapas({ etapa, ganado }) {
+  return <span className="fv2-minietapas" aria-label={`Etapa ${etapa} de 6`}>
+    {[1, 2, 3, 4, 5, 6].map((n) => <i key={n} className={n <= etapa ? (ganado ? 'is-ganado' : 'is-hecha') : ''} />)}
+  </span>
 }
 
 export function Vacio({ titulo, texto }) {

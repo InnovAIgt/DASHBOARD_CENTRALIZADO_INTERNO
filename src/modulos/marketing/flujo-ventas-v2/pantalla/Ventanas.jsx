@@ -4,14 +4,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CalendarClock, CheckCircle2, Eye, MessageSquareText, Search, TrendingUp, UserRound, X } from 'lucide-react'
-import { formatNumber, formatPercent, isWon, leadUnits, monthLabel, PIPELINE_STAGES } from '../utils/analytics.js'
+import { formatNumber, formatPercent, isOpen, isWon, leadComments, leadUnits, monthLabel, PIPELINE_STAGES } from '../utils/analytics.js'
 import { formatDate, toDate } from '../utils/dates.js'
 import { leadDisplayId } from '../utils/leads.js'
-import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, PaisChip } from './comunes.jsx'
-import { datosAsesor, datosLead, datosMes, ejecutivosEnEtapa, estaHoy, ETAPAS, fechaReferencia, INDICADORES, leadsDeIndicador, mesesEnEtapa, tonoPaso } from './datos.js'
+import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, MiniEtapas, PaisChip } from './comunes.jsx'
+import {
+  datosAsesor, datosLead, datosMes, ejecutivosEnEtapa, embudoEtapas, esVencido, estaHoy, ETAPAS, fechaReferencia, iniciales,
+  INDICADORES, leadsDeIndicador, mesesDelPeriodo, mesesEnEtapa, puntoDebil, tonoPaso, ventasPorMes,
+} from './datos.js'
 import { diasDesdeCreacion } from './informeDatos.js'
 import { Semaforo } from './Semaforo.jsx'
-import { Medidor } from './graficas.jsx'
+import { BarritasMes, EmbudoEtapas } from './graficas.jsx'
 import { NombreLead, Tabla, TablaLeads } from './Tablas.jsx'
 
 function Ventana({ capa, etiqueta, ancho = 'normal', onCerrar, children }) {
@@ -33,10 +36,11 @@ function CabezaVentana({ eyebrow, titulo, subtitulo, onCerrar, children }) {
   </header>
 }
 
-function Metrica({ etiqueta, valor, color }) {
+function Metrica({ etiqueta, valor, nota, color }) {
   return <div className="fv2-metrica" style={{ '--fv2-color': color }}>
     <span>{etiqueta}</span>
     <strong>{valor}</strong>
+    {nota && <small>{nota}</small>}
   </div>
 }
 
@@ -118,17 +122,42 @@ export function DetalleLeads({ clave, leads, titulo, onClose }) {
   </>
 }
 
-// ---------- Ejecutivo ----------
-export function DetalleAsesor({ name, country, leads, month, onClose }) {
+// ---------- Ejecutivo (4.0b: mismo contenido, reordenado) ----------
+const PESTANAS_LEADS = [
+  { key: 'abiertos', label: 'Abiertos', filtro: isOpen },
+  { key: 'ganados', label: 'Ganados', filtro: isWon },
+  { key: 'perdidos', label: 'Perdidos', filtro: (l) => l.estado === 'perdido' },
+  { key: 'vencidos', label: 'Vencidos', filtro: esVencido, rojo: true },
+]
+
+export function DetalleAsesor({ name, country, leads, month, posicion, equipo, onClose }) {
   const [leadSel, setLeadSel] = useState(null)
+  const [mesSel, setMesSel] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(month ?? '')
   const [selectedType, setSelectedType] = useState('')
-  useVentana(onClose, leadSel, () => setLeadSel(null))
-  const { availableMonths, own, summary, stages, maxStage, forecast, advisorCountry, conversion } = datosAsesor({ name, country, leads, selectedMonth, selectedType })
+  const [pestanaLeads, setPestanaLeads] = useState('abiertos')
+  const [etapaFiltro, setEtapaFiltro] = useState(null)
+  const [verPronostico, setVerPronostico] = useState(false)
+  useVentana(onClose, leadSel || mesSel, () => { setLeadSel(null); setMesSel(null) })
+  const { availableMonths, own, summary, forecast, advisorCountry, conversion } = datosAsesor({ name, country, leads, selectedMonth, selectedType })
+  const embudo = useMemo(() => embudoEtapas(own), [own])
+  const debil = equipo?.embudo ? puntoDebil(embudo, equipo.embudo) : null
+  const meses = useMemo(() => ventasPorMes(own, mesesDelPeriodo(own)), [own])
+  const vencidos = own.filter(esVencido).length
+  const pestana = PESTANAS_LEADS.find((p) => p.key === pestanaLeads)
+  const listaLeads = [...own]
+    .filter((l) => (etapaFiltro ? estaHoy(l, etapaFiltro) : pestana.filtro(l)))
+    .sort((a, b) => b.apiStage - a.apiStage)
+  const embudoVista = { etapas: embudo.etapas.map((e) => ({ ...e, mejor: null })), mayorCaida: debil?.stage ?? null }
 
   return <>
     <Ventana capa={0} etiqueta={`Detalle de ${name}`} ancho="ancha" onCerrar={onClose}>
-      <CabezaVentana eyebrow="Detalle del ejecutivo" titulo={<>{name} {advisorCountry && <PaisChip pais={advisorCountry} />}</>} onCerrar={onClose}>
+      <header className="fv2-ventana-cabeza">
+        <span className="fv2-avatar is-grande">{iniciales(name)}</span>
+        <div className="fv2-ventana-titulos">
+          <div className="fv2-eyebrow">Detalle del ejecutivo</div>
+          <h2>{name} {advisorCountry && <PaisChip pais={advisorCountry} />} {posicion && <span className={`fv2-posicion ${posicion === 1 ? 'is-primero' : ''}`}>{posicion === 1 ? '★ ' : ''}#{posicion} del equipo</span>}</h2>
+        </div>
         <div className="fv2-ventana-filtros">
           <label><span>Mes</span>
             <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
@@ -144,74 +173,101 @@ export function DetalleAsesor({ name, country, leads, month, onClose }) {
             </select>
           </label>
         </div>
-      </CabezaVentana>
+        <button type="button" className="fv2-cerrar" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
+      </header>
 
       <div className="fv2-ventana-cuerpo">
-        <div className="fv2-metricas is-5">
-          <Metrica etiqueta="Leads" valor={formatNumber(summary.total)} color={COLORES.azul} />
-          <Metrica etiqueta="Calificados" valor={formatNumber(summary.qualified)} color={COLORES.azulClaro} />
-          <Metrica etiqueta="Ganados" valor={formatNumber(summary.won)} color={COLORES.verde} />
-          <Metrica etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} color={COLORES.tenue} />
-          <Metrica etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.azulClaro} />
+        <div className="fv2-metricas is-6">
+          <Metrica etiqueta="Leads" valor={formatNumber(summary.total)} nota={`${formatNumber(summary.qualified)} calificados`} color={COLORES.azul} />
+          <Metrica etiqueta="Ganados" valor={formatNumber(summary.won)} nota={`${formatNumber(conversion.ganadosCalificados)} calif. · ${formatNumber(conversion.ganadosNoCalificados)} no calif.`} color={COLORES.verde} />
+          <Metrica etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} nota={equipo ? `equipo: ${formatearRatio(equipo.ratio)}` : undefined} color={COLORES.azulClaro} />
+          <Metrica etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} nota={summary.won ? `${formatNumber(Math.round(summary.avgUnits))} por cierre` : 'sin ganados'} color={COLORES.tenue} />
+          <Metrica etiqueta="Abiertos hoy" valor={formatNumber(summary.open)} nota="en proceso" color={COLORES.azul} />
+          {vencidos > 0
+            ? <Metrica etiqueta="Seguimientos" valor={`${formatNumber(vencidos)} vencidos`} nota="próxima gestión ya pasada" color={COLORES.rosa} />
+            : <Metrica etiqueta="Seguimientos" valor="Al día" nota="0 vencidos" color={COLORES.verde} />}
         </div>
 
-        <div className="fv2-dos-columnas">
+        <div className="fv2-ejec-bloques">
           <section className="fv2-bloque">
-            <h3>Embudo del ejecutivo</h3>
-            {[
-              { label: 'Leads', valor: summary.total, color: COLORES.azul },
-              { label: 'Calificados', valor: summary.qualified, color: COLORES.azulClaro, pct: formatPercent(summary.qualified, summary.total) },
-              { label: 'Ganados', valor: summary.won, color: COLORES.verde, pct: formatearRatio(conversion.ratio) },
-            ].map((p) => <div key={p.label} className="fv2-embudo-paso">
-              <div className="fv2-embudo-texto"><span>{p.label}</span><b>{formatNumber(p.valor)}</b>{p.pct && <small>{p.pct}</small>}</div>
-              <Medidor valor={p.valor} max={Math.max(1, summary.total)} color={p.color} alto={8} />
-            </div>)}
+            <h3>Avance por etapa <small>llegaron · % que pasó · están hoy</small></h3>
+            <EmbudoEtapas embudo={embudoVista} onEtapa={(k) => setEtapaFiltro(k)} />
             <p className="fv2-nota">
-              Ganados: {formatNumber(conversion.ganadosCalificados)} de leads calificados · {formatNumber(conversion.ganadosNoCalificados)} de no calificados.
-              Conversión de calificados = ganados calificados ÷ calificados. Conversión general: {formatPercent(summary.won, summary.total)}.
-              {' '}{formatNumber(summary.units)} unidades vendidas en los {formatNumber(summary.won)} leads ganados de {name}.
+              {debil
+                ? <>Su punto débil: <b className="fv2-texto-amarillo">{debil.label}</b> (pasa {formatearRatio(debil.ratio)}{debil.equipo != null ? `, el equipo pasa ${formatearRatio(debil.equipo)}` : ''}). </>
+                : 'Sin datos suficientes para señalar un punto débil (se necesitan al menos 5 leads en la etapa anterior). '}
+              Clic en una etapa para ver sus leads.
             </p>
           </section>
-
           <section className="fv2-bloque">
-            <h3>Etapas <small>distribución actual</small></h3>
-            <div className="fv2-etapas">
-              {stages.map((stage) => <div key={stage.stage} className="fv2-etapa-fila">
-                <span className="fv2-etapa-num">{stage.stage}</span>
-                <span className="fv2-etapa-nombre">{stage.label}</span>
-                <Medidor valor={stage.count} max={maxStage} color={COLORES.azul} />
-                <span className="fv2-etapa-cuenta">{stage.count}<small> · {stage.open} abiertos</small></span>
-              </div>)}
-            </div>
+            <h3>Ventas por mes <small>clic en un mes: su detalle</small></h3>
+            {meses.length
+              ? <BarritasMes meses={meses} onMes={(m) => setMesSel({ month: m.month, country: advisorCountry, ejecutivo: name, leads: m.leads })} />
+              : <p className="fv2-nota">Sin meses con leads.</p>}
+            <p className="fv2-nota">Verde fuerte = de calificados · verde claro = de no calificados.</p>
           </section>
         </div>
 
         <section className="fv2-bloque">
-          <h3>Leads del ejecutivo <small>{formatNumber(own.length)} en esta selección</small></h3>
-          <TablaLeads className="fv2-tabla-ventana" leads={[...own].sort((a, b) => b.apiStage - a.apiStage)} columnas={['lead', 'etapa', 'calificacion', 'estado', 'fecha', 'comentario', 'unidadesGanadas', 'detalle']} onLead={setLeadSel} />
+          <div className="fv2-bloque-cabeza">
+            <h3>Leads del ejecutivo <small>{formatNumber(own.length)} en esta selección</small></h3>
+            <div className="fv2-vistas">
+              {etapaFiltro && <button type="button" className="fv2-vista-pildora is-activa" onClick={() => setEtapaFiltro(null)} title="Quitar filtro de etapa">
+                Hoy en {ETAPAS[etapaFiltro - 1]} ✕
+              </button>}
+              {PESTANAS_LEADS.map((p) => <button type="button" key={p.key}
+                className={`fv2-vista-pildora ${!etapaFiltro && pestanaLeads === p.key ? 'is-activa' : ''}`}
+                onClick={() => { setEtapaFiltro(null); setPestanaLeads(p.key) }}>
+                {p.label}<span className={`fv2-vista-cuenta ${p.rojo ? 'is-rojo' : ''}`}>{formatNumber(own.filter(p.filtro).length)}</span>
+              </button>)}
+            </div>
+          </div>
+          <Tabla columnas={['Cliente', 'Etapa', 'Calificación', 'Estado', 'Próxima gestión', 'Último comentario', { label: 'Unid.', num: true }, '']}
+            vacio={listaLeads.length ? null : 'Sin leads en esta pestaña.'} className="fv2-tabla-ventana">
+            {listaLeads.map((lead) => {
+              const comentario = leadComments(lead)[0]
+              return <tr key={lead.id}>
+                <td><button type="button" className="fv2-enlace-lead" onClick={() => setLeadSel(lead)}><NombreLead lead={lead} /></button></td>
+                <td><span className="fv2-etapa-celda"><MiniEtapas etapa={lead.apiStage} ganado={isWon(lead)} /><small>{PIPELINE_STAGES[lead.apiStage - 1] ?? '—'}</small></span></td>
+                <td><Calificacion tipo={lead.tipoLead} /></td>
+                <td><EstadoLead estado={lead.estado} /></td>
+                <td><Semaforo lead={lead} fecha={toDate(lead.proximaGestion)} /></td>
+                <td><span className="fv2-comentario" title={comentario}>{comentario ?? '—'}</span></td>
+                <td className="num">{isWon(lead) && leadUnits(lead) ? formatNumber(leadUnits(lead)) : '—'}</td>
+                <td><button type="button" className="fv2-btn-ficha" onClick={() => setLeadSel(lead)}><Eye size={13} />Ver ficha</button></td>
+              </tr>
+            })}
+          </Tabla>
         </section>
 
         <section className="fv2-bloque">
-          <h3><TrendingUp size={15} color={COLORES.verde} /> Pronóstico <small>{forecast.items.length} casos · {formatNumber(forecast.units)} unidades proyectadas</small></h3>
-          <TablaLeads className="fv2-tabla-ventana" leads={forecast.items.map((item) => item.lead)} columnas={['lead', 'fecha', 'comentario', 'unidadesProyectadas', 'detalle']} vacio="Sin casos que cumplan el criterio de pronóstico (próximos 30 días)." onLead={setLeadSel} />
+          <div className="fv2-bloque-cabeza">
+            <h3><TrendingUp size={15} color={COLORES.verde} /> Pronóstico <small>{forecast.items.length} casos con señal de cierre · {formatNumber(forecast.units)} unidades proyectadas</small></h3>
+            <button type="button" className="fv2-pildora" onClick={() => setVerPronostico((v) => !v)} aria-expanded={verPronostico}>{verPronostico ? 'Ocultar casos ▴' : 'Ver casos ▾'}</button>
+          </div>
+          {verPronostico && <TablaLeads className="fv2-tabla-ventana" leads={forecast.items.map((item) => item.lead)} columnas={['lead', 'fecha', 'comentario', 'unidadesProyectadas', 'detalle']} vacio="Sin casos que cumplan el criterio de pronóstico (próximos 30 días)." onLead={setLeadSel} />}
         </section>
       </div>
     </Ventana>
     {leadSel && <DetalleLead lead={leadSel} onClose={() => setLeadSel(null)} />}
+    {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
   </>
 }
 
 // ---------- Mes ----------
-export function DetalleMes({ month, country, leads, onClose }) {
+// 4.0b: country puede ser null ("Todos los países", desde la gráfica "Leads por mes") y
+// `ejecutivo` indica que es el detalle de un solo ejecutivo (desde sus barritas de ventas por mes).
+export function DetalleMes({ month, country, ejecutivo, leads, onClose }) {
   const [leadSel, setLeadSel] = useState(null)
   useVentana(onClose, leadSel, () => setLeadSel(null))
   const { summary, stages, units, conversion } = datosMes(leads)
+  const donde = country ?? 'Todos los países'
 
   return <>
-    <Ventana capa={1} etiqueta={`Detalle de ${monthLabel(month, 'long')} · ${country}`} ancho="ancha" onCerrar={onClose}>
+    <Ventana capa={1} etiqueta={`Detalle de ${monthLabel(month, 'long')} · ${ejecutivo ?? donde}`} ancho="ancha" onCerrar={onClose}>
       <CabezaVentana
-        eyebrow="Detalle mensual"
-        titulo={<>{monthLabel(month, 'long')} <PaisChip pais={country} /></>}
+        eyebrow={ejecutivo ? `Detalle mensual · ${ejecutivo}` : 'Detalle mensual'}
+        titulo={<>{monthLabel(month, 'long')} {country ? <PaisChip pais={country} /> : <span className="fv2-tenue">· Todos los países</span>}</>}
         subtitulo="Los ganados se ubican por fecha de cierre; el resto de leads, por fecha de creación."
         onCerrar={onClose}
       />

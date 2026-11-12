@@ -1,9 +1,8 @@
 // Flujo de ventas v2 · gráficas (estilo de las de Activaciones: guías suaves, línea guía punteada
 // al pasar el cursor y recuadro de detalle). Las cifras vienen de pantalla/datos.js.
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { formatNumber, monthLabel } from '../utils/analytics.js'
-import { Bandera, CODIGO_PAIS, COLORES, formatearRatio, PaisChip } from './comunes.jsx'
+import { Bandera, CODIGO_PAIS, COLORES, formatearRatio } from './comunes.jsx'
 import { tonoPaso } from './datos.js'
 
 export const GRIS = '#5b6170'
@@ -42,7 +41,7 @@ export const SERIES_MES = [
   { key: 'won', label: 'Ganados (escala derecha)', color: COLORES.verde, linea: true },
 ]
 
-export function GraficaMensual({ filas }) {
+export function GraficaMensual({ filas, onMes }) {
   const [hover, setHover] = useState(null)
   const w = 720
   const h = 280
@@ -89,6 +88,7 @@ export function GraficaMensual({ filas }) {
       {filas.map((f, i) => <circle key={f.month} cx={xCentro(i)} cy={yGanados(f.won)} r={hover === i ? 6 : 4.5} fill={COLORES.verde} stroke="#151821" strokeWidth="2" />)}
 
       {filas.map((f, i) => <rect key={f.month} x={pad.left + grupo * i} y="0" width={grupo} height={h} fill="transparent"
+        style={onMes ? { cursor: "pointer" } : undefined} onClick={onMes ? () => onMes(f) : undefined}
         onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} />)}
     </svg>
     {hover !== null && filas[hover] && <div className={`fv2-tooltip ${xCentro(hover) / w > 0.6 ? 'is-izquierda' : ''}`} style={{ left: `${(xCentro(hover) / w) * 100}%` }}>
@@ -127,78 +127,25 @@ export function TarjetasPais({ paises }) {
   </section>
 }
 
-// ---------- Desempeño por ejecutivo (barras del embudo del Flujo de ventas viejo) ----------
-// 4.0: el verde se divide en dos (calificados / no calificados), píldora roja de seguimientos
-// vencidos (solo si hay) y los ejecutivos sin leads en el período o país aparecen al final en 0.
+// Verde claro: ganados de no calificados (barritas de ventas por mes).
 export const VERDE_CLARO = '#8fd3bf'
-export const LEYENDA_EJECUTIVOS = [
-  { label: 'Ganados de calificados', color: COLORES.verde },
-  { label: 'Ganados de no calificados', color: VERDE_CLARO },
-  { label: 'Calificados sin ganar', color: COLORES.azul },
-  { label: 'No calificados sin ganar', color: GRIS },
-]
 
-export function DesempenoEjecutivos({ filas, onSeleccionar, onVencidos }) {
-  // Los ejecutivos sin leads van ocultos y se despliegan con un botón, para no alargar la gráfica.
-  const [verCero, setVerCero] = useState(false)
-  const max = Math.max(1, ...filas.map((f) => f.total))
-  const enCero = filas.filter((f) => f.sinLeads).length
-  const visibles = verCero ? filas : filas.filter((f) => !f.sinLeads)
-  return <div className="fv2-desempeno">
-    <div className="fv2-desempeno-cabeza"><span>Ejecutivo</span><span>Leads por resultado</span><span>Leads</span><span>Conv. calif.</span><span>Vencidos</span></div>
-    {enCero > 0 && enCero === filas.length && !verCero && <p className="fv2-nota">Ningún ejecutivo tiene leads con los filtros actuales.</p>}
-    {visibles.map((fila, i) => {
-      const partes = [
-        { valor: fila.partes.ganadosCalificados, color: COLORES.verde, label: 'Ganados de calificados' },
-        { valor: fila.partes.ganadosNoCalificados, color: VERDE_CLARO, label: 'Ganados de no calificados' },
-        { valor: fila.partes.calificadosSinGanar, color: COLORES.azul, label: 'Calificados sin ganar' },
-        { valor: fila.partes.noCalificadosSinGanar, color: GRIS, label: 'No calificados sin ganar' },
-      ]
-      const ancho = Math.max((fila.total / max) * 100, fila.total ? 4 : 0)
-      const detalle = partes.map((p) => `${p.label}: ${formatNumber(p.valor)}`).join('\n')
-      if (fila.sinLeads) {
-        return <div key={fila.name} className="fv2-desempeno-fila is-cero" title={`${fila.name}: sin leads con los filtros actuales`}>
-          <span className="fv2-desempeno-nombre"><strong>{fila.name}</strong><span className="fv2-en-linea"><PaisChip pais={fila.country} /> sin leads en el período</span></span>
-          <span className="fv2-desempeno-pista"><span className="fv2-desempeno-barra is-vacia" /></span>
-          <span className="fv2-desempeno-total">0</span>
-          <span className="fv2-desempeno-conv"><span className="fv2-insignia is-neutro">—</span></span>
-          <span className="fv2-desempeno-venc" />
-          <span />
-        </div>
-      }
-      return <div key={fila.name} className="fv2-desempeno-fila" role="button" tabIndex={0}
-        onClick={() => onSeleccionar(fila.name, fila.country)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSeleccionar(fila.name, fila.country) } }}
-        title={`Ver detalle de ${fila.name}\n${detalle}`}>
-        <span className="fv2-desempeno-nombre">
-          <strong>{fila.name}</strong>
-          <PaisChip pais={fila.country} />
-        </span>
-        <span className="fv2-desempeno-pista">
-          <span className="fv2-desempeno-barra fv2-barra-h" style={{ width: `${ancho}%`, '--fv2-i': i }}>
-            {partes.map((p) => p.valor > 0 && <i key={p.label} style={{ flexGrow: p.valor, background: p.color }} title={`${p.label}: ${formatNumber(p.valor)}`}>
-              {p.valor / max >= 0.06 ? formatNumber(p.valor) : ''}
-            </i>)}
-          </span>
-        </span>
-        <span className="fv2-desempeno-total">{formatNumber(fila.total)}</span>
-        <span className="fv2-desempeno-conv"><PildoraCalificados ratio={fila.conversion.ratio} /></span>
-        <span className="fv2-desempeno-venc">
-          {fila.vencidos.length > 0 && <button type="button" className="fv2-pildora-vencidos"
-            onClick={(e) => { e.stopPropagation(); onVencidos(fila) }}
-            title={`Ver los ${fila.vencidos.length} seguimientos vencidos de ${fila.name}`}>
-            {formatNumber(fila.vencidos.length)} vencidos
-          </button>}
-        </span>
-        <ChevronRight size={14} className="fv2-desempeno-flecha" />
-      </div>
-    })}
-    {enCero > 0 && <button type="button" className="fv2-ver-cero" aria-expanded={verCero} onClick={() => setVerCero((v) => !v)}>
-      <ChevronDown size={14} className={verCero ? 'is-abierto' : ''} />
-      {verCero
-        ? `Ocultar ${enCero} ${enCero === 1 ? 'ejecutivo' : 'ejecutivos'} sin leads`
-        : `Ver ${enCero} ${enCero === 1 ? 'ejecutivo' : 'ejecutivos'} sin leads en el período`}
-    </button>}
+// ---------- Ventas por mes en barritas (4.0b: tarjetas y ventana del ejecutivo) ----------
+// Verde fuerte = ganados de calificados · verde claro = ganados de no calificados.
+export function BarritasMes({ meses, onMes, apagado }) {
+  const max = Math.max(1, ...meses.map((m) => m.total))
+  return <div className="fv2-barritas">
+    {meses.map((m) => <button type="button" key={m.month} className="fv2-barrita" disabled={apagado || !onMes}
+      onClick={(e) => { e.stopPropagation(); onMes?.(m) }}
+      title={`${monthLabel(m.month, 'long')}: ${formatNumber(m.ganadosCalificados)} de calificados · ${formatNumber(m.ganadosNoCalificados)} de no calificados${onMes && !apagado ? ' · clic para ver el detalle del mes' : ''}`}>
+      <b>{formatNumber(m.total)}</b>
+      <span className="fv2-barrita-pista">
+        {m.ganadosNoCalificados > 0 && <i style={{ height: `${(m.ganadosNoCalificados / max) * 100}%`, background: VERDE_CLARO }} />}
+        {m.ganadosCalificados > 0 && <i style={{ height: `${(m.ganadosCalificados / max) * 100}%`, background: COLORES.verde }} />}
+        {m.total === 0 && <i className="is-cero" />}
+      </span>
+      <small>{monthLabel(m.month)}</small>
+    </button>)}
   </div>
 }
 

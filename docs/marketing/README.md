@@ -42,11 +42,13 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `api/marketing/reuniones.js` | Función de Vercel: el "mesero" que llama a Prospekt IA con la llave escondida |
 | `server/marketingReuniones.js` | La misma lógica, compartida para que también funcione en local (`npm run dev`); quita el teléfono del cliente antes de responder |
 | `src/components/layout/PortalLayout.tsx` | Entrada "Flujo de ventas v2 (prueba)" del menú (MARKETING) |
-| `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` | Pantalla principal: encabezado, filtros y pestañas **Resumen** / **Informe detallado** |
+| `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` | Pantalla principal: encabezado, filtros fijos y pestañas **Resumen** / **Ejecutivos** / **Informe detallado** |
 | `src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css` | Estilos propios (tema oscuro basado en Activaciones), encerrados en `.fv2` |
 | `src/modulos/marketing/flujo-ventas-v2/utils/`, `types/`, `hooks/`, `context/`, `services/` | **Lógica copiada** de InnovAIgt/DashboardLeads, sin cambios (carga de datos, filtros y cálculos) |
 | `…/pantalla/datos.js` | Cálculos de la pantalla: período, conversión de calificados corregida, agrupaciones |
-| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx`, `Tablas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, gráficas y tablas |
+| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, "Leads por mes" y embudo por etapa |
+| `…/pantalla/Ejecutivos.jsx` | Pestaña Ejecutivos: "Resultados por ejecutivo" en tarjetas |
+| `…/pantalla/Tablas.jsx` | Tabla y tabla de leads que usan las ventanas |
 | `…/pantalla/Filtros.jsx` | Barra de filtros (país, período, panel Filtros) |
 | `…/pantalla/Ventanas.jsx` | Ventanas de detalle (indicadores, ejecutivo, mes y ficha del lead) |
 | `…/pantalla/comunes.jsx` | Piezas visuales comunes (banderas, insignias, avisos) |
@@ -55,6 +57,19 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `…/pantalla/informeDatos.js` | Columnas del informe (campos de la API por grupo), vistas rápidas y semáforo |
 | `…/pantalla/excel.js` | Botón "Descargar Excel": misma plantilla y método que el Excel de Activaciones |
 | `docs/marketing/` | Esta documentación |
+
+## Pestañas
+
+Debajo de los filtros: **Resumen** (tarjetas por país, 6 indicadores, "Leads por mes" y embudo
+por etapa) · **Ejecutivos** (tarjetas por ejecutivo) · **Informe detallado**. La zona de filtros
+y pestañas queda fija arriba: la v2 se desplaza dentro de su propio contenedor (alto de la
+pantalla menos la barra del portal). La pestaña elegida se recuerda mientras la página esté abierta.
+
+- Clic en un mes de "Leads por mes" → Detalle mensual de ese mes con el filtro de país actual.
+- **Ejecutivos:** una tarjeta por ejecutivo (todos los del país; los que no tienen leads en el
+  período van al final y apagados) con la conversión de calificados en un círculo (verde ≥ 20 %,
+  azul 10–20 %, amarillo < 10 %; provisional, D14), ventas, unidades, vencidos y ventas por mes.
+  Clic en la tarjeta → Detalle del ejecutivo; clic en una barrita → Detalle mensual del ejecutivo.
 
 ## Filtros por defecto
 

@@ -19,6 +19,13 @@ import { isOverdue, toDate } from '../utils/dates.js'
 export const LIMITES_PASO = { bajo: 0.6, bueno: 0.75 }
 export const tonoPaso = (ratio) => (ratio == null ? 'neutro' : ratio >= LIMITES_PASO.bueno ? 'verde' : ratio < LIMITES_PASO.bajo ? 'amarillo' : 'neutro')
 
+/**
+ * Color del círculo de conversión de calificados en las tarjetas de ejecutivos (DECISIONES D14).
+ * PROVISIONAL hasta que el ingeniero defina la meta: ≥ 20 % verde · 10–20 % azul · < 10 % amarillo.
+ */
+export const LIMITES_CONVERSION = { bajo: 0.1, bueno: 0.2 }
+export const tonoConversion = (ratio) => (ratio >= LIMITES_CONVERSION.bueno ? 'verde' : ratio < LIMITES_CONVERSION.bajo ? 'amarillo' : 'azul')
+
 /** Filtros por defecto (paso 4.0): Tipo de lead = Calificado (+ Período = mes actual hasta hoy). */
 export const FILTROS_POR_DEFECTO = { filterTipoLead: ['calificado'] }
 
@@ -227,6 +234,18 @@ export function embudoEtapas(leads) {
   return { etapas, mayorCaida }
 }
 
+/**
+ * Punto débil de un ejecutivo (4.0b): la etapa 2 a 6 con el menor % de entrada, contando solo
+ * las etapas cuya etapa anterior tuvo al menos 5 leads (misma regla que "Mejor"). Se compara con
+ * el % de entrada del equipo en esa misma etapa. null si ninguna etapa tiene datos suficientes.
+ */
+export function puntoDebil(embudoPropio, embudoEquipo, minimo = 5) {
+  const candidatas = embudoPropio.etapas.filter((e, i) => i > 0 && e.entrada != null && embudoPropio.etapas[i - 1].llegaron >= minimo)
+  if (!candidatas.length) return null
+  const peor = candidatas.reduce((min, e) => (e.entrada < min.entrada ? e : min))
+  return { stage: peor.stage, label: peor.label, ratio: peor.entrada, equipo: embudoEquipo.etapas[peor.stage - 1]?.entrada ?? null }
+}
+
 /** Por mes del período (más reciente primero): llegaron, pasaron y % de paso en la etapa k. */
 export function mesesEnEtapa(leads, k) {
   const meses = [...new Set(leads.map(leadReferenceMonth).filter(Boolean))].sort((a, b) => b.localeCompare(a))
@@ -235,6 +254,54 @@ export function mesesEnEtapa(leads, k) {
     const pasaron = delMes.filter((l) => paso(l, k)).length
     return { month, llegaron: delMes.length, pasaron, ratio: delMes.length ? pasaron / delMes.length : null }
   })
+}
+
+// ---------- Pestaña "Ejecutivos": tarjetas (4.0b) ----------
+export const iniciales = (nombre = '') => nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '—'
+
+/** Meses del período (los de los leads filtrados), del más antiguo al más reciente. */
+export const mesesDelPeriodo = (leads) => [...new Set(leads.map(leadReferenceMonth).filter(Boolean))].sort()
+
+/** Ventas por mes de un grupo de leads: ganados de calificados y de no calificados en cada mes. */
+export function ventasPorMes(leads, meses) {
+  return meses.map((month) => {
+    const delMes = leads.filter((l) => leadReferenceMonth(l) === month)
+    const c = conversionCalificados(delMes)
+    return { month, leads: delMes, ganadosCalificados: c.ganadosCalificados, ganadosNoCalificados: c.ganadosNoCalificados, total: c.ganados }
+  })
+}
+
+/**
+ * Tarjetas de la pestaña Ejecutivos. Usa desempenoEjecutivos (lista completa del país, los de 0
+ * al final). Orden: ganados de calificados ("ventas" de la tarjeta), luego todos los ganados,
+ * luego calificados. Posición #N solo para quien tiene leads. Equipo = suma de todos.
+ * Comprobación: Σ ventas + Σ "+X no calificados" = Ganados del Resumen.
+ */
+export function tarjetasEjecutivos(leads, base = []) {
+  const meses = mesesDelPeriodo(leads)
+  const filas = desempenoEjecutivos(leads, base)
+  const conLeads = filas.filter((f) => !f.sinLeads)
+    .sort((a, b) => b.conversion.ganadosCalificados - a.conversion.ganadosCalificados || b.won - a.won || b.qualified - a.qualified || a.name.localeCompare(b.name))
+  const enCero = filas.filter((f) => f.sinLeads)
+  const tarjetas = [...conLeads, ...enCero].map((f, i) => ({
+    ...f,
+    posicion: f.sinLeads ? null : i + 1,
+    iniciales: iniciales(f.name),
+    units: f.units ?? 0,
+    meses: ventasPorMes(f.leads, meses),
+  }))
+  const equipo = conversionCalificados(leads)
+  return {
+    tarjetas,
+    meses,
+    equipo: {
+      ventas: equipo.ganadosCalificados,
+      calificados: equipo.calificados,
+      ratio: equipo.ratio,
+      unidades: summarize(leads).units,
+      vencidos: leads.filter(esVencido).length,
+    },
+  }
 }
 
 // ---------- Ventana "Detalle de leads" (al cliquear un indicador) ----------
@@ -264,38 +331,20 @@ export function leadsDeIndicador(clave, leads) {
 // por `ejecutivos` (todos, ver desempenoEjecutivos) y a meses, países y embudo se les agrega la
 // conversión de calificados corregida; los meses llevan además `noCalificados` = leads − calificados
 // (incluye "sin clasificar"), para que las columnas apiladas sumen los leads del mes.
-// En 4.0: se quitó `monthlyFunnelGroups` (el "Embudo por mes" se reemplazó por embudoEtapas) y
-// `ejecutivos` recibe la lista base para mostrar en 0 a quien no tenga leads.
-export function datosVistaGeneral(leads, baseEjecutivos = []) {
+// En 4.0: se quitó `monthlyFunnelGroups` (el "Embudo por mes" se reemplazó por embudoEtapas).
+// En 4.0b: se quitaron `advisors`, `advisorsByCountry`, `monthlyCountryTables` y `ejecutivos`
+// (sus secciones pasaron a la pestaña Ejecutivos, que usa tarjetasEjecutivos).
+export function datosVistaGeneral(leads) {
   const months = byMonth(leads).map((month) => {
     const monthLeads = leads.filter((lead) => leadReferenceMonth(lead) === month.month)
     return { ...month, noCalificados: month.total - month.qualified, conversion: conversionCalificados(monthLeads) }
   })
-  const advisors = byAdvisor(leads)
-  const advisorsByCountry = COUNTRIES.map((country) => {
-    const countryLeads = leads.filter((lead) => lead.pais === country)
-    return {
-      country,
-      summary: summarize(countryLeads),
-      advisors: byAdvisor(countryLeads).sort((left, right) => right.total - left.total || left.name.localeCompare(right.name)),
-    }
-  }).filter((group) => group.advisors.length)
   const countries = byCountry(leads).map((row) => ({
     ...row,
     conversion: conversionCalificados(leads.filter((lead) => lead.pais === row.country)),
   }))
-  const monthlyCountryTables = COUNTRIES.map((country) => {
-    const countryLeads = leads.filter((lead) => lead.pais === country)
-    const countryMonths = byMonth(countryLeads).map((month) => {
-      const monthLeads = countryLeads.filter((lead) => leadReferenceMonth(lead) === month.month)
-      return { ...month, leads: monthLeads }
-    })
-    const countrySummary = summarize(countryLeads)
-    return { country, months: countryMonths, summary: countrySummary }
-  })
-  const ejecutivos = desempenoEjecutivos(leads, baseEjecutivos)
   const embudo = embudoEtapas(leads)
-  return { months, advisors, advisorsByCountry, countries, monthlyCountryTables, ejecutivos, embudo }
+  return { months, countries, embudo }
 }
 
 // ---------- Ventana: detalle del ejecutivo ----------

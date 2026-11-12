@@ -145,3 +145,23 @@ etapa con datos registrados por el vendedor".
 **Mejor en cada etapa:** mayor % de paso de esa etapa a la siguiente (en Cierre, % que se
 ganó), solo entre ejecutivos con al menos 5 leads que llegaron a ella; empate → más leads.
 **Autorizó:** Keily García.
+
+## D14 · 11/11/2026 · Pestañas, tarjetas de ejecutivos y límites del círculo
+
+**Decisión:**
+- Pestañas **Resumen · Ejecutivos · Informe detallado**. El Informe detallado (4.1) sigue
+  funcionando como tercera pestaña.
+- "Desempeño por ejecutivo", "Resultados por ejecutivo" y los dos "Resultados mensuales" salen
+  del Resumen; su información pasa a las tarjetas de la pestaña Ejecutivos. El Detalle mensual
+  por país se conserva: se abre desde la gráfica "Leads por mes" con el filtro de país actual.
+- Filtros y pestañas fijos arriba mediante desplazamiento interno de la v2 (el portal tiene
+  `overflow: hidden` y no se tocó `src/index.css`).
+- **Color del círculo de conversión de calificados (PROVISIONAL hasta que el ingeniero defina la
+  meta):** verde ≥ 20 % · azul 10–20 % · amarillo < 10 %, en la constante `LIMITES_CONVERSION`
+  de `pantalla/datos.js`. Con los datos del 11/11/2026 el equipo convierte 13–15 % y los
+  ejecutivos con 5 o más calificados van de 0 % a 37.5 %.
+- "Su punto débil" (ventana del ejecutivo): la etapa 2 a 6 con menor % de entrada, solo entre
+  etapas cuya etapa anterior tuvo al menos 5 leads (misma regla que "Mejor").
+- Tarjetas: "N ventas" = ganados de calificados; orden por ventas, luego todos los ganados,
+  luego calificados.
+**Autorizó:** Keily García.

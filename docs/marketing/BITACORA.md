@@ -547,3 +547,54 @@ Al final de la lista aparece el botón "Ver N ejecutivos sin leads en el períod
 despliega (en gris, con 0) y cambia a "Ocultar N ejecutivos sin leads". Siguen contando en la
 lista completa del país; solo cambia que se muestran a pedido. `npm run build` y
 `npm run lint` ✅.
+
+---
+
+## Paso 4.0b · Pestañas, ejecutivos en tarjetas y ventana del ejecutivo — 11/11/2026 ✅ (pendiente revisión visual)
+
+**Qué se hizo:**
+1. **Pestañas** Resumen · Ejecutivos · Informe detallado (el Informe de la 4.1 sigue
+   funcionando). Filtros y pestañas **fijos arriba** con desplazamiento interno de la v2. La
+   pestaña elegida se recuerda mientras la página esté abierta.
+2. **Resumen:** tarjetas por país → 6 indicadores → "Leads por mes" (clic en un mes → Detalle
+   mensual con el filtro de país; pista "Clic en un mes para ver su detalle") → embudo por etapa.
+   **Se quitaron del Resumen:** "Desempeño por ejecutivo", "Resultados por ejecutivo",
+   "Resultados mensuales · Guatemala" y "Resultados mensuales · El Salvador". Nada más desapareció.
+3. **Ejecutivos:** "Resultados por ejecutivo" en tarjetas (3, 2 o 1 por fila): iniciales,
+   nombre, país, calificados recibidos, posición (#1 con ★ y borde dorado suave), círculo de
+   conversión de calificados (D14), "N ventas", "de M calificados · +X de no calificados",
+   unidades, "al día" o "N seguimientos vencidos" y ventas por mes en barritas (verde fuerte y
+   claro). Con un solo mes en el período: "Amplía el Período para comparar meses". Los
+   ejecutivos sin leads en el período, al final y apagados. Línea "Equipo: …".
+4. **Detalle del ejecutivo** (mismo contenido, reordenado): encabezado con iniciales, país, #N y
+   filtros Mes/Tipo; 6 indicadores; "Avance por etapa" con 6 cuadritos y "Su punto débil";
+   "Ventas por mes" (clic → Detalle mensual); "Leads del ejecutivo" con pestañas
+   Abiertos/Ganados/Perdidos/Vencidos, minibarra de etapas y semáforo (clic en un cuadrito filtra
+   a los leads que están hoy en esa etapa); "Pronóstico" plegado con "Ver casos ▾".
+5. **Detalle mensual:** igual; acepta "Todos los países" y el nombre del ejecutivo. Barras de
+   desplazamiento grises en todas las ventanas.
+
+**Código que dejó de usarse y se quitó:** el componente "Desempeño por ejecutivo", las tablas
+"Resultados por ejecutivo" y "Resultados mensuales" (`Tablas.jsx`), la píldora de conversión
+general, sus agrupaciones en `datos.js` (`advisors`, `advisorsByCountry`,
+`monthlyCountryTables`, `ejecutivos`) y sus estilos.
+
+**Pruebas hechas (datos reales; 4 casos: por defecto, calificados historial, todos historial y
+SV ago–nov; 48 comprobaciones):**
+
+| Prueba | Resultado |
+|---|---|
+| `npm run build` y `npm run lint` | ✅ |
+| Σ ventas + Σ "+X no calificados" = Ganados (historial: 43 + 24 = 67) | ✅ |
+| Σ calificados recibidos = Calificados · Σ unidades = Unidades vendidas · Σ vencidos = `calculateMetrics.vencidos` | ✅ |
+| Línea "Equipo" = suma de las tarjetas | ✅ |
+| Tarjetas = todos los ejecutivos del país (por defecto hoy: 6 + 9 apagadas); apagadas al final; #N por ventas | ✅ |
+| Cada tarjeta: Σ barritas por mes = sus ganados | ✅ |
+| Los cuadritos de los ejecutivos suman el embudo general (llegaron y "hoy aquí") | ✅ |
+| Detalle mensual desde la gráfica: leads del mes = columna del mes | ✅ |
+| Hoja de estilos del portal: reglas nuevas solo dentro de `.fv2`; ningún valor existente cambió; `src/index.css`, `PortalLayout.tsx` y `public/` sin cambios → los demás dashboards se ven y se desplazan igual | ✅ |
+| Revisión en pantalla | ⏳ pendiente (la hace Keily) |
+
+**Qué no se tocó:** la lógica copiada, Activaciones, el Flujo de ventas viejo, los demás
+dashboards, `src/index.css`, `PortalLayout.tsx`, `package.json`, `vercel.json`, Supabase ni
+`main`. La carpeta `.claude/` no se incluye en el commit.

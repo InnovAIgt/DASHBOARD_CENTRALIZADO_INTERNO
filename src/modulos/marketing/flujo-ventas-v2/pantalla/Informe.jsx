@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { formatNumber, PIPELINE_STAGES, qualificationLabel } from '../utils/analytics.js'
-import { Calificacion, CODIGO_PAIS, EstadoLead, PaisChip } from './comunes.jsx'
+import { Calificacion, CODIGO_PAIS, EstadoLead, MiniEtapas, PaisChip } from './comunes.jsx'
 import { descargarInforme } from './excel.js'
 import { buscarFilas, COLUMNAS, conteoVistas, filasInforme, GRUPOS, ordenarFilas, textoCelda, VISTAS } from './informeDatos.js'
 import { Semaforo } from './Semaforo.jsx'
@@ -14,12 +14,6 @@ const hoyISO = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 const aDMA = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
-
-function MiniEtapas({ etapa, ganado }) {
-  return <span className="fv2-minietapas" aria-label={`Etapa ${etapa} de 6`}>
-    {[1, 2, 3, 4, 5, 6].map((n) => <i key={n} className={n <= etapa ? (ganado ? 'is-ganado' : 'is-hecha') : ''} />)}
-  </span>
-}
 
 function Celda({ col, fila }) {
   const valor = fila.v[col.key]

@@ -10,15 +10,23 @@ import { useLeads } from './hooks/useLeads.js'
 import { qualificationLabel, summarize } from './utils/analytics.js'
 import { AvisoError, Vacio } from './pantalla/comunes.jsx'
 import { aplicarFiltros, FILTROS_POR_DEFECTO, listaEjecutivos, periodoPorDefecto } from './pantalla/datos.js'
+import { Ejecutivos } from './pantalla/Ejecutivos.jsx'
 import { BarraFiltros } from './pantalla/Filtros.jsx'
 import { Informe } from './pantalla/Informe.jsx'
 import { VistaGeneral } from './pantalla/VistaGeneral.jsx'
+import './flujo-ventas-v2.css'
 
 const PESTANAS = [
   { key: 'resumen', label: 'Resumen' },
+  { key: 'ejecutivos', label: 'Ejecutivos' },
   { key: 'informe', label: 'Informe detallado' },
 ]
-import './flujo-ventas-v2.css'
+// La pestaña elegida se recuerda mientras la página esté abierta (sessionStorage), aunque se
+// cambie a otro dashboard del menú y se vuelva.
+const CLAVE_PESTANA = 'fv2-pestana'
+const leerPestana = () => {
+  try { const v = sessionStorage.getItem(CLAVE_PESTANA); return PESTANAS.some((p) => p.key === v) ? v : 'resumen' } catch { return 'resumen' }
+}
 
 const horaFormato = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
 
@@ -50,7 +58,11 @@ function FlujoVentasV2Contenido() {
   const filters = useFilters()
   // Por defecto: todos los países, Tipo de lead = Calificado (4.0) y del día 1 del mes actual hasta hoy (R11).
   const [periodo, setPeriodo] = useState(() => periodoPorDefecto())
-  const [pestana, setPestana] = useState('resumen')
+  const [pestana, setPestanaEstado] = useState(leerPestana)
+  const setPestana = (p) => {
+    setPestanaEstado(p)
+    try { sessionStorage.setItem(CLAVE_PESTANA, p) } catch { /* sin almacenamiento: solo en memoria */ }
+  }
   const { setFilter, clearFilters } = filters
   const aplicarPorDefecto = () => {
     clearFilters()
@@ -61,8 +73,9 @@ function FlujoVentasV2Contenido() {
 
   const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
   const summary = useMemo(() => summarize(filtrados), [filtrados])
-  // Ejecutivos de "Desempeño por ejecutivo": todos los del país elegido, sin importar período ni tipo.
+  // Ejecutivos de la pestaña Ejecutivos: todos los del país elegido, sin importar período ni tipo.
   const baseEjecutivos = useMemo(() => listaEjecutivos(leads, filters), [leads, filters])
+  const paisFiltro = filters.filterPais?.length === 1 ? filters.filterPais[0] : null
   const restablecer = () => {
     aplicarPorDefecto()
     setPeriodo(periodoPorDefecto())
@@ -87,22 +100,25 @@ function FlujoVentasV2Contenido() {
       </button>
     </header>
 
-    {leads.length > 0 && <BarraFiltros
-      leads={leads}
-      filters={filters}
-      periodo={periodo}
-      onPeriodo={setPeriodo}
-      onRestablecer={restablecer}
-      filtrados={filtrados.length}
-    />}
-
-    {leads.length > 0 && <nav className="fv2-pestanas" role="tablist" aria-label="Secciones del Flujo de ventas">
-      {PESTANAS.map((p) => <button type="button" key={p.key} role="tab" aria-selected={pestana === p.key}
-        className={`fv2-pestana ${pestana === p.key ? 'is-activa' : ''}`} onClick={() => setPestana(p.key)}>{p.label}</button>)}
-    </nav>}
+    {/* Zona fija (4.0b): filtros y pestañas quedan arriba; solo se desplaza el contenido. */}
+    {leads.length > 0 && <div className="fv2-fijo">
+      <BarraFiltros
+        leads={leads}
+        filters={filters}
+        periodo={periodo}
+        onPeriodo={setPeriodo}
+        onRestablecer={restablecer}
+        filtrados={filtrados.length}
+      />
+      <nav className="fv2-pestanas" role="tablist" aria-label="Secciones del Flujo de ventas">
+        {PESTANAS.map((p) => <button type="button" key={p.key} role="tab" aria-selected={pestana === p.key}
+          className={`fv2-pestana ${pestana === p.key ? 'is-activa' : ''}`} onClick={() => setPestana(p.key)}>{p.label}</button>)}
+      </nav>
+    </div>}
 
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
-    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} baseEjecutivos={baseEjecutivos} contexto={contexto} />}
+    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} contexto={contexto} paisFiltro={paisFiltro} />}
+    {leads.length > 0 && pestana === 'ejecutivos' && <Ejecutivos leads={filtrados} baseEjecutivos={baseEjecutivos} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo} />}
     {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}
   </div>
