@@ -1,0 +1,62 @@
+services:
+  red-intelfon-portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SAP_API_KEY: ${VITE_SAP_API_KEY:-}
+        VITE_SAP_API_URL: ${VITE_SAP_API_URL:-https://sapapi.red.com.sv/api}
+        VITE_WORKFLOW_API_KEY: ${VITE_WORKFLOW_API_KEY:-}
+        VITE_WORKFLOW_API_URL: ${VITE_WORKFLOW_API_URL:-https://workflow.red.com.gt/api/integraciones/dashboard/preofertas}
+        VITE_MARKETING_SUPABASE_URL: ${VITE_MARKETING_SUPABASE_URL:-https://wciyhyyjdpaavbzlwikl.supabase.co}
+        VITE_MARKETING_SUPABASE_KEY: ${VITE_MARKETING_SUPABASE_KEY:-}
+        VITE_MARKETING_RRSS_URL: ${VITE_MARKETING_RRSS_URL:-https://dashboard-marketing-ks6o.onrender.com/api/rrss/excel}
+        VITE_FX_URL: ${VITE_FX_URL:-https://excel-parser-m9q8.onrender.com/api/tipo-cambio}
+        VITE_CLIENTES_SUPABASE_URL: ${VITE_CLIENTES_SUPABASE_URL:-https://grultaxaxbcruzoeljld.supabase.co}
+        VITE_CLIENTES_SUPABASE_KEY: ${VITE_CLIENTES_SUPABASE_KEY:-}
+        VITE_SAC_VIVO_URL: ${VITE_SAC_VIVO_URL:-https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-vivo-publico}
+        VITE_SAC_CORTE_URL: ${VITE_SAC_CORTE_URL:-https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-corte-publico}
+        VITE_SAC_HIST_URL: ${VITE_SAC_HIST_URL:-https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-historico-semanal}
+        VITE_RRHH_VIVO_URL: ${VITE_RRHH_VIVO_URL:-https://alkaqpxcrmbzhgcwpynj.supabase.co/functions/v1/rrhh-vivo-publico}
+        VITE_SIMS_API_BASE: ${VITE_SIMS_API_BASE:-https://mso-api-proxy-sims.onrender.com/api/mso}
+        VITE_BREVO_API_KEY: ${VITE_BREVO_API_KEY:-}
+        VITE_MAKE_WEBHOOK_URL: ${VITE_MAKE_WEBHOOK_URL:-https://hook.eu2.make.com/uf2f68usry02c9ljgb8wcoy634ymbkcf}
+        VITE_HISTORY_WEBHOOK_URL: ${VITE_HISTORY_WEBHOOK_URL:-https://hook.eu2.make.com/fa2xcbqi6a9aupb9bby5wqp5wuelk9ea}
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY:-}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN:-reportes-bancarios.firebaseapp.com}
+        VITE_FIREBASE_DATABASE_URL: ${VITE_FIREBASE_DATABASE_URL:-https://reportes-bancarios-default-rtdb.firebaseio.com}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID:-reportes-bancarios}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET:-reportes-bancarios.firebasestorage.app}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID:-457368392091}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID:-}
+        VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID:-}
+        VITE_EXCHANGE_RATE_GTQ_USD: ${VITE_EXCHANGE_RATE_GTQ_USD:-7.75}
+        VITE_MASTER_PASSWORD: ${VITE_MASTER_PASSWORD:-}
+        VITE_MASTER_GT_PASSWORD: ${VITE_MASTER_GT_PASSWORD:-}
+        VITE_MASTER_SV_PASSWORD: ${VITE_MASTER_SV_PASSWORD:-}
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-3000}
+      APP_URL: ${APP_URL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      RED_API_KEY: ${RED_API_KEY:-}
+      SAP_API_KEY: ${SAP_API_KEY:-}
+      WORKFLOW_API_KEY: ${WORKFLOW_API_KEY:-}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAKE_WEBHOOK_URL: ${MAKE_WEBHOOK_URL:-https://hook.eu2.make.com/uf2f68usry02c9ljgb8wcoy634ymbkcf}
+      HISTORY_WEBHOOK_URL: ${HISTORY_WEBHOOK_URL:-https://hook.eu2.make.com/fa2xcbqi6a9aupb9bby5wqp5wuelk9ea}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

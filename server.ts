@@ -114,14 +114,28 @@ async function startServer() {
   } else {
     // Production mode: Serve built static files
     app.use(express.static(path.resolve(__dirname, 'dist')));
+    app.get('/api/*', (req, res) => {
+      res.status(404).json({ error: 'Endpoint no encontrado' });
+    });
     app.get('*', (req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Server] RED INTELFON Dashboard running on http://0.0.0.0:${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Server] RED INTELFON Dashboard running on http://0.0.0.0:${PORT} (${isProduction ? 'production' : 'development'})`);
   });
+
+  const shutdown = (signal: string) => {
+    console.log(`[Server] Received ${signal}, shutting down gracefully...`);
+    server.close(() => {
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(1), 5000).unref();
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer();
