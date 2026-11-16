@@ -74,9 +74,63 @@ Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. 
 
 ---
 
+## Fase 2 · Google Drive — 16/11/2026 🔄 (esperando aprobación para commit; falta prueba con la llave real)
+
+**Decisiones de Keily:**
+- sin librerías nuevas;
+- si están las dos fuentes, gana Drive;
+- las hojas de Google se ignoran;
+- la llave se acepta en JSON o base64;
+- `?actualizar=1` para refrescar sin esperar;
+- la cuenta de servicio la crea Keily con la cuenta de Google de MARKETING de RED.
+
+**Qué se hizo:**
+- `server/marketingCanales/googleAuth.js` (nuevo): permiso de solo lectura con la cuenta de servicio, sin librerías.
+- `server/marketingCanales/fuenteDrive.js` (nuevo): lee la carpeta de Drive, con caché de 15 min y
+  descarga solo de lo que cambió.
+- `server/marketingCanales/errorFuente.js` (nuevo): el tipo de error compartido; antes estaba en `fuenteLocal.js`.
+- `server/marketingMailing.js`: elige la fuente (gana Drive), informa cuál se usó y acepta `actualizar`.
+- `api/marketing/mailing.js` y `server.ts`: pasan `?actualizar=1`.
+- `.env.example`: `GOOGLE_SERVICE_ACCOUNT_JSON=` y `MARKETING_DRIVE_FOLDER_ID=` vacías.
+- Docs:
+  - `CONFIGURAR_DRIVE.md` (nuevo), con las reglas de cuenta de empresa, Editor/Lector y no borrar CSV;
+  - DECISIONES D15–D20;
+  - README y REQUISITOS actualizados.
+- **No cambiaron:** cálculos, lector de CSV, regla de archivos repetidos, `package.json`, `vercel.json`.
+
+**Pruebas:**
+- **Drive simulado** con los 3 CSV reales y archivos inventados (llave inventada, sin internet): 33 casos y 7 revisiones de privacidad, 0 fallas.
+  - Las cifras de Drive son **idénticas** a las de la carpeta local, y los números de control cuadran.
+  - Lista de varias páginas.
+  - Archivos ignorados con motivo: hoja de Google, documento, subcarpeta, .txt y copia vieja de una campaña.
+  - Caché:
+    - a los 10 min no vuelve a Drive;
+    - a los 16 min vuelve y descarga solo lo que cambió;
+    - `?actualizar=1` la ignora;
+    - el permiso de Google se renueva cada hora.
+  - Si falla una descarga, se muestra lo demás y no se guarda en caché.
+  - La llave funciona en base64 y con `\n` escritos.
+  - Errores con mensaje claro:
+    - falta una variable;
+    - llave mal copiada o dañada;
+    - Google rechaza la cuenta;
+    - carpeta no compartida;
+    - API desactivada;
+    - código de carpeta raro;
+    - sin internet.
+  - Ninguna respuesta lleva "@", ni la llave, ni el correo de la cuenta de servicio.
+- Pruebas de la Fase 1, repetidas: 0 fallas.
+- `npm run lint`: sin errores.
+- Ruta real con `npm run dev` (carpeta local): HTTP 200 y las mismas cifras.
+
+**Falta:** la prueba con el Drive real, cuando Keily tenga la llave (ver CONFIGURAR_DRIVE.md, Paso 5).
+
+---
+
 ## Pendientes
 
 - **Pedir a Prospekt IA que guarde el correo del lead para el cruce de la Fase 4.**
+- Crear la cuenta de servicio y la carpeta de Drive (Keily, con la cuenta de MARKETING de RED) y hacer la prueba real de la Fase 2.
 - Retirar "Campañas de correo" (`mailing-campanas.html`) en otro PR (D13).
 
 ### Para la Fase 3 (pantalla) — anotado el 16/11/2026, no cambiar antes
@@ -100,3 +154,4 @@ Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. 
 | 16/11/2026 | Anotar como pendiente pedir el correo del lead a Prospekt IA. | Pendientes |
 | 16/11/2026 | `infored.com.sv` es externo: se deja así. | D7 |
 | 16/11/2026 | En pantalla no decir "como Brevo" (las cifras no coinciden con la pantalla de Brevo); avisar del 82 % de país "Desconocido". | Para la Fase 3 |
+| 16/11/2026 | Reglas de Drive: cuenta de empresa, Marketing Editor / cuenta de servicio Lector, nunca borrar CSV viejos. | D20 · CONFIGURAR_DRIVE.md |

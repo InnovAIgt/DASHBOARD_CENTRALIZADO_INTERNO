@@ -36,7 +36,7 @@ app.all('/api/marketing/reuniones', async (req, res) => {
 // Marketing por canales · métricas de mailing (docs/marketing-canales/README.md).
 // En Vercel esta misma ruta la atiende api/marketing/mailing.js.
 app.all('/api/marketing/mailing', async (req, res) => {
-  const resultado = await obtenerMailing({ method: req.method });
+  const resultado = await obtenerMailing({ method: req.method, actualizar: req.query.actualizar === '1' });
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', resultado.contentType);

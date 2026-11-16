@@ -10,10 +10,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { combinarArchivosBrevo } from './combinarArchivos.js'
+import { ErrorFuente } from './errorFuente.js'
 
 export const TIPO_FUENTE_LOCAL = 'carpeta-local'
-
-export class ErrorFuente extends Error {}
 
 export async function obtenerFilasCarpetaLocal(carpeta) {
   let nombres

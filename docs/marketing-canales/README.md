@@ -1,7 +1,7 @@
 # Marketing · Marketing por canales
 
 > Responsable: Keily García · Inicio: 16 de noviembre de 2026
-> Rama: `feature/marketing-mailing` · Estado: **Fase 1 (fuente local + cálculos + ruta)**
+> Rama: `feature/marketing-mailing` · Estado: **Fase 2 (Google Drive) — falta la prueba con la llave real**
 
 ## ¿Qué es?
 
@@ -28,7 +28,10 @@ Cambiar la fuente **no** obliga a tocar los cálculos ni la pantalla.
 
 | Archivo | Pieza | Qué hace |
 |---|---|---|
+| `server/marketingCanales/fuenteDrive.js` | Fuente | Lee la carpeta de Google Drive, con caché de 15 min. |
+| `server/marketingCanales/googleAuth.js` | Fuente | Pide a Google el permiso de solo lectura con la cuenta de servicio. |
 | `server/marketingCanales/fuenteLocal.js` | Fuente | Lee la carpeta de `MARKETING_LOCAL_CSV_DIR`. |
+| `server/marketingCanales/errorFuente.js` | Fuente | Errores de fuente con mensajes claros (sin llaves ni rutas). |
 | `server/marketingCanales/combinarArchivos.js` | Fuente | Junta todos los CSV; si una campaña se repite, usa el archivo más reciente. |
 | `server/marketingCanales/brevoCsv.js` | Fuente | Convierte un CSV de Brevo a filas estándar. |
 | `server/marketingCanales/reglas.js` | Cálculos | **Lista editable**: campañas de prueba, dominios internos, país, mínimo de datos. |
@@ -39,8 +42,15 @@ Cambiar la fuente **no** obliga a tocar los cálculos ni la pantalla.
 
 ## ¿De dónde salen los datos?
 
-Hoy, de una **carpeta local** con los reportes "por persona" que se descargan de Brevo
-(un CSV por campaña). La carpeta es el **historial**: se leen todos los CSV y se acumulan.
+De una carpeta con los reportes "por persona" que se descargan de Brevo (un CSV por campaña).
+La carpeta es el **historial**: se leen todos los CSV y se acumulan. Hay dos fuentes posibles:
+
+| Fuente | Variables | Dónde sirve |
+|---|---|---|
+| **Google Drive** (oficial) | `GOOGLE_SERVICE_ACCOUNT_JSON` + `MARKETING_DRIVE_FOLDER_ID` | Local, Vercel y Docker. Guía: [CONFIGURAR_DRIVE.md](CONFIGURAR_DRIVE.md) |
+| Carpeta local | `MARKETING_LOCAL_CSV_DIR` | Solo en la computadora de desarrollo |
+
+Si están las dos, **gana Drive** (D15). Drive se guarda 15 minutos; `?actualizar=1` lo vuelve a leer (D17).
 
 - La campaña se reconoce por la columna **Campaign ID**, no por el nombre del archivo.
 - Si dos CSV traen la misma campaña, se usa el de **fecha de modificación más reciente**.
@@ -81,8 +91,9 @@ Cada campaña trae dos bloques:
 
 ## La ruta `/api/marketing/mailing`
 
-`GET` devuelve JSON con:
-- `fuente`: tipo y si está configurada.
+`GET` (opcional `?actualizar=1`) devuelve JSON con:
+- `fuente`: cuál se usó (`tipo`, `descripcion`, `nota`), si está configurada y, en Drive, la caché
+  (cuándo se leyó y cuándo vence).
 - `archivos`: cuántos se revisaron, cuáles se usaron (campañas y filas) y cuáles se ignoraron, con motivo.
 - `campanas`: id, nombre, fecha de envío, mes, si está excluida y por qué, `totalBrevo`, `metricas`,
   `porPais` e internos.
@@ -93,14 +104,16 @@ Cada campaña trae dos bloques:
 **Privacidad:** no envía correos, IPs ni datos de personas. Si por error algún texto trajera un
 correo, la ruta bloquea la respuesta (D11).
 
-Sin fuente configurada (hoy en Vercel y Docker) responde `200` con
-`fuente.configurada = false` y el mensaje "Fuente de datos no configurada" (D12).
+Sin ninguna fuente configurada responde `200` con `fuente.configurada = false` y el mensaje
+"Fuente de datos no configurada" (D12).
 
 ## Variables de entorno (solo servidor, sin `VITE_`)
 
 | Variable | Dónde | Para qué |
 |---|---|---|
-| `MARKETING_LOCAL_CSV_DIR` | `.env.local` en tu computadora | Ruta de la carpeta con los CSV de Brevo. |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | `.env.local`, Vercel y Coolify | Llave de la cuenta de servicio (JSON o base64). **Secreta.** |
+| `MARKETING_DRIVE_FOLDER_ID` | `.env.local`, Vercel y Coolify | Código de la carpeta de Drive. |
+| `MARKETING_LOCAL_CSV_DIR` | `.env.local` en tu computadora | Ruta de la carpeta local con los CSV de Brevo. |
 
 ## Cómo probarlo en local
 
@@ -112,4 +125,5 @@ Sin fuente configurada (hoy en Vercel y Docker) responde `200` con
 
 - [REQUISITOS.md](REQUISITOS.md): lo pedido y su estado.
 - [DECISIONES.md](DECISIONES.md): decisiones D1, D2…
+- [CONFIGURAR_DRIVE.md](CONFIGURAR_DRIVE.md): cómo crear la cuenta de servicio y conectar la carpeta de Drive.
 - [BITACORA.md](BITACORA.md): qué se hizo en cada fase y cambios solicitados.

@@ -8,7 +8,7 @@ Pedido por Keily García el 16/11/2026. Estado: ✅ hecho · 🔄 en curso · �
 |---|---|---|
 | R1 | Tres piezas separadas: fuente → cálculos → ruta/pantalla. Cambiar la fuente no toca lo demás. | ✅ Fase 1 |
 | R2 | La fuente entrega un formato estándar: una fila por persona por campaña. | ✅ Fase 1 |
-| R3 | Funciona en local, Vercel y Docker. | ✅ Fase 1 (en Vercel/Docker: "fuente no configurada" hasta la Fase 2) |
+| R3 | Funciona en local, Vercel y Docker. | ✅ Fase 1 + Fase 2 (Drive funciona en los tres; falta la prueba con la llave real) |
 
 ## Fuente (CSV de Brevo)
 
@@ -18,7 +18,9 @@ Pedido por Keily García el 16/11/2026. Estado: ✅ hecho · 🔄 en curso · �
 | R5 | Identificar la campaña por Campaign ID, no por el nombre del archivo. | ✅ Fase 1 |
 | R6 | Leer y acumular todos los CSV de la carpeta. Campaña repetida → archivo más reciente. | ✅ Fase 1 |
 | R7 | Carpeta local `MARKETING_LOCAL_CSV_DIR`. | ✅ Fase 1 |
-| R8 | Google Drive con cuenta de servicio (`GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`), caché de ~15 min. | ⏳ Fase 2 |
+| R8 | Google Drive con cuenta de servicio (`GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`), caché de ~15 min. | 🔄 Fase 2: probado con Drive simulado; falta la prueba con la llave real |
+| R8a | Si están las dos fuentes, gana Drive y la respuesta dice cuál se usó. Hojas de Google se ignoran con motivo. Llave en JSON o base64. `?actualizar=1`. Sin librerías nuevas. | ✅ Fase 2 |
+| R8b | Carpeta y proyecto de Google Cloud de cuenta de empresa; Marketing Editor, cuenta de servicio Lector; nunca borrar CSV viejos. | ✅ documentado (CONFIGURAR_DRIVE.md) |
 
 ## Cálculos
 

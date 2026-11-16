@@ -3,7 +3,11 @@
 import { obtenerMailing } from '../../server/marketingMailing.js'
 
 export default async function handler(request, response) {
-  const resultado = await obtenerMailing({ method: request.method })
+  const url = new URL(request.url, 'http://localhost')
+  const resultado = await obtenerMailing({
+    method: request.method,
+    actualizar: url.searchParams.get('actualizar') === '1',
+  })
   if (resultado.status === 405) response.setHeader('Allow', 'GET')
   response.setHeader('Cache-Control', 'no-store')
   response.setHeader('Content-Type', resultado.contentType)

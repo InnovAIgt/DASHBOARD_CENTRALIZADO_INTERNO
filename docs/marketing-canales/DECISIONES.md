@@ -114,3 +114,55 @@ más adelante en otro PR.
 
 **Decisión:** `*.csv` y `*.CSV` en `.gitignore` y `.dockerignore`.
 **Por qué:** los reportes de Brevo tienen datos personales.
+
+## D15 · 16/11/2026 · Google Drive como fuente; si están las dos, gana Drive
+
+**Decisión:** `fuenteDrive.js` es una fuente más y reutiliza el mismo lector y la misma regla de
+"campaña repetida → archivo más reciente" que la carpeta local. Si están configuradas Drive y la
+carpeta local, se usa Drive y la respuesta lo dice (`fuente.tipo`, `fuente.descripcion` y `fuente.nota`).
+Si solo está una de las dos variables de Drive, la ruta responde un error que dice cuál falta.
+**Por qué:** Drive es la fuente oficial y funciona en local, Vercel y Docker. Cálculos y pantalla no cambian.
+
+## D16 · 16/11/2026 · Sin librerías nuevas para Google
+
+**Decisión:** el permiso de la cuenta de servicio se pide con `node:crypto` (firma del JWT) y
+`fetch`, en `googleAuth.js`. Se pide solo lectura de Drive (`drive.readonly`). No se toca `package.json`.
+**Por qué:** menos dependencias que mantener. La `google-auth-library` que hay en `node_modules`
+llega solo como parte de otra librería y podría desaparecer.
+
+## D17 · 16/11/2026 · Caché de 15 minutos y `?actualizar=1`
+
+**Decisión:**
+- el resultado de Drive se guarda 15 minutos en la memoria del servidor;
+- al refrescar, solo se descargan los archivos cuya fecha de modificación cambió;
+- `?actualizar=1` ignora la caché;
+- los errores no se guardan: si falla la descarga de un archivo, se muestra lo demás, ese archivo
+  aparece como ignorado con el motivo, y el siguiente pedido vuelve a intentar;
+- el permiso de Google se reutiliza hasta 5 minutos antes de que venza (~55 min).
+
+**Por qué:** menos llamadas a Google y respuestas rápidas aunque el historial crezca.
+En Vercel la caché dura mientras la función siga "despierta"; si se apaga, la siguiente consulta lee Drive de nuevo.
+
+## D18 · 16/11/2026 · Hojas de Google se ignoran
+
+**Decisión:** si en la carpeta hay una Hoja de Google (un CSV que Drive convirtió), se ignora con el
+motivo "Es una hoja de Google, no un CSV: sube el CSV original de Brevo". Lo mismo con otros
+documentos de Google, subcarpetas y archivos que no son `.csv`.
+**Por qué:** al exportar una hoja, Drive la entrega separada por comas, no por `;`, y puede cambiar las fechas.
+
+## D19 · 16/11/2026 · Llave en JSON o en base64
+
+**Decisión:** `GOOGLE_SERVICE_ACCOUNT_JSON` acepta el JSON tal cual o el mismo JSON en base64. También
+se aceptan los saltos de línea de la llave escritos como `\n`. Ningún mensaje de error muestra la
+llave ni el correo de la cuenta de servicio.
+**Por qué:** algunos paneles (Vercel, Coolify) cortan o alteran los textos de varias líneas.
+
+## D20 · 16/11/2026 · Reglas de la carpeta de Drive
+
+**Decisión:**
+- la carpeta y el proyecto de Google Cloud son de la cuenta de **MARKETING de RED**, nunca personal;
+- Marketing es **Editor** y la cuenta de servicio es **Lector**;
+- **nunca se borran CSV viejos**, porque la carpeta es el historial.
+
+Ver [CONFIGURAR_DRIVE.md](CONFIGURAR_DRIVE.md).
+**Por qué:** los CSV traen correos de clientes.

@@ -2,7 +2,7 @@
  * Marketing por canales — respuesta de /api/marketing/mailing.
  *
  * Une las 3 piezas (docs/marketing-canales/DECISIONES.md, D1):
- *   1. FUENTE   → filas estándar   (hoy: carpeta local; Fase 2: Google Drive)
+ *   1. FUENTE   → filas estándar   (Google Drive o carpeta local; ver elegirFuente)
  *   2. CÁLCULOS → métricas         (server/marketingCanales/calculos.js)
  *   3. RUTA     → esta respuesta   (solo totales: sin correos, IPs ni datos personales)
  *
@@ -11,35 +11,63 @@
  *   - server.ts                 (desarrollo local y Docker/Coolify)
  */
 import { calcularMailing } from './marketingCanales/calculos.js'
-import { ErrorFuente, obtenerFilasCarpetaLocal } from './marketingCanales/fuenteLocal.js'
+import { ErrorFuente } from './marketingCanales/errorFuente.js'
+import { MINUTOS_CACHE_DRIVE, TIPO_FUENTE_DRIVE, obtenerFilasDrive } from './marketingCanales/fuenteDrive.js'
+import { TIPO_FUENTE_LOCAL, obtenerFilasCarpetaLocal } from './marketingCanales/fuenteLocal.js'
 
-/** Elige la fuente según las variables de entorno del servidor. */
-function elegirFuente() {
-  const carpeta = process.env.MARKETING_LOCAL_CSV_DIR?.trim()
-  if (carpeta) return { tipo: 'carpeta-local', obtener: () => obtenerFilasCarpetaLocal(carpeta) }
+const DESCRIPCION = {
+  [TIPO_FUENTE_DRIVE]: 'Carpeta de Google Drive',
+  [TIPO_FUENTE_LOCAL]: 'Carpeta local (solo en la computadora de desarrollo)',
+}
+
+/**
+ * Elige la fuente según las variables de entorno del servidor (D15):
+ * si Drive está configurado, gana Drive; si no, la carpeta local; si no hay ninguna, "no configurada".
+ */
+function elegirFuente(env, fuenteDrive) {
+  const cuentaTexto = env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()
+  const carpetaId = env.MARKETING_DRIVE_FOLDER_ID?.trim()
+  const carpetaLocal = env.MARKETING_LOCAL_CSV_DIR?.trim()
+
+  if (cuentaTexto || carpetaId) {
+    const falta = !cuentaTexto ? 'GOOGLE_SERVICE_ACCOUNT_JSON' : !carpetaId ? 'MARKETING_DRIVE_FOLDER_ID' : null
+    if (falta) return { tipo: TIPO_FUENTE_DRIVE, error: `Google Drive está a medio configurar: falta ${falta}.` }
+    return {
+      tipo: TIPO_FUENTE_DRIVE,
+      nota: carpetaLocal ? 'También hay una carpeta local configurada; cuando existen las dos, se usa Google Drive.' : null,
+      obtener: ({ actualizar }) => fuenteDrive({ cuentaTexto, carpetaId, actualizar }),
+    }
+  }
+  if (carpetaLocal) return { tipo: TIPO_FUENTE_LOCAL, nota: null, obtener: () => obtenerFilasCarpetaLocal(carpetaLocal) }
   return null
 }
 
-export async function obtenerMailing({ method }) {
+/**
+ * @param {{ method: string, actualizar?: boolean }} pedido
+ * @param {{ env?: object, fuenteDrive?: Function }} [opciones]  solo para pruebas
+ */
+export async function obtenerMailing({ method, actualizar = false }, { env = process.env, fuenteDrive = obtenerFilasDrive } = {}) {
   if (method !== 'GET') return json(405, { error: 'Método no permitido. Usa GET.' })
 
-  const fuente = elegirFuente()
+  const fuente = elegirFuente(env, fuenteDrive)
   if (!fuente) {
     return json(200, {
       generado: new Date().toISOString(),
       fuente: {
         tipo: null,
+        descripcion: null,
         configurada: false,
-        mensaje: 'Fuente de datos no configurada. En local, define MARKETING_LOCAL_CSV_DIR en .env.local.',
+        mensaje: 'Fuente de datos no configurada. Configura Google Drive (GOOGLE_SERVICE_ACCOUNT_JSON y MARKETING_DRIVE_FOLDER_ID) o, en local, MARKETING_LOCAL_CSV_DIR.',
       },
       archivos: { revisados: 0, usados: [], ignorados: [] },
       ...calcularMailing([]),
     })
   }
+  if (fuente.error) return json(500, { error: fuente.error, fuente: { tipo: fuente.tipo, configurada: false } })
 
   let resultado
   try {
-    resultado = await fuente.obtener()
+    resultado = await fuente.obtener({ actualizar })
   } catch (error) {
     if (error instanceof ErrorFuente) return json(500, { error: error.message, fuente: { tipo: fuente.tipo, configurada: true } })
     console.error('[marketing/mailing] Error inesperado al leer la fuente:', error?.message)
@@ -48,7 +76,15 @@ export async function obtenerMailing({ method }) {
 
   const respuesta = {
     generado: new Date().toISOString(),
-    fuente: { tipo: resultado.tipo, configurada: true, mensaje: null },
+    fuente: {
+      tipo: resultado.tipo,
+      descripcion: DESCRIPCION[resultado.tipo],
+      configurada: true,
+      mensaje: null,
+      nota: fuente.nota,
+      // Solo Drive usa caché: cuándo se leyó y cuándo vence (MINUTOS_CACHE_DRIVE).
+      cache: resultado.cache ? { ...resultado.cache, minutos: MINUTOS_CACHE_DRIVE } : null,
+    },
     archivos: resultado.archivos,
     ...calcularMailing(resultado.filas),
   }
