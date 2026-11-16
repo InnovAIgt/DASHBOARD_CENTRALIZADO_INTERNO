@@ -2263,3 +2263,164 @@ color: var(--text-muted);
 font-family: var(--font-mono);
       font-size: 13px;
 }
+
+/* ==========================================================================
+   RESUMEN ORDENADO Y CENTRADO: CLIENTES POR LÍNEA Y DESGLOSE POR TIPO
+   ========================================================================== */
+.fl-summary-panel {
+  background: var(--panel, #151821);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fl-summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fl-summary-section + .fl-summary-section {
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.fl-summary-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.fl-summary-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.fl-summary-fx {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.fl-lines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.fl-types-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fl-sum-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 3px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.fl-sum-card.is-line {
+  border-top-color: #3f9c85;
+}
+
+.fl-sum-card.is-total {
+  background: rgba(196, 60, 80, 0.1);
+  border-color: rgba(196, 60, 80, 0.3);
+  border-top-color: #c43c50;
+}
+
+.fl-sum-card.is-ciclica {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.12);
+  border-top-color: #94a3b8;
+}
+
+.fl-sum-card.is-manual {
+  background: rgba(79, 143, 216, 0.08);
+  border-color: rgba(79, 143, 216, 0.28);
+  border-top-color: #4f8fd8;
+}
+
+.fl-sum-card.is-refact {
+  background: rgba(196, 60, 80, 0.09);
+  border-color: rgba(196, 60, 80, 0.3);
+  border-top-color: #c43c50;
+}
+
+.fl-sum-card-top {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e8eaf0;
+}
+
+.fl-sum-card.is-total .fl-sum-card-top { color: #f07b8a; }
+.fl-sum-card.is-manual .fl-sum-card-top { color: #7fb0f0; }
+.fl-sum-card.is-refact .fl-sum-card-top { color: #f07b8a; }
+
+.fl-sum-pct {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #cbd5e1;
+}
+
+.fl-sum-main {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.fl-sum-main .fl-unit {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  color: #3f9c85;
+  margin-left: 3px;
+}
+
+.fl-sum-card.is-total .fl-sum-main .fl-unit {
+  color: #e8eaf0;
+}
+
+.fl-sum-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 780px) {
+  .fl-types-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

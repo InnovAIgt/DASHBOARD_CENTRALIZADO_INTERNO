@@ -164,9 +164,9 @@
       <div id="activeFilterAlertBanner" style="display: none; background: rgba(79,143,216, 0.12); border: 1px solid rgba(79,143,216, 0.3); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7fb0f0;">
           <span style="font-size: 15px;">🔍</span>
-          <span>Filtro activo: <strong id="activeFilterAlertText" style="color: #fff;">Línea de Negocio: ADICIÓN</strong> (<span id="activeFilterAlertCount">19 de 44</span> radicaciones)</span>
+          <span>Filtro activo: <strong id="activeFilterAlertText" style="color: #fff;">Filtros aplicados</strong> (<span id="activeFilterAlertCount">0</span>)</span>
         </div>
-        <button type="button" onclick="resetAllFilters()" style="background: rgba(196,60,80, 0.15); border: 1px solid rgba(196,60,80, 0.3); color: #d95f6e; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Restablecer todos los filtros y ver las 44 radicaciones">
+        <button type="button" onclick="resetAllFilters()" style="background: rgba(196,60,80, 0.15); border: 1px solid rgba(196,60,80, 0.3); color: #d95f6e; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Restablecer todos los filtros">
           ✕ Mostrar todas las radicaciones
         </button>
       </div>
@@ -456,7 +456,7 @@
         <div class="panel-header">
           <div>
             <div class="hero-eyebrow">ANÁLISIS POR LÍNEA DE NEGOCIO</div>
-            <div class="panel-title">Venta Nueva, Renovación y Adición</div>
+            <div class="panel-title" id="categoriasTitleText">Venta Nueva, Renovación, Adición y Backup</div>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
               Volumen de equipos (radios), comparativa por país y ranking de clientes con mayor demanda.
             </div>
@@ -466,11 +466,12 @@
             <button class="pill-btn" data-cat="ADICION">Adición</button>
             <button class="pill-btn" data-cat="VENTA NUEVA">Venta Nueva</button>
             <button class="pill-btn" data-cat="RENOVACION">Renovación</button>
+            <button class="pill-btn" data-cat="BACKUP">Backup</button>
           </div>
         </div>
 
-        <!-- 3 Category Cards -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" id="categoryCardsGrid">
+        <!-- Category Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;" id="categoryCardsGrid">
           <!-- Rendered by JS -->
         </div>
 
@@ -801,7 +802,8 @@
   const NEGOCIO_OPTIONS = [
     { label: 'Adición', value: 'ADICION' },
     { label: 'Venta nueva', value: 'VENTA NUEVA' },
-    { label: 'Renovación', value: 'RENOVACION' }
+    { label: 'Renovación', value: 'RENOVACION' },
+    { label: 'Backup', value: 'BACKUP' }
   ];
 
   const ETAPA_OPTIONS = [
@@ -814,8 +816,7 @@
 
   const SLA_OPTIONS = [
     { label: 'En tiempo', value: 'en_tiempo' },
-    { label: 'Por vencer en etapa', value: 'por_vencer' },
-    { label: 'Por vencer en SLA global', value: 'por_vencer_global' },
+    { label: 'Por vencer (SLA global)', value: 'por_vencer' },
     { label: 'Vencida en etapa', value: 'vencidas_etapa' },
     { label: 'Vencida en SLA global', value: 'vencidas_global' }
   ];
@@ -839,6 +840,12 @@
       (currentFilter.dateFrom !== period.from || currentFilter.dateTo !== period.to);
   }
 
+  function getActiveCountryLabel() {
+    if (currentFilter.pais === "GT") return "Guatemala (GT)";
+    if (currentFilter.pais === "SV") return "El Salvador (SV)";
+    return "Todos (GT + SV)";
+  }
+
   // Estado Global de Datos y Filtros
   let allData = [];
   let filteredData = [...allData];
@@ -849,9 +856,9 @@
   let currentFilter = {
     pais: "todos",
     estados: ['en_proceso', 'finalizada', 'cancelada'],
-    negocios: ['ADICION', 'VENTA NUEVA', 'RENOVACION'],
+    negocios: ['ADICION', 'VENTA NUEVA', 'RENOVACION', 'BACKUP'],
     etapas: ['1', '2', '3', '4', '5'],
-    slas: ['en_tiempo', 'por_vencer', 'por_vencer_global', 'vencidas_etapa', 'vencidas_global'],
+    slas: ['en_tiempo', 'por_vencer', 'vencidas_etapa', 'vencidas_global'],
     dateFrom: initialPeriod.from,
     dateTo: initialPeriod.to,
     search: "",
@@ -1369,13 +1376,15 @@
       // 0. Excluir no iniciadas (todo menos las no iniciadas)
       if (item.iniciada === false || item.estado === "no_iniciada" || item.estado === "no iniciada") return false;
       // 1. País
-      if (currentFilter.pais !== "todos" && item.pais !== currentFilter.pais) return false;
+      const itemPais = String(item.pais || "GT").trim().toUpperCase();
+      if (currentFilter.pais !== "todos" && itemPais !== currentFilter.pais) return false;
 
       // 2. Estado
       if (!currentFilter.estados.includes(item.estado)) return false;
 
       // 3. Negocio
-      if (!currentFilter.negocios.includes(item.negocio)) return false;
+      const itemNegocio = String(item.negocio || "").trim().toUpperCase();
+      if (currentFilter.negocios.length < NEGOCIO_OPTIONS.length && !currentFilter.negocios.includes(itemNegocio)) return false;
 
       // 4. Etapas
       const activeStageNum = item.proceso && item.proceso.etapaActual 
@@ -1398,7 +1407,7 @@
       }
 
       // 6. Categoría Quick Filter
-      if (currentFilter.catQuickFilter !== "ALL" && item.negocio !== currentFilter.catQuickFilter) return false;
+      if (currentFilter.catQuickFilter !== "ALL" && itemNegocio !== currentFilter.catQuickFilter) return false;
 
       // 7. Rango de fechas:
       // En vista por defecto (sin filtro manual de fecha), todas las radicaciones "en_proceso" activas
@@ -1442,6 +1451,7 @@
   function updateFilterBanner() {
     const banner = document.getElementById("activeFilterAlertBanner");
     const textEl = document.getElementById("activeFilterAlertText");
+    const countEl = document.getElementById("activeFilterAlertCount");
     const countBtn = document.getElementById("btnResetActiveFilterCount");
     if (!banner || !textEl) return;
 
@@ -1468,11 +1478,25 @@
 
     if (hasFilter) {
       banner.style.display = "flex";
-      if (currentFilter.openSlaFocus) {
-        const pLabel = currentFilter.pais === "todos" ? "Todos" : currentFilter.pais;
-        textEl.innerHTML = `${pLabel} · ${focusLabels[currentFilter.openSlaFocus] || "Procesos en curso"} (${filteredData.length} radicaciones)`;
-      } else {
-        textEl.innerHTML = `Filtros Personalizados (${filteredData.length} radicaciones)`;
+      const parts = [];
+      if (currentFilter.pais !== "todos") parts.push(`País: ${getActiveCountryLabel()}`);
+      if (currentFilter.openSlaFocus) parts.push(focusLabels[currentFilter.openSlaFocus] || "Procesos en curso");
+      if (currentFilter.catQuickFilter !== "ALL") parts.push(`Categoría: ${currentFilter.catQuickFilter}`);
+      if (currentFilter.stageQuickFilter !== "todos") parts.push(`Etapa: Fase ${currentFilter.stageQuickFilter}`);
+      if (customDateFilter) parts.push(`Período: ${currentFilter.dateFrom || "inicio"} a ${currentFilter.dateTo || "hoy"}`);
+      if (currentFilter.search) parts.push(`Búsqueda: "${currentFilter.search}"`);
+      if (
+        parts.length === 0 ||
+        currentFilter.estados.length < ESTADO_OPTIONS.length ||
+        currentFilter.negocios.length < NEGOCIO_OPTIONS.length ||
+        currentFilter.etapas.length < ETAPA_OPTIONS.length ||
+        currentFilter.slas.length < SLA_OPTIONS.length
+      ) {
+        if (parts.length === 0) parts.push("Filtros Personalizados");
+      }
+      textEl.textContent = parts.join(" · ");
+      if (countEl) {
+        countEl.textContent = `${filteredData.length} radicaciones mostradas de ${allData.length} históricas`;
       }
       if (countBtn) countBtn.innerText = "✕ Mostrar todas las radicaciones";
     } else {
@@ -1522,6 +1546,8 @@
     document.querySelectorAll(".op-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-op") === "todos");
     });
+    updatePillActive("#catQuickFilter", "ALL", "data-cat");
+    updatePillActive("#etapasTabFilterButtons", "todos", "data-etapa");
 
     renderChecklistCols();
     renderApp();
@@ -1816,16 +1842,18 @@
     const customDate = hasCustomDateFilter();
     return allData.filter(item => {
       if (!item || item.iniciada === false || item.estado !== "en_proceso") return false;
-      if (item.pais !== countryCode) return false;
+      const itemPais = String(item.pais || "GT").trim().toUpperCase();
+      if (itemPais !== countryCode) return false;
       if (!currentFilter.estados.includes("en_proceso") && !currentFilter.openSlaFocus) return false;
-      if (!currentFilter.negocios.includes(item.negocio)) return false;
+      const itemNegocio = String(item.negocio || "").trim().toUpperCase();
+      if (currentFilter.negocios.length < NEGOCIO_OPTIONS.length && !currentFilter.negocios.includes(itemNegocio)) return false;
 
       const activeStageNum = item.proceso && item.proceso.etapaActual
         ? String(item.proceso.etapaActual.numero)
         : "1";
       if (!currentFilter.etapas.includes(activeStageNum)) return false;
       if (currentFilter.stageQuickFilter !== "todos" && activeStageNum !== currentFilter.stageQuickFilter) return false;
-      if (currentFilter.catQuickFilter !== "ALL" && item.negocio !== currentFilter.catQuickFilter) return false;
+      if (currentFilter.catQuickFilter !== "ALL" && itemNegocio !== currentFilter.catQuickFilter) return false;
 
       if (customDate) {
         const itemDate = getItemFilterDate(item);
@@ -1886,7 +1914,7 @@
         const st = etapas.find(e => e.numero === num);
         if (!st || !st.fechaInicio) return;
         iniciadas++;
-        const h = calculateBusinessHours(st.fechaInicio, st.fechaFin);
+        const h = calculateBusinessHours(st.fechaInicio, getStageEffectiveEndIso(item, st));
         if (h <= limit) cumplidas++;
       });
 
@@ -2036,13 +2064,18 @@
       };
 
       const customDate = hasCustomDateFilter();
+      const countryScopeLabel = getActiveCountryLabel();
       const eyebrowSpan = document.querySelector("#radiosRowEyebrow span:last-child");
       if (eyebrowSpan) {
         eyebrowSpan.innerText = customDate
-          ? "CONTROL Y ENTREGA DE RADIOS DEL PERÍODO SELECCIONADO"
-          : "CONTROL Y ENTREGA DE RADIOS (ACTIVAS EN CURSO + FINALIZADAS DEL MES)";
+          ? `CONTROL Y ENTREGA DE RADIOS · ${countryScopeLabel.toUpperCase()} (PERÍODO SELECCIONADO)`
+          : `CONTROL Y ENTREGA DE RADIOS · ${countryScopeLabel.toUpperCase()} (ACTIVAS EN CURSO + FINALIZADAS DEL MES)`;
       }
 
+      setElText(
+        "kpiTotalRadiosSub",
+        currentFilter.pais === "todos" ? "Todas las radicaciones (GT + SV)" : `Radicaciones de ${countryScopeLabel}`
+      );
       setElText("kpiTotalRadios", totalRadios.toLocaleString("es-GT"));
       setElText("kpiRadiosEnProceso", radiosEnProceso.toLocaleString("es-GT"));
       setElText("kpiRadiosEntregados", radiosEntregados.toLocaleString("es-GT"));
@@ -2054,7 +2087,7 @@
       );
 
       setElText("kpiTotalExact", total);
-      setElText("kpiTotalFootnote", `${enProceso} en curso + ${finalizadas} fin. + ${canceladas} canc. · Clic ↗`);
+      setElText("kpiTotalFootnote", `${enProceso} en curso + ${finalizadas} fin. + ${canceladas} canc. · ${countryScopeLabel} ↗`);
       setElText("kpiActiveExact", enProceso);
       setElText(
         "kpiActiveFootnote",
@@ -2063,7 +2096,9 @@
           : `${enProceso} en curso (${currentFilter.pais}) · Clic ↗`
       );
       setElText("kpiDoneExact", finalizadas);
+      setElText("kpiDoneFootnote", `Procesos completados (${currentFilter.pais === "todos" ? "GT + SV" : currentFilter.pais}) · Clic ↗`);
       setElText("kpiCancelledExact", canceladas);
+      setElText("kpiCancelledFootnote", `Procesos cancelados (${currentFilter.pais === "todos" ? "GT + SV" : currentFilter.pais}) · Clic ↗`);
 
       // SLAs para Donut Chart (mismos colores semánticos que las tarjetas de arriba)
       let enTiempo = 0;
@@ -2484,12 +2519,15 @@
       });
     }
 
+    const titleEl = document.getElementById("generalTableTitleText");
+    if (titleEl) {
+      titleEl.innerText = currentFilter.pais === "todos"
+        ? "Listado General de Detalle de Radicaciones"
+        : `Listado General de Detalle de Radicaciones · ${getActiveCountryLabel()}`;
+    }
+
     if (countBadge) {
-      if (tableSearchText) {
-        countBadge.innerText = `Mostrando ${displayList.length} radicaciones`;
-      } else {
-        countBadge.innerText = `Mostrando ${displayList.length} radicaciones`;
-      }
+      countBadge.innerText = `Mostrando ${displayList.length} radicaciones · ${getActiveCountryLabel()}`;
     }
 
     if (btnResetTable) {
@@ -2597,11 +2635,22 @@
       const detailTbody = document.getElementById("inventoryDetailTbody");
       if (!grid) return;
 
-      const categories = ["ADICION", "VENTA NUEVA", "RENOVACION"];
+      const catTitleEl = document.getElementById("categoriasTitleText");
+      if (catTitleEl) {
+        catTitleEl.innerText = currentFilter.pais === "todos"
+          ? "Venta Nueva, Renovación, Adición y Backup"
+          : `Venta Nueva, Renovación, Adición y Backup · ${getActiveCountryLabel()}`;
+      }
+
+      const categories = ["ADICION", "VENTA NUEVA", "RENOVACION", "BACKUP"];
+      filteredData.forEach(i => {
+        const neg = String(i.negocio || "").trim().toUpperCase();
+        if (neg && !categories.includes(neg)) categories.push(neg);
+      });
       let cardsHtml = "";
 
       categories.forEach(cat => {
-        const catItems = filteredData.filter(i => i.negocio === cat);
+        const catItems = filteredData.filter(i => String(i.negocio || "").trim().toUpperCase() === cat);
         const totalRadicaciones = catItems.length;
         const totalRadios = catItems.reduce((acc, i) => acc + getTotalRadiosCount(i), 0);
         const deliveredRadios = catItems.reduce((acc, i) => acc + getRadiosEntregadosCount(i), 0);
@@ -3119,7 +3168,7 @@
     const badge = document.getElementById("actInformeSummaryBadge");
 
     if (badge) {
-      badge.textContent = `Mostrando ${list.length} radicaciones`;
+      badge.textContent = `Mostrando ${list.length} radicaciones · ${getActiveCountryLabel()}`;
     }
 
     const totalRadios = list.reduce((sum, r) => sum + getTotalRadiosCount(r), 0);
@@ -3536,14 +3585,15 @@
     const gt = countryStats('GT');
     const pctColor = (p) => p >= 90 ? '#2f8f76' : '#c59600';
     const pctLabel = (p) => p >= 100 ? 'ÓPTIMO' : (p >= 90 ? 'CUMPLIDO' : 'POR MEJORAR');
-    const negocios = ['ADICION', 'VENTA NUEVA', 'RENOVACION'];
+    const negocios = ['ADICION', 'VENTA NUEVA', 'RENOVACION', 'BACKUP'];
     const negocioRows = negocios.map(n => {
-      const items = list.filter(r => r.negocio === n);
+      const items = list.filter(r => String(r.negocio || '').trim().toUpperCase() === n);
+      if (n === 'BACKUP' && !items.length) return '';
       const radios = items.reduce((s, r) => s + (Number(r.cantidad) || 0), 0);
       return `<div><b>${n}:</b> ${items.length} radicaciones | <b>${radios}</b> radios</div>`;
     }).join('');
     const categoryRows = negocios.map(negocio => {
-      const items = list.filter(item => item.negocio === negocio);
+      const items = list.filter(item => String(item.negocio || '').trim().toUpperCase() === negocio);
       if (!items.length) return '';
       const radios = items.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
       const gt = items.filter(item => item.pais === 'GT').length;
@@ -3694,11 +3744,11 @@
     <div class="period-kpi" style="border-top-color:#4f8fd8;"><div class="lbl">Cumplimiento SLA</div><div class="num" style="color:#4f8fd8;">${slaRate}%</div><div class="sub">${cOk} radicaciones dentro de SLA</div></div>
   </div>
   <h2>2. Cumplimiento de SLA global (&lt; 104h laborables L-V 8am-6pm)</h2>
-  <div class="grid2">
-    <div class="box country"><div><div class="name">SV El Salvador (SV)</div><div class="sub">${sv.ok} de ${sv.n} radicaciones dentro de SLA</div></div>
-      <div><div class="pct" style="color:${pctColor(sv.pct)};">${sv.pct}%</div><div class="tag" style="color:${pctColor(sv.pct)};">${pctLabel(sv.pct)}</div></div></div>
-    <div class="box country"><div><div class="name">GT Guatemala (GT)</div><div class="sub">${gt.ok} de ${gt.n} radicaciones dentro de SLA</div></div>
-      <div><div class="pct" style="color:${pctColor(gt.pct)};">${gt.pct}%</div><div class="tag" style="color:${pctColor(gt.pct)};">${pctLabel(gt.pct)}</div></div></div>
+  <div class="grid2" style="${currentFilter.pais !== 'todos' ? 'grid-template-columns: 1fr;' : ''}">
+    ${currentFilter.pais !== 'GT' ? `<div class="box country"><div><div class="name">SV El Salvador (SV)</div><div class="sub">${sv.ok} de ${sv.n} radicaciones dentro de SLA</div></div>
+      <div><div class="pct" style="color:${pctColor(sv.pct)};">${sv.pct}%</div><div class="tag" style="color:${pctColor(sv.pct)};">${pctLabel(sv.pct)}</div></div></div>` : ''}
+    ${currentFilter.pais !== 'SV' ? `<div class="box country"><div><div class="name">GT Guatemala (GT)</div><div class="sub">${gt.ok} de ${gt.n} radicaciones dentro de SLA</div></div>
+      <div><div class="pct" style="color:${pctColor(gt.pct)};">${gt.pct}%</div><div class="tag" style="color:${pctColor(gt.pct)};">${pctLabel(gt.pct)}</div></div></div>` : ''}
   </div>
   <div class="grid2"><div class="box"><h3>Situación Operativa de SLA</h3><div class="sit">
     <svg width="95" height="95" viewBox="0 0 100 100" style="transform: rotate(-90deg);">${donut}</svg>

@@ -910,46 +910,68 @@
           linesSummaryEl.innerHTML = '';
         }
       } else {
+        const cicPct = total > 0 ? ((typeSummary.CICLICA.total / total) * 100).toFixed(1) : '0.0';
+        const manPct = total > 0 ? ((typeSummary['CICLICA MANUAL'].total / total) * 100).toFixed(1) : '0.0';
         const refPct = total > 0 ? ((typeSummary.REFACTURACION.total / total) * 100).toFixed(1) : '0.0';
         const fxNote = currentCountry === 'ALL'
-          ? `<span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">Consolidado GT (GTQ→USD) + SV (USD) · 1 USD = Q ${CURRENCY_RATE.toFixed(5)}</span>`
+          ? `<div class="fl-summary-fx">Consolidado GT (GTQ→USD) + SV (USD) · 1 USD = Q ${CURRENCY_RATE.toFixed(5)}</div>`
           : (currentCountry === 'GT'
-            ? `<span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">Origen SAP GT en GTQ · Vista en ${currentCurrency} (1 USD = Q ${CURRENCY_RATE.toFixed(5)})</span>`
+            ? `<div class="fl-summary-fx">Origen SAP GT en GTQ · Vista en ${currentCurrency} (1 USD = Q ${CURRENCY_RATE.toFixed(5)})</div>`
             : '');
 
         linesSummaryEl.innerHTML = `
-          <div style="background:var(--panel, #151821);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 18px;display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-              <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Clientes por línea:</span>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div class="fl-summary-panel">
+            <div class="fl-summary-section">
+              <div class="fl-summary-head">
+                <div class="fl-summary-title">Clientes por línea de negocio</div>
+                ${fxNote}
+              </div>
+              <div class="fl-lines-grid">
                 ${orderedLines.map(k => `
-                  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:5px 12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;">
-                    <strong style="color:#ffffff;">${k}</strong>
-                    <span style="color:#2f8f76;font-weight:700;">${lineMap[k].clients.size} clientes</span>
-                    <span style="color:var(--text-muted);font-size:11px;">(${lineMap[k].invoices} fact. · ${formatMoney(lineMap[k].total)})</span>
+                  <div class="fl-sum-card is-line">
+                    <div class="fl-sum-card-top">${escapeHTML(k)}</div>
+                    <div class="fl-sum-main">${lineMap[k].clients.size}<span class="fl-unit">clientes</span></div>
+                    <div class="fl-sum-sub">${lineMap[k].invoices.toLocaleString('es-SV')} fact. · ${formatMoney(lineMap[k].total)}</div>
                   </div>
                 `).join('')}
-                <div style="background:rgba(196,60,80,0.14);border:1px solid rgba(196,60,80,0.32);border-radius:8px;padding:5px 12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;">
-                  <strong style="color:#d95f6e;">TOTAL</strong>
-                  <span style="color:#ffffff;font-weight:700;">${allUniqueClients.size} clientes</span>
-                  <span style="color:#d95f6e;font-size:11px;">(${list.length} fact.)</span>
+                <div class="fl-sum-card is-total">
+                  <div class="fl-sum-card-top">Total consolidado</div>
+                  <div class="fl-sum-main">${allUniqueClients.size}<span class="fl-unit">clientes</span></div>
+                  <div class="fl-sum-sub">${list.length.toLocaleString('es-SV')} fact. · ${formatMoney(total)}</div>
                 </div>
               </div>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-right:4px;">Desglose por tipo:</span>
-                <span style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:4px 10px;font-size:11.5px;color:var(--text-muted);">
-                  Cíclica: <strong style="color:#ffffff;font-family:var(--font-mono);">${typeSummary.CICLICA.count}</strong> · <span style="font-family:var(--font-mono);color:#e8eaf0;">${formatMoney(typeSummary.CICLICA.total)}</span>
-                </span>
-                <span style="background:rgba(79,143,216,0.1);border:1px solid rgba(79,143,216,0.25);border-radius:8px;padding:4px 10px;font-size:11.5px;color:#7fb0f0;">
-                  Manuales: <strong style="color:#ffffff;font-family:var(--font-mono);">${typeSummary['CICLICA MANUAL'].count}</strong> · <span style="font-family:var(--font-mono);color:#e8eaf0;">${formatMoney(typeSummary['CICLICA MANUAL'].total)}</span>
-                </span>
-                <span style="background:rgba(196,60,80,0.12);border:1px solid rgba(196,60,80,0.3);border-radius:8px;padding:4px 10px;font-size:11.5px;color:#f07b8a;">
-                  Refacturación: <strong style="color:#ffffff;font-family:var(--font-mono);">${typeSummary.REFACTURACION.count}</strong> · <span style="font-family:var(--font-mono);color:#ffffff;">${formatMoney(typeSummary.REFACTURACION.total)}</span> <span style="color:var(--text-muted);">(${refPct}%)</span>
-                </span>
+
+            <div class="fl-summary-section">
+              <div class="fl-summary-head">
+                <div class="fl-summary-title">Desglose por tipo de facturación</div>
               </div>
-              ${fxNote}
+              <div class="fl-types-grid">
+                <div class="fl-sum-card is-ciclica">
+                  <div class="fl-sum-card-top">
+                    <span>Cíclica</span>
+                    <span class="fl-sum-pct">${cicPct}%</span>
+                  </div>
+                  <div class="fl-sum-main">${formatMoney(typeSummary.CICLICA.total)}</div>
+                  <div class="fl-sum-sub">${typeSummary.CICLICA.count.toLocaleString('es-SV')} facturas</div>
+                </div>
+                <div class="fl-sum-card is-manual">
+                  <div class="fl-sum-card-top">
+                    <span>Manuales</span>
+                    <span class="fl-sum-pct">${manPct}%</span>
+                  </div>
+                  <div class="fl-sum-main">${formatMoney(typeSummary['CICLICA MANUAL'].total)}</div>
+                  <div class="fl-sum-sub">${typeSummary['CICLICA MANUAL'].count.toLocaleString('es-SV')} facturas</div>
+                </div>
+                <div class="fl-sum-card is-refact">
+                  <div class="fl-sum-card-top">
+                    <span>Refacturación</span>
+                    <span class="fl-sum-pct">${refPct}%</span>
+                  </div>
+                  <div class="fl-sum-main">${formatMoney(typeSummary.REFACTURACION.total)}</div>
+                  <div class="fl-sum-sub">${typeSummary.REFACTURACION.count.toLocaleString('es-SV')} facturas</div>
+                </div>
+              </div>
             </div>
           </div>
         `;
