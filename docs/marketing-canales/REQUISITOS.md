@@ -26,7 +26,8 @@ Pedido por Keily García el 16/11/2026. Estado: ✅ hecho · 🔄 en curso · �
 
 | # | Requisito | Estado |
 |---|---|---|
-| R9 | Enviados, entregados, rebotes duro y suave, aperturas reales, solo apertura automática, personas con clic, totales "como Brevo", bajas y quejas. | ✅ Fase 1 |
+| R9 | Enviados, entregados, rebotes temporales y permanentes, aperturas reales, solo apertura automática, personas con clic, aperturas totales y clics en enlaces distintos, bajas y quejas. | ✅ Fase 1 |
+| R9a | Entregado o rebote: gana el último evento con fecha. Contador "entregados y luego rebotados". Nota visible en "% de apertura" con las aperturas de quienes luego rebotaron. | ✅ Paso A (D21) |
 | R10 | % apertura y % clic sobre entregados. Con < 5 entregados: "pocos datos". | ✅ Fase 1 |
 | R11 | Excluir campañas de prueba (lista editable, sin importar mayúsculas ni tildes). | ✅ Fase 1 |
 | R12 | Excluir destinatarios internos de RED. | ✅ Fase 1 |

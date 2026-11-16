@@ -38,7 +38,10 @@ de fecha de modificación más reciente; el otro aparece como ignorado y se expl
 - los porcentajes van sobre entregados;
 - con menos de 5 entregados se muestra "pocos datos".
 
-La API entrega también los totales "como Brevo" (sumas de Total Opens y Clicked_Links_Count) y la
+**Actualizado por D21:** la regla de entregados y rebotes cambió a "gana el último evento".
+
+La API entrega también las sumas de Total Opens y Clicked_Links_Count (que **no** coinciden con la
+pantalla de Brevo; ver la nota de la Fase 3 en la bitácora) y la
 definición de cada métrica, para que la pantalla explique la diferencia.
 **Por qué:** "aperturas" de Brevo cuenta repeticiones y aperturas automáticas; queremos personas reales.
 
@@ -166,3 +169,40 @@ llave ni el correo de la cuenta de servicio.
 
 Ver [CONFIGURAR_DRIVE.md](CONFIGURAR_DRIVE.md).
 **Por qué:** los CSV traen correos de clientes.
+
+## D21 · 16/11/2026 · Entregado o rebote: gana el último evento con fecha
+
+**Decisión:** cada persona queda en **un solo** estado según el último evento con fecha entre entrega
+(Delivered_Date), rebote temporal (Soft_Bounce_Date) y rebote permanente (Hard_Bounce_Date):
+- **entregado:** lo último fue la entrega. Incluye a quien rebotó temporalmente y después sí recibió el correo;
+- **rebote temporal / permanente:** lo último fue ese rebote, aunque antes hubiera fecha de entrega;
+- **sin estado:** no tiene ninguna de esas fechas.
+
+Así siempre se cumple: enviados = entregados + temporales + permanentes + sin estado.
+
+Detalles aprobados por Keily:
+- **a) Empate de hora** entre entrega y rebote: gana el rebote. Entre los dos rebotes, gana el permanente.
+- **b) Fecha ilegible** (hay texto pero no es una fecha): el evento se cuenta como ocurrido. Si así no
+  se puede ordenar, gana el rebote (el permanente antes que el temporal). El resumen de archivos lo
+  informa en `avisos`.
+- **c) Aperturas de personas que terminaron en rebote:** se siguen contando como aperturas reales,
+  porque abrir es un hecho. El "% de apertura" muestra una nota visible con el número calculado, por
+  ejemplo: "Incluye 4 personas que abrieron el correo y luego tuvieron un rebote temporal" (`notaPctApertura`).
+
+**Contador nuevo:** `entregadosLuegoRebotados` cuenta a quienes tenían entrega pero después rebotaron.
+Ya están dentro de los rebotes; es informativo. En los 3 CSV de noviembre son **10**, todos con rebote temporal.
+
+**Nombres:** `rebotesDuros` y `rebotesSuaves` pasan a `rebotesTemporales` y `rebotesPermanentes`.
+La fila estándar guarda las **fechas** de entrega y de rebote, no solo "sí/no".
+
+**Por qué:** así los números cuadran con la pantalla de Brevo y con el otro dashboard de mailing de
+la empresa. Con la regla anterior, "entregados" incluía a 10 personas que terminaron en rebote.
+
+**Control ("Total en Brevo"):**
+- 854 enviados;
+- 719 entregados (#74 = 157, #75 = 308, #76 = 254);
+- 82 rebotes temporales y 53 permanentes;
+- 147 aperturas reales;
+- 12 personas con clic.
+
+Todos ✅.

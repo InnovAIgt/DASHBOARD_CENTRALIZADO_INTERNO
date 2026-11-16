@@ -27,7 +27,7 @@ export function combinarArchivosBrevo(entradas) {
       if (!porCampana.has(fila.campanaId)) porCampana.set(fila.campanaId, [])
       porCampana.get(fila.campanaId).push(fila)
     }
-    leidos.push({ ...e, porCampana, descartadas: r.descartadas })
+    leidos.push({ ...e, porCampana, descartadas: r.descartadas, avisos: r.avisos })
   }
 
   // Para cada Campaign ID, el archivo más reciente (si empatan, el último por nombre).
@@ -54,6 +54,7 @@ export function combinarArchivosBrevo(entradas) {
       }
     }
     const filasDescartadas = Object.entries(archivo.descartadas).map(([motivo, cantidad]) => ({ motivo, cantidad }))
+    const avisos = Object.entries(archivo.avisos).map(([motivo, cantidad]) => ({ motivo, cantidad }))
     if (campanas.length === 0) {
       ignorados.push({ archivo: archivo.nombre, motivo: `Campaña repetida: ${reemplazadas.join('; ')}.` })
       continue
@@ -63,6 +64,7 @@ export function combinarArchivosBrevo(entradas) {
       fechaModificacion: new Date(archivo.fechaModificacion).toISOString(),
       campanas,
       filasDescartadas,
+      avisos,
       ...(reemplazadas.length ? { campanasNoUsadas: reemplazadas } : {}),
     })
   }

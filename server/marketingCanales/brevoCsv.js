@@ -15,10 +15,17 @@
  *   campanaNombre: 'GERENTE GENERAL …',
  *   correo: 'persona@dominio.com',       // en minúsculas — PRIVADO, nunca va al navegador
  *   fechaEnvio: '2026-11-05T09:30:00',   // hora local tal como viene en Brevo
- *   entregado, aperturaReal, baja, reboteDuro, reboteSuave, queja: true/false
+ *   fechaEntrega, fechaReboteSuave, fechaReboteDuro:
+ *       null (no pasó) · '2026-11-05T09:31:00' · FECHA_ILEGIBLE (pasó, pero la fecha no se entiende)
+ *   aperturaReal, baja, queja: true/false
  *   aperturasTotales, aperturasApple, clicsTotales: número
  * }
+ * Con las fechas, los cálculos deciden el estado final de cada persona (gana el último evento, D21).
  */
+
+import { FECHA_ILEGIBLE } from './filaEstandar.js'
+
+const COLUMNAS_EVENTO = { fechaEntrega: 'Delivered_Date', fechaReboteSuave: 'Soft_Bounce_Date', fechaReboteDuro: 'Hard_Bounce_Date' }
 
 /** Columnas que el CSV DEBE tener (nombre en Brevo → campo interno). */
 const COLUMNAS = {
@@ -42,7 +49,7 @@ const claveColumna = (t) => String(t ?? '').trim().replace(/^"|"$/g, '').toLower
 /**
  * Lee un CSV de Brevo.
  * @param {Buffer|string} contenido
- * @returns {{ ok: true, filas: object[], descartadas: Record<string, number>, columnasEnlace: number }
+ * @returns {{ ok: true, filas: object[], descartadas: Record<string, number>, avisos: Record<string, number>, columnasEnlace: number }
  *         | { ok: false, motivo: string }}
  */
 export function leerCsvBrevo(contenido) {
@@ -67,6 +74,8 @@ export function leerCsvBrevo(contenido) {
   const filas = []
   const descartadas = {}
   const descartar = (motivo) => { descartadas[motivo] = (descartadas[motivo] ?? 0) + 1 }
+  const avisos = {}
+  const avisar = (motivo) => { avisos[motivo] = (avisos[motivo] ?? 0) + 1 }
 
   for (const r of registros.slice(1)) {
     const celda = (campo) => (r[indice[campo]] ?? '').trim()
@@ -78,24 +87,29 @@ export function leerCsvBrevo(contenido) {
     if (!correo.includes('@')) { descartar('Fila sin correo válido en Email_ID'); continue }
     if (!fechaEnvio) { descartar('Fila sin Send_Date válida (DD-MM-YYYY HH:mm:ss)'); continue }
 
+    const eventos = {}
+    for (const [campo, columna] of Object.entries(COLUMNAS_EVENTO)) {
+      const texto = celda(campo)
+      eventos[campo] = texto === '' ? null : fechaIso(texto) ?? FECHA_ILEGIBLE
+      if (eventos[campo] === FECHA_ILEGIBLE) avisar(`Fecha ilegible en ${columna}: el evento se cuenta y, si no se puede ordenar, gana el rebote`)
+    }
+
     filas.push({
       canal: 'mailing',
       campanaId,
       campanaNombre: celda('campanaNombre'),
       correo,
       fechaEnvio,
-      entregado: celda('fechaEntrega') !== '',
+      ...eventos,
       aperturaReal: celda('fechaApertura') !== '',
       aperturasTotales: entero(celda('aperturasTotales')),
       aperturasApple: entero(celda('aperturasApple')),
       clicsTotales: entero(celda('clicsTotales')),
       baja: celda('fechaBaja') !== '',
-      reboteDuro: celda('fechaReboteDuro') !== '',
-      reboteSuave: celda('fechaReboteSuave') !== '',
       queja: celda('fechaQueja') !== '',
     })
   }
-  return { ok: true, filas, descartadas, columnasEnlace }
+  return { ok: true, filas, descartadas, avisos, columnasEnlace }
 }
 
 /** UTF-8 (con o sin BOM). Si el archivo no es UTF-8 válido, se lee como Windows-1252/Latin-1 (Excel). */

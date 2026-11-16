@@ -74,7 +74,7 @@ Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. 
 
 ---
 
-## Fase 2 · Google Drive — 16/11/2026 🔄 (esperando aprobación para commit; falta prueba con la llave real)
+## Fase 2 · Google Drive — 16/11/2026 ✅ commit `927f665` (falta la prueba con la llave real, irá en otro commit)
 
 **Decisiones de Keily:**
 - sin librerías nuevas;
@@ -127,10 +127,60 @@ Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. 
 
 ---
 
+## Paso A · Regla "gana el último evento" — 16/11/2026 ✅
+
+Keily revisó las tablas "Total en Brevo" y "Sin internos": correctas. Commit aprobado.
+
+**Por qué:** para que los números cuadren con la pantalla de Brevo y con el otro dashboard de
+mailing de la empresa. Si alguien tenía entrega y **después** un rebote, antes contaba como entregado.
+Ahora cuenta como rebote (D21).
+
+**Qué se hizo:**
+- `server/marketingCanales/filaEstandar.js` (nuevo): la marca de "fecha ilegible", compartida por fuentes y cálculos.
+- `brevoCsv.js`: la fila estándar guarda las fechas de entrega y de rebote. Las fechas ilegibles
+  quedan como aviso en el resumen de archivos (`avisos`).
+- `combinarArchivos.js`: pasa esos avisos al resumen.
+- `calculos.js`:
+  - estado final por persona (`estadoFinal`);
+  - nombres `rebotesTemporales` y `rebotesPermanentes`;
+  - contadores nuevos: `entregadosLuegoRebotados`, `sinEstado` y `aperturasDeRebotados`;
+  - nota visible `notaPctApertura`;
+  - textos de explicación actualizados.
+- Docs: D21; D4 actualizada; README con la tabla de cálculo y los números de control; REQUISITOS R9a.
+- **No cambiaron:** Drive, carpeta local, ruta, `package.json`.
+
+**Pruebas:**
+- Control con los 3 CSV reales: todo ✅ (16 revisiones).
+- 50 casos inventados: incluyen entrega y luego rebote, rebote y luego entrega, empates, fecha
+  ilegible, sin eventos y la nota de apertura.
+- Drive simulado: 40 revisiones, sigue igual a la carpeta local.
+- 0 fallas en total. `npm run lint` sin errores.
+
+| "Total en Brevo" | #74 | #75 | #76 | Total |
+|---|---|---|---|---|
+| Enviados | 169 | 371 | 314 | **854** ✅ |
+| Entregados | 157 | 308 | 254 | **719** ✅ |
+| Rebotes temporales | 12 | 37 | 33 | **82** ✅ |
+| Rebotes permanentes | 0 | 26 | 27 | **53** ✅ |
+| Entregados y luego rebotados | 1 | 6 | 3 | **10** ✅ |
+| Aperturas reales (de ellas, luego rebotaron) | 28 (0) | 62 (3) | 57 (1) | **147 (4)** ✅ |
+| Personas con clic | 1 | 5 | 6 | **12** ✅ |
+
+"Sin internos": 853 enviados, 718 entregados, 146 aperturas reales y 11 personas con clic. Solo cambia la #76.
+
+---
+
 ## Pendientes
 
 - **Pedir a Prospekt IA que guarde el correo del lead para el cruce de la Fase 4.**
 - Crear la cuenta de servicio y la carpeta de Drive (Keily, con la cuenta de MARKETING de RED) y hacer la prueba real de la Fase 2.
+- **Catálogo de campañas.** El CSV de Brevo no trae el ASUNTO del correo. Propuesta: un CSV
+  "catálogo" en la misma carpeta de Drive, que llene Marketing, con las columnas
+  Campaign ID, asunto, cargo, territorio/vendedor y marca. Asuntos conocidos:
+  - #75: "Reduce tu tiempo muerto";
+  - #76: "Producción a ciegas todavía".
+- **Lista de "correos a corregir"** para Marketing (rebotes permanentes y dominios inválidos).
+  Evaluar cómo entregarla. **No mostrar correos de personas en el navegador sin la aprobación de Keily.**
 - Retirar "Campañas de correo" (`mailing-campanas.html`) en otro PR (D13).
 
 ### Para la Fase 3 (pantalla) — anotado el 16/11/2026, no cambiar antes
@@ -155,3 +205,5 @@ Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. 
 | 16/11/2026 | `infored.com.sv` es externo: se deja así. | D7 |
 | 16/11/2026 | En pantalla no decir "como Brevo" (las cifras no coinciden con la pantalla de Brevo); avisar del 82 % de país "Desconocido". | Para la Fase 3 |
 | 16/11/2026 | Reglas de Drive: cuenta de empresa, Marketing Editor / cuenta de servicio Lector, nunca borrar CSV viejos. | D20 · CONFIGURAR_DRIVE.md |
+| 16/11/2026 | Entregado o rebote: gana el último evento. Contador "entregados y luego rebotados". Nota visible en "% de apertura" con el número calculado. | D21 · Paso A |
+| 16/11/2026 | Pendientes: catálogo de campañas (asunto, cargo, territorio, marca) y lista de "correos a corregir". | Pendientes |

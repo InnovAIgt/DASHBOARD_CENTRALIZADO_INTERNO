@@ -61,22 +61,45 @@ imagen de Docker (`.dockerignore`).
 
 ## Cómo se calcula (por campaña)
 
+**Estado final de cada persona (D21): gana el ÚLTIMO evento con fecha.** Se comparan las fechas de
+entrega, rebote temporal (Soft_Bounce) y rebote permanente (Hard_Bounce), y cada persona queda en un
+solo estado. Si un rebote tiene la misma hora que la entrega, o una fecha no se entiende, gana el rebote.
+Así, **enviados = entregados + rebotes temporales + rebotes permanentes + sin estado**.
+
 | Métrica | Regla |
 |---|---|
 | Enviados | Filas del reporte (una persona por fila; si un correo se repite, cuenta una vez). |
-| Entregados | Tiene fecha de entrega y **no** tiene rebote duro. |
-| Rebote duro | Tiene fecha de rebote duro. |
-| Rebote suave | Tiene fecha de rebote suave y **no** tiene fecha de entrega. |
-| Aperturas reales | Tiene fecha de apertura (Open_Date). |
+| Entregados | Lo último que pasó fue la entrega. Es la base de los porcentajes, igual que en Brevo. |
+| Rebotes temporales | Lo último que pasó fue un rebote temporal, aunque antes se haya entregado. |
+| Rebotes permanentes | Lo último que pasó fue un rebote permanente. |
+| Entregados y luego rebotados | Tenían entrega, pero después rebotaron. Ya están en los rebotes; es informativo. |
+| Sin estado | Sin fecha de entrega ni de rebote. |
+| Aperturas reales | Tiene fecha de apertura (Open_Date), aunque después haya rebotado. |
+| Aperturas de rebotados | Abrieron y luego terminaron en rebote. Están dentro de las aperturas reales. |
 | Solo apertura automática | Sin fecha de apertura y con aperturas de Apple (MPP) > 0. **No cuenta como real.** |
 | Personas con clic | Clicked_Links_Count > 0. |
-| Total aperturas "como Brevo" | Suma de Total Opens (incluye repeticiones y aperturas automáticas). |
-| Total clics "como Brevo" | Suma de Clicked_Links_Count (cada enlace distinto de cada persona). |
-| % apertura | Aperturas reales ÷ entregados. |
+| Aperturas totales (incluye repetidas y automáticas) | Suma de Total Opens. **No coincide con la pantalla de Brevo**, que usa otra fórmula. |
+| Clics en enlaces distintos | Suma de Clicked_Links_Count. **No coincide con la pantalla de Brevo**, que usa otra fórmula. |
+| % apertura | Aperturas reales ÷ entregados. Si alguien abrió y luego rebotó, `notaPctApertura` lo dice con el número calculado, por ejemplo: "Incluye 4 personas que abrieron el correo y luego tuvieron un rebote temporal". |
 | % clic | Personas con clic ÷ entregados. |
 | Bajas / Quejas | Tienen fecha de baja / de queja (spam). |
 
 Con **menos de 5 entregados** los porcentajes no se calculan: "pocos datos".
+
+### Números de control (3 CSV de noviembre)
+
+| "Total en Brevo" | #74 | #75 | #76 | Total |
+|---|---|---|---|---|
+| Enviados | 169 | 371 | 314 | **854** |
+| Entregados | 157 | 308 | 254 | **719** (los mismos que usa Brevo para sus %) |
+| Rebotes temporales | 12 | 37 | 33 | **82** |
+| Rebotes permanentes | 0 | 26 | 27 | **53** |
+| Entregados y luego rebotados | 1 | 6 | 3 | **10** |
+| Aperturas reales | 28 | 62 | 57 | **147** |
+| Personas con clic | 1 | 5 | 6 | **12** |
+
+"Sin internos" (cifra oficial) solo cambia en la #76, que tiene 1 correo interno de RED con entrega,
+apertura y clic: quedan 313 enviados, 253 entregados, 56 aperturas reales y 5 personas con clic.
 
 Cada campaña trae dos bloques:
 - **`totalBrevo`**: todas las filas, para comparar con Brevo.
