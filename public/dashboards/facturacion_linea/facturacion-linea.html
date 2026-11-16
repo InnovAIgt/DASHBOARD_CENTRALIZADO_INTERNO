@@ -873,11 +873,42 @@
     safeText('overdueBadge', `Vencido: ${formatMoney(overdueAmount)}`);
 
     // Resumen de Clientes y Facturas por línea de negocio + Desglose por tipo (incluye Refacturación)
+    const baseWithoutType = list.length === 0 ? baseFilteredWithoutFactura() : null;
+    const baseTypeCounts = { CICLICA: 0, 'CICLICA MANUAL': 0, REFACTURACION: 0 };
+    if (baseWithoutType) {
+      baseWithoutType.forEach(r => {
+        const cat = getInvoiceCategory(r);
+        baseTypeCounts[cat] = (baseTypeCounts[cat] || 0) + 1;
+      });
+    }
+
     const linesSummaryEl = $('linesSummaryContainer');
     if (linesSummaryEl) {
       const orderedLines = BILL_LINE_ORDER.filter(k => lineMap[k]).concat(Object.keys(lineMap).filter(k => !BILL_LINE_ORDER.includes(k)));
       if (orderedLines.length === 0) {
-        linesSummaryEl.innerHTML = '';
+        if (baseWithoutType && baseWithoutType.length > 0 && selectedFacturas.length < FACTURA_OPTIONS.length) {
+          const countryName = currentCountry === 'SV' ? 'El Salvador (SV)' : (currentCountry === 'GT' ? 'Guatemala (GT)' : 'Todos');
+          const onlyRefact = selectedFacturas.length === 1 && selectedFacturas[0] === 'REFACTURACION';
+          const reasonTxt = onlyRefact && currentCountry === 'SV'
+            ? `En SAP para <b>${countryName}</b> hay <b>${baseWithoutType.length.toLocaleString('es-SV')} facturas</b> en este período (Cíclica: ${baseTypeCounts.CICLICA.toLocaleString('es-SV')} · Manuales: ${baseTypeCounts['CICLICA MANUAL'].toLocaleString('es-SV')}), pero <b>0 están marcadas como Refacturación</b>.`
+            : `Hay <b>${baseWithoutType.length.toLocaleString('es-SV')} facturas</b> disponibles en <b>${countryName}</b> para este período (Cíclica: ${baseTypeCounts.CICLICA.toLocaleString('es-SV')} · Manuales: ${baseTypeCounts['CICLICA MANUAL'].toLocaleString('es-SV')} · Refacturación: ${baseTypeCounts.REFACTURACION.toLocaleString('es-SV')}) ocultas por el filtro de tipo de factura.`;
+          linesSummaryEl.innerHTML = `
+            <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.32);border-radius:12px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+              <span style="font-size:12.5px;color:#fde68a;line-height:1.45;">${reasonTxt}</span>
+              <button type="button" id="btnShowAllFacturaTypes" style="background:#c43c50;color:#ffffff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Mostrar todos los tipos</button>
+            </div>
+          `;
+          const btnResetTypes = $('btnShowAllFacturaTypes');
+          if (btnResetTypes) {
+            btnResetTypes.addEventListener('click', () => {
+              selectedFacturas = FACTURA_OPTIONS.map(f => f.value);
+              renderChecklistCols();
+              render();
+            });
+          }
+        } else {
+          linesSummaryEl.innerHTML = '';
+        }
       } else {
         const refPct = total > 0 ? ((typeSummary.REFACTURACION.total / total) * 100).toFixed(1) : '0.0';
         const fxNote = currentCountry === 'ALL'
@@ -997,7 +1028,10 @@
     const rowsEl = $('rows');
     if (rowsEl) {
       if (list.length === 0) {
-        rowsEl.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-muted);">No hay facturas con los filtros seleccionados.</td></tr>';
+        const emptyMsg = (baseWithoutType && baseWithoutType.length > 0 && selectedFacturas.length < FACTURA_OPTIONS.length)
+          ? `Sin coincidencias para el filtro de tipo actual (disponibles en el período: Cíclica ${baseTypeCounts.CICLICA.toLocaleString('es-SV')}, Manuales ${baseTypeCounts['CICLICA MANUAL'].toLocaleString('es-SV')}, Refacturación ${baseTypeCounts.REFACTURACION.toLocaleString('es-SV')}).`
+          : 'No hay facturas con los filtros seleccionados.';
+        rowsEl.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-muted);">${emptyMsg}</td></tr>`;
       } else {
         rowsEl.innerHTML = list.map(item => {
           const dispTotal = rowTotal(item);
