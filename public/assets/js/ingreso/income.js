@@ -2517,12 +2517,10 @@ function renderCountryUpdated() {
 const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-// excel-parser escribe generatedAt en hora UTC y sin avisar que lo es: el lote
-// que Make entregó a las 13:58 en Guatemala quedó guardado como "19:59". Si se
-// leyera como hora local la pastilla adelantaba 6 horas. Aquí se interpreta
-// como UTC para que el navegador la lleve a la hora del equipo que mira.
-// Si algún día el microservicio pase a guardar hora local, basta con poner
-// esto en false.
+// excel-parser escribe generatedAt en UTC y sin indicar la zona horaria.
+// Se interpreta como UTC y se presenta siempre en America/Guatemala,
+// independientemente de la zona configurada en el navegador.
+// Si el microservicio cambia a hora local, habrá que ajustar esta conversión.
 const GENERATED_AT_ES_UTC = true;
 
 function parseGeneratedAt(valor) {
@@ -2550,15 +2548,24 @@ function parseGeneratedAt(valor) {
   return isNaN(fecha) ? null : fecha;
 }
 
+const ZONA_HORARIA_DASHBOARD = 'America/Guatemala';
+
 function fechaLargaEs(fecha) {
-  return `${fecha.getDate()} de ${MESES_LARGOS[fecha.getMonth()]} de ${fecha.getFullYear()}`;
+  return new Intl.DateTimeFormat('es-GT', {
+    timeZone: ZONA_HORARIA_DASHBOARD,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(fecha);
 }
 
 function hora12Es(fecha) {
-  const horas = fecha.getHours();
-  const h12 = horas % 12 || 12;
-  const sufijo = horas < 12 ? 'a. m.' : 'p. m.';
-  return `${h12}:${String(fecha.getMinutes()).padStart(2, '0')} ${sufijo}`;
+  return new Intl.DateTimeFormat('es-GT', {
+    timeZone: ZONA_HORARIA_DASHBOARD,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  }).format(fecha);
 }
 
 function ultimaGeneracionData() {
@@ -2600,17 +2607,20 @@ function renderDataSyncPill() {
   // texto según de dónde salió lo que se está viendo.
   const estados = {
     vivo: { clase: '', texto: `Actualizado: ${fecha}` },
-    snapshot: { clase: 'is-backup', texto: `Actualizado: ${fecha} · respaldo` },
-    quemado: { clase: 'is-offline', texto: `Sin conexión · data del ${fecha}` }
+    snapshot: { clase: '', texto: `Actualizado: ${fecha}` },
+    publicado: { clase: '', texto: `Actualizado: ${fecha}` },
+    // Compatibilidad con versiones anteriores: si solo hay datos incorporados
+    // en el HTML, se muestra su fecha real y no una falsa alerta de conexión.
+    quemado: { clase: '', texto: `Actualizado: ${fecha}` }
   };
   const estado = estados[ORIGEN_DATA] || estados.vivo;
 
   pill.classList.remove('is-backup', 'is-offline');
   if (estado.clase) pill.classList.add(estado.clase);
   texto.textContent = estado.texto;
-  pill.title = ORIGEN_DATA === 'vivo'
-    ? 'Fecha y hora en que Make/excel-parser generó la data del dashboard'
-    : 'La API no respondió; se muestra el último lote guardado en el microservicio';
+  pill.title = ORIGEN_DATA === 'publicado' || ORIGEN_DATA === 'quemado'
+    ? 'Fecha y hora del último lote procesado y publicado por Make en este dashboard'
+    : 'Fecha y hora del último lote recibido desde Excel Parser';
   pill.hidden = false;
 }
 
@@ -3352,7 +3362,7 @@ let dashboardDataLoadedAt = 0;   // última consulta a la API (para no repetirla
 // De dónde salió la data que se está viendo, para no presentarla como fresca:
 //   'snapshot'→ vino del snapshot publicado por Excel Parser
 //   'quemado' → el snapshot no respondió: se quedó lo del HTML
-let ORIGEN_DATA = 'quemado';
+let ORIGEN_DATA = 'publicado';
 
 function setOrigenData(origen) {
   ORIGEN_DATA = origen;
@@ -3472,7 +3482,7 @@ async function cargarDatosAPI(){
     try {
       // 1) Data quemada en el HTML (inmediata, sin consultar nada).
       aplicarDataQuemada();
-      setOrigenData('quemado');
+      setOrigenData('publicado');
 
       // 2) Consultar la fuente consolidada actualizada de Excel Parser.
       //    Si falla, conservar los datos incorporados en el HTML.
@@ -3480,7 +3490,7 @@ async function cargarDatosAPI(){
       const origen = hasUsableBankData(data) ? 'snapshot' : null;
 
       if (!origen) {
-        setOrigenData('quemado');
+        setOrigenData('publicado');
         console.warn("La API no devolvio datos bancarios validos; se conserva la ultima data buena");
         return;
       }
@@ -3488,7 +3498,7 @@ async function cargarDatosAPI(){
       // 3) Solo se reemplaza lo que venga con datos; el resto se conserva.
       const combinado = combinarDashboardData(LAST_GOOD_DASHBOARD_DATA, data);
       if (!combinado) {
-        setOrigenData('quemado');
+        setOrigenData('publicado');
         console.warn("No fue posible combinar los datos; se conserva la ultima data buena");
         return;
       }
