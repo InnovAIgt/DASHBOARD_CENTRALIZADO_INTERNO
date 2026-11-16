@@ -176,9 +176,9 @@
 
       <!-- 3 CUADRITOS DE CONTROL DE RADIOS (TOTAL, EN PROCESO, ENTREGADOS) -->
       <section class="radios-kpi-row" style="margin-bottom: 16px;">
-        <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+        <div id="radiosRowEyebrow" style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
           <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #c59600;"></span>
-          CONTROL Y ENTREGA DE RADIOS DEL PERÍODO
+          <span>CONTROL Y ENTREGA DE RADIOS (ACTIVAS EN CURSO + PERÍODO)</span>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
           <!-- 1: Total Radios -->
@@ -186,12 +186,12 @@
             <div style="display: flex; align-items: flex-start; justify-content: space-between;">
               <div>
                 <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em;">Total de Radios</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Todas las radicaciones que abarca el período</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;" id="kpiTotalRadiosSub">Todas las radicaciones mostradas</div>
               </div>
               <div style="font-size: 28px; font-weight: 900; color: #fff; font-family: var(--font-mono); line-height: 1;" id="kpiTotalRadios">—</div>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
-              <span>Suma total de equipos</span>
+              <span id="kpiTotalRadiosFoot">Suma total de equipos</span>
               <span style="color: #7fb0f0; font-weight: 700;">Ver tabla ↗</span>
             </div>
           </div>
@@ -299,7 +299,7 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">Situación Actual de las Radicaciones</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Distribución operativa por condición de SLA</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Distribución por condición SLA sobre el total mostrado (prioridad: Global &gt; Por vencer &gt; Etapa)</div>
             </div>
           </div>
 
@@ -330,10 +330,10 @@
               <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutPorVencerCount">7</span>
             </div>
 
-            <div onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" style="cursor: pointer; background: rgba(197, 150, 0, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(197, 150, 0, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas por Etapa">
+            <div onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" style="cursor: pointer; background: rgba(139, 92, 246, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.28); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas por Etapa">
               <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: #c59600; display: inline-block;"></span>
-                <span style="font-size: 11px; color: #e0b52e; font-weight: 700;">Venc. Etapa</span>
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; display: inline-block;"></span>
+                <span style="font-size: 11px; color: #a78bfa; font-weight: 700;">Venc. Etapa</span>
               </div>
               <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasEtapaCount">18</span>
             </div>
@@ -922,27 +922,42 @@
       }
     }
 
+    function getStageEffectiveEndIso(parentItem, etapa) {
+      if (etapa && etapa.fechaFin) return etapa.fechaFin;
+      if (parentItem && (parentItem.estado === "cancelada" || parentItem.estado === "finalizada")) {
+        if (parentItem.proceso && parentItem.proceso.fechaFin) return parentItem.proceso.fechaFin;
+        return etapa ? etapa.fechaInicio : null;
+      }
+      return null;
+    }
+
     function getProcessTotalHours(item) {
-      if (item.proceso && item.proceso.fechaInicio && item.estado === "en_proceso") {
-        return calculateBusinessHours(item.proceso.fechaInicio, null);
+      if (item.proceso && item.proceso.fechaInicio) {
+        if (item.estado === "en_proceso") {
+          return calculateBusinessHours(item.proceso.fechaInicio, null);
+        }
+        if (item.proceso.fechaFin) {
+          return calculateBusinessHours(item.proceso.fechaInicio, item.proceso.fechaFin);
+        }
       }
       if (!item.proceso || !item.proceso.etapas) return 0;
       let sum = 0;
       item.proceso.etapas.forEach(et => {
         if (et.fechaInicio) {
-          sum += calculateBusinessHours(et.fechaInicio, et.fechaFin);
+          sum += calculateBusinessHours(et.fechaInicio, getStageEffectiveEndIso(item, et));
         }
       });
       return +sum.toFixed(1);
     }
 
-    function getStageStatus(etapa, slaHours) {
+    function getStageStatus(etapa, slaHours, parentItem = null) {
       if (!etapa || !etapa.fechaInicio) return { status: "pending", hours: 0, pct: 0, text: "Pendiente" };
-      const hours = calculateBusinessHours(etapa.fechaInicio, etapa.fechaFin);
+      const endIso = getStageEffectiveEndIso(parentItem, etapa);
+      const hours = calculateBusinessHours(etapa.fechaInicio, endIso);
       const limit = etapa.slaHoras || slaHours || 24;
       const pct = Math.round((hours / limit) * 100);
 
-      if (etapa.estado === "completada") {
+      if (etapa.estado === "completada" || (parentItem && (parentItem.estado === "cancelada" || parentItem.estado === "finalizada"))) {
         if (hours > limit) return { status: "vencida", hours, pct, text: `Vencida (${formatHours(hours)} / SLA ${limit}h)` };
         return { status: "ok", hours, pct, text: `En tiempo (${formatHours(hours)})` };
       }
@@ -966,7 +981,7 @@
       for (const st of etapas) {
         if (!st || !st.fechaInicio) continue;
         const limit = st.slaHoras || STAGE_SLAS[st.numero] || 24;
-        const h = calculateBusinessHours(st.fechaInicio, st.fechaFin);
+        const h = calculateBusinessHours(st.fechaInicio, getStageEffectiveEndIso(item, st));
         if (h > limit) {
           hasStageVencida = true;
           break;
@@ -986,19 +1001,19 @@
     function getItemSlaCondition(item) {
       const totalH = getProcessTotalHours(item);
       if (totalH > 104) return "vencidas_global";
+      if (item.estado === "en_proceso" && totalH > 83.2) return "por_vencer";
 
       if (item.proceso && item.proceso.etapas) {
         let hasVencida = false;
-        let hasNear = false;
         for (const st of item.proceso.etapas) {
-          const evalSt = getStageStatus(st, STAGE_SLAS[st.numero]);
-          if (evalSt.status === "vencida") hasVencida = true;
-          else if (evalSt.status === "near") hasNear = true;
+          const evalSt = getStageStatus(st, STAGE_SLAS[st.numero], item);
+          if (evalSt.status === "vencida") {
+            hasVencida = true;
+            break;
+          }
         }
         if (hasVencida) return "vencidas_etapa";
-        if (hasNear) return "por_vencer";
       }
-      if (totalH > 83.2) return "por_vencer_global";
       return "en_tiempo";
     }
 
@@ -1385,8 +1400,12 @@
       // 6. Categoría Quick Filter
       if (currentFilter.catQuickFilter !== "ALL" && item.negocio !== currentFilter.catQuickFilter) return false;
 
-      // 7. Rango de fechas (cuando viene de clic en procesos en curso sin fecha personalizada, mostrar todos los abiertos activos)
-      if (!currentFilter.openSlaFocus || customDate) {
+      // 7. Rango de fechas:
+      // En vista por defecto (sin filtro manual de fecha), todas las radicaciones "en_proceso" activas
+      // permanecen visibles junto con las finalizadas/canceladas del período para que cuadren 100%
+      // con los KPIs superiores de procesos actualmente en curso.
+      const keepActiveCarryover = !customDate && item.estado === "en_proceso";
+      if (!keepActiveCarryover && (!currentFilter.openSlaFocus || customDate)) {
         const itemDate = getItemFilterDate(item);
         if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
         if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
@@ -1798,8 +1817,16 @@
     return allData.filter(item => {
       if (!item || item.iniciada === false || item.estado !== "en_proceso") return false;
       if (item.pais !== countryCode) return false;
+      if (!currentFilter.estados.includes("en_proceso") && !currentFilter.openSlaFocus) return false;
       if (!currentFilter.negocios.includes(item.negocio)) return false;
+
+      const activeStageNum = item.proceso && item.proceso.etapaActual
+        ? String(item.proceso.etapaActual.numero)
+        : "1";
+      if (!currentFilter.etapas.includes(activeStageNum)) return false;
+      if (currentFilter.stageQuickFilter !== "todos" && activeStageNum !== currentFilter.stageQuickFilter) return false;
       if (currentFilter.catQuickFilter !== "ALL" && item.negocio !== currentFilter.catQuickFilter) return false;
+
       if (customDate) {
         const itemDate = getItemFilterDate(item);
         if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
@@ -1986,14 +2013,20 @@
   function renderResumenKPIs() {
       renderCountrySlaBlocks();
 
-      // 3 KPIs de Radios (Total, En proceso, Entregados)
+      // 3 KPIs de Radios (Total, En proceso, Entregados) sobre el mismo conjunto filteredData
       const totalRadios = filteredData.reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
       const radiosEnProceso = filteredData.reduce((sum, i) => sum + getRadiosEnProcesoCount(i), 0);
       const radiosEntregados = filteredData.reduce((sum, i) => sum + getRadiosEntregadosCount(i), 0);
+      const radiosCancelados = filteredData
+        .filter(i => i.estado === "cancelada")
+        .reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
 
-      // 4 KPIs Principales de Radicaciones
+      // 4 KPIs Principales de Radicaciones (cuadran exactamente con los bloques por país de arriba)
       const total = filteredData.length;
-      const enProceso = filteredData.filter(i => i.estado === "en_proceso").length;
+      const enProcesoItems = filteredData.filter(i => i.estado === "en_proceso");
+      const enProceso = enProcesoItems.length;
+      const enProcesoGT = enProcesoItems.filter(i => i.pais === "GT").length;
+      const enProcesoSV = enProcesoItems.filter(i => i.pais === "SV").length;
       const finalizadas = filteredData.filter(i => i.estado === "finalizada").length;
       const canceladas = filteredData.filter(i => i.estado === "cancelada").length;
 
@@ -2002,17 +2035,37 @@
         if (el) el.innerText = val;
       };
 
+      const customDate = hasCustomDateFilter();
+      const eyebrowSpan = document.querySelector("#radiosRowEyebrow span:last-child");
+      if (eyebrowSpan) {
+        eyebrowSpan.innerText = customDate
+          ? "CONTROL Y ENTREGA DE RADIOS DEL PERÍODO SELECCIONADO"
+          : "CONTROL Y ENTREGA DE RADIOS (ACTIVAS EN CURSO + FINALIZADAS DEL MES)";
+      }
+
       setElText("kpiTotalRadios", totalRadios.toLocaleString("es-GT"));
       setElText("kpiRadiosEnProceso", radiosEnProceso.toLocaleString("es-GT"));
       setElText("kpiRadiosEntregados", radiosEntregados.toLocaleString("es-GT"));
+      setElText(
+        "kpiTotalRadiosFoot",
+        radiosCancelados > 0
+          ? `${radiosEnProceso} en proceso + ${radiosEntregados} entregados + ${radiosCancelados} canc.`
+          : `${radiosEnProceso} en proceso + ${radiosEntregados} entregados`
+      );
 
       setElText("kpiTotalExact", total);
-      setElText("kpiTotalFootnote", `${total} radicaciones encontradas · Clic para ver ↗`);
+      setElText("kpiTotalFootnote", `${enProceso} en curso + ${finalizadas} fin. + ${canceladas} canc. · Clic ↗`);
       setElText("kpiActiveExact", enProceso);
+      setElText(
+        "kpiActiveFootnote",
+        currentFilter.pais === "todos"
+          ? `${enProcesoGT} GT + ${enProcesoSV} SV en curso · Clic ↗`
+          : `${enProceso} en curso (${currentFilter.pais}) · Clic ↗`
+      );
       setElText("kpiDoneExact", finalizadas);
       setElText("kpiCancelledExact", canceladas);
 
-      // SLAs para Donut Chart (se mantienen los gráficos intactos)
+      // SLAs para Donut Chart (mismos colores semánticos que las tarjetas de arriba)
       let enTiempo = 0;
       let porVencer = 0;
       let vencEtapa = 0;
@@ -2042,21 +2095,18 @@
     function renderDonutSvg(ok, near, vencE, vencG, total) {
       const svg = document.getElementById("donutSvg");
       if (!svg) return;
-      // Pista sobria de la guía (rgba(255,255,255,.07)); la rotación -90° va dentro del SVG
-      // porque la animación general .gx-donut usa transform sobre el <svg>.
       const track = `<circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="13" />`;
       if (total === 0) {
         svg.innerHTML = track;
         return;
       }
 
-      const circumference = 2 * Math.PI * 38; // ~238.76
-      // Colores con significado (SLA) en tonos de la guía: verde ok, amarillo advertencia,
-      // naranja vencida por etapa, rojo vencida global
+      const circumference = 2 * Math.PI * 38;
+      // Colores exactos emparejados con los 5 cuadritos SLA: verde, amarillo, morado (etapa), rojo (global)
       const segments = [
         { count: ok, color: "#2f8f76" },
         { count: near, color: "#c59600" },
-        { count: vencE, color: "#c59600" },
+        { count: vencE, color: "#8b5cf6" },
         { count: vencG, color: "#c43c50" }
       ];
 
@@ -2146,7 +2196,14 @@
       const tooltip = document.getElementById("weeklyHoverTooltip");
       if (!svg || !wrapper) return;
 
-      const weeks = computeWeeklySeries(filteredData);
+      const weeklyPeriodData = filteredData.filter(item => {
+        const itemDate = getItemFilterDate(item);
+        if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+        if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+        if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+        return true;
+      });
+      const weeks = computeWeeklySeries(weeklyPeriodData);
       if (!weeks || weeks.length === 0) {
         svg.innerHTML = `
           <text x="300" y="120" fill="#8b909e" font-size="12" text-anchor="middle" font-weight="700">
@@ -2354,8 +2411,8 @@
           const st = item.proceso.etapas.find(e => e.numero === stageNum);
           if (!st || !st.fechaInicio) return;
 
-          const evalSt = getStageStatus(st, slaLimit);
-          if (st.estado === "activa") activeNow++;
+          const evalSt = getStageStatus(st, slaLimit, item);
+          if (item.estado === "en_proceso" && st.estado === "activa") activeNow++;
 
           if (evalSt.status === "vencida") vencidas++;
           else if (evalSt.status === "near") porVencer++;
@@ -2829,7 +2886,7 @@
         const st = item.proceso.etapas.find(e => e.numero === stageNum);
         if (!st || !st.fechaInicio) return;
 
-        const evalSt = getStageStatus(st, slaLimit);
+        const evalSt = getStageStatus(st, slaLimit, item);
         const rowData = { item, stage: st, eval: evalSt };
 
         if (evalSt.status === "vencida") vencidasList.push(rowData);
@@ -2972,7 +3029,7 @@
           const num = idx + 1;
           const st = etapas.find(e => e.numero === num);
           const limit = STAGE_SLAS[num];
-          const evalSt = getStageStatus(st, limit);
+          const evalSt = getStageStatus(st, limit, item);
 
           let color = "#8b909e";
           let badgeText = "Pendiente";
@@ -2990,7 +3047,13 @@
           }
 
           const start = st && st.fechaInicio ? formatDateDisplay(st.fechaInicio) : "Sin iniciar";
-          const fin = st && st.fechaFin ? formatDateDisplay(st.fechaFin) : (st && st.estado === "activa" ? "Activa actualmente..." : "Pendiente");
+          const fin = st && st.fechaFin
+            ? formatDateDisplay(st.fechaFin)
+            : (st && st.estado === "activa"
+              ? (item.estado === "en_proceso"
+                ? "Activa actualmente..."
+                : (item.proceso && item.proceso.fechaFin ? `${formatDateDisplay(item.proceso.fechaFin)} (Cierre)` : "Cerrada"))
+              : "Pendiente");
 
           stagesHtml += `
             <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
@@ -3508,8 +3571,8 @@
         if (!item.proceso || !item.proceso.etapas) return;
         const st = item.proceso.etapas.find(e => e.numero === num);
         if (!st || !st.fechaInicio) return;
-        const ev = getStageStatus(st, limit);
-        if (st.estado === 'activa') activas++;
+        const ev = getStageStatus(st, limit, item);
+        if (item.estado === 'en_proceso' && st.estado === 'activa') activas++;
         if (ev.status === 'vencida') venc++;
         else if (ev.status === 'near') near++;
         else if (ev.status === 'ok') ok++;
