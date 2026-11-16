@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Datos reales (reportes de Brevo, etc.): NUNCA se suben al repositorio.
+*.csv
+*.CSV
