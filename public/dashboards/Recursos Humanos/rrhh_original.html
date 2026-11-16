@@ -13,6 +13,14 @@
 <script src="../../assets/js/ultima-actualizacion.js"></script>
 <link rel="stylesheet" href="../../assets/css/pdfx-modal.css?v=20261021tokens">
 <style>
+.apx-pie-layout{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:center}
+.apx-pie-wrap{display:flex;justify-content:center}
+.apx-pie{width:170px;height:170px;display:block}
+.apx-pie-legend{display:flex;flex-direction:column;gap:9px;min-width:0}
+.apx-pie-row{display:grid;grid-template-columns:1fr 40px;gap:9px;align-items:center}
+.apx-pie-row .apx-legend-count{font-size:10.5px;text-align:right}
+.apx-card.card-top-informe{margin-top:18px}
+@media (max-width:720px){.apx-pie-layout{grid-template-columns:1fr}}
 
 @media (max-width:620px){
   .pdfx-rejilla{grid-template-columns:1fr}
@@ -57,8 +65,129 @@
   white-space:nowrap;
   line-height:1;
 }
+/* ESTILOS PERSONALIZADOS PARA LAS 3 TARJETAS KPI REDISEÑADAS */
+.apx-kpirow-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+@media (max-width: 900px) {
+  .apx-kpirow-3 {
+    grid-template-columns: 1fr;
+  }
+}
 
-/* Duración dentro del Informe detallado: columnas Horas/Días, pastillas y línea de resumen */
+.kpi-card-3 {
+  background: #151c28;
+  border-radius: 12px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.kpi-card-3:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Tarjeta 1: Total Solicitudes */
+.kpi-card-3.card-total {
+  background: linear-gradient(145deg, #182030 0%, #121722 100%);
+  border-left: 5px solid #8b909e;
+}
+.kpi-card-3.card-total .kpi-main-val {
+  font-size: 38px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  margin: 12px 0 6px 0;
+}
+
+/* Tarjeta 2: Primer Aprobador (Tono Corinto / Cobre Rojizo) */
+.kpi-card-3.card-primer {
+  background: linear-gradient(145deg, #2a1619 0%, #1a1012 100%);
+  border-left: 5px solid #c43c50;
+}
+
+/* Tarjeta 3: Segundo Aprobador (Tono Bordó / Vino) */
+.kpi-card-3.card-segundo {
+  background: linear-gradient(145deg, #28121d 0%, #180b12 100%);
+  border-left: 5px solid #9e2a4b;
+}
+
+.kpi-header-3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kpi-title-3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa4b2;
+}
+.kpi-badge-3 {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.08);
+  color: #d0d7e2;
+}
+
+/* Divisiones internas para Primer y Segundo Aprobador */
+.kpi-divisions-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.kpi-div-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.kpi-div-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #a0aab8;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.kpi-div-val {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.kpi-div-sub {
+  font-size: 9px;
+  color: #7a8494;
+  margin-top: 2px;
+}
+
+/* Colores de indicadores de estado */
+.val-aprobadas { color: #4ade80; }
+.val-pendientes { color: #facc15; }
+.val-rechazadas { color: #f87171; }
+
 table.apx-table .apx-num{text-align:right;font-variant-numeric:tabular-nums}
 .apx-dur-resumen{padding:10px 16px 0}
 .apx-dur-resumen[hidden]{display:none}
@@ -69,17 +198,141 @@ table.apx-table .apx-num{text-align:right;font-variant-numeric:tabular-nums}
 .apx-chip.apx-chip-sm{min-width:0;margin-left:8px;padding:3px 8px;font-size:9px}
 .apx-pill-dur{margin-left:8px;white-space:nowrap}
 .apx-solo-dur{white-space:nowrap}
-/* Pastilla «Actualizado: …» (assets/js/ultima-actualizacion.js) arriba a la derecha del
-   encabezado, como en Flujo de ventas. Solo la ubicación: el estilo lo trae el componente. */
 .page-header{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:20px;align-items:center}
 .page-header>.page-eyebrow,.page-header>.page-title,.page-header>.page-sub,.page-header>.std-sync{grid-column:1}
 .page-header>.apx-update-slot{grid-column:2;grid-row:1 / 4;justify-self:end;text-align:right;max-width:420px}
 @media(max-width:760px){.page-header{grid-template-columns:minmax(0,1fr)}.page-header>.apx-update-slot{grid-column:1;grid-row:auto;justify-self:end;margin-top:10px;max-width:100%}}
-/* El «Actualizado HH:MM» suelto de estandar.js repetiría la pastilla: se deja solo
-   mientras consulta («Consultando la API…»). */
 html body .page-header>.std-sync:not(.std-sync-busy){display:none}
-/* Panel de filtros: siete columnas con «Duración» (en angosto se acomodan solas) */
 @media (min-width:1100px){ .xf-columns{grid-template-columns:repeat(7,minmax(0,1fr))} }
+
+/* ==========================================
+   RANKINGS: 3 COLUMNAS DEL MISMO TAMAÑO
+   QUE LAS TARJETAS KPI SUPERIORES
+   ========================================== */
+.apx-rankings-row {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 0;
+}
+.apx-rankings-row .apx-card {
+  grid-column: auto !important;
+  min-height: 350px;
+}
+@media (max-width: 1180px) {
+  .apx-rankings-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ===== Ventanas modales renovadas (excluye Acciones por mes) ===== */
+#chartSolicitantes .apx-bartrack-click{cursor:pointer;transition:filter .15s, box-shadow .15s}
+#chartSolicitantes .apx-bartrack-click:hover{filter:brightness(1.18);box-shadow:0 0 0 1px rgba(255,255,255,.28)}
+#chartSolicitantes .apx-bartrack-click:focus-visible{outline:2px solid #7fb0f0;outline-offset:2px}
+.expx-bg{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(10,10,15,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.expx-bg.open{display:flex;animation:expxFade .2s ease-out}
+.expx{position:relative;width:min(900px,100%);max-height:calc(100vh - 48px);overflow-y:auto;border-radius:20px;border:1px solid rgba(255,255,255,.1);color:#e8eaf0;
+  background:linear-gradient(145deg,#131720 0%,#0d1018 100%);box-shadow:0 40px 100px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.3);animation:expxPop .25s cubic-bezier(.16,1,.3,1)}
+.expx::-webkit-scrollbar{width:8px}.expx::-webkit-scrollbar-track{background:rgba(0,0,0,.2)}.expx::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#4f8fd8,#2f8f76);border-radius:8px;border:2px solid #0d1018}
+.expx-cab{display:flex;align-items:center;gap:16px;padding:24px 28px 18px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
+.expx-avatar{flex:0 0 auto;width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;text-transform:uppercase;color:#0a0f1a;background:linear-gradient(135deg,#7fb0f0 0%,#4f8fd8 50%,#2f8f76 100%);box-shadow:0 4px 16px rgba(79,143,216,.4),inset 0 1px 0 rgba(255,255,255,.3)}
+.expx-cab-txt{min-width:0;flex:1}
+.expx-cejilla{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(127,176,240,.8)}
+.expx-cab h3{margin:2px 0 4px;font-size:21px;font-weight:800;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.expx-sub{margin:0;font-size:11.5px;color:rgba(232,234,240,.65)}
+.dsc-sec{margin:0 0 14px}
+.dsc-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.dsc-kpi{display:block;width:100%;text-align:left;font-family:inherit;color:inherit;cursor:pointer;padding:14px 12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(15,17,23,.7);transition:all .18s ease;position:relative;overflow:hidden}
+.dsc-kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--kpi-accent,#4f8fd8);opacity:0;transition:opacity .18s}
+.dsc-kpi:hover{border-color:rgba(255,255,255,.14);background:rgba(15,17,23,.9);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.dsc-kpi:hover::before{opacity:1}
+.dsc-kpi:focus-visible{outline:2px solid #7fb0f0;outline-offset:2px}
+.dsc-kpi-hint{display:block;margin-top:8px;font-size:9px;color:rgba(139,144,158,.5);text-align:right}
+.dsc-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:16px 0 12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.05)}
+.dsc-legend span{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#e8eaf0;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.05);transition:all .2s}
+.dsc-legend span:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
+.dsc-vchart{display:flex;gap:8px;margin-top:8px}
+.dsc-y{position:relative;flex:0 0 34px;height:240px}
+.dsc-y span{position:absolute;right:0;transform:translateY(50%);font-size:9px;color:rgba(139,144,158,.7)}
+.dsc-vscroll{flex:1 1 auto;min-width:0;overflow-x:auto;padding-bottom:6px}
+.dsc-plot{position:relative;min-width:100%}
+.dsc-grid{position:absolute;left:0;right:0;top:0;height:240px;pointer-events:none}
+.dsc-grid i{position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.03)}
+.dsc-groups{position:relative;display:flex}
+.dsc-g{flex:1 1 0;display:flex;flex-direction:column;align-items:center;min-width:96px}
+.dsc-bars{height:240px;display:flex;align-items:flex-end;justify-content:center;gap:4px;width:100%}
+.dsc-bar{flex:0 1 18px;min-width:10px;padding:0;border:0;border-radius:6px 6px 0 0;cursor:pointer;background:linear-gradient(180deg,var(--c),color-mix(in srgb,var(--c) 65%,#000));min-height:4px;transition:filter .15s,transform .15s,box-shadow .15s;box-shadow:0 -2px 8px rgba(0,0,0,.3)}
+.dsc-bar:hover{filter:brightness(1.25);transform:scaleY(1.02);box-shadow:0 -4px 16px rgba(0,0,0,.4),0 0 12px var(--c)}
+.dsc-bar:focus-visible{outline:2px solid #7fb0f0;outline-offset:2px}
+.dsc-bar.is-zero{height:0 !important;min-height:0;pointer-events:none}
+.dsc-glab{margin-top:10px;max-width:120px;text-align:center;font-size:10px;line-height:1.25;color:#e8eaf0;font-weight:600}
+.dsc-empty{font-size:11px;color:rgba(139,144,158,.6);text-align:center;padding:40px 20px}
+.expx-tabla .dsc-lnk{background:none;border:0;padding:0;font:inherit;color:#7fb0f0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;transition:color .15s}
+.expx-tabla .dsc-lnk:hover{color:#a8d0ff}
+.expx-tabla tr.dsc-tot td{font-weight:800;color:#fff}
+.expx-tabla td.dsc-r,.expx-tabla th.dsc-r{text-align:right}
+@media (max-width:900px){.dsc-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.expx-nombre{margin:0 0 3px;font-size:13px;font-weight:600;color:rgba(232,234,240,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.expx-cerrar{flex:0 0 auto;width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8eaf0;font-size:22px;line-height:1;cursor:pointer;transition:all .15s}
+.expx-cerrar:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff;transform:rotate(90deg)}
+.expx-cerrar:focus-visible{outline:2px solid #7fb0f0;outline-offset:2px}
+.expx-cuerpo{padding:22px 28px 28px;display:flex;flex-direction:column;gap:22px}
+.expx-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.expx-kpi{padding:16px 16px;border-radius:14px;background:rgba(15,17,23,.6);border:1px solid rgba(255,255,255,.06);position:relative;overflow:hidden}
+.expx-kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#4f8fd8,#2f8f76)}
+.expx-kpi b{display:block;font-size:24px;font-weight:800;color:#fff;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.expx-kpi span{display:block;margin-top:6px;font-size:10.5px;color:rgba(232,234,240,.65)}
+.expx-sec h4{margin:0 0 12px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#e8eaf0;display:flex;align-items:center;gap:10px}
+.expx-sec h4::before{content:'';flex:0 0 4px;height:16px;border-radius:2px;background:linear-gradient(180deg,#4f8fd8,#2f8f76)}
+.expx-sec h4 small{font-weight:600;letter-spacing:0;text-transform:none;color:rgba(139,144,158,.6);margin-left:8px}
+.expx-vbars{height:220px;display:flex;align-items:flex-end;gap:12px;padding:14px 4px 0;border-bottom:1px solid rgba(255,255,255,.06);overflow-x:auto}
+.expx-vcol{flex:1 1 0;min-width:68px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px}
+.expx-vval{font-size:11px;font-weight:800;color:#fff}
+.expx-vbar{width:min(46px,70%);min-height:4px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--vbar-c,#4f8fd8),color-mix(in srgb,var(--vbar-c,#4f8fd8) 65%,#000));box-shadow:0 -2px 10px rgba(0,0,0,.3),0 0 16px var(--vbar-c);transform-origin:bottom;animation:expxGrow .5s cubic-bezier(.16,1,.3,1) both}
+.expx-vlab{font-size:9.5px;line-height:1.15;text-align:center;min-height:32px;max-width:100px;color:rgba(232,234,240,.6)}
+.expx-estado{display:flex;height:16px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.05)}
+.expx-estado span{display:block;height:100%}
+.expx-leyenda{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px}
+.expx-leyenda span{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:#e8eaf0}
+.expx-dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor}
+.expx-tabla-wrap{overflow-x:auto;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(15,17,23,.5);max-height:320px;overflow-y:auto}
+.expx-tabla{width:100%;border-collapse:collapse;font-size:11.5px;color:#e8eaf0}
+.expx-tabla th{position:sticky;top:0;text-align:left;padding:10px 12px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(232,234,240,.7);background:rgba(15,17,23,.9);border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;z-index:1}
+.expx-tabla td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;transition:background .15s}
+.expx-tabla tr:last-child td{border-bottom:0}
+.expx-tabla tbody tr:hover td{background:rgba(79,143,216,.08)}
+.expx-tabla .expx-just{white-space:normal;min-width:180px;max-width:280px;color:rgba(232,234,240,.75)}
+.expx-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.expx-pill{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e8eaf0;font-size:10.5px;font-weight:700}
+.expx-vacio{padding:30px;text-align:center;color:rgba(139,144,158,.6);font-size:12px}
+@keyframes expxFade{from{opacity:0}to{opacity:1}}
+@keyframes expxPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes expxGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@media (max-width:720px){
+  .expx-bg{padding:12px}
+  .expx-kpis{grid-template-columns:repeat(2,1fr)}
+  .expx-cab,.expx-cuerpo{padding-left:18px;padding-right:18px}
+  .expx-vbars{gap:8px}
+}
+@media (prefers-reduced-motion:reduce){.expx-bg.open,.expx,.expx-vbar{animation:none}}
+.mes-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.mes-sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:11px;font-weight:600;color:#e8ecf4;background:rgba(255,255,255,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23aab2c5' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 28px 6px 12px;cursor:pointer;max-width:210px}
+.mes-sel:hover,.mes-sel:focus-visible{border-color:rgba(127,176,240,.6);outline:0}
+.mes-sel option{background:#1a1d27;color:#e8ecf4}
+.apx-mes-hit{fill:transparent;cursor:pointer;outline:0}
+.apx-mes-hit:hover,.apx-mes-hit:focus-visible{fill:rgba(255,255,255,.05)}
+.mesx-leyenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px;font-size:11px;color:#f6ecd9}
+.mesx-leyenda span{display:inline-flex;align-items:center;gap:6px}
+.expx-tabla tr.mesx-fila td{border-bottom-color:rgba(255,255,255,.06)}
+
+/* ===== Acciones por área: fondos oscuros con matiz + filas por tipo ===== */
+.dsc-kpi{background:linear-gradient(145deg,color-mix(in srgb,var(--kpi-accent,#4f8fd8) 24%,#0b0c11),color-mix(in srgb,var(--kpi-accent,#4f8fd8) 9%,#0b0c11));border-color:color-mix(in srgb,var(--kpi-accent,#4f8fd8) 30%,rgba(255,255,255,.05))}
+.dsc-kpi:hover{background:linear-gradient(145deg,color-mix(in srgb,var(--kpi-accent,#4f8fd8) 32%,#0b0c11),color-mix(in srgb,var(--kpi-accent,#4f8fd8) 13%,#0b0c11));border-color:color-mix(in srgb,var(--kpi-accent,#4f8fd8) 50%,rgba(255,255,255,.08))}
+.expx-tabla tr.dsc-tipo-row td{background:color-mix(in srgb,var(--rc) 22%,transparent)}
+.expx-tabla tr.dsc-tipo-row td:first-child{box-shadow:inset 4px 0 0 var(--rc)}
+.expx-tabla tbody tr.dsc-tipo-row:hover td{background:color-mix(in srgb,var(--rc) 34%,transparent)}
 </style>
 </head>
 <body class="apx-rh-page">
@@ -90,6 +343,7 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
     <h1 class="page-title">Acciones de personal</h1>
     <p class="page-sub" id="subtitleLine">El Salvador &amp; Guatemala</p>
     <div class="apx-update-slot"><span id="ultimaAct"></span></div>
+
   </div>
   <div id="loadStatus" class="error-box" role="alert" hidden></div>
   <div class="apx-filters" id="filterBar">
@@ -125,7 +379,6 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
         </button>
       </div>
       <input id="fSearch" class="apx-search" type="search" placeholder="Buscar: usuario, jefe, ID…" aria-label="Buscar (texto libre)">
-      <!-- Exportar va junto a lo que exporta: el PDF lleva estos mismos filtros. -->
       <button type="button" class="fx-pdf" id="fxPdf" disabled aria-haspopup="dialog" aria-controls="pdfModalBg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>PDF</button>
       <button id="btnReset" class="apx-reset" type="button">Limpiar</button>
     </div>
@@ -146,38 +399,56 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
   <div class="tabs" id="rrhhTabs" role="tablist" aria-label="Vistas del dashboard">
     <button type="button" class="tab-btn active" role="tab" id="tabResumen" aria-selected="true" aria-controls="panelResumen">Resumen</button>
     <button type="button" class="tab-btn" role="tab" id="tabInforme" aria-selected="false" aria-controls="panelInforme" tabindex="-1">Informe detallado</button>
+    <button type="button" class="tab-btn" role="tab" id="tabDescansos" aria-selected="false" aria-controls="panelDescansos" tabindex="-1">Acciones</button>
   </div>
      <div class="apx-tabpanel" role="tabpanel" id="panelResumen" aria-labelledby="tabResumen">
-  <div class="kpi-grid apx-kpirow" id="kpiRow"></div>
-  <div class="apx-summaryrow" id="summaryRow"></div>
-  <div class="apx-charts">
-    <div class="card apx-card card-state">
-      <div class="apx-card-head">
-        <div><h2 class="card-title">Por estado</h2><p class="card-caption">Distribución actual de solicitudes.</p></div>
-        <span class="apx-insight" id="insightEstado">—</span>
-      </div>
-      <div id="chartEstado"></div>
+    <div class="apx-kpirow-3" id="kpiRow"></div>
+   <div class="apx-charts">
+
+    <!-- FILA EXCLUSIVA DE LOS 3 RANKINGS -->
+    <div class="apx-rankings-row">
+
+        <div class="card apx-card card-state">
+            <div class="apx-card-head">
+                <div>
+                    <h2 class="card-title">Por estado</h2>
+                    <p class="card-caption">Distribución actual de solicitudes.</p>
+                </div>
+                <span class="apx-insight" id="insightEstado">—</span>
+            </div>
+            <div id="chartEstado"></div>
+        </div>
+
+        <div class="card apx-card card-jefe">
+            <div class="apx-card-head">
+                <div>
+                    <h2 class="card-title">Primer Aprobador (jefe inmediato)</h2>
+                    <p class="card-caption">Estadística gráfica de los jefes que más solicitudes del primer aprobado han manejado</p>
+                </div>
+                <span class="apx-insight" id="insightJefe">Top 10</span>
+            </div>
+            <div id="chartJefe"></div>
+        </div>
+
+        <div class="card apx-card card-rank">
+            <div class="apx-card-head">
+                <div>
+                    <h2 class="card-title">Segundo Aprobador (recursos humanos)</h2>
+                    <p class="card-caption">Estadística gráfica de los jefes que más solicitudes del segundo aprobado han manejado</p>
+                </div>
+                <span class="apx-insight" id="insightAprobador">Top 8</span>
+            </div>
+            <div id="chartAprobador"></div>
+        </div>
+
     </div>
-    <div class="card apx-card card-rank">
-      <div class="apx-card-head">
-        <div><h2 class="card-title">Segundo aprobador</h2><p class="card-caption">Ranking de los aprobadores con más solicitudes.</p></div>
-        <span class="apx-insight" id="insightAprobador">Top 8</span>
-      </div>
-      <div id="chartAprobador"></div>
-    </div>
-    <div class="card apx-card card-area">
+    <!-- FIN DE LOS RANKINGS -->
+<div class="card apx-card card-area">
       <div class="apx-card-head">
         <div><h2 class="card-title">Por área</h2><p class="card-caption">Peso relativo de las áreas dentro del período filtrado.</p></div>
-        <span class="apx-insight" id="insightArea">Treemap</span>
+        <span class="apx-insight" id="insightArea">Dona</span>
       </div>
       <div id="chartArea"></div>
-    </div>
-    <div class="card apx-card card-jefe">
-      <div class="apx-card-head">
-        <div><h2 class="card-title">Por jefe inmediato</h2><p class="card-caption">Primer aprobador · comparación tipo lollipop.</p></div>
-        <span class="apx-insight" id="insightJefe">Top 10</span>
-      </div>
-      <div id="chartJefe"></div>
     </div>
     <div class="card apx-card card-type">
       <div class="apx-card-head">
@@ -186,17 +457,10 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
       </div>
       <div id="chartTipo"></div>
     </div>
-    <div class="card apx-card card-top">
-      <div class="apx-card-head">
-        <div><h2 class="card-title">Top solicitantes</h2><p class="card-caption">Ranking expandible con permisos y vacaciones.</p></div>
-        <span class="apx-insight">Top 8</span>
-      </div>
-      <div id="chartSolicitantes"></div>
-    </div>
     <div class="card apx-card card-month">
       <div class="apx-card-head">
         <div><h2 class="card-title">Acciones por mes</h2><p class="card-caption">Evolución temporal de las solicitudes del período.</p></div>
-        <span class="apx-insight" id="insightMes">Tendencia</span>
+        <div class="mes-ctrl"><select id="mesAreaSel" class="mes-sel" aria-label="Filtrar por área"></select><span class="apx-insight" id="insightMes">Tendencia</span></div>
       </div>
       <div id="chartMes"></div>
     </div>
@@ -210,29 +474,64 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
     </div>
     <div class="apx-table-tools">
       <input id="fTableSearch" class="apx-search apx-table-search" type="search" placeholder="Buscar dentro de estos resultados" aria-label="Buscar dentro de los resultados filtrados">
-      <!-- Como el buscador: filtra las filas de esta tabla (y lo que se exporta), no las tarjetas. -->
       <label class="apx-inactive apx-solo-dur" title="Solo las solicitudes que traen horas o días">
         <input type="checkbox" id="fSoloDuracion">
         <span>Solo con duración</span>
       </label>
       <button type="button" class="apx-ghost apx-export" id="btnExportXlsx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Excel</button>
-      <!-- El PDF salió de aquí: está en la barra de filtros (#fxPdf). -->
-      <!-- CSV oculto: aparece si ExcelJS no logra cargarse (no necesita librería). -->
       <button type="button" class="apx-ghost apx-export" id="btnExportCsv" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>CSV</button>
     </div>
     <p class="apx-export-aviso" id="exportAviso" role="alert" hidden></p>
-    <!-- Con «Solo con duración»: totales de las filas que se ven y la nota de pre-aprobados -->
     <div class="apx-dur-resumen" id="durResumen" hidden>
       <p class="apx-dur-linea" id="durLinea"></p>
       <p class="apx-dur-nota" id="durNotaTipo" hidden></p>
     </div>
     <div id="tableBody"></div>
   </div>
+  <div class="card apx-card card-top card-top-informe">
+    <div class="apx-card-head">
+      <div><h2 class="card-title">Reporte gráfico de cada expediente</h2><p class="card-caption">Ranking expandible con permisos y vacaciones.</p></div>
+      <span class="apx-insight">Todos</span>
+    </div>
+    <div id="chartSolicitantes"></div>
+  </div>
+  </div>
+  <div class="apx-tabpanel" role="tabpanel" id="panelDescansos" aria-labelledby="tabDescansos" hidden>
+    <div class="apx-summaryrow" id="summaryRow"></div>
   </div>
 </div>
 
-<!-- Ventana «Exportar PDF» (botón PDF de la barra de filtros). Las tarjetas
-     de los módulos las arma armarPdfxModulos(). -->
+<div class="expx-bg" id="mesxBg" aria-hidden="true">
+  <div class="expx" role="dialog" aria-modal="true" aria-labelledby="mesxTitulo">
+    <div class="expx-cab">
+      <span class="expx-avatar" id="mesxAvatar" aria-hidden="true"></span>
+      <div class="expx-cab-txt">
+        <span class="expx-cejilla">Registros del mes</span>
+        <h3 id="mesxTitulo"></h3>
+        <p class="expx-sub" id="mesxSub"></p>
+      </div>
+      <button type="button" class="expx-cerrar" id="mesxCerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div class="expx-cuerpo" id="mesxCuerpo"></div>
+  </div>
+</div>
+
+<div class="expx-bg" id="expxBg" aria-hidden="true">
+  <div class="expx" role="dialog" aria-modal="true" aria-labelledby="expxTitulo">
+    <div class="expx-cab">
+      <span class="expx-avatar" id="expxAvatar" aria-hidden="true"></span>
+      <div class="expx-cab-txt">
+        <span class="expx-cejilla">Expediente del solicitante</span>
+        <h3 id="expxTitulo"></h3>
+        <p class="expx-nombre" id="expxNombre" hidden></p>
+        <p class="expx-sub" id="expxSub"></p>
+      </div>
+      <button type="button" class="expx-cerrar" id="expxCerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div class="expx-cuerpo" id="expxCuerpo"></div>
+  </div>
+</div>
+
 <div class="pdfx-bg" id="pdfModalBg">
   <div class="modal pdfx" role="dialog" aria-modal="true" aria-labelledby="pdfxTitulo" aria-describedby="pdfxBajada">
     <div class="pdfx-cab">
@@ -241,7 +540,6 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
         <span class="pdfx-cejilla">Exportar reporte</span>
         <h3 id="pdfxTitulo">¿Qué módulos deseas imprimir?</h3>
         <p id="pdfxBajada">Marca las secciones que quieres incluir en el PDF. Las que no marques no aparecerán en el documento.</p>
-        <!-- Solo lectura: lo que tienes filtrado en el dashboard, que es lo que lleva el PDF. -->
         <div class="pdfx-resumen" id="pdfxResumen" aria-label="Lo que se va a descargar"></div>
       </div>
       <button type="button" class="pdfx-cerrar" id="pdfxCerrar" aria-label="Cerrar">×</button>
@@ -274,18 +572,12 @@ const AREA_MAP = {
   'Raúl Ramirez': 'Comercial',
   'Ana María Manzano': 'Legal',
   'Kevin Escobar': 'Bodega',
-  'Eduardo Méndez': 'Operaciones GT (Guatemala)',
   'Camilo Santos': 'IT',
   'Alexandra Londoño': 'Gerencia de País',
+  'Fatima Espinal': 'Legal',
   'Juan Carlos Jiménez': 'Dirección General',
   'Daniel Magaña': 'Recursos Humanos'
 };
-// Reasignacion individual dentro del antiguo equipo de Luis Farela (Operaciones El Salvador),
-// que ahora queda dividido en Contabilidad / Activaciones / Cobros / Bodega. Tiene prioridad
-// sobre el mapeo por jefe_inmediato.
-// Correccion puntual por ID: solicitud propia de Luis Farela capturada con el mismo
-// como su jefe_inmediato (dato inconsistente). Por organigrama, su jefe real es
-// Juan Carlos Jimenez (Direccion General). Tiene prioridad maxima.
 const AREA_OVERRIDE_BY_ID = { '4346': 'Dirección General' };
 const SOLICITANTE_AREA_OVERRIDE = {
   'atejada@red.com.sv': 'Contabilidad',
@@ -299,6 +591,47 @@ const SOLICITANTE_AREA_OVERRIDE = {
   'edlopez@red.com.sv': 'Bodega',
   'rballadares@red.com.sv': 'Bodega',
 };
+const AREA_GT_POR_USUARIO = {
+  'jrustrian': 'Activaciones', 'enflores': 'Activaciones',
+  'sconde': 'Ventas', 'ohernandez': 'Ventas', 'jflores': 'Ventas',
+  'wortega': 'Legal',
+  'dmorataya': 'SAC', 'jcifuentes': 'SAC', 'jcifuente': 'SAC', 'asolis': 'SAC', 'sfigueroa': 'SAC',
+  'rfuentes': 'SAC', 'cche': 'SAC', 'ajaguilar': 'SAC', 'kgarcia': 'SAC',
+  'mchicas': 'Contabilidad',
+  'kreyna': 'Cobros', 'mfsandoval': 'Cobros',
+  'bsantos': 'Marketing',
+  'aayala': 'Recursos Humanos', 'acano': 'Recursos Humanos', 'jmagana': 'Recursos Humanos',
+  'lngonzalez': 'Finanzas', 'afhernandez': 'Marketing', 'memartinez': 'Bodega',
+  'dcmonge': 'Auxiliar de Operaciones',
+  'ecandray': 'Comercial', 'rramirez': 'SAC'
+};
+// Áreas que se unen: Contabilidad y Finanzas -> Finanzas; Ventas -> Comercial
+function areaFinal(a) {
+  if (a === 'Contabilidad' || a === 'Finanzas') return 'Finanzas';
+  if (a === 'Ventas') return 'Comercial';
+  if (esAreaExcluida(a)) return 'Sin área asignada';
+  return a;
+}
+// Áreas que no se muestran en ningún apartado del dashboard
+function esAreaExcluida(a) {
+  return a === 'Gerencia de País' || / — área pendiente por asignar$/.test(String(a || ''));
+}
+// Jefe de cada área (según el organigrama de RED Intelfon)
+const JEFES_AREA = {
+  'Comercial': 'Carlos Abrego · Líder Comercial',
+  'Legal': 'Ana María Manzano · Jefe Legal',
+  'Bodega': 'Kevin Escobar · Supervisor de Bodega y Producción Refurbished',
+  'IT': 'Camilo Santos · Especialista SAP y Aplicaciones',
+  'Dirección General': 'Juan Carlos Jiménez · Director General',
+  'Finanzas': 'Marco Chicas · Contador General',
+  'SAC': 'Raúl Ramírez · Jefe de Servicio al Cliente',
+  'Marketing': 'Gabriela Henriquez · Especialista de Marketing y Plataforma',
+  'Recursos Humanos': 'Daniel Magaña',
+  'Activaciones': 'Carlos Martínez · Analista de Créditos y Activaciones',
+  'Auxiliar de Operaciones': 'Eduardo Méndez · Gerente Operaciones GT'
+};
+// Registros sin área: se conservan en los totales pero no se muestran en las vistas por área
+function esSinArea(a) { return a === 'Sin área asignada'; }
 const CARGO_MAP = {
   'Daniel Magaña': 'Recursos Humanos'
 };
@@ -311,6 +644,11 @@ let ALL_RECORDS = [];
 let RECORDS = [];
 const INACTIVE_LEADERS = ['Elmer Miranda', 'César Guerrero', 'Eduardo Ortiz'];
   const INACTIVE_SOLICITANTES = ['gmolina@red.com.sv'];
+const EMPLEADOS_EXCLUIDOS = ['aacosta'];
+function esEmpleadoExcluido(r) {
+  var usuario = String(r.solicitante || '').split('@')[0].trim().toLowerCase();
+  return EMPLEADOS_EXCLUIDOS.indexOf(usuario) !== -1;
+}
 function isInactiveRecord(r) {
   var solicitante = String(r.solicitante || '').toLowerCase();
   return (
@@ -329,14 +667,19 @@ function applyActiveScope() {
 const SUPABASE_URL = 'https://alkaqpxcrmbzhgcwpynj.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_q5jDfgo48CvWHYoztIyC3w_XIB5KIaW';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// Correcciones manuales conocidas (no reflejadas aun en el origen)
 const PAIS_OVERRIDES = { '4457': 'El Salvador', '4463': 'El Salvador' };
-var KNOWN_ESTADOS = ['Ingresada', 'Aval Jefe', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH'];
-function normalizeEstado(raw) {
+var KNOWN_ESTADOS = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH'];
+function normalizeEstado(raw, aprobador) {
   if (!raw) return 'Sin estado';
   if (KNOWN_ESTADOS.indexOf(raw) !== -1) return raw;
   var match = KNOWN_ESTADOS.find(function(e) { return raw.indexOf(e) === 0; });
-  return match || 'Sin estado';
+  var normalized = match || 'Sin estado';
+
+  // Si está en "Aprobacion RRHH" pero no tiene aprobador asignado, es "Pendiente Segundo"
+  if (normalized === 'Aprobacion RRHH' && segundoSinAsignar({ aprobador: aprobador })) {
+    return 'Pendiente Segundo';
+  }
+  return normalized;
 }
 function textOrNull(v) {
   if (v === null || v === undefined) return null;
@@ -375,24 +718,22 @@ function buildRecordsFromSupabaseRows(dataRows) {
     }
     if (horasNum !== null && isNaN(horasNum)) horasNum = null;
     if (diasNum !== null && isNaN(diasNum)) diasNum = null;
-    // Vista «Duración»: horas y días por separado, tal como vienen de la base
-    // (duracion/horas/dias de arriba guardan uno solo y los usan las otras vistas).
-    // 0 horas = no se midió: cuenta como sin dato. Los días van en una sola columna.
     var horasDbNum = horas === null ? NaN : parseFloat(horas);
     var diasTxt = diasVac || diasComp || diasIncap || diasPerm;
     var diasDbNum = diasTxt === null ? NaN : parseFloat(diasTxt);
     var solicitante = textOrNull(row.solicitante) || 'No especificado';
+    var aprobadorNorm = textOrNull(row.aprobador) || 'Sin asignar';
     out.push({
       id: row.id,
       tipo: textOrNull(row.tipo) || 'No especificado',
       pais: pais,
       solicitante: solicitante,
       jefeInmediato: jefeInmediato,
-      aprobador: textOrNull(row.aprobador) || 'Sin asignar',
-      estado: normalizeEstado(textOrNull(row.estado)),
+      aprobador: aprobadorNorm,
+      estado: normalizeEstado(textOrNull(row.estado), aprobadorNorm),
       fechaSolicitud: (textOrNull(row.fecha_solicitud) || '').slice(0, 10) || null,
       justificacion: textOrNull(row.justificacion),
-      area: AREA_OVERRIDE_BY_ID[idStr] || SOLICITANTE_AREA_OVERRIDE[solicitante] || areaFor(jefeInmediato),
+      area: areaFinal(AREA_OVERRIDE_BY_ID[idStr] || SOLICITANTE_AREA_OVERRIDE[solicitante] || AREA_GT_POR_USUARIO[String(solicitante).split('@')[0].toLowerCase()] || areaFor(jefeInmediato)),
       duracion: duracion,
       horas: horasNum,
       dias: diasNum,
@@ -404,26 +745,15 @@ function buildRecordsFromSupabaseRows(dataRows) {
   });
   return out;
 }
-function fmtNowLabel() {
-  var d = new Date();
-  var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  var hh = String(d.getHours()).padStart(2,'0');
-  var mm = String(d.getMinutes()).padStart(2,'0');
-  return d.getDate() + ' ' + meses[d.getMonth()] + ' ' + d.getFullYear() + ', ' + hh + ':' + mm;
-}
-// La consulta se muestra con el estándar (estandar.js); aquí solo se avisa si falla.
 function setLoadStatus(text, mode) {
   var el = document.getElementById('loadStatus');
   el.textContent = text;
   el.hidden = mode !== 'error';
 }
-// Fuente principal: Edge Function que lee SharePoint en vivo y devuelve los registros
-// con los mismos campos que la RPC. Si falla o tarda más de VIVO_ESPERA_MS, se usa
-// el último corte guardado en Supabase (RPC dashboard_rrhh_publico) como respaldo.
 const VIVO_URL = 'https://alkaqpxcrmbzhgcwpynj.supabase.co/functions/v1/rrhh-vivo-publico';
 const VIVO_ESPERA_MS = 20000;
 const AVISO_RESPALDO = 'No se pudo consultar en vivo. Mostrando el último corte guardado.';
-var DATOS_FECHA = null;   // generated_at (ISO) de la Edge Function; null si vienen del respaldo
+var DATOS_FECHA = null;
 async function loadFromVivo() {
   var ctrl = new AbortController();
   var espera = setTimeout(function() { ctrl.abort(); }, VIVO_ESPERA_MS);
@@ -440,7 +770,6 @@ async function loadFromVivo() {
     clearTimeout(espera);
   }
 }
-// Respaldo: el último corte guardado en Supabase, paginado como siempre.
 async function loadFromRpc() {
   var pageSize = 1000;
   var all = [];
@@ -478,20 +807,35 @@ async function loadFromSupabase() {
     }
   }
   try {
-    ALL_RECORDS = buildRecordsFromSupabaseRows(rows);
-    applyActiveScope();
-    // Con los datos ya cargados, el período toma las fechas que trae la API
-    PERIODO = defaultPeriodo();
-    syncPeriodInputs();
+var hoyGT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Guatemala',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+}).format(new Date());
+
+ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
+  return r.fechaSolicitud &&
+    !esEmpleadoExcluido(r) &&
+    r.fechaSolicitud >= '2026-09-01' &&
+    r.fechaSolicitud <= hoyGT;
+});
+
+applyActiveScope();
+
+PERIODO = {
+  desde: '2026-09-01',
+  hasta: hoyGT
+};
+
+syncPeriodInputs();
     setLoadStatus(aviso, aviso ? 'error' : 'hidden');
-    // Pastilla «Actualizado: …» solo con datos en vivo. Con el respaldo no hay fecha del
-    // corte guardado y una pastilla gris diría «sin información»: queda solo el aviso.
     if (DATOS_FECHA) {
       pintarUltimaActualizacion('ultimaAct', { fecha: DATOS_FECHA, estado: 'exitoso', registros: ALL_RECORDS.length });
     }
     initFilters();
     render();
-    document.getElementById('fxPdf').disabled = false;   // ya hay datos: se puede exportar
+    document.getElementById('fxPdf').disabled = false;
   } catch (e) {
     console.error('No se pudieron procesar los datos de RRHH', e);
     setLoadStatus('Los datos llegaron (' + (aviso ? 'corte guardado en Supabase' : 'en vivo desde SharePoint') +
@@ -500,7 +844,7 @@ async function loadFromSupabase() {
 }
 loadFromSupabase();
 const STATUS_META = {
-  'Ingresada': { label: 'Ingresada', color: '#c59600' },
+  'Ingresada': { label: 'Pendiente 1.er aprobador', color: '#c59600' },
   'Aval Jefe': { label: 'Pendiente 1.er aprobador', color: '#2f8f76' },
   'Aprobacion RRHH': { label: 'Aprobada 2.º aprobador', color: '#4f8fd8' },
   'Pendiente Segundo': { label: 'Pendiente 2.º aprobador', color: '#8b909e' },
@@ -511,7 +855,7 @@ const STATUS_META = {
 const STATUS_ORDER = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
 function statusMeta(estado) { return STATUS_META[estado] || STATUS_META['Sin estado']; }
 function shortUser(email) {
-  if (!email || email === 'Sin asignar' || email === 'No especificado') return email || '—';
+  if (!email || email === 'Sin me asigno' || email === 'No especificado' || email === 'Sin asignar') return '—';
   return email.split('@')[0];
 }
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -545,13 +889,9 @@ function uniqueCounts(records, key) {
 }
 var ALL_SOLICITANTE_OPTS, ALL_APROBADOR_OPTS, ALL_TIPO_OPTS, ALL_AREA_OPTS, ALL_JEFE_OPTS, ALL_ESTADO_OPTS;
 
-// ---------- Estado de los filtros ----------
-// Operación: países marcados (nunca vacío). Con los dos marcados no se filtra por país.
 var OP_PAISES = ['Guatemala', 'El Salvador'];
 var opSel = new Set(OP_PAISES);
-// Período sobre fecha_solicitud, en formato aaaa-mm-dd. Las dos vacías = todo el histórico.
 var PERIODO = defaultPeriodo();
-// Desplegables tipo Excel: sel = null significa "Todas"; si no, un Set con lo marcado.
 var XF_DEFS = [
   { key: 'solicitante', field: 'solicitante', label: 'Solicitante' },
   { key: 'aprobador', field: 'aprobador', label: 'Aprobador' },
@@ -559,7 +899,6 @@ var XF_DEFS = [
   { key: 'area', field: 'area', label: 'Área' },
   { key: 'tipo', field: 'tipo', label: 'Tipo de acción' },
   { key: 'estado', field: 'estado', label: 'Estado' },
-  // Categorías que se superponen (como Estado): una solicitud con horas y días está en las tres primeras.
   { key: 'duracion', field: null, label: 'Duración', cats: durCategorias }
 ];
 var DUR_FILTRO_OPCIONES = ['Con duración', 'Solo con horas', 'Solo con días', 'Sin duración'];
@@ -602,11 +941,9 @@ function parseDmy(txt) {
   if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
   return isoFromDate(dt);
 }
-// Período por defecto = fechas de las solicitudes que trae la API (de la más antigua
-// a la más reciente). Antes eran los últimos 30 días desde hoy.
 function defaultPeriodo() {
   var fechas = ALL_RECORDS.map(function(r) { return r.fechaSolicitud; }).filter(Boolean).sort();
-  return { desde: fechas[0] || '', hasta: fechas[fechas.length - 1] || '' };
+  return { desde: fechas[0] || '2026-09-01', hasta: fechas[fechas.length - 1] || todayIso() };
 }
 function xfLabel(key, value) {
   if (key === 'estado') return value;
@@ -614,8 +951,6 @@ function xfLabel(key, value) {
   return value;
 }
 
-// Un estado del filtro representa un indicador, no necesariamente el valor crudo de SharePoint.
-// La primera aprobación es acumulativa y puede coincidir con una decisión posterior del segundo nivel.
 var APS_ESTADOS_FILTRO = [
   'Ingresadas',
   'Pendientes 1.er aprobador',
@@ -629,10 +964,11 @@ function estadosIndicadoresAPS(r) {
   var e = r.estado, lista = [];
   if (e === 'Ingresada') lista.push('Ingresadas');
   if (e === 'Ingresada' || e === 'Aval Jefe') lista.push('Pendientes 1.er aprobador');
-  if (e === 'Aprobacion RRHH' || e === 'Rechazo RRHH') lista.push('Aprobadas 1.er aprobador');
+  // Aprobadas 1.er aprobador = las que pasaron al segundo nivel (Aprobacion RRHH, Pendiente Segundo, Rechazo RRHH)
+  if (e === 'Aprobacion RRHH' || e === 'Pendiente Segundo' || e === 'Rechazo RRHH') lista.push('Aprobadas 1.er aprobador');
   if (e === 'Rechazo Jefe') lista.push('Rechazadas 1.er aprobador');
-  if (esPendienteSegundo(r)) lista.push('Pendientes 2.º aprobador');
-  if (e === 'Aprobacion RRHH' && !esPendienteSegundo(r)) lista.push('Aprobadas 2.º aprobador');
+  if (e === 'Pendiente Segundo') lista.push('Pendientes 2.º aprobador');
+  if (e === 'Aprobacion RRHH') lista.push('Aprobadas 2.º aprobador');
   if (e === 'Rechazo RRHH') lista.push('Rechazadas 2.º aprobador');
   return lista;
 }
@@ -670,9 +1006,6 @@ function applyFilters(records, filters, exclude) {
     return true;
   });
 }
-// Cascada: cada desplegable solo ofrece opciones compatibles con los demás filtros
-// (se calcula con todos los filtros menos el propio). Lo marcado que deja de estar
-// disponible se desmarca solo; si no queda nada marcado, vuelve a "Todas".
 function updateXfOptions(def, filters) {
   var st = XF_STATE[def.key];
   var countMap = new Map();
@@ -694,7 +1027,7 @@ function initFilters() {
   ALL_APROBADOR_OPTS = uniqueCounts(RECORDS, 'aprobador');
   ALL_TIPO_OPTS = uniqueCounts(RECORDS, 'tipo');
   ALL_ESTADO_OPTS = APS_ESTADOS_FILTRO.map(function(s) { return { value: s, label: s }; });
-  ALL_AREA_OPTS = uniqueCounts(RECORDS, 'area');
+  ALL_AREA_OPTS = uniqueCounts(RECORDS.filter(function(r) { return !esSinArea(r.area); }), 'area');
   ALL_JEFE_OPTS = uniqueCounts(RECORDS.filter(function(r) { return r.jefeInmediato; }), 'jefeInmediato')
     .sort(function(a, b) { return a.value.localeCompare(b.value); });
   XF_OPTS = {
@@ -708,8 +1041,6 @@ function initFilters() {
   };
   document.getElementById('subtitleLine').textContent = 'El Salvador & Guatemala · ' + RECORDS.length + ' solicitudes registradas';
 }
-// Recalcula opciones y conteos de los seis desplegables. Si alguno vuelve a "Todas"
-// porque se le vaciaron las opciones, repite para que los demás reflejen el cambio.
 function refreshFilterCounts(filters) {
   for (var pass = 0; pass < 4; pass++) {
     var changed = false;
@@ -748,16 +1079,11 @@ function horasDeSolicitante(records, solicitante) {
     dias: vacaciones.reduce(function(s, r) { return s + (r.dias || 0); }, 0)
   };
 }
-// Cuántas solicitudes hay en cada estado. La usan las tarjetas, la dona «Por estado» y el PDF.
 function conteoEstados(rows) {
   var c = {};
   rows.forEach(function(r) { c[r.estado] = (c[r.estado] || 0) + 1; });
   return c;
 }
-// Los números de las tarjetas de arriba. Los pintan renderKpis() y el PDF.
-// Regla operativa confirmada: TODA APS cuyo campo aprobador esté sin asignar
-// entra al indicador y filtro «Pendientes 2.º aprobador», sin importar estado.
-// Es una clasificación de asignación, no una afirmación de que el jefe aprobó.
 function segundoSinAsignar(r) {
   var a = String(r.aprobador == null ? '' : r.aprobador).trim().toLowerCase();
   return !a || a === 'sin asignar' || a === 'sin asignación' || a === 'sin asignacion' || a === 'null';
@@ -766,14 +1092,14 @@ function esPendienteSegundo(r) {
   return segundoSinAsignar(r);
 }
 function etiquetaEstadoAPS(r) {
-  // Mostrar el estado real del proceso; el filtro de segundo aprobador
-  // sigue siendo una clasificación independiente, no un reemplazo del estado.
+  if (r.estado === 'Ingresada') return 'Pendiente 1.er aprobador';
+  if (r.estado === 'Aval Jefe') return 'Pendiente 1.er aprobador';
+  if (r.estado === 'Pendiente Segundo') return 'Pendiente 2.º aprobador';
   if (r.estado === 'Aprobacion RRHH') {
-    return segundoSinAsignar(r) ? 'Aprobada 1.er aprobador; 2.º sin asignar' : 'Aprobada 2.º aprobador';
+    return segundoSinAsignar(r) ? 'Pendiente 2.º aprobador' : 'Aprobada 2.º aprobador';
   }
   if (r.estado === 'Rechazo RRHH') return 'Rechazada 2.º aprobador';
   if (r.estado === 'Rechazo Jefe') return 'Rechazada 1.er aprobador';
-  if (r.estado === 'Aval Jefe') return 'Pendiente 1.er aprobador';
   return statusMeta(r.estado).label;
 }
 function indicadoresRrhh(filtered) {
@@ -782,12 +1108,16 @@ function indicadoresRrhh(filtered) {
   var enAval = c['Aval Jefe'] || 0;
   var rechazadasPrimero = c['Rechazo Jefe'] || 0;
   var rechazadasSegundo = c['Rechazo RRHH'] || 0;
-  var pendientesSegundo = filtered.filter(esPendienteSegundo).length;
-  var aprobadasSegundo = filtered.filter(function(r) { return r.estado === 'Aprobacion RRHH' && !segundoSinAsignar(r); }).length;
+  var pendientesSegundo = c['Pendiente Segundo'] || 0;
+  var aprobadasSegundo = c['Aprobacion RRHH'] || 0;
+
+  // Aprobadas del primer aprobador = TODAS las que avanzaron al 2º nivel (Aprobadas + Pendientes 2º + Rechazadas 2º)
+  var aprobadasPrimero = aprobadasSegundo + pendientesSegundo + rechazadasSegundo;
+
   return {
     total: filtered.length,
     pendientesPrimero: nuevas + enAval,
-    aprobadasPrimero: filtered.filter(function(r) { return r.estado === 'Aprobacion RRHH' || r.estado === 'Rechazo RRHH'; }).length,
+    aprobadasPrimero: aprobadasPrimero,
     rechazadasPrimero: rechazadasPrimero,
     pendientesSegundo: pendientesSegundo,
     aprobadasSegundo: aprobadasSegundo,
@@ -797,10 +1127,9 @@ function indicadoresRrhh(filtered) {
     enRRHH: aprobadasSegundo,
     rechazadas: rechazadasPrimero + rechazadasSegundo,
     solicitantes: new Set(filtered.map(function(r){ return r.solicitante; }).filter(Boolean)).size,
-    areas: new Set(filtered.map(function(r){ return r.area; }).filter(Boolean)).size
+    areas: new Set(filtered.map(function(r){ return r.area; }).filter(function(a){ return a && !esSinArea(a); })).size
   };
 }
-// «Permisos y vacaciones»: solicitudes de cada tipo con sus horas y sus días. La usan la tarjeta y el PDF.
 function permisosVacaciones(filtered) {
   var permisos = filtered.filter(function(r) { return r.tipo === 'Permiso'; });
   var vacaciones = filtered.filter(function(r) { return r.tipo === 'Vacaciones anuales'; });
@@ -813,62 +1142,268 @@ function permisosVacaciones(filtered) {
 }
 function renderKpis(filtered) {
   var I = indicadoresRrhh(filtered);
-  function kpi(number, label, foot) {
-    var mostrable = number === null ? '—' : Number(number).toLocaleString('es-GT');
-    return '<div class="kpi">' +
-      '<div class="kpi-label">' + label + '</div>' +
-      '<div class="kpi-value">' + mostrable + '</div>' +
-      '<div class="kpi-sub">' + foot + '</div>' +
-    '</div>';
-  }
+  
+  var totalStr = Number(I.total).toLocaleString('es-GT');
+  var pAprobadasStr = Number(I.aprobadasPrimero).toLocaleString('es-GT');
+  var pPendientesStr = Number(I.pendientesPrimero).toLocaleString('es-GT');
+  var pRechazadasStr = Number(I.rechazadasPrimero).toLocaleString('es-GT');
+  
+  var sAprobadasStr = Number(I.aprobadasSegundo).toLocaleString('es-GT');
+  var sPendientesStr = Number(I.pendientesSegundo).toLocaleString('es-GT');
+  var sRechazadasStr = Number(I.rechazadasSegundo).toLocaleString('es-GT');
+
   var html = '';
-  html += kpi(I.total, 'Total solicitudes', 'APS en el filtro actual');
-  html += kpi(I.pendientesPrimero, 'Pendientes 1.er aprobador', 'Ingresadas y en aval');
-  html += kpi(I.aprobadasPrimero, 'Aprobadas 1.er aprobador', 'Avanzaron al segundo nivel');
-  html += kpi(I.rechazadasPrimero, 'Rechazadas 1.er aprobador', 'Rechazadas por el jefe');
-  html += kpi(I.pendientesSegundo, 'Pendientes 2.º aprobador', 'Segundo aprobador sin asignar');
-  html += kpi(I.aprobadasSegundo, 'Aprobadas 2.º aprobador', 'Aprobadas por segundo nivel');
-  html += kpi(I.rechazadasSegundo, 'Rechazadas 2.º aprobador', 'Rechazadas por segundo nivel');
+  
+  html += '<div class="kpi-card-3 card-total">' +
+            '<div class="kpi-header-3">' +
+              '<span class="kpi-title-3">Total Solicitudes</span>' +
+              '<span class="kpi-badge-3">General</span>' +
+            '</div>' +
+            '<div class="kpi-main-val">' + totalStr + '</div>' +
+            '<div class="kpi-div-sub">APS registradas en el filtro actual</div>' +
+          '</div>';
+
+  html += '<div class="kpi-card-3 card-primer">' +
+            '<div class="kpi-header-3">' +
+              '<span class="kpi-title-3">Primer Aprobador</span>' +
+              '<span class="kpi-badge-3" style="background:rgba(196,60,80,0.25);color:#ffb3be;">Nivel 1</span>' +
+            '</div>' +
+            '<div class="kpi-divisions-3">' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Aprobadas</span>' +
+                '<span class="kpi-div-val val-aprobadas">' + pAprobadasStr + '</span>' +
+                '<span class="kpi-div-sub">Avanzaron</span>' +
+              '</div>' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Pendientes</span>' +
+                '<span class="kpi-div-val val-pendientes">' + pPendientesStr + '</span>' +
+                '<span class="kpi-div-sub">En aval</span>' +
+              '</div>' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Rechazadas</span>' +
+                '<span class="kpi-div-val val-rechazadas">' + pRechazadasStr + '</span>' +
+                '<span class="kpi-div-sub">Por jefe</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+  html += '<div class="kpi-card-3 card-segundo">' +
+            '<div class="kpi-header-3">' +
+              '<span class="kpi-title-3">Segundo Aprobador</span>' +
+              '<span class="kpi-badge-3" style="background:rgba(158,42,75,0.3);color:#ffd1de;">Nivel 2</span>' +
+            '</div>' +
+            '<div class="kpi-divisions-3">' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Aprobadas</span>' +
+                '<span class="kpi-div-val val-aprobadas">' + sAprobadasStr + '</span>' +
+                '<span class="kpi-div-sub">Por RRHH</span>' +
+              '</div>' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Pendientes</span>' +
+                '<span class="kpi-div-val" style="color:#8b909e;">' + sPendientesStr + '</span>' +
+                '<span class="kpi-div-sub">Pendientes 2.º aprobador</span>' +
+              '</div>' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Rechazadas</span>' +
+                '<span class="kpi-div-val val-rechazadas">' + sRechazadasStr + '</span>' +
+                '<span class="kpi-div-sub">Por RRHH</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
   document.getElementById('kpiRow').innerHTML = html;
 }
+var DESC_AREAS = [];
+var DESC_TIPOS = [];
+var DESC_COLOR = {};
+function esDescanso(r) { return r.tipo !== DUR_TIPO_NO_AUSENCIA && ((r.horas || 0) > 0 || (r.dias || 0) > 0); }
+function esTiempoExtra(r) { return r.tipo === DUR_TIPO_NO_AUSENCIA && (r.horas || 0) > 0; }
+function esPendienteAprobacion(r) { return r.estado === 'Ingresada' || r.estado === 'Aval Jefe' || r.estado === 'Pendiente Segundo'; }
+function descansosPorArea(filtered) {
+  var map = {};
+  function get(a) { return map[a] || (map[a] = { area: a, n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0, tipos: {}, personas: {} }); }
+  function persona(o, s) { return o.personas[s] || (o.personas[s] = { n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0 }); }
+  RECORDS.filter(function(r) { return !esSinArea(r.area); }).forEach(function(r) { persona(get(r.area), r.solicitante); });
+  filtered.filter(function(r) { return !esSinArea(r.area); }).forEach(function(r) {
+    if (esTiempoExtra(r)) { var e = get(r.area), pe = persona(e, r.solicitante); e.extraN++; e.extraHoras += r.horas || 0; pe.extraN++; pe.extraHoras += r.horas || 0; return; }
+    if (!esDescanso(r)) return;
+    var o = get(r.area), h = r.horas || 0, d = r.dias || 0, p = persona(o, r.solicitante);
+    o.n++; o.horas += h; o.dias += d; p.n++; p.horas += h; p.dias += d;
+    var t = o.tipos[r.tipo] || (o.tipos[r.tipo] = { n: 0, horas: 0, dias: 0 }); t.n++; t.horas += h; t.dias += d;
+    if (esPendienteAprobacion(r)) { o.pendN++; o.pendHoras += h; o.pendDias += d; p.pendN++; p.pendHoras += h; p.pendDias += d; }
+  });
+  return Object.keys(map).map(function(k) { return map[k]; }).sort(function(a, b) { return (b.n - a.n) || a.area.localeCompare(b.area, 'es'); });
+}
+function dscHD(h, d) { var p = []; if (h) p.push(fmtNum(h) + ' h'); if (d) p.push(fmtNum(d) + ' d'); return p.length ? p.join(' · ') : '—'; }
 
+function dscAbrirModal(cejilla, titulo, sub, nombre, cuerpo, letra) {
+  document.querySelector('.expx-cejilla').textContent = cejilla;
+  document.getElementById('expxAvatar').textContent = letra;
+  document.getElementById('expxTitulo').textContent = titulo;
+  var n = document.getElementById('expxNombre'); n.textContent = nombre || ''; n.hidden = !nombre;
+  document.getElementById('expxSub').textContent = sub;
+  document.getElementById('expxCuerpo').innerHTML = cuerpo;
+  var bg = document.getElementById('expxBg');
+  bg.classList.add('open');
+  bg.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  bg.querySelector('.expx').scrollTop = 0;
+  document.getElementById('expxCerrar').focus();
+}
+function abrirDetalleArea(i) {
+  var o = DESC_AREAS[i];
+  if (!o) return;
+  var areaColor = DESC_COLOR[o.area] || '#4f8fd8';
+  var kpi = function(v, l, accent) { return '<div class="expx-kpi" style="--kpi-accent:' + (accent || areaColor) + '"><b>' + v + '</b><span>' + l + '</span></div>'; };
+  var pers = Object.keys(o.personas).map(function(s) {
+    var u = shortUser(s);
+    return { nombre: nombreCompletoEmpleado(u) || u, u: u, p: o.personas[s] };
+  }).sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+  var kpis = '<div class="expx-kpis" style="grid-template-columns:repeat(3,1fr)">' +
+    kpi(o.n, 'Total de acciones') + kpi(fmtNum(o.horas) + ' h', 'Horas registradas') + kpi(fmtNum(o.dias) + ' d', 'Días registrados') +
+    kpi(o.pendN ? o.pendN + ' · ' + dscHD(o.pendHoras, o.pendDias) : '0', 'Pendientes de aprobar') +
+    kpi(o.extraN ? fmtNum(o.extraHoras) + ' h' : '—', 'Tiempo extra (' + o.extraN + (o.extraN === 1 ? ' solicitud' : ' solicitudes') + ')') +
+    kpi(pers.length, 'Trabajadores') + '</div>';
+  var tipos = DESC_TIPOS.filter(function(t) { return o.tipos[t]; });
+  var maxT = Math.max.apply(null, tipos.map(function(t) { return o.tipos[t].n; }).concat([1]));
+  var tiposHtml = '<div class="expx-sec"><h4>Por tipo de acción<small>' + tipos.length + (tipos.length === 1 ? ' tipo' : ' tipos') + '</small></h4>' +
+    (tipos.length ? '<div class="expx-vbars">' + tipos.map(function(t, i) {
+      var x = o.tipos[t], hh = Math.max(4, x.n / maxT * 160);
+      var corto = t.length > 18 ? t.slice(0, 16) + '…' : t;
+      var barColor = DESC_COLOR[t] || areaColor;
+      return '<div class="expx-vcol" title="' + escapeHtml(t) + ': ' + x.n + '"><span class="expx-vval">' + x.n + '</span>' +
+        '<div class="expx-vbar" style="height:' + hh.toFixed(0) + 'px;--vbar-c:' + barColor + ';animation-delay:' + (i * 0.05).toFixed(2) + 's"></div>' +
+        '<span class="expx-vlab">' + escapeHtml(corto) + '</span></div>';
+    }).join('') + '</div>' +
+    '<div class="expx-tabla-wrap" style="margin-top:12px"><table class="expx-tabla"><thead><tr><th>Tipo</th><th class="dsc-r">Acciones</th><th class="dsc-r">Horas registradas</th><th class="dsc-r">Días registrados</th></tr></thead><tbody>' +
+    tipos.map(function(t) { var x = o.tipos[t]; return '<tr class="dsc-tipo-row" style="--rc:' + (DESC_COLOR[t] || areaColor) + '"><td>' + escapeHtml(t) + '</td><td class="dsc-r">' + x.n + '</td><td class="dsc-r">' + fmtNum(x.horas) + ' h</td><td class="dsc-r">' + fmtNum(x.dias) + ' d</td></tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="expx-vacio">Sin acciones en el período filtrado.</div>') + '</div>';
+  var persHtml = '<div class="expx-sec"><h4>Trabajadores del área<small>' + pers.length + '</small></h4>' +
+    (pers.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>Trabajador</th><th class="dsc-r">Acciones</th><th class="dsc-r">Horas registradas</th><th class="dsc-r">Días registrados</th></tr></thead><tbody>' +
+    pers.map(function(x) {
+      return '<tr><td>' + escapeHtml(x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td><td class="dsc-r">' + x.p.n + '</td><td class="dsc-r">' + fmtNum(x.p.horas) + ' h</td><td class="dsc-r">' + fmtNum(x.p.dias) + ' d</td></tr>';
+    }).join('') + '</tbody></table></div>' : '<div class="expx-vacio">Sin trabajadores registrados.</div>') + '</div>';
+  dscAbrirModal('Detalle del área', o.area, o.n + (o.n === 1 ? ' acción' : ' acciones') + ' · ' + pers.length + (pers.length === 1 ? ' trabajador' : ' trabajadores'),
+    JEFES_AREA[o.area] ? 'Jefe del área: ' + JEFES_AREA[o.area] : '', kpis + tiposHtml + persHtml, o.area.charAt(0));
+}
+var DESC_METRICAS = {
+  n:     { t: 'Total de acciones', val: function(p) { return p.n; },          fmt: function(v) { return String(v); },        cols: [['Horas registradas', function(p) { return fmtNum(p.horas) + ' h'; }], ['Días registrados', function(p) { return fmtNum(p.dias) + ' d'; }]] },
+  horas: { t: 'Horas registradas',  val: function(p) { return p.horas; },      fmt: function(v) { return fmtNum(v) + ' h'; }, cols: [['Acciones', function(p) { return p.n; }]] },
+  dias:  { t: 'Días registrados',        val: function(p) { return p.dias; },       fmt: function(v) { return fmtNum(v) + ' d'; }, cols: [['Acciones', function(p) { return p.n; }]] },
+  pend:  { t: 'Pendientes de aprobar',   val: function(p) { return p.pendN; },      fmt: function(v) { return String(v); },        cols: [['Horas', function(p) { return fmtNum(p.pendHoras) + ' h'; }], ['Días', function(p) { return fmtNum(p.pendDias) + ' d'; }]] },
+  extra: { t: 'Tiempo extra',            val: function(p) { return p.extraHoras; }, fmt: function(v) { return fmtNum(v) + ' h'; }, cols: [['Acciones', function(p) { return p.extraN; }]] }
+};
+function abrirDetalleMetrica(key) {
+  var m = DESC_METRICAS[key];
+  if (!m) return;
+  var filas = [];
+  DESC_AREAS.forEach(function(o, i) {
+    Object.keys(o.personas).forEach(function(s) {
+      var u = shortUser(s), p = o.personas[s], v = m.val(p);
+      if (v > 0) filas.push({ nombre: nombreCompletoEmpleado(u) || u, u: u, area: o.area, ai: i, p: p, v: v });
+    });
+  });
+  filas.sort(function(a, b) { return (b.v - a.v) || a.nombre.localeCompare(b.nombre, 'es'); });
+  var total = filas.reduce(function(s, x) { return s + x.v; }, 0);
+  var cuerpo = '<div class="expx-sec"><h4>Detalle por trabajador<small>' + filas.length + (filas.length === 1 ? ' trabajador' : ' trabajadores') + '</small></h4>' +
+    (filas.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>Trabajador</th><th>Área</th><th class="dsc-r">' + m.t + '</th>' +
+    m.cols.map(function(c) { return '<th class="dsc-r">' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    filas.map(function(x) {
+      return '<tr><td>' + escapeHtml(x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td>' +
+        '<td><button type="button" class="dsc-lnk" data-dsc-open-area="' + x.ai + '">' + escapeHtml(x.area) + '</button></td><td class="dsc-r">' + m.fmt(x.v) + '</td>' +
+        m.cols.map(function(c) { return '<td class="dsc-r">' + c[1](x.p) + '</td>'; }).join('') + '</tr>';
+    }).join('') + '<tr class="dsc-tot"><td>Total</td><td></td><td class="dsc-r">' + m.fmt(total) + '</td>' + m.cols.map(function() { return '<td></td>'; }).join('') + '</tr></tbody></table></div>'
+    : '<div class="expx-vacio">Sin datos en el período filtrado.</div>') + '</div>' +
+    (key === 'extra' ? '<p class="expx-sub" style="margin:0">El tiempo extra se toma de las acciones «' + escapeHtml(DUR_TIPO_NO_AUSENCIA) + '».</p>' : '');
+  dscAbrirModal('Detalle de acciones', m.t, m.fmt(total) + ' en total · ' + filas.length + (filas.length === 1 ? ' trabajador' : ' trabajadores'), '', cuerpo, m.t.charAt(0));
+}
 function renderSummaryCards(filtered) {
   var el = document.getElementById('summaryRow');
   if (!el) return;
+  var areas = descansosPorArea(filtered);
+  DESC_AREAS = areas;
+  var tot = { n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0 };
+  var tipoTot = {};
+  areas.forEach(function(o) {
+    Object.keys(tot).forEach(function(k) { tot[k] += o[k]; });
+    Object.keys(o.tipos).forEach(function(t) { tipoTot[t] = (tipoTot[t] || 0) + o.tipos[t].n; });
+  });
+  var tipos = Object.keys(tipoTot).sort(function(a, b) { return tipoTot[b] - tipoTot[a]; });
+  var color = {}; tipos.forEach(function(t, i) { color[t] = AREA_PALETTE[i % AREA_PALETTE.length]; });
+  DESC_TIPOS = tipos; DESC_COLOR = color;
+  var maxV = Math.max.apply(null, areas.map(function(o) { return Math.max.apply(null, tipos.map(function(t) { return o.tipos[t] ? o.tipos[t].n : 0; }).concat([0])); }).concat([1]));
+  var step = Math.max(1, Math.ceil(maxV / 4)), top = step * 4;
+  var ticks = [0, 1, 2, 3, 4].map(function(k) { return k * step; });
 
-  var pv = permisosVacaciones(filtered);
-  var permisos = pv.permisos, vacaciones = pv.vacaciones, totalHoras = pv.horas, totalDias = pv.dias;
+  function kpi(key, label, main, word, total) {
+    var accents = { n: '#4f8fd8', horas: '#2f8f76', dias: '#c59600', pend: '#c43c50', extra: '#9e2a4b' };
+    return '<button type="button" class="dsc-kpi" data-dsc-metric="' + key + '" style="--kpi-accent:' + (accents[key] || '#4f8fd8') + '"><div class="apx-leave-label">' + label + '</div><div class="apx-leave-main"><span class="apx-leave-count">' + main + '</span><span class="apx-leave-word">' + word + '</span></div><div class="apx-leave-total">' + total + '</div><span class="dsc-kpi-hint">Ver detalle ›</span></button>';
+  }
+  var legend = tipos.map(function(t) { return '<span><span class="apx-dot" style="background:' + color[t] + '"></span>' + escapeHtml(t) + '</span>'; }).join('');
+  var minG = tipos.length * 19 + 24;
+  var grupos = areas.map(function(o, i) {
+    var barras = tipos.map(function(t) {
+      var n = o.tipos[t] ? o.tipos[t].n : 0;
+      return '<button type="button" class="dsc-bar' + (n ? '' : ' is-zero') + '" data-dsc-bar="' + i + '" style="height:' + (n / top * 100).toFixed(2) + '%;--c:' + color[t] + '" title="' + escapeHtml(o.area) + ' · ' + escapeHtml(t) + ': ' + n + '" aria-label="' + escapeHtml(o.area) + ', ' + escapeHtml(t) + ': ' + n + '"></button>';
+    }).join('');
+    return '<div class="dsc-g" style="min-width:' + minG + 'px"><div class="dsc-bars">' + barras + '</div><span class="dsc-glab">' + escapeHtml(o.area) + '</span></div>';
+  }).join('');
 
   el.style.gridTemplateColumns = 'minmax(0, 1fr)';
   el.innerHTML =
-    '<div class="card apx-summary-card">' +
-      '<h2 class="card-title">Permisos y vacaciones</h2>' +
-      '<div class="apx-leave-grid">' +
-        '<div class="apx-leave-item">' +
-          '<div class="apx-leave-label">Permisos (horas)</div>' +
-          '<div class="apx-leave-main"><span class="apx-leave-count">' + permisos.length + '</span><span class="apx-leave-word">solicitudes</span></div>' +
-          '<div class="apx-leave-total"><strong>' + fmtNum(totalHoras) + ' horas</strong> en total</div>' +
-        '</div>' +
-        '<div class="apx-leave-item">' +
-          '<div class="apx-leave-label">Vacaciones (días)</div>' +
-          '<div class="apx-leave-main"><span class="apx-leave-count">' + vacaciones.length + '</span><span class="apx-leave-word">solicitudes</span></div>' +
-          '<div class="apx-leave-total"><strong>' + fmtNum(totalDias) + ' días</strong> en total</div>' +
-        '</div>' +
+    '<div class="card apx-summary-card dsc-sec">' +
+      '<h2 class="card-title">Acciones por área</h2>' +
+      '<p class="card-caption">Haz clic en cualquier tarjeta para ver el detalle de cada área en el período filtrado.</p>' +
+      '<div class="dsc-kpis">' +
+        kpi('n', 'Total de acciones', tot.n, 'acciones', '<strong>' + areas.length + ' áreas</strong>') +
+        kpi('horas', 'Horas registradas', fmtNum(tot.horas), 'horas', '<strong>permisos y otras acciones</strong>') +
+        kpi('dias', 'Días registrados', fmtNum(tot.dias), 'días', '<strong>vacaciones, compensatorios, incapacidad</strong>') +
+        kpi('pend', 'Pendientes de aprobar', tot.pendN, 'acciones', '<strong>' + dscHD(tot.pendHoras, tot.pendDias) + '</strong> por resolver') +
+        kpi('extra', 'Tiempo extra', tot.extraN ? fmtNum(tot.extraHoras) : '—', tot.extraN ? 'horas' : '', '<strong>' + tot.extraN + (tot.extraN === 1 ? ' solicitud' : ' solicitudes') + '</strong> pre-aprobadas') +
       '</div>' +
+    '</div>' +
+    '<div class="card apx-summary-card dsc-sec">' +
+      '<h2 class="card-title">Tipos de acción por área</h2>' +
+      '<p class="card-caption">Haz clic en cualquier barra para ver el detalle del área.</p>' +
+      (areas.length && tipos.length ?
+      '<div class="dsc-legend">' + legend + '</div>' +
+      '<div class="dsc-vchart"><div class="dsc-y">' + ticks.map(function(v) { return '<span style="bottom:' + (v / top * 100) + '%">' + v + '</span>'; }).join('') + '</div>' +
+      '<div class="dsc-vscroll"><div class="dsc-plot"><div class="dsc-grid">' + ticks.map(function(v) { return '<i style="bottom:' + (v / top * 100) + '%"></i>'; }).join('') + '</div>' +
+      '<div class="dsc-groups">' + grupos + '</div></div></div></div>'
+      : '<div class="dsc-empty">Sin acciones en el período filtrado.</div>') +
     '</div>';
+
+  if (!el.dataset.dscBound) {
+    el.dataset.dscBound = '1';
+    el.addEventListener('click', function(ev) {
+      var bar = ev.target.closest('[data-dsc-bar]');
+      var met = ev.target.closest('[data-dsc-metric]');
+      if (bar) { EXPX_FOCO = bar; abrirDetalleArea(Number(bar.getAttribute('data-dsc-bar'))); }
+      else if (met) { EXPX_FOCO = met; abrirDetalleMetrica(met.getAttribute('data-dsc-metric')); }
+    });
+    document.getElementById('expxCuerpo').addEventListener('click', function(ev) {
+      var b = ev.target.closest('[data-dsc-open-area]');
+      if (b) abrirDetalleArea(Number(b.getAttribute('data-dsc-open-area')));
+    });
+  }
 }
 
-// Por estado: la guía limita la dona a 3 segmentos y aquí hay hasta 7 estados,
-// así que el reparto se muestra como barras horizontales (una por estado, en el
-// orden del flujo), con el color de cada estado ajustado a los tonos de la guía.
 var ESTADO_COLOR_GRAFICA = {
-  'Ingresada': '#c59600', 'Aval Jefe': '#4f8fd8', 'Pendiente Segundo': '#8b909e', 'Aprobacion RRHH': '#7fb0f0',
+  'Ingresada': '#2f8f76', 'Aval Jefe': '#2f8f76', 'Pendiente Segundo': '#8b909e', 'Aprobacion RRHH': '#7fb0f0',
   'Rechazo Jefe': '#c43c50', 'Rechazo RRHH': '#d95f6e', 'Sin estado': '#8b909e'
 };
 function renderDonut(filtered) {
   var counts = conteoEstados(filtered);
-  var data = STATUS_ORDER.filter(function(s) { return counts[s]; }).map(function(s) {
-    return { name: statusMeta(s).label, value: counts[s], color: ESTADO_COLOR_GRAFICA[s] || statusMeta(s).color };
+  var sumIngAval = (counts['Ingresada'] || 0) + (counts['Aval Jefe'] || 0);
+  var data = [];
+  if (sumIngAval > 0) {
+    data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#2f8f76' });
+  }
+  var otherStatuses = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
+  otherStatuses.forEach(function(s) {
+    if (counts[s]) {
+      data.push({ name: statusMeta(s).label, value: counts[s], color: ESTADO_COLOR_GRAFICA[s] || statusMeta(s).color });
+    }
   });
   var total = filtered.length;
   var el = document.getElementById('chartEstado');
@@ -887,38 +1422,88 @@ function renderDonut(filtered) {
     rows + '</div>';
 }
 
+var ESTADOS_ORDEN_GRAFICA = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
+function leyendaEstadosHtml(estTot) {
+  var guia = [
+    { label: 'Pendiente 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Aval Jefe'], on: estTot['Ingresada'] || estTot['Aval Jefe'] },
+    { label: 'Pendiente 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Pendiente Segundo'], on: estTot['Pendiente Segundo'] },
+    { label: 'Aprobada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Aprobacion RRHH'], on: estTot['Aprobacion RRHH'] },
+    { label: 'Rechazada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'], on: estTot['Rechazo Jefe'] },
+    { label: 'Rechazada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo RRHH'], on: estTot['Rechazo RRHH'] },
+    { label: 'Sin estado', color: ESTADO_COLOR_GRAFICA['Sin estado'], on: estTot['Sin estado'] }
+  ].filter(function(g){ return g.on; }).map(function(g) {
+    return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + g.color + '"></span>' + g.label + '</span>';
+  }).join('');
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
+}
 function renderRanking(containerId, data, limit) {
   var el = document.getElementById(containerId);
   var rows = data.slice(0, limit || 8);
   if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
-  el.innerHTML = '<div class="apx-ranking">' + rows.map(function(d, i){
+  var conEstados = rows.some(function(d){ return d.items; });
+  var estTot = {};
+  if (conEstados) rows.forEach(function(d){
+    var c = conteoEstados(d.items || []);
+    Object.keys(c).forEach(function(k){ estTot[k] = (estTot[k] || 0) + c[k]; });
+  });
+  el.innerHTML = (conEstados ? leyendaEstadosHtml(estTot) : '') + '<div class="apx-ranking">' + rows.map(function(d, i){
     var pct = (d.count / max * 100).toFixed(1);
+    var fill;
+    if (d.items) {
+      var estCount = conteoEstados(d.items);
+      var segs = ESTADOS_ORDEN_GRAFICA.filter(function(e){ return estCount[e]; }).map(function(e) {
+        return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
+      }).join('');
+      fill = '<div class="apx-rank-fill gx-bar-h" style="display:flex;background:none;width:' + pct + '%;--gx-i:' + i + '">' + segs + '</div>';
+    } else {
+      fill = '<div class="apx-rank-fill gx-bar-h" style="width:' + pct + '%;--gx-i:' + i + '"></div>';
+    }
     return '<div class="apx-rank-row">' +
       '<span class="apx-rank-no">' + (i+1) + '</span>' +
       '<span class="apx-rank-name" title="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</span>' +
-      '<div class="apx-rank-track"><div class="apx-rank-fill gx-bar-h" style="width:' + pct + '%;--gx-i:' + i + '"></div></div>' +
+      '<div class="apx-rank-track">' + fill + '</div>' +
       '<span class="apx-rank-value">' + d.count + '</span>' +
     '</div>';
   }).join('') + '</div>';
 }
 
+var AREA_PALETTE = ['#2f8f76', '#4f8fd8', '#c43c50', '#8b909e', '#c59600', '#7fb0f0', '#9e2a4b', '#d95f6e', '#a0aab8'];
+
+var AREA_PALETTE_PIE = AREA_PALETTE.concat(['#5fb59c', '#3a6fb0', '#e0b94f', '#6f7686', '#e89aa5', '#b5c9ee', '#4f6f64', '#a8334a']);
 function renderTreemap(containerId, data) {
   var el = document.getElementById(containerId);
   if (!data.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
-  var rows = data.slice(0, 8);
-  if (data.length > 8) {
-    var otros = data.slice(8).reduce(function(s,d){return s+d.count;},0);
-    if (otros) rows.push({name:'Otras áreas', count:otros});
-  }
+  var rows = data.slice();
   var total = rows.reduce(function(s,d){return s+d.count;},0) || 1;
-  el.innerHTML = '<div class="apx-treemap">' + rows.map(function(d){
-    var pct = d.count/total*100;
-    var grow = Math.max(1, Math.round(pct));
-    return '<div class="apx-tree-cell" style="flex-grow:' + grow + '" title="' + escapeHtml(d.name) + ': ' + d.count + '">' +
-      '<span class="apx-tree-pct">' + pct.toFixed(1) + '%</span>' +
-      '<span class="apx-tree-name">' + escapeHtml(d.name) + '</span><span class="apx-tree-value">' + d.count + '</span></div>';
-  }).join('') + '</div>';
+
+  var cx = 100, cy = 100, r = 92, ang = -Math.PI / 2;
+  var slices = rows.map(function(d, i) {
+    var color = AREA_PALETTE_PIE[i % AREA_PALETTE_PIE.length];
+    var pct = (d.count / total * 100).toFixed(1);
+    var tip = '<title>' + escapeHtml(d.name) + ': ' + d.count + ' (' + pct + '%)</title>';
+    if (d.count >= total) {
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '" style="stroke:var(--card-bg);stroke-width:2">' + tip + '</circle>';
+    }
+    var a0 = ang, a1 = ang + (d.count / total) * Math.PI * 2;
+    ang = a1;
+    var x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+    var x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    var large = (a1 - a0) > Math.PI ? 1 : 0;
+    return '<path d="M' + cx + ',' + cy + ' L' + x0.toFixed(2) + ',' + y0.toFixed(2) + ' A' + r + ',' + r + ' 0 ' + large + ' 1 ' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' Z" fill="' + color + '" style="stroke:var(--card-bg);stroke-width:2">' + tip + '</path>';
+  }).join('');
+
+  var legend = rows.map(function(d, i) {
+    var pct = (d.count / total * 100).toFixed(1);
+    var color = AREA_PALETTE_PIE[i % AREA_PALETTE_PIE.length];
+    return '<div class="apx-pie-row" title="' + escapeHtml(d.name) + ': ' + d.count + '">' +
+      '<span class="apx-estado-name"><span class="apx-dot" style="background:' + color + '"></span>' + escapeHtml(d.name) + ' · ' + pct + '%</span>' +
+      '<span class="apx-legend-count">' + d.count + '</span></div>';
+  }).join('');
+
+  el.innerHTML = '<div class="apx-estado"><div class="apx-estado-total"><span class="apx-donut-center-num">' + total + '</span><span class="apx-donut-center-lbl">total en áreas</span></div>' +
+    '<div class="apx-pie-layout"><div class="apx-pie-wrap"><svg class="apx-pie" viewBox="0 0 200 200" role="img" aria-label="Por área">' + slices + '</svg></div>' +
+    '<div class="apx-pie-legend">' + legend + '</div></div></div>';
 }
 
 function renderLollipop(containerId, data, limit) {
@@ -947,36 +1532,219 @@ function renderVerticalBars(containerId, data) {
   }).join('') + '</div>';
 }
 
-function toggleSolicitanteDetail(el) {
-  var detail = el.nextElementSibling;
-  detail.classList.toggle('open');
-  el.querySelector('.apx-solic-arrow').classList.toggle('open');
+var SOLIC_FILTERED = [];
+var SOLIC_TOP = [];
+var EXPX_FOCO = null;
+function expxCerrar() {
+  var bg = document.getElementById('expxBg');
+  if (!bg.classList.contains('open')) return;
+  bg.classList.remove('open');
+  bg.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (EXPX_FOCO && EXPX_FOCO.focus) EXPX_FOCO.focus();
 }
+var NOMBRES_EMPLEADOS = {
+  'aayala': 'Angelica Ayala',
+  'kaescobar': 'Kevin Escobar',
+  'sconde': 'Silvia Conde',
+  'lcanas': 'Lourdes Cañas',
+  'icanas': 'Lourdes Cañas',
+  'fespinal': 'Fatima Espinal',
+  'wortega': 'Wendy Ortega',
+  'cemartinez': 'Carlos Martinez',
+  'lngonzalez': 'Lourdes Gonzales',
+  'ingonzalez': 'Lourdes Gonzales',
+  'ecandry': 'Erick Candray',
+  'ecandray': 'Erick Candray',
+  'dmorataya': 'David Morataya',
+  'jcifuentes': 'Joel Cifuentes',
+  'edlopez': 'Daniel Lopez',
+  'dbolaines': 'Denis Bolaines',
+  'mdcastillo': 'Mirna Castillo',
+  'rramirez': 'Raul Ramirez',
+  'ohernandez': 'Obed Hernandez',
+  'tcastillo': 'Tanya Castillo',
+  'rballadares': 'Ramon Balladeres',
+  'asolis': 'Alvaro Solis',
+  'nmarroquin': 'Nilson Marroquin',
+  'jmira': 'Jorge Mira',
+  'hamejia': 'Hector Mejia',
+  'jflores': 'Mabel Flores',
+  'crosales': 'Stanley Rosales',
+  'mchicas': 'Marco Chicas',
+  'acano': 'Alisson Cano',
+  'rfuentes': 'Rachel Fuentes',
+  'rapineda': 'Ricardo Pineda',
+  'dcmonge': 'Daniela Monge',
+  'kreyna': 'Karla Reyna',
+  'ksoriano': 'Kenny Soriano',
+  'cche': 'Cristian Che',
+  'galfaro': 'Guillermo Alfaro',
+  'memartinez': 'Mauricio Martines',
+  'csantos': 'Camilo Santos',
+  'ajaguilar': 'Adril Aguilar',
+  'paguilar': 'Pablo Aguilar',
+  'jmagana': 'Jose Magaña',
+  'ghenriquez': 'Gabriela Henriquez',
+  'ckreitz': 'Carlos Kreitz',
+  'kgarcia': 'Keily Garcia',
+  'mpalacios': 'Jonathan Palacios',
+  'sfigueroa': 'Sharon Figueroa',
+  'kmazariegos': 'Krissia Mazariegos',
+  'kmazariego': 'Krissia Mazariegos',
+  'bsantos': 'Bryan Santos',
+  'alondono': 'Alexandra Londono',
+  'enflores': 'Erick Flores',
+  'mfsandoval': 'Miriam Sandoval'
+};
+function nombreCompletoEmpleado(usuario) {
+  return NOMBRES_EMPLEADOS[String(usuario || '').trim().toLowerCase()] || '';
+}
+function abrirExpedienteSolicitante(ev, idx) {
+  if (ev) { ev.stopPropagation(); EXPX_FOCO = ev.currentTarget || null; }
+  var d = SOLIC_TOP[idx];
+  if (!d) return;
+  var rows = SOLIC_FILTERED.filter(function(r){ return r.solicitante === d.value; });
+  var name = shortUser(d.value);
+  var info = horasDeSolicitante(SOLIC_FILTERED, d.value);
+  var estCount = conteoEstados(rows);
+  var aprobadas = estCount['Aprobacion RRHH'] || 0;
+
+  document.querySelector('.expx-cejilla').textContent = 'Expediente del solicitante';
+  document.getElementById('expxAvatar').textContent = name.charAt(0);
+  document.getElementById('expxTitulo').textContent = name;
+  var nombreEl = document.getElementById('expxNombre');
+  var nombreCompleto = nombreCompletoEmpleado(name);
+  nombreEl.textContent = nombreCompleto;
+  nombreEl.hidden = !nombreCompleto;
+  var area = rows.length && rows[0].area ? rows[0].area : '';
+  document.getElementById('expxSub').textContent = '#' + (idx + 1) + ' en el ranking · ' + rows.length +
+    (rows.length === 1 ? ' solicitud' : ' solicitudes') + (area ? ' · ' + area : '');
+
+  var kpis = '<div class="expx-kpis">' +
+    '<div class="expx-kpi"><b>' + rows.length + '</b><span>Total de solicitudes</span></div>' +
+    '<div class="expx-kpi"><b>' + (info.permisosCount ? fmtNum(info.horas) + ' h' : '—') + '</b><span>Permisos (' + info.permisosCount + (info.permisosCount === 1 ? ' solicitud' : ' solicitudes') + ')</span></div>' +
+    '<div class="expx-kpi"><b>' + (info.vacacionesCount ? fmtNum(info.dias) + ' d' : '—') + '</b><span>Vacaciones (' + info.vacacionesCount + (info.vacacionesCount === 1 ? ' solicitud' : ' solicitudes') + ')</span></div>' +
+    '<div class="expx-kpi"><b>' + aprobadas + '</b><span>Aprobadas 2.º aprobador</span></div></div>';
+
+  var tipos = uniqueCounts(rows, 'tipo');
+  var maxT = Math.max.apply(null, tipos.map(function(t){ return t.count; }).concat([1]));
+  var tiposHtml = '<div class="expx-sec"><h4>Por tipo de acción<small>' + tipos.length + (tipos.length === 1 ? ' tipo' : ' tipos') + '</small></h4>' +
+    '<div class="expx-vbars">' + tipos.map(function(t, i) {
+      var h = Math.max(4, t.count / maxT * 160);
+      var corto = t.value.length > 18 ? t.value.slice(0, 16) + '…' : t.value;
+      var barColor = DESC_COLOR[t.value] || '#4f8fd8';
+      return '<div class="expx-vcol" title="' + escapeHtml(t.value) + ': ' + t.count + '"><span class="expx-vval">' + t.count + '</span>' +
+        '<div class="expx-vbar" style="height:' + h.toFixed(0) + 'px;--vbar-c:' + barColor + ';animation-delay:' + (i * 0.05).toFixed(2) + 's"></div>' +
+        '<span class="expx-vlab">' + escapeHtml(corto) + '</span></div>';
+    }).join('') + '</div></div>';
+
+  var pend1 = (estCount['Ingresada'] || 0) + (estCount['Aval Jefe'] || 0);
+  var grupos = [
+    { label: 'Pendiente 1.er aprobador', n: pend1, color: ESTADO_COLOR_GRAFICA['Aval Jefe'] },
+    { label: 'Pendiente 2.º aprobador', n: estCount['Pendiente Segundo'] || 0, color: ESTADO_COLOR_GRAFICA['Pendiente Segundo'] },
+    { label: 'Aprobada 2.º aprobador', n: aprobadas, color: ESTADO_COLOR_GRAFICA['Aprobacion RRHH'] },
+    { label: 'Rechazada 1.er aprobador', n: estCount['Rechazo Jefe'] || 0, color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'] },
+    { label: 'Rechazada 2.º aprobador', n: estCount['Rechazo RRHH'] || 0, color: ESTADO_COLOR_GRAFICA['Rechazo RRHH'] },
+    { label: 'Sin estado', n: estCount['Sin estado'] || 0, color: ESTADO_COLOR_GRAFICA['Sin estado'] }
+  ].filter(function(g){ return g.n; });
+  var estadoHtml = '<div class="expx-sec"><h4>Estado de sus solicitudes</h4><div class="expx-estado">' +
+    grupos.map(function(g) {
+      var p = (g.n / rows.length * 100);
+      return '<span style="width:' + p.toFixed(2) + '%;background:' + g.color + '" title="' + g.label + ': ' + g.n + ' (' + p.toFixed(1) + '%)"></span>';
+    }).join('') + '</div><div class="expx-leyenda">' +
+    grupos.map(function(g) {
+      return '<span><i class="expx-dot" style="background:' + g.color + '"></i>' + g.label + ' · <b>' + g.n + '</b></span>';
+    }).join('') + '</div></div>';
+
+  var ordenadas = rows.slice().sort(function(a, b) {
+    return String(b.fechaSolicitud || '').localeCompare(String(a.fechaSolicitud || '')) || String(b.id).localeCompare(String(a.id));
+  });
+  var filas = ordenadas.map(function(r) {
+    var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
+    var just = r.justificacion ? (r.justificacion.length > 80 ? r.justificacion.slice(0, 78) + '…' : r.justificacion) : '—';
+    var estadoColor = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
+    var rowBg = estadoColor + '1a'; // 10% opacity
+    return '<tr style="background:' + rowBg + '"><td class="expx-mono">' + escapeHtml(r.id) + '</td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + estadoColor + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td>' +
+      '<td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
+      '<td class="expx-just" title="' + escapeHtml(r.justificacion || '') + '">' + escapeHtml(just) + '</td></tr>';
+  }).join('');
+  var tablaHtml = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más reciente a la más antigua</small></h4>' +
+    (rows.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>ID</th><th>Tipo</th><th>Duración</th><th>Estado</th><th>Fecha</th><th>Justificación</th></tr></thead><tbody>' + filas + '</tbody></table></div>'
+      : '<div class="expx-vacio">Sin solicitudes en el periodo filtrado.</div>') + '</div>';
+
+  document.getElementById('expxCuerpo').innerHTML = kpis + tiposHtml + estadoHtml + tablaHtml;
+  var bg = document.getElementById('expxBg');
+  bg.classList.add('open');
+  bg.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  bg.querySelector('.expx').scrollTop = 0;
+  document.getElementById('expxCerrar').focus();
+}
+document.getElementById('expxCerrar').addEventListener('click', expxCerrar);
+document.getElementById('expxBg').addEventListener('click', function(e) { if (e.target === this) expxCerrar(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') expxCerrar(); });
+document.getElementById('chartSolicitantes').addEventListener('keydown', function(e) {
+  var t = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && t.classList && t.classList.contains('apx-bartrack-click')) {
+    e.preventDefault();
+    t.click();
+  }
+});
 function renderSolicitantesChart(filtered) {
   var el = document.getElementById('chartSolicitantes');
-  var top = uniqueCounts(filtered, 'solicitante').slice(0, 8);
+  var top = uniqueCounts(filtered, 'solicitante');
+  SOLIC_FILTERED = filtered; SOLIC_TOP = top;
   if (!top.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var max = Math.max.apply(null, top.map(function(d){return d.count;}).concat([1]));
-  el.innerHTML = top.map(function(d, idx) {
+  var estTot = conteoEstados(filtered);
+  var guia = [
+    { label: 'Pendiente 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Aval Jefe'], on: estTot['Ingresada'] || estTot['Aval Jefe'] },
+    { label: 'Pendiente 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Pendiente Segundo'], on: estTot['Pendiente Segundo'] },
+    { label: 'Aprobada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Aprobacion RRHH'], on: estTot['Aprobacion RRHH'] },
+    { label: 'Rechazada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'], on: estTot['Rechazo Jefe'] },
+    { label: 'Rechazada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo RRHH'], on: estTot['Rechazo RRHH'] },
+    { label: 'Sin estado', color: ESTADO_COLOR_GRAFICA['Sin estado'], on: estTot['Sin estado'] }
+  ].filter(function(g){ return g.on; }).map(function(g) {
+    return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + g.color + '"></span>' + g.label + '</span>';
+  }).join('');
+  var guiaHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
+  el.innerHTML = guiaHtml + top.map(function(d, idx) {
     var pct = (d.count/max*100).toFixed(1);
     var name = shortUser(d.value);
-    var info = horasDeSolicitante(filtered, d.value);
-    var permisoLine = info.permisosCount > 0 ? fmtNum(info.horas) + ' horas (' + info.permisosCount + ' solicitudes)' : 'sin registro';
-    var vacacionLine = info.vacacionesCount > 0 ? fmtNum(info.dias) + ' días (' + info.vacacionesCount + ' solicitudes)' : 'sin registro';
-    return '<div class="apx-solic-item"><div class="apx-solic-row" onclick="toggleSolicitanteDetail(this)">' +
-      '<span class="apx-solic-arrow">&#9656;</span><span class="apx-barlabel" title="' + escapeHtml(name) + '">' + (idx+1) + '. ' + escapeHtml(name) + '</span>' +
-      '<div class="apx-bartrack"><div class="apx-barfill gx-bar-h" style="width:' + pct + '%;--gx-i:' + idx + '"></div></div><span class="apx-barcount">' + d.count + '</span></div>' +
-      '<div class="apx-solic-detail"><div>Permisos: <strong>' + permisoLine + '</strong></div><div>Vacaciones: <strong>' + vacacionLine + '</strong></div></div></div>';
+    var estCount = conteoEstados(filtered.filter(function(r){ return r.solicitante === d.value; }));
+    var segs = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'].filter(function(e){ return estCount[e]; }).map(function(e) {
+      return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
+    }).join('');
+    return '<div class="apx-solic-item"><div class="apx-solic-row">' +
+      '<span class="apx-solic-arrow" aria-hidden="true"></span><span class="apx-barlabel" title="' + escapeHtml(name) + '">' + (idx+1) + '. ' + escapeHtml(name) + '</span>' +
+      '<div class="apx-bartrack apx-bartrack-click" role="button" tabindex="0" onclick="abrirExpedienteSolicitante(event,' + idx + ')" title="Ver expediente de ' + escapeHtml(name) + '"><div class="apx-barfill gx-bar-h" style="display:flex;background:none;width:' + pct + '%;--gx-i:' + idx + '">' + segs + '</div></div><span class="apx-barcount">' + d.count + '</span></div></div>';
   }).join('');
 }
 
+var MES_BASE = [], MES_AREA = '', MES_FOCO = null, MES_ROWS = [];
 function renderMonthChart(filtered) {
   var el = document.getElementById('chartMes');
-  if (!filtered.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
+  MES_BASE = filtered;
+  var sel = document.getElementById('mesAreaSel');
+  var areas = (ALL_AREA_OPTS || []).map(function(o) { return o.value; }).filter(Boolean);
+  if (MES_AREA && areas.indexOf(MES_AREA) < 0) MES_AREA = '';
+  sel.innerHTML = '<option value="">Todas las áreas</option>' + areas.map(function(a) {
+    return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>';
+  }).join('');
+  sel.value = MES_AREA;
+  if (!sel.dataset.bound) {
+    sel.dataset.bound = '1';
+    sel.addEventListener('change', function() { MES_AREA = sel.value; renderMonthChart(MES_BASE); });
+  }
+  if (MES_AREA) filtered = filtered.filter(function(r) { return r.area === MES_AREA; });
+  MES_ROWS = filtered;
+  if (!filtered.length) { document.getElementById('insightMes').textContent = 'Tendencia'; el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var counts = {};
   filtered.forEach(function(r){ var ym=yearMonth(r.fechaSolicitud); if(ym) counts[ym]=(counts[ym]||0)+1; });
   var keys = Object.keys(counts).sort();
-  var data = keys.map(function(k){ return {name:fmtMonthLabel(k), count:counts[k]}; });
+  var data = keys.map(function(k){ return {key:k, name:fmtMonthLabel(k), count:counts[k]}; });
   if (!data.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var W=1100, H=260, padL=42, padR=24, padT=28, padB=42;
   var max = Math.max.apply(null, data.map(function(d){return d.count;}).concat([1]));
@@ -988,19 +1756,69 @@ function renderMonthChart(filtered) {
   var grid='';
   for(var g=0;g<=4;g++) { var gy=padT+g*(H-padT-padB)/4; grid += '<line class="apx-line-grid" x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'"/>'; }
   var dots = data.map(function(d,i){ return '<circle class="apx-line-dot gx-dot" style="--gx-i:'+i+'" cx="'+x(i)+'" cy="'+y(d.count)+'" r="4.5"/><text class="apx-line-value gx-dot" style="--gx-i:'+i+'" x="'+x(i)+'" y="'+(y(d.count)-12)+'" text-anchor="middle">'+d.count+'</text><text class="apx-line-label" x="'+x(i)+'" y="'+(H-15)+'" text-anchor="middle">'+escapeHtml(d.name)+'</text>'; }).join('');
+  var bandW = data.length === 1 ? 300 : (W-padL-padR)/(data.length-1);
+  var hits = data.map(function(d,i){ var hx = Math.max(0, x(i)-bandW/2), hw = Math.min(W, x(i)+bandW/2) - hx; return '<rect class="apx-mes-hit" data-mes="'+d.key+'" x="'+hx.toFixed(1)+'" y="0" width="'+hw.toFixed(1)+'" height="'+H+'" tabindex="0" role="button" aria-label="Ver registros de '+escapeHtml(d.name)+'"><title>Ver registros de '+escapeHtml(d.name)+'</title></rect>'; }).join('');
   var peak = data.slice().sort(function(a,b){return b.count-a.count;})[0];
   document.getElementById('insightMes').textContent = peak ? 'Pico: ' + peak.name + ' · ' + peak.count : 'Tendencia';
-  el.innerHTML = '<div class="apx-linechart-wrap"><svg class="apx-linechart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Acciones por mes"><defs><linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c43c50" stop-opacity=".26"/><stop offset="100%" stop-color="#c43c50" stop-opacity="0"/></linearGradient></defs>'+grid+'<path class="apx-line-area gx-area" d="'+area+'"/><path class="apx-line-path gx-line" pathLength="1" d="'+path+'"/>'+dots+'</svg></div>';
+  var areaColor = '#c43c50';
+  if (MES_AREA) {
+    var areaIdx = (ALL_AREA_OPTS || []).findIndex(function(o) { return o.value === MES_AREA; });
+    if (areaIdx >= 0) areaColor = AREA_PALETTE_PIE[areaIdx % AREA_PALETTE_PIE.length];
+  }
+  el.innerHTML = '<div class="apx-linechart-wrap"><svg class="apx-linechart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Acciones por mes"><defs><linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+areaColor+'" stop-opacity=".26"/><stop offset="100%" stop-color="'+areaColor+'" stop-opacity="0"/></linearGradient></defs>'+grid+'<path class="apx-line-area gx-area" d="'+area+'"/><path class="apx-line-path gx-line" pathLength="1" d="'+path+'" style="stroke:'+areaColor+'"/>'+dots+hits+'</svg></div>';
+  if (!el.dataset.mesBound) {
+    el.dataset.mesBound = '1';
+    el.addEventListener('click', function(ev) { var t = ev.target.closest('[data-mes]'); if (t) { MES_FOCO = t; abrirRegistrosMes(t.getAttribute('data-mes')); } });
+    el.addEventListener('keydown', function(ev) { var t = ev.target; if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-mes')) { ev.preventDefault(); MES_FOCO = t; abrirRegistrosMes(t.getAttribute('data-mes')); } });
+  }
 }
+function abrirRegistrosMes(ym) {
+  var rows = MES_ROWS.filter(function(r) { return yearMonth(r.fechaSolicitud) === ym; });
+  function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
+  rows.sort(function(a, b) { return String(nom(a)).localeCompare(String(nom(b)), 'es') || String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')); });
+  var empleados = {};
+  rows.forEach(function(r) { empleados[shortUser(r.solicitante)] = 1; });
+  var nEmp = Object.keys(empleados).length, mes = fmtMonthLabel(ym);
+  document.getElementById('mesxAvatar').textContent = mes.charAt(0).toUpperCase();
+  document.getElementById('mesxTitulo').textContent = mes;
+  document.getElementById('mesxSub').textContent = rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · ' + nEmp + (nEmp === 1 ? ' empleado' : ' empleados') + ' · ' + (MES_AREA || 'Todas las áreas');
+  var vistos = {}, leyenda = '';
+  rows.forEach(function(r) {
+    var lab = etiquetaEstadoAPS(r);
+    if (vistos[lab]) return;
+    vistos[lab] = 1;
+    leyenda += '<span><i class="expx-dot" style="background:' + (ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color) + '"></i>' + escapeHtml(lab) + '</span>';
+  });
+  var filas = rows.map(function(r) {
+    var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
+    var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
+    return '<tr class="mesx-fila" style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>';
+  }).join('');
+  document.getElementById('mesxCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+    (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en este mes.</div>') + '</div>';
+  var bg = document.getElementById('mesxBg');
+  bg.classList.add('open');
+  bg.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  bg.querySelector('.expx').scrollTop = 0;
+  document.getElementById('mesxCerrar').focus();
+}
+function mesxCerrar() {
+  var bg = document.getElementById('mesxBg');
+  if (!bg.classList.contains('open')) return;
+  bg.classList.remove('open');
+  bg.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (MES_FOCO && MES_FOCO.isConnected && MES_FOCO.focus) MES_FOCO.focus();
+}
+document.getElementById('mesxCerrar').addEventListener('click', mesxCerrar);
+document.getElementById('mesxBg').addEventListener('click', function(e) { if (e.target === this) mesxCerrar(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') mesxCerrar(); });
 
-// ---------- Informe detallado: tabla, buscador propio y exportación ----------
-// El buscador de la tabla solo busca dentro de lo que ya dejaron pasar los filtros
-// de la barra; no cambia tarjetas ni gráficas. Se exporta exactamente lo que se ve.
 var LAST_FILTERED = [];
 var TABLE_ROWS = [];
-// Horas a dos decimales, solo al mostrar (las sumas usan el valor completo).
 function fmtHoras(n) { return Number(n).toLocaleString('es-GT', { maximumFractionDigits: 2 }); }
-// Horas y Días como se muestran: sin dato = «—», nunca 0.
 function horasPantalla(r) { return r.horasDb !== null ? fmtHoras(r.horasDb) : '—'; }
 function diasPantalla(r) { return r.diasTxt !== null ? r.diasTxt : '—'; }
 function tableHaystack(r) {
@@ -1012,7 +1830,6 @@ function tableHaystack(r) {
 }
 function renderTable(filtered) {
   LAST_FILTERED = filtered;
-  // «Solo con duración», como el buscador, recorta las filas de esta tabla (y lo que se exporta).
   var soloDur = soloConDuracion();
   var base = soloDur ? filtered.filter(durTiene) : filtered;
   var input = document.getElementById('fTableSearch');
@@ -1025,7 +1842,6 @@ function renderTable(filtered) {
     ? visibles.length + ' de ' + filtered.length + ' filtradas · ' + RECORDS.length + ' en total'
     : filtered.length + ' de ' + RECORDS.length;
   pintarDurResumen(visibles, soloDur);
-  // Mientras un botón dice "Generando…" no se reactiva desde aquí.
   ['btnExportXlsx', 'btnExportCsv'].forEach(function(id) {
     var b = document.getElementById(id);
     if (!b.dataset.generando) b.disabled = !visibles.length;
@@ -1057,24 +1873,17 @@ function renderTable(filtered) {
   wrap.innerHTML = html;
 }
 
-// ---------- Duración (dentro del Informe detallado) ----------
-// Una solicitud tiene duración si trae horas o días (horasDb / diasDb); 0 horas = sin dato.
-// Con las dos llenas cuenta una sola vez. No recalcula nada: muestra lo que trae la base.
-var DUR_TIPOS_EN_DIAS = ['Vacaciones anuales', 'Incapacidad medica'];   // no deberían traer horas
-var DUR_HORAS_ATIPICAS = 40;                                            // más de una semana
+var DUR_TIPOS_EN_DIAS = ['Vacaciones anuales', 'Incapacidad medica'];
+var DUR_HORAS_ATIPICAS = 40;
 var DUR_TIPO_NO_AUSENCIA = 'Ingreso de pre-aprobados';
 function durTiene(r) { return r.horasDb !== null || r.diasDb !== null; }
-// Error conocido del proceso de carga: horas en tipos que se miden en días (aún sin resolver).
 function durErrorCarga(r) { return DUR_TIPOS_EN_DIAS.indexOf(r.tipo) !== -1 && r.horasRegistradas; }
 function durAtipica(r) { return r.horasDb !== null && r.horasDb > DUR_HORAS_ATIPICAS; }
-// Caso a revisar: vacaciones con 0 días (fechas mal capturadas o todo en fin de semana).
 function durVacacionesSinDias(r) { return r.tipo === 'Vacaciones anuales' && r.diasDb === 0; }
 function durNum(n) { return Number(n).toLocaleString('es-GT', { maximumFractionDigits: 1 }); }
 function durMarca(texto, color, titulo) {
   return '<span class="apx-chip apx-chip-sm" style="color:' + color + '" title="' + escapeHtml(titulo) + '">' + texto + '</span>';
 }
-// Pastilla «Con duración» y marcas de calidad de una fila. Las marcas van solo en filas
-// con duración (como en la antigua vista): una con 0 horas no lleva «Error de carga».
 function durMarcas(r) {
   if (!durTiene(r)) return '';
   return '<span class="pill pill-muted apx-pill-dur">Con duración</span>' +
@@ -1082,7 +1891,6 @@ function durMarcas(r) {
     (durAtipica(r) ? durMarca('Atípico', '#c43c50', 'Más de ' + DUR_HORAS_ATIPICAS + ' horas') : '') +
     (durVacacionesSinDias(r) ? durMarca('0 días', '#4f8fd8', 'Vacaciones con 0 días: revisar las fechas') : '');
 }
-// Totales de duración de unas filas (los de la antigua vista Duración, sin cambios).
 function durTotales(rows) {
   var con = rows.filter(durTiene);
   var horas = 0, dias = 0, horasPre = 0;
@@ -1092,7 +1900,6 @@ function durTotales(rows) {
   });
   return { n: con.length, horas: horas, dias: dias, horasPre: horasPre };
 }
-// Línea de resumen sobre la tabla: solo con «Solo con duración» activo, y con las filas que se ven.
 function pintarDurResumen(rows, activo) {
   var caja = document.getElementById('durResumen');
   caja.hidden = !activo;
@@ -1101,7 +1908,6 @@ function pintarDurResumen(rows, activo) {
   document.getElementById('durLinea').innerHTML =
     '<strong>' + t.n.toLocaleString('es-GT') + '</strong> ' + (t.n === 1 ? 'solicitud' : 'solicitudes') + ' con duración · ' +
     '<strong>' + durNum(t.horas) + '</strong> horas · <strong>' + durNum(t.dias) + '</strong> días';
-  // Nota: «Ingreso de pre-aprobados» no es una ausencia y pesa mucho en el total de horas.
   var nota = document.getElementById('durNotaTipo');
   nota.hidden = !(t.horasPre && t.horas);
   if (!nota.hidden) {
@@ -1111,9 +1917,6 @@ function pintarDurResumen(rows, activo) {
 }
 function soloConDuracion() { return document.getElementById('fSoloDuracion').checked; }
 
-// Mismas columnas que la tabla. Justificación completa; Aprobador sin dominio, como se ve.
-// La fecha va en aaaa-mm-dd y cada formato la escribe a su manera.
-// Horas y Días con el valor completo (son archivos para trabajar); sin dato, la celda va vacía.
 var EXPORT_COLS = ['ID', 'Tipo', 'Horas', 'Días', 'País', 'Solicitante', 'Jefe inmediato', 'Aprobador', 'Estado', 'Fecha solicitud', 'Justificación'];
 var EXPORT_DATE_COL = 9;
 var EXPORT_NUM_COLS = ['Horas', 'Días'];
@@ -1136,8 +1939,6 @@ function downloadBlob(blob, name) {
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
-// CSV: UTF-8 con BOM para que Excel lea bien las tildes; fecha dd/mm/aaaa.
-// Un texto que empiece con = + - @ se antepone con ' para que Excel no lo tome como fórmula.
 function csvCell(v) {
   var s = v == null ? '' : String(v);
   if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
@@ -1153,38 +1954,6 @@ function buildCsv(rows) {
   return new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
 }
 
-/* ============================================================
-   EXPORTACIÓN EXCEL · FORMATO ESTÁNDAR INTELFON
-   Mismo formato en los seis tableros (referencia: «Informe detallado SAC -
-   formato propuesto.xlsx»). Usa ExcelJS porque SheetJS gratis no escribe
-   colores, negritas ni bordes.
-
-   PARA COPIARLO A OTRO TABLERO: copiar desde aquí hasta «FIN FORMATO
-   ESTÁNDAR» tal cual. Lo propio de cada tablero va aparte, en la config
-   que se le pasa a exportarExcelEstandar() (ver «Config de RRHH»).
-
-   cfg = {
-     titulo:    "RED INTELFON · Flujo de Ventas · Informe detallado",
-     hoja:      nombre de la pestaña,
-     filtros:   "Filtros: …"   (estado real de la barra al exportar),
-     mostrando: "Mostrando X de Y …",
-     nota:      texto al pie,
-     archivo:   nombre del .xlsx,
-     columnas:  [{t:"Título", tipo, estado}] — tipo: "num" | "dinero" |
-                "fecha" | "fechaHora" | "link" | (nada = texto);
-                estado: v => "positivo" | "proceso" | "negativo" | "sinDato"
-                (opcional: pinta la celda en negrita con su color),
-     filas:     [[valor, …], …] en el mismo orden que columnas.
-                Fechas: Date o texto "AAAA-MM-DD" / "AAAA-MM-DD HH:MM".
-   }
-   ============================================================ */
-/* ---------------------------------------------------------
-   Carga de ExcelJS bajo demanda.
-   La URL se pide una sola vez; si falla, se puede reintentar.
-   Si el CDN no responde en 20 s se da por fallida, para que el
-   botón no se quede en "Generando…" para siempre.
-   El error lleva libreria:true para ofrecer el CSV.
---------------------------------------------------------- */
 const SCRIPT_ESPERA_MS = 20000;
 const scriptCargas = {};
 
@@ -1213,8 +1982,6 @@ function loadScriptOnce(url,global){
 }
 
 const EXCELJS_URL = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
-
-/* Carga ExcelJS la primera vez que se exporta (pesa ~1 MB); después ya queda. */
 const cargarExcelJS = ()=>loadScriptOnce(EXCELJS_URL,"ExcelJS");
 
 const XL_ESTILO = {
@@ -1226,14 +1993,12 @@ const XL_ESTILO = {
 };
 const XL_NUMERICOS = ["num","dinero"];
 
-/* "AAAA-MM-DD" o "AAAA-MM-DD HH:MM" → fecha de Excel (sin zona horaria: se ve tal cual) */
 function xlFecha(v){
   if(v instanceof Date) return isNaN(v) ? null : v;
   const m = String(v ?? "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
   return m ? new Date(Date.UTC(+m[1], m[2]-1, +m[3], +(m[4]||0), +(m[5]||0))) : null;
 }
 
-/* Texto que se ve en la celda: solo para calcular el ancho de la columna. */
 function xlTextoAncho(c, v){
   if(v === null || v === undefined || v === "") return "";
   if(c.tipo === "fecha") return "00/00/0000";
@@ -1260,7 +2025,6 @@ async function exportarExcelEstandar(cfg){
   const libro = new ExcelJS.Workbook();
   const ws = libro.addWorksheet(cfg.hoja);
 
-  /* Filas 1-4 (y la nota al pie): una banda combinada a lo ancho */
   const banda = (n, texto, alto, estilo) => {
     const fila = ws.getRow(n);
     fila.height = alto;
@@ -1275,7 +2039,6 @@ async function exportarExcelEstandar(cfg){
   banda(4, cfg.mostrando, 15, contexto({bold:true}));
   ws.getRow(5).height = 6;
 
-  /* Fila 6: encabezados */
   const enc = ws.getRow(6);
   enc.height = 28;
   cols.forEach((c, i)=>{
@@ -1287,7 +2050,6 @@ async function exportarExcelEstandar(cfg){
     celda.alignment = alinear(XL_NUMERICOS.includes(c.tipo) ? "right" : "left", {wrapText:true});
   });
 
-  /* Filas de datos */
   cfg.filas.forEach((valores, r)=>{
     const fila = ws.getRow(7 + r);
     fila.height = 18;
@@ -1301,7 +2063,7 @@ async function exportarExcelEstandar(cfg){
 
       if(c.tipo === "fecha" || c.tipo === "fechaHora"){
         const f = v === null ? null : xlFecha(v);
-        celda.value = f ?? v;               // si no se reconoce la fecha, queda el texto original
+        celda.value = f ?? v;
         if(f) celda.numFmt = E.formatos[c.tipo];
         celda.alignment = alinear("left");
       }else if(XL_NUMERICOS.includes(c.tipo) && v !== null && Number.isFinite(Number(v))){
@@ -1313,8 +2075,8 @@ async function exportarExcelEstandar(cfg){
         celda.value = {text:String(v), hyperlink:String(v)};
         celda.alignment = alinear();
       }else{
-        celda.value = v === null ? null : String(v);   // ids y códigos siempre como texto
-        celda.alignment = alinear(XL_NUMERICOS.includes(c.tipo) ? "right" : undefined);   // texto: alineación general (izquierda)
+        celda.value = v === null ? null : String(v);
+        celda.alignment = alinear(XL_NUMERICOS.includes(c.tipo) ? "right" : undefined);
       }
 
       const est = c.estado && v !== null ? c.estado(v) : null;
@@ -1322,7 +2084,6 @@ async function exportarExcelEstandar(cfg){
     });
   });
 
-  /* Anchos según el contenido (las de texto largo, anchas; tope para no desbordar) */
   cols.forEach((c, i)=>{
     const muestra = cfg.filas.slice(0, 1000).map(f=>xlTextoAncho(c, f[i]).length);
     const largo = Math.max(Math.min(c.t.length, 18), ...muestra, 6);
@@ -1342,14 +2103,10 @@ async function exportarExcelEstandar(cfg){
   const buffer = await libro.xlsx.writeBuffer();
   return new Blob([buffer], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 }
-/* ============================ FIN FORMATO ESTÁNDAR ============================ */
 
-/* ---- Config de RRHH para el formato estándar ----
-   Lo único que cambia de un tablero a otro: título, filtros, columnas y filas. */
-// Color del Estado en el Excel. Aprobacion RRHH es aprobación del 2.º nivel.
 var XL_ESTADO_RRHH = {
   'Aprobacion RRHH': 'positivo',
-  'Ingresada': 'proceso', 'Aval Jefe': 'proceso',
+  'Ingresada': 'proceso', 'Aval Jefe': 'proceso', 'Pendiente Segundo': 'proceso',
   'Rechazo Jefe': 'negativo', 'Rechazo RRHH': 'negativo'
 };
 var XL_ESTADO_POR_ETIQUETA = {};
@@ -1358,8 +2115,6 @@ Object.keys(STATUS_META).forEach(function(k) {
 });
 function xlEstadoRrhh(v) { return XL_ESTADO_POR_ETIQUETA[v] || 'sinDato'; }
 
-// Fila 3: lo que de verdad filtra el tablero (filtrosLista, la misma del PDF) más el
-// buscador propio de la tabla, porque el Excel sale de esa tabla.
 function xlFiltrosTexto() {
   var parts = filtrosLista().map(function(f) { return f.etiqueta + ': ' + f.valor; });
   var qTabla = document.getElementById('fTableSearch').value.trim();
@@ -1367,7 +2122,6 @@ function xlFiltrosTexto() {
   return 'Filtros: ' + parts.join(' · ');
 }
 
-// Título, «Mostrando X de Y» y nota: los mismos en el Excel y en el PDF.
 var INF_TITULO = 'RED INTELFON · Acciones de Personal · Informe detallado';
 var INF_NOTA = 'Las filas corresponden únicamente a los registros filtrados en el dashboard al momento de la exportación.';
 function infMostrandoTexto(filas) {
@@ -1399,7 +2153,6 @@ async function exportXlsx() {
   }
 }
 
-/* Botón en "Generando…" y deshabilitado mientras corre la tarea. */
 async function infGenerando(btn, tarea){
   const html = btn.innerHTML;
   btn.dataset.generando = "1";
@@ -1415,8 +2168,6 @@ async function infGenerando(btn, tarea){
   }
 }
 
-/* Si lo que falló es la librería (sin internet, CDN bloqueado o colgado),
-   se ofrece el CSV, que se genera sin librería. */
 function infFalloDescarga(err, formato){
   console.error(`No se pudo generar el ${formato} del informe`, err);
   const aviso = document.getElementById("exportAviso");
@@ -1433,16 +2184,6 @@ function infDescargaOk(){
   document.getElementById("btnExportCsv").hidden = true;
 }
 
-/* ============================================================
-   PDF POR MÓDULOS · FORMATO ESTÁNDAR RED INTELFON
-   Botón PDF de la barra de filtros, con la ventana de módulos de Flash de
-   altas, Flujo de ventas y Servicio al Cliente. Usa assets/js/reporte-pdf.js.
-   Cada módulo se arma con las MISMAS filas ya filtradas que la pantalla
-   (getFiltered(): operación, período, panel «Filtros», búsqueda de la barra
-   y la casilla de líderes) y con las mismas funciones de cálculo. El buscador
-   propio de la tabla del Informe no entra: vive en otra pestaña.
-   ============================================================ */
-
 function rrhhPdfNum(n){
   return Number(n || 0).toLocaleString('es-GT');
 }
@@ -1451,18 +2192,21 @@ function rrhhPdfPct(n, total){
   return total ? ((n / total) * 100).toFixed(1) + '%' : '0.0%';
 }
 
-// Estados del PDF: los dos rechazos van juntos, como en la tarjeta «Rechazadas».
 function rrhhPdfEstadoCounts(rows){
   var c = conteoEstados(rows);
   return {
-    ingresadas:c['Ingresada'] || 0, aval:c['Aval Jefe'] || 0, rrhh:c['Aprobacion RRHH'] || 0,
-    rechazadas:(c['Rechazo Jefe'] || 0) + (c['Rechazo RRHH'] || 0), sinEstado:c['Sin estado'] || 0
+    ingresadas:c['Ingresada'] || 0,
+    aval:c['Aval Jefe'] || 0,
+    pendienteSegundo:c['Pendiente Segundo'] || 0,
+    rrhh:c['Aprobacion RRHH'] || 0,
+    rechazadas:(c['Rechazo Jefe'] || 0) + (c['Rechazo RRHH'] || 0),
+    sinEstado:c['Sin estado'] || 0
   };
 }
 
 function rrhhPdfResumenArea(rows){
   var grupos = new Map();
-  rows.forEach(function(r){
+  rows.filter(function(r){ return !esSinArea(r.area); }).forEach(function(r){
     var area = r.area || 'Sin área';
     var pais = r.pais || 'No especificado';
     var key = area + '\u0000' + pais;
@@ -1477,7 +2221,7 @@ function rrhhPdfResumenArea(rows){
       var e = rrhhPdfEstadoCounts(rs);
       return {
         area:partes[0], pais:partes[1], total:rs.length,
-        ingresadas:e.ingresadas, aval:e.aval, rrhh:e.rrhh, rechazadas:e.rechazadas
+        ingresadas:e.ingresadas, aval:e.aval, pendienteSegundo:e.pendienteSegundo, rrhh:e.rrhh, rechazadas:e.rechazadas
       };
     })
     .sort(function(a,b){ return b.total - a.total || a.area.localeCompare(b.area); });
@@ -1493,7 +2237,7 @@ function rrhhPdfDetalle(rows){
       r.area || '',
       r.jefeInmediato || '',
       r.tipo || '',
-      { texto:horasPantalla(r), align:'r' },   // como en pantalla: dos decimales y «—» sin dato (Excel/CSV llevan el valor completo)
+      { texto:horasPantalla(r), align:'r' },
       { texto:diasPantalla(r), align:'r' },
       { texto:etiquetaEstadoAPS(r), color:statusMeta(r.estado).color, bold:true },
       r.justificacion || ''
@@ -1501,10 +2245,6 @@ function rrhhPdfDetalle(rows){
   });
 }
 
-/* Los módulos = las secciones de la vista principal que ya tienen bloque en
-   el PDF, con el nombre que se ve en pantalla y en el orden de la pantalla.
-   Sin bloque todavía (pendientes): Segundo aprobador, Por jefe inmediato,
-   Por tipo de acción, Top solicitantes y Acciones por mes. */
 var PDFX_ICONOS = {
   indicadores:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   pais:'<path d="M4 21V7l6-4 6 4v14"/><path d="M4 21h16"/><path d="M16 11h4v10"/>',
@@ -1520,20 +2260,11 @@ var PDF_MODULOS = [
   { k:'area', t:'Por área', d:'Cada área por operación, con su desglose por estado y la fila TOTAL.' },
   { k:'informe', t:'Informe detallado', detalle:true, d:'La tabla solicitud por solicitud, {filas}. Decide si el PDF tiene 3 páginas o 60.' }
 ];
-/* Con una sola operación marcada, «Distribución por país» sería una barra sola
-   al 100 %: no se ofrece en la ventana ni va al PDF (mismo criterio que SAC con
-   «Cumplimiento por operación»). La numeración de los demás no cambia. */
 var unSoloPais = function(){ return opSel.size === 1; };
 function pdfxDisponibles(){
   return PDF_MODULOS.map(function(m){ return m.k; });
 }
 
-/* Lo que filtra la barra en este momento, como lista {etiqueta, valor}. Sale del
-   estado de los filtros (getFilterValues, XF_STATE, la casilla de líderes),
-   nunca del DOM de la ventana. Alimenta el encabezado del PDF, las pastillas
-   de la ventana y la fila de filtros del Excel. */
-// Texto de un filtro activo: «N de M»; en «Duración» con una sola opción, su nombre
-// (el PDF tiene que decir con qué se filtró).
 function xfSelTexto(def){
   var st = XF_STATE[def.key];
   if(def.key === 'duracion' && st.sel.size === 1) return Array.from(st.sel)[0];
@@ -1567,8 +2298,8 @@ function pdfConfig(marcados){
   var e = rrhhPdfEstadoCounts(rows);
 
   var partesEstado = [
-    { etiqueta:'Ingresadas', valor:e.ingresadas, color:'#c59600' },
-    { etiqueta:'Pendientes 1.er aprobador (en aval)', valor:e.aval, color:'#2f8f76' },
+    { etiqueta:'Pendientes 1.er aprobador', valor:e.ingresadas + e.aval, color:'#2f8f76' },
+    { etiqueta:'Pendientes 2.º aprobador', valor:e.pendienteSegundo, color:'#8b909e' },
     { etiqueta:'Aprobadas 2.º aprobador', valor:e.rrhh, color:'#4f8fd8' },
     { etiqueta:'Rechazadas 1.er y 2.º aprobador', valor:e.rechazadas, color:'#c43c50' }
   ];
@@ -1604,35 +2335,32 @@ function pdfConfig(marcados){
     nota:rrhhPdfNum(I.areas) + ' áreas activas en la selección actual.',
     columnas:[
       {titulo:'Área'}, {titulo:'Operación'}, {titulo:'Solicitudes', align:'r'},
-      {titulo:'Ingresadas', align:'r'}, {titulo:'Pendientes 1.º (aval)', align:'r'},
+      {titulo:'Pendientes 1.º', align:'r'}, {titulo:'Pendientes 2.º', align:'r'},
       {titulo:'Aprobadas 2.º', align:'r'}, {titulo:'Rechazadas (ambos)', align:'r'}
     ],
     filas:rrhhPdfResumenArea(rows).map(function(x){
       return [
         { texto:x.area, bold:true }, x.pais,
         { texto:rrhhPdfNum(x.total), align:'r' },
-        { texto:rrhhPdfNum(x.ingresadas), align:'r', color:'#b4790a' },
-        { texto:rrhhPdfNum(x.aval), align:'r', color:'#0f766e' },
+        { texto:rrhhPdfNum(x.ingresadas + x.aval), align:'r', color:'#b4790a' },
+        { texto:rrhhPdfNum(x.pendienteSegundo), align:'r', color:'#8b909e' },
         { texto:rrhhPdfNum(x.rrhh), align:'r', color:'#4f8fd8' },
         { texto:rrhhPdfNum(x.rechazadas), align:'r', color:'#c43c50' }
       ];
     }),
     total:[
       'TOTAL','', {texto:rrhhPdfNum(total), align:'r'},
-      {texto:rrhhPdfNum(e.ingresadas), align:'r'}, {texto:rrhhPdfNum(e.aval), align:'r'},
+      {texto:rrhhPdfNum(e.ingresadas + e.aval), align:'r'}, {texto:rrhhPdfNum(e.pendienteSegundo), align:'r'},
       {texto:rrhhPdfNum(e.rrhh), align:'r'}, {texto:rrhhPdfNum(e.rechazadas), align:'r'}
     ]
   } : null;
 
-  // Con una sola operación, la columna País sería igual en todas las filas y la
-  // librería la pasaría al encabezado como «País: …», repitiendo «Operaciones: …».
   var columnasDetalle = [
     {titulo:'ID'}, {titulo:'País'}, {titulo:'Fecha'}, {titulo:'Solicitante'}, {titulo:'Área'},
     {titulo:'Jefe inmediato'}, {titulo:'Tipo'}, {titulo:'Horas', align:'r'}, {titulo:'Días', align:'r'}, {titulo:'Estado'},
     {titulo:'Justificación', clase:'com'}
   ];
   var sinPais = function(lista){ return unSoloPais() ? lista.filter(function(x, i){ return i !== 1; }) : lista; };
-  // El detalle respeta «Solo con duración», igual que la tabla del Informe.
   var filasDetalle = soloConDuracion() ? rows.filter(durTiene) : rows;
   var detalle = conDetalle ? {
     titulo:'Detalle de solicitudes' + (soloConDuracion() ? ' con duración' : '') + ' — ' + rrhhPdfNum(filasDetalle.length) +
@@ -1647,7 +2375,6 @@ function pdfConfig(marcados){
     subarea:'ACCIONES DE PERSONAL',
     titulo:'Reporte de Solicitudes de Recursos Humanos',
     archivo:titulo + ' - RED Intelfon - ' + (conDetalle ? '' : 'sin detalle - ') + todayIso(),
-    // Si el navegador bloquea la ventana no se imprime nada: lo dice la ventana del PDF.
     onBloqueado:function(){ pdfxAvisar('El navegador bloqueó la ventana del reporte. Permite las ventanas emergentes para este sitio (ícono a la derecha de la barra de direcciones) y vuelve a intentarlo.'); },
     filtros:filtrosLista(),
     pill:{ etiqueta:'Solicitudes', valor:rrhhPdfNum(total) },
@@ -1664,23 +2391,12 @@ function pdfConfig(marcados){
   };
 }
 
-/* ---- Retoques de impresión, sin tocar reporte-pdf.js (como en Flujo de ventas) ----
-   La librería escribe el reporte en una ventana nueva y recién imprime cuando
-   carga el logo. pdfGenerar() captura esa ventana y, antes de que se imprima,
-   pdfRetocar() le agrega CSS propio y reacomoda las tablas:
-   · ningún título (ni su nota gris) queda solo al pie de una página: se va
-     a la siguiente junto con su contenido;
-   · las primeras filas de cada tabla no se separan de su título, y la fila
-     TOTAL siempre va con las últimas filas: si la tabla parte, parte arriba;
-   · si del bloque dona + barras va solo la mitad de las barras, se quita la
-     caja vacía de la dona. */
 var PDF_CSS_EXTRA =
   'h2, .filtro.nota { break-after: avoid; page-break-after: avoid; }\n' +
   'tbody.pdf-cabeza, tbody.pdf-cola { break-inside: avoid; page-break-inside: avoid; }\n' +
-  /* Las filas se reparten en varios <tbody>: el cebreado va por clase, no por posición */
   'table tr:nth-child(even) td { background: none; }\n' +
   'table tr.pdf-par td { background: #e8eaf0; }\n';
-var PDF_FILAS_JUNTAS = 2;   // filas que viajan con el título y con el TOTAL
+var PDF_FILAS_JUNTAS = 2;
 function pdfRetocar(doc){
   var estilo = doc.createElement('style');
   estilo.textContent = PDF_CSS_EXTRA;
@@ -1702,7 +2418,6 @@ function pdfRetocar(doc){
     if(!(h3 && h3.textContent.trim()) && !box.querySelector('.bar')) box.remove();
   });
 }
-/* generarReportePDF() de la librería, con los retoques de arriba. */
 function pdfGenerar(cfg){
   var abrirOriginal = window.open;
   var ventanaReporte = null;
@@ -1716,11 +2431,6 @@ function pdfGenerar(cfg){
   }
 }
 
-/* ---------------------------------------------------------
-   Ventana «Exportar PDF» (botón PDF de la barra de filtros).
-   Copia de la de Flash de altas, Flujo de ventas y SAC. Los filtros
-   del dashboard deciden QUÉ DATOS van; la ventana, QUÉ MÓDULOS van.
---------------------------------------------------------- */
 var pdfxMarcados = new Set();
 var PDFX_ICONO = {
   pais:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>',
@@ -1729,7 +2439,6 @@ var PDFX_ICONO = {
   casos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'
 };
 
-// Pastillas de solo lectura: misma fuente que el encabezado del PDF.
 function pintarPdfxResumen(){
   var icono = function(e){ return e === 'Operaciones' ? PDFX_ICONO.pais : e === 'Período' ? PDFX_ICONO.periodo : PDFX_ICONO.filtro; };
   var n = getFiltered().length;
@@ -1770,11 +2479,10 @@ function pintarPdfx(){
   document.getElementById('pdfxContador').classList.toggle('vacio', !n);
   document.getElementById('pdfxGenerarN').textContent = n;
   var celda = document.getElementById('pdfxFilas');
-  var filasDet = soloConDuracion() ? getFiltered().filter(durTiene).length : filas;   // el detalle respeta «Solo con duración»
+  var filasDet = soloConDuracion() ? getFiltered().filter(durTiene).length : filas;
   if(celda) celda.textContent = rrhhPdfNum(filasDet) + ' ' + (filasDet === 1 ? 'fila' : 'filas');
   pintarPdfxResumen();
 
-  // Nunca se genera un PDF vacío sin decir por qué.
   var aviso = !filas
     ? 'No hay solicitudes con los filtros del dashboard. Cambia los filtros para generar el PDF.'
     : !n
@@ -1790,8 +2498,8 @@ function pdfxAvisar(texto){
 
 function abrirPdfx(){
   if(document.getElementById('fxPdf').disabled) return;
-  closeXf();   // si el panel «Filtros» estaba abierto, se descarta su borrador
-  pdfxMarcados = new Set(pdfxDisponibles());   // todos los disponibles, tildados
+  closeXf();
+  pdfxMarcados = new Set(pdfxDisponibles());
   armarPdfxModulos();
   pintarPdfx();
   document.getElementById('pdfModalBg').classList.add('open');
@@ -1800,12 +2508,11 @@ function abrirPdfx(){
 function cerrarPdfx(){
   if(!document.getElementById('pdfModalBg').classList.contains('open')) return;
   document.getElementById('pdfModalBg').classList.remove('open');
-  document.getElementById('fxPdf').focus();   // el único que abre la ventana
+  document.getElementById('fxPdf').focus();
 }
 function generarPdfx(){
   if(document.getElementById('pdfxGenerar').disabled) return;
   try{
-    // Si el navegador bloquea la ventana, la de módulos queda abierta con el aviso.
     if(pdfGenerar(pdfConfig(pdfxMarcados))) cerrarPdfx();
   }catch(err){
     console.error('No se pudo generar el PDF', err);
@@ -1821,7 +2528,6 @@ document.getElementById('pdfModalBg').addEventListener('click', function(e){ if(
 document.getElementById('pdfxTodo').addEventListener('click', function(){ pdfxMarcados = new Set(pdfxDisponibles()); pintarPdfx(); });
 document.getElementById('pdfxLimpiar').addEventListener('click', function(){ pdfxMarcados.clear(); pintarPdfx(); });
 
-// Esc cierra; Tab no se escapa de la ventana mientras está abierta.
 document.addEventListener('keydown', function(e){
   var bg = document.getElementById('pdfModalBg');
   if(!bg.classList.contains('open')) return;
@@ -1834,8 +2540,7 @@ document.addEventListener('keydown', function(e){
   else if(!e.shiftKey && document.activeElement === ultimo){ e.preventDefault(); primero.focus(); }
 });
 
-// ---------- Pestañas ----------
-var TABS = ['Resumen', 'Informe'];
+var TABS = ['Resumen', 'Informe', 'Descansos'];
 function setTab(which) {
   TABS.forEach(function(n) {
     var on = n === which;
@@ -1846,8 +2551,6 @@ function setTab(which) {
     document.getElementById('panel' + n).hidden = !on;
   });
 }
-// "Activo" = distinto de los valores por defecto (las dos operaciones, período de los datos,
-// todo en "Todas" y sin búsqueda). Limpiar vuelve a ese estado.
 function hasActiveFilters() {
   var def = defaultPeriodo();
   if (opSel.size !== OP_PAISES.length) return true;
@@ -1869,7 +2572,6 @@ function renderFilterControls() {
   var todas = opSel.size === OP_PAISES.length;
   document.querySelectorAll('.op-btn').forEach(function(b) {
     var v = b.getAttribute('data-op');
-    // Uno solo activo, como en Flujo de ventas y Flash: «Todas» o el país elegido.
     var on = v === 'all' ? todas : !todas && opSel.has(v);
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1920,18 +2622,16 @@ function render() {
   renderSummaryCards(filtered);
   renderDonut(filtered);
 
-  var aprobadores = uniqueCounts(filtered, 'aprobador').map(function(d){ return {name:shortUser(d.value), count:d.count}; });
+  var aprobadores = uniqueCounts(filtered, 'aprobador').map(function(d){ return {name:shortUser(d.value), count:d.count, items:filtered.filter(function(r){ return r.aprobador === d.value; })}; });
   renderRanking('chartAprobador', aprobadores, 8);
   if (aprobadores.length) document.getElementById('insightAprobador').textContent = aprobadores[0].name + ' · ' + aprobadores[0].count;
 
-  // Mismas filas que el resto del tablero: los inactivos ya los saca (o no) la casilla
-  // «Incluir líderes que ya no están en la organización» (applyActiveScope).
-  var areasData = uniqueCounts(filtered, 'area').map(function(d){return {name:d.value,count:d.count};});
+  var areasData = uniqueCounts(filtered.filter(function(r){ return !esSinArea(r.area); }), 'area').map(function(d){return {name:d.value,count:d.count};});
   renderTreemap('chartArea', areasData);
   if (areasData.length) document.getElementById('insightArea').textContent = areasData[0].name + ' · ' + areasData[0].count;
 
-  var jefesData = uniqueCounts(filtered.filter(function(r){return r.jefeInmediato;}), 'jefeInmediato').map(function(d){return {name:d.value,count:d.count};});
-  renderLollipop('chartJefe', jefesData, 10);
+  var jefesData = uniqueCounts(filtered.filter(function(r){return r.jefeInmediato;}), 'jefeInmediato').map(function(d){return {name:d.value,count:d.count,items:filtered.filter(function(r){ return r.jefeInmediato === d.value; })};});
+  renderRanking('chartJefe', jefesData, 10);
   if (jefesData.length) document.getElementById('insightJefe').textContent = jefesData[0].name + ' · ' + jefesData[0].count;
 
   var tipoData = uniqueCounts(filtered, 'tipo').map(function(d){return {name:d.value,count:d.count};});
@@ -1947,10 +2647,6 @@ function render() {
 function jefesForArea(areaValue) {
   return ALL_JEFE_OPTS.map(function(o) { return o.value; }).filter(function(jefe) { return areaFor(jefe) === areaValue; });
 }
-// Sincronización Área ↔ Jefe (misma regla que con un solo valor, extendida a varios):
-// - Al aceptar jefes, Área queda con las áreas de esos jefes.
-// - Al aceptar áreas: "Todas" limpia Jefe; si hay un único jefe candidato se marca;
-//   si no, se conservan solo los jefes marcados que pertenezcan a esas áreas.
 function syncAreaJefe(key) {
   if (key === 'jefe') {
     var jefes = XF_STATE.jefe.sel;
@@ -1972,11 +2668,7 @@ function syncAreaJefe(key) {
   }
 }
 
-// ---------- Panel "Filtros" (seis listas tipo Excel en columnas) ----------
-// Lo que se marca en el panel es un borrador: solo "Aplicar" lo pasa a los filtros.
-// Clic afuera o Esc descartan el borrador. Los conteos de cada columna se calculan
-// con los demás filtros ya aplicados (ver updateXfOptions).
-var XF_DRAFT = null; // { sel: {key: Set}, q: {key: ''}, vis: {key: []}, inactive: bool }
+var XF_DRAFT = null;
 function xfCol(key) { return document.querySelector('.xf-col[data-key="' + key + '"]'); }
 function buildXfPanel() {
   document.getElementById('xfColumns').innerHTML = XF_DEFS.map(function(def) {
@@ -2048,7 +2740,6 @@ function updateXfColState(key) {
   var marcadas = xfDraftCount(key);
   col.querySelector('h5 small').textContent = marcadas + '/' + total;
   col.classList.toggle('is-empty', total > 0 && marcadas === 0);
-  // Una lista sin nada marcado no se puede aplicar (dejaría el tablero vacío).
   var vacias = XF_DEFS.filter(function(d) { return XF_STATE[d.key].avail.length && !xfDraftCount(d.key); });
   document.getElementById('xfApply').disabled = vacias.length > 0;
   var hint = document.getElementById('xfHint');
@@ -2069,7 +2760,6 @@ function openXf() {
   document.getElementById('xfToggle').setAttribute('aria-expanded', 'true');
   document.getElementById('xf').classList.add('is-open');
 }
-// Cerrar sin aplicar: se descarta el borrador, incluida la casilla de líderes.
 function closeXf(returnFocus) {
   if (!XF_DRAFT) return;
   document.getElementById('fIncludeInactive').checked = XF_DRAFT.inactive;
@@ -2094,8 +2784,6 @@ function applyXf() {
     var todas = st.avail.every(function(o) { return draft.has(o.value); });
     st.sel = todas ? null : new Set(st.avail.filter(function(o) { return draft.has(o.value); }).map(function(o) { return o.value; }));
   });
-  // Área ↔ Jefe: si solo cambió uno de los dos, el otro se ajusta; si cambiaron
-  // ambos en el mismo Aplicar, se respeta lo que marcó la persona.
   var jefeCambio = !sameSel(prev.jefe, XF_STATE.jefe.sel);
   var areaCambio = !sameSel(prev.area, XF_STATE.area.sel);
   if (jefeCambio && !areaCambio) syncAreaJefe('jefe');
@@ -2131,21 +2819,16 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && XF_DRAFT) closeXf(true);
 });
 
-// ---------- Operación ----------
-// Cada botón selecciona, no alterna (igual que Flujo de ventas y Flash):
-// GT deja solo Guatemala, SV solo El Salvador y «Todas» las dos.
 document.querySelectorAll('.op-btn').forEach(function(b) {
   b.addEventListener('click', function() {
     var v = b.getAttribute('data-op');
     var nueva = v === 'all' ? new Set(OP_PAISES) : new Set([v]);
-    if (sameSel(nueva, opSel)) return;   // ya era la selección: no se repinta
+    if (sameSel(nueva, opSel)) return;
     opSel = nueva;
     render();
   });
 });
 
-// ---------- Período ----------
-// Se escribe en texto dd/mm/aaaa; el <input type="date"> oculto solo abre el calendario.
 var periodMsgTimer = null;
 function periodText(w) { return document.getElementById(w === 'desde' ? 'fDesde' : 'fHasta'); }
 function periodNative(w) { return document.getElementById(w === 'desde' ? 'fDesdeNative' : 'fHastaNative'); }
@@ -2232,6 +2915,7 @@ document.getElementById('btnExportCsv').addEventListener('click', function() {
 document.getElementById('btnExportXlsx').addEventListener('click', exportXlsx);
 document.getElementById('tabResumen').addEventListener('click', function() { setTab('Resumen'); });
 document.getElementById('tabInforme').addEventListener('click', function() { setTab('Informe'); });
+document.getElementById('tabDescansos').addEventListener('click', function() { setTab('Descansos'); });
 document.getElementById('rrhhTabs').addEventListener('keydown', function(e) {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   var actual = TABS.findIndex(function(n) { return document.getElementById('tab' + n).getAttribute('aria-selected') === 'true'; });
@@ -2247,7 +2931,6 @@ buildXfPanel();
 syncPeriodInputs();
 renderFilterControls();
 </script>
-<!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
 <link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
 </body>
 </html>
