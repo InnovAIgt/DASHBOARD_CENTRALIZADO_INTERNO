@@ -1,4 +1,173 @@
 /* Estilos especificos de Inventario minimo. Los estilos base vienen de dashboard.css. */
+.inventory-page > .inventory-toolbar,
+.inventory-page > .inventory-error,
+.inventory-page > #inventoryTabs,
+.inventory-page > #inventoryOverviewView,
+.inventory-page > #inventoryReport {
+    display: none;
+}
+
+.warehouse-redesign {
+    color: var(--std-text);
+    display: grid;
+    gap: 18px;
+    margin-top: 12px;
+}
+
+.warehouse-section-head,
+.warehouse-card-head,
+.warehouse-bar-label {
+    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.warehouse-section-head h2,
+.warehouse-card h3 {
+    color: var(--std-text);
+    margin: 3px 0 4px;
+}
+
+.warehouse-section-head h2 { font-size: 22px; }
+.warehouse-card h3 { font-size: 16px; }
+.warehouse-section-head p,
+.warehouse-card p,
+.warehouse-caption,
+.warehouse-kicker,
+.warehouse-kpi small,
+.warehouse-condition small {
+    color: var(--std-text-2);
+}
+
+.warehouse-section-head p { margin: 0; font-size: 12px; }
+.warehouse-kicker { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
+.warehouse-caption { font-size: 11px; text-align: right; }
+.warehouse-scope { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.warehouse-country,
+.warehouse-refresh {
+    background: var(--std-elevated);
+    border: 1px solid var(--std-border-light);
+    border-radius: 7px;
+    color: var(--std-text-2);
+    cursor: pointer;
+    font: 700 11px var(--font);
+    padding: 8px 11px;
+}
+.warehouse-country.active { background: rgba(196, 60, 80, .16); border-color: var(--std-red); color: #fff; }
+.warehouse-refresh { background: var(--std-red); border-color: var(--std-red); color: #fff; }
+
+.warehouse-kpis { display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.warehouse-kpi {
+    background: var(--std-card);
+    border: 1px solid var(--std-border);
+    border-left: 3px solid var(--std-border-light);
+    border-radius: 10px;
+    min-height: 100px;
+    padding: 14px;
+}
+.warehouse-kpi span { color: var(--std-text-2); display: block; font-size: 11px; font-weight: 700; }
+.warehouse-kpi strong { display: block; font-size: 25px; margin: 10px 0 3px; }
+.warehouse-kpi small { display: block; font-size: 10px; }
+.warehouse-kpi.is-green { border-left-color: #42b998; }
+.warehouse-kpi.is-blue { border-left-color: #4f8fd8; }
+.warehouse-kpi.is-violet { border-left-color: #9a7bd4; }
+.warehouse-kpi.is-amber { border-left-color: #c59600; }
+.warehouse-kpi.is-red,
+.warehouse-kpi.is-alert { border-left-color: var(--std-red); }
+.warehouse-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); }
+.warehouse-card { background: var(--std-card); border: 1px solid var(--std-border); border-radius: 12px; min-width: 0; padding: 18px; }
+.warehouse-bars { display: grid; gap: 15px; margin-top: 20px; max-height: 530px; overflow: auto; padding-right: 4px; }
+.warehouse-bar-label { align-items: center; font-size: 12px; }
+.warehouse-bar-label span { color: var(--std-text-2); font-variant-numeric: tabular-nums; }
+.warehouse-bar-track { background: rgba(255,255,255,.07); border-radius: 99px; height: 8px; margin: 8px 0 7px; overflow: hidden; }
+.warehouse-bar-track i { background: linear-gradient(90deg, var(--std-red), #e38a8f); border-radius: inherit; display: block; height: 100%; }
+.warehouse-bar-breakdown { color: var(--std-text-2); display: flex; flex-wrap: wrap; font-size: 10px; gap: 8px 12px; }
+.warehouse-condition-list { display: grid; gap: 8px; margin-top: 18px; }
+.warehouse-condition { align-items: center; background: var(--std-elevated); border-left: 3px solid var(--std-border-light); border-radius: 8px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; padding: 11px 12px; }
+.warehouse-condition strong { font-size: 18px; }
+.warehouse-condition small { font-size: 10px; }
+.warehouse-condition.is-green { border-left-color: #42b998; }
+.warehouse-condition.is-blue { border-left-color: #4f8fd8; }
+.warehouse-condition.is-violet { border-left-color: #9a7bd4; }
+.warehouse-condition.is-amber { border-left-color: #c59600; }
+.warehouse-condition.is-red { border-left-color: var(--std-red); }
+.warehouse-note { border-top: 1px solid var(--std-border); font-size: 11px; line-height: 1.5; margin: 16px 0 0; padding-top: 12px; }
+.warehouse-minimum-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px 16px;
+    padding: 12px;
+    border: 1px solid var(--std-border);
+    border-radius: 10px;
+    background: var(--std-surface-2);
+}
+.warehouse-minimum-filters label {
+    display: grid;
+    flex: 0 1 14rem;
+    gap: 6px;
+    color: var(--std-text-2);
+    font-size: 12px;
+    font-weight: 600;
+}
+.warehouse-minimum-filters select {
+    width: 100%;
+    min-height: 40px;
+    padding: 6px 12px;
+    border: 1px solid var(--std-border-light);
+    border-radius: 8px;
+    background: var(--std-elevated);
+    color: var(--std-text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+.warehouse-minimum-filters select:focus-visible {
+    outline: 2px solid var(--std-red);
+    outline-offset: 2px;
+}
+.warehouse-minimum-filters [aria-live] {
+    align-self: end;
+    padding-block: 10px;
+    color: var(--std-text-2);
+    font-size: 12px;
+}
+.warehouse-table-wrap { margin-top: 16px; overflow-x: auto; }
+.warehouse-table { border-collapse: collapse; min-width: 960px; width: 100%; }
+.warehouse-table th { color: var(--std-text-2); font-size: 10px; letter-spacing: .4px; text-align: left; text-transform: uppercase; }
+.warehouse-table td,
+.warehouse-table th { border-bottom: 1px solid var(--std-border); padding: 11px 10px; white-space: nowrap; }
+.warehouse-table td { color: var(--std-text); font-size: 12px; }
+.warehouse-table td:nth-child(3) { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.warehouse-table td:nth-child(2),
+.warehouse-table td:nth-child(4) { min-width: 140px; max-width: 240px; white-space: normal; }
+.warehouse-shortfall { display: block; margin-top: 4px; color: var(--std-red-soft); }
+.warehouse-status { border-radius: 99px; display: inline-block; font-size: 10px; font-weight: 800; padding: 4px 8px; }
+.warehouse-status.is-green { background: rgba(66,185,152,.13); color: #67d4b0; }
+.warehouse-status.is-amber { background: rgba(197,150,0,.15); color: #e2bd5e; }
+.warehouse-status.is-red { background: rgba(217,95,110,.15); color: #f08a98; }
+.warehouse-status.is-neutral { background: rgba(139,144,158,.13); color: var(--std-text-2); }
+.warehouse-future-card { align-items: center; display: flex; justify-content: space-between; gap: 20px; }
+.warehouse-future-card h3 { margin-bottom: 5px; }
+.warehouse-future-card p { font-size: 12px; margin: 0; }
+.warehouse-future-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.warehouse-future-items span { border: 1px dashed var(--std-border-light); border-radius: 99px; color: var(--std-text-2); font-size: 11px; padding: 7px 10px; }
+.warehouse-empty { color: var(--std-text-2); font-size: 12px; padding: 18px; text-align: center; }
+
+@media (max-width: 1100px) {
+    .warehouse-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+    .warehouse-section-head,
+    .warehouse-future-card { align-items: stretch; flex-direction: column; }
+    .warehouse-scope { justify-content: flex-start; }
+    .warehouse-kpis,
+    .warehouse-grid { grid-template-columns: 1fr; }
+    .warehouse-card-head { flex-direction: column; gap: 4px; }
+    .warehouse-caption { text-align: left; }
+}
+
 .inventory-page {
     --inventory-card: var(--std-card);
     --inventory-elevated: var(--std-elevated);
@@ -15,14 +184,6 @@
     min-width: 0;
     overflow-x: hidden;
     position: relative;
-}
-
-html body .inventory-api-updated-row {
-    position: fixed;
-    top: 16px;
-    right: 18px;
-    z-index: 1000;
-    margin: 0;
 }
 
 html body .bodega-api-updated-row.inventory-api-updated-row {
@@ -1364,4 +1525,22 @@ html body .bodega-api-updated-row.inventory-api-updated-row {
     .inventory-page .inventory-report-skeleton {
         animation: none;
     }
+}
+
+.inventory-column-filters select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 4rem;
+    padding: 5px 7px;
+    border: 1px solid var(--std-border-light);
+    border-radius: 6px;
+    background: var(--std-surface-2);
+    color: var(--std-text);
+    font: 400 12px var(--std-font, system-ui);
+    max-width: 11rem;
+    cursor: pointer;
+}
+.inventory-column-filters select:focus-visible {
+    outline: 2px solid var(--std-red);
+    outline-offset: 1px;
 }
