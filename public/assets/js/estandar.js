@@ -50,6 +50,7 @@
    Los indicadores propios de cada dashboard se ocultan en estandar.css.
    ══════════════════════════════════════════════════════════════════ */
 (function () {
+  if (document.documentElement.dataset.apiStatus === 'manual') return;
   const ESTATICO = /\.(css|js|mjs|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|map)(\?|#|$)/i;
   const LIBRERIA = /fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com/i;
   const PANELES = '.card, .chart-panel, .chart-card, .oc-card, .bill-card, .bill-panel, .apx-card, .pc-chart-card, .rrss-card, .content-panel, .kpi, .kpi-card, .kpi-card-exact, .oc-kpi, .bill-kpi, .stat-box, .apx-kpi, .table-wrap';
