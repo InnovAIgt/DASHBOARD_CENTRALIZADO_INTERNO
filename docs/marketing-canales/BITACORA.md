@@ -363,7 +363,61 @@ fuente de datos", igual que "Otros". No se creó `/api/marketing/redes`.
 
 ---
 
-## Detalle por persona ("Quién abrió y quién hizo clic") — 17/11/2026 🔄 (esperando aprobación para commit)
+## Marco estándar del portal (modelo: Activaciones) — 17/11/2026 🔄 (esperando aprobación para commit)
+
+**Revisión previa (solo lectura):**
+- Activaciones está en `public/dashboards/activaciones/activaciones.html` y `public/assets/css/activaciones.css`.
+- Los elementos compartidos son:
+  - `estandar.css` / `estandar.js` (pastilla, carga y animaciones; 14 dashboards HTML);
+  - `dashboard-pdf.*` (ventana de PDF; Activaciones, Facturación por línea y Flujo de ventas v2).
+- Encabezado, barra, panel de filtros y franja están **copiados** en cada dashboard.
+
+**Decisiones de Keily:**
+- Cifras y Período al instante; Cargo y Campañas en el panel, con "Aplicar".
+- Las campañas pasan al panel y se quita la tarjeta de chips.
+- Botón actualizar redondo dentro de la barra.
+- PDF con 4 módulos; las gráficas como tablas con barras. "¿Cómo se calcula?" incluye la transparencia de datos.
+- Los chips del PDF muestran los filtros activos.
+- Una sola vista.
+
+**Qué se hizo (D35):**
+- **Pantalla:**
+  - `Filtros.jsx`: barra estándar, panel tipo Excel y franja "Filtro activo";
+  - `Mailing.jsx`: encabezado con pastilla, mensajes estándar y "¿Cómo se calcula?" con textos compartidos;
+  - `MarketingCanales.jsx`: hora de la última lectura, círculo de carga y conexión del PDF;
+  - nuevo `pdf.js`: el reporte;
+  - `datos.js`: filtros con lista de cargos, textos de filtros y explicaciones compartidas;
+  - estilos `.mkt-` copiados del estándar.
+- **No cambiaron:** datos, cálculos, números, gráficas, servidor, el detalle por persona, `activaciones.*`,
+  `estandar.*` ni `dashboard-pdf.*`.
+
+**Pruebas (0 fallas):**
+- **Pantalla y PDF con los datos reales: 92 revisiones.** Las pruebas leen solo la carpeta local, sin cargar
+  `.env.local`. Cubren:
+  - números idénticos: 853 / 854, 718 / 719, 146 / 147 y 11 / 12;
+  - el marco: tarjeta FILTROS, Cifras, Período con restablecer, botón Filtros con contador, PDF, botón
+    actualizar redondo, pastilla "Actualizado", sin botón rojo y sin tarjeta de chips;
+  - el panel tipo Excel (Cargo 2/3 · Campañas 1/2, buscador, "todo", Limpiar todo y Aplicar);
+  - la franja "Filtro activo" (período, cargo, campañas);
+  - el mensaje "sin campañas";
+  - el PDF:
+    - sus 4 módulos, ninguno es la lista por persona;
+    - la estructura que espera la herramienta;
+    - los mismos números que la pantalla;
+    - la transparencia de datos;
+    - los chips con los filtros activos;
+    - sin correos ni "@";
+    - el candado si algo trae forma de correo;
+    - no exporta mientras se actualiza ni sin campañas.
+- Pruebas anteriores (Paso A, Drive simulado, casos inventados, detalle por persona): 0 fallas.
+- `npm run lint` y `npm run build`: sin errores.
+- **PDF de ejemplo generado con la herramienta compartida real** (Edge sin ventana): 9 páginas, solo totales.
+  No se guardó en el repositorio.
+- Capturas lado a lado con Activaciones (ancha y teléfono) y del panel abierto.
+
+---
+
+## Detalle por persona ("Quién abrió y quién hizo clic") — 17/11/2026 ✅ commit `75b543b`
 
 **Decisiones de Keily:**
 - protección con clave en el servidor (`MARKETING_DETALLE_CLAVE`, mínimo 24 caracteres);

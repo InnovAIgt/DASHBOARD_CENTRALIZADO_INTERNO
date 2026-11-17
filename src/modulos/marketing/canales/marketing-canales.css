@@ -69,20 +69,129 @@
   }
   .mkt-boton-rojo:hover:not(:disabled) { background: #a73344; }
 
-  /* ---------- Barra de filtros estándar (fx-bar) ---------- */
-  .mkt-fx-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 15px; border-radius: 10px; border: 1px solid rgba(139, 144, 158, .2); background: var(--mkt-caja); }
-  .mkt-fx-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  .mkt-fx-etiqueta { margin-right: 4px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--mkt-tenue); }
+  /* ---------- Marco estándar del portal (D35) ----------
+     Copia con prefijo mkt- de lo que usan Activaciones (activaciones.css) y el Flujo de ventas v2
+     (flujo-ventas-v2.css), y de .std-sync / .std-loader de estandar.css. Ninguno de esos archivos se modificó. */
+
+  /* Pastilla de estado bajo el subtítulo */
+  .mkt-estado {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid rgba(47, 143, 118, .35); background: rgba(47, 143, 118, .1); color: var(--mkt-ok-texto); font-size: 12px; font-weight: 700;
+  }
+  .mkt-estado::before { content: ""; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: var(--mkt-ok); }
+  .mkt-estado b { font-weight: 600; }
+  .mkt-estado.is-error { color: var(--mkt-bad-texto); background: rgba(196, 60, 80, .1); border-color: rgba(196, 60, 80, .35); }
+  .mkt-estado.is-error::before { background: var(--mkt-bad); }
+  .mkt-consultando {
+    display: inline-flex; align-items: center; gap: 9px; width: auto; max-width: max-content; margin: 10px 0 0; padding: 7px 14px 7px 12px;
+    border: 1px solid rgba(196, 60, 80, .45); border-radius: 999px; background: rgba(217, 95, 110, .12); box-shadow: 0 0 0 4px rgba(217, 95, 110, .07);
+    font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--mkt-texto); animation: mkt-consulta-brillo 1.6s ease-in-out infinite;
+  }
+  .mkt-consultando::before {
+    content: ''; flex-shrink: 0; width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(217, 95, 110, .35); border-top-color: var(--mkt-bad-texto); animation: mkt-girar .8s linear infinite;
+  }
+  /* Círculo de carga de la primera carga (.std-loader) */
+  .mkt-cargador { width: 36px; height: 36px; margin: 80px auto; border: 3px solid rgba(255, 255, 255, .38); border-top-color: var(--mkt-accion); border-radius: 50%; animation: mkt-girar .8s linear infinite; }
+
+  /* Tarjeta de filtros */
+  .mkt-filtros-caja {
+    position: relative; z-index: 20; padding: 14px 18px 16px; border-radius: 14px; border: 1px solid var(--mkt-borde-fuerte);
+    background: var(--mkt-tarjeta); box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+  }
+  .mkt-filtros-eyebrow { display: block; margin-bottom: 10px; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--mkt-tenue); }
+  .mkt-filtros-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .mkt-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 10px; border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-caja); }
+  .mkt-etiqueta-grupo { padding: 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--mkt-tenue); }
+  .mkt-btn-grupo {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--mkt-borde-fuerte);
+    background: var(--mkt-tarjeta); color: #fff; font-size: 13px; font-weight: 700; transition: all .18s ease;
+  }
+  .mkt-btn-grupo:hover { background: var(--mkt-elevado); }
+  .mkt-btn-grupo.is-activo { background: var(--mkt-accion); border-color: var(--mkt-accion); box-shadow: 0 4px 14px rgba(196, 60, 80, .35); }
+  .mkt-periodo { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 10px; border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-caja); }
+  .mkt-periodo-etiqueta { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--mkt-texto); }
+  .mkt-fecha { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-tarjeta); color: #fff; font-size: 12px; outline: none; color-scheme: dark; }
+  .mkt-fecha:focus { border-color: var(--mkt-accion); }
+  .mkt-periodo-guion { color: var(--mkt-tenue); font-weight: 600; }
+  .mkt-periodo-limpiar { display: inline-flex; padding: 4px; border: none; border-radius: 6px; background: transparent; color: var(--mkt-tenue); }
+  .mkt-periodo-limpiar:hover:not(:disabled) { background: var(--mkt-elevado); color: #fff; }
+  .mkt-btn-filtros {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--mkt-borde-fuerte);
+    background: var(--mkt-tarjeta); color: #fff; font-size: 13px; font-weight: 700; transition: all .18s ease;
+  }
+  .mkt-btn-filtros:hover, .mkt-btn-filtros.is-abierto { background: var(--mkt-elevado); }
+  .mkt-filtros-cuenta { padding: 1px 6px; border-radius: 999px; background: var(--mkt-accion); color: #fff; font-size: 10px; font-weight: 800; line-height: 1.2; }
+  .mkt-chevron { transition: transform .2s ease; }
+  .mkt-btn-filtros.is-abierto .mkt-chevron { transform: rotate(180deg); }
+  .mkt-filtros-accion { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+  /* Botón PDF: mismo aspecto que .dashboard-pdf-trigger (dashboard-pdf.css), por si esa hoja aún no cargó */
+  .mkt-btn-pdf {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 8px 14px; border-radius: 9px;
+    border: 1px solid #d95f6e; background: #c43c50; color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 4px 16px rgba(196, 60, 80, .24);
+  }
+  .mkt-btn-actualizar {
+    display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-tarjeta); color: var(--mkt-texto); transition: all .2s ease;
+  }
+  .mkt-btn-actualizar:not(:disabled):hover { background: var(--mkt-elevado); color: #fff; transform: rotate(45deg); }
+
+  /* Panel desplegable tipo Excel (.xf-panel) */
+  .mkt-xf-panel {
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 60; padding: 18px; border-radius: 14px;
+    border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-caja); box-shadow: 0 24px 50px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .04);
+  }
+  .mkt-xf-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; }
+  .mkt-xf-col { display: flex; flex-direction: column; min-width: 0; padding: 12px; border-radius: 10px; border: 1px solid var(--mkt-borde); background: var(--mkt-fondo); }
+  .mkt-xf-cabeza { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .mkt-xf-titulo { font-size: 13px; font-weight: 700; color: #fff; }
+  .mkt-xf-cuenta { font-family: var(--mkt-mono); font-size: 11px; color: var(--mkt-tenue); }
+  .mkt-xf-buscar { position: relative; margin-bottom: 10px; color: var(--mkt-tenue); }
+  .mkt-xf-buscar svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .mkt-xf-buscar input { width: 100%; padding: 7px 10px 7px 30px; border-radius: 8px; border: 1px solid var(--mkt-borde); background: var(--mkt-caja); color: #fff; font-size: 12px; outline: none; }
+  .mkt-xf-buscar input:focus { border-color: var(--mkt-accion); }
+  .mkt-xf-lista { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+  .mkt-xf-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 12px; color: var(--mkt-texto); cursor: pointer; user-select: none; }
+  .mkt-xf-item:hover { background: var(--mkt-tarjeta); color: #fff; }
+  .mkt-xf-item.is-todo { margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--mkt-borde); font-weight: 600; }
+  .mkt-xf-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mkt-xf-item small { font-family: var(--mkt-mono); font-size: 11px; color: var(--mkt-tenue); }
+  .mkt-xf-sin { padding: 8px; font-size: 12px; color: var(--mkt-tenue); }
+  .mkt-casilla {
+    appearance: none; -webkit-appearance: none; display: inline-grid; place-content: center; flex-shrink: 0; width: 16px; height: 16px; margin: 0;
+    border: 1.5px solid var(--mkt-borde-fuerte); border-radius: 4px; background: var(--mkt-fondo);
+  }
+  .mkt-casilla:checked { background: var(--mkt-accion); border-color: var(--mkt-accion); }
+  .mkt-casilla:checked::before { content: ""; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .mkt-casilla:indeterminate { background: var(--mkt-elevado); border-color: var(--mkt-info); }
+  .mkt-casilla:indeterminate::before { content: ""; width: 8px; height: 2px; background: #fff; }
+  .mkt-xf-pie { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--mkt-borde); }
+  .mkt-xf-limpiar { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-caja); font-size: 13px; font-weight: 600; }
+  .mkt-xf-limpiar:hover:not(:disabled) { background: var(--mkt-elevado); color: #fff; }
+  .mkt-xf-aplicar { padding: 8px 20px; border-radius: 8px; border: 1px solid var(--mkt-accion); background: var(--mkt-accion); color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(196, 60, 80, .35); }
+  .mkt-xf-aplicar:hover { background: #a73344; border-color: #a73344; }
+
+  /* Franja "Filtro activo" (Activaciones) */
+  .mkt-franja-filtro {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-radius: 12px;
+    border: 1px solid rgba(79, 143, 216, .3); background: rgba(79, 143, 216, .12); font-size: 12px; color: var(--mkt-info-texto);
+  }
+  .mkt-franja-filtro > span { display: inline-flex; align-items: center; gap: 8px; }
+  .mkt-franja-filtro strong { color: #fff; }
+  .mkt-franja-filtro button {
+    display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(196, 60, 80, .3);
+    background: rgba(196, 60, 80, .15); color: #d95f6e; font-size: 11px; font-weight: 800;
+  }
+
+  /* Mensaje "sin datos" */
+  .mkt-sin-datos { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 40px 20px; border-radius: 10px; border: 1px solid var(--mkt-borde); background: var(--mkt-tarjeta); text-align: center; color: var(--mkt-tenue); }
+  .mkt-sin-datos-titulo { font-weight: 700; color: #fff; }
+  .mkt-sin-datos-texto { margin-bottom: 8px; font-size: 12px; }
+  .mkt-reintentar { align-self: flex-start; margin-top: 6px; }
+
   .mkt-fxb { min-height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--mkt-borde-control); background: var(--mkt-tarjeta); color: var(--mkt-texto); font-size: 12.5px; font-weight: 600; }
   .mkt-fxb:hover:not(:disabled) { border-color: var(--mkt-texto-suave); }
   .mkt-fxb.is-activa { background: var(--mkt-accion); border-color: var(--mkt-accion); color: #fff; }
-  .mkt-fxb.is-marcada { border-color: var(--mkt-info-texto); }
-  .mkt-fx-limpiar { margin-left: auto; }
-  .mkt-fx-periodo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--mkt-borde-control); background: var(--mkt-tarjeta); }
-  .mkt-fx-periodo input { width: 138px; border: none; background: transparent; color: var(--mkt-texto); font-size: 13px; color-scheme: dark; }
-  .mkt-fx-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 8px; padding: 12px 15px; border-radius: 10px; border: 1px solid rgba(139, 144, 158, .2); background: var(--mkt-caja); font-size: 12.5px; }
-  .mkt-fx-panel label { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--mkt-tenue); }
-  .mkt-fx-panel select, .mkt-casilla select { min-height: 32px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-caja); color: var(--mkt-texto); font-size: 12.5px; text-transform: none; letter-spacing: normal; font-weight: 400; }
   .mkt-fx-resumen { margin: -8px 0 0 4px; font-size: 12px; color: var(--mkt-tenue); }
   .mkt-fx-resumen strong { color: var(--mkt-texto); }
 
@@ -145,14 +254,6 @@
   .mkt-note { margin-top: 12px; padding: 10px 14px; border-radius: 6px; border-left: 3px solid var(--mkt-elevado); background: var(--mkt-caja); font-size: 11.5px; line-height: 1.55; color: var(--mkt-tenue); }
   .mkt-note strong { color: var(--mkt-texto-suave); }
 
-  /* ---------- Filtro de campañas (chips) ---------- */
-  .mkt-filtro-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-  .mkt-filtro-titulo { font-size: 14px; font-weight: 700; }
-  .mkt-filtro-titulo span { font-size: 12px; font-weight: 400; color: var(--mkt-tenue); }
-  .mkt-filtro-botones { display: flex; flex-wrap: wrap; gap: 8px; }
-  .mkt-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .mkt-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px dashed var(--mkt-borde-fuerte); background: transparent; font-size: 12px; color: var(--mkt-tenue); }
-  .mkt-chip.is-activa { border-style: solid; background: var(--mkt-elevado); color: var(--mkt-texto); }
 
   /* ---------- Anillos (.ring / .r-bench) ---------- */
   .mkt-rings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
@@ -326,8 +427,9 @@
     .mkt-pagina { padding: 16px 16px 40px; }
     .mkt-titulo { font-size: 22px; }
     .mkt-card { padding: 16px; }
-    .mkt-fx-limpiar { margin-left: 0; }
-    .mkt-fx-periodo input { width: 128px; }
+    .mkt-filtros-accion { margin-left: 0; }
+    .mkt-xf-grid { grid-template-columns: 1fr; }
+    .mkt-periodo { width: 100%; }
     .mkt-rings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .mkt-grid-graficas { grid-template-columns: 1fr; }
     .mkt-grid-salud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -339,3 +441,4 @@
 }
 
 @keyframes mkt-girar { to { transform: rotate(360deg); } }
+@keyframes mkt-consulta-brillo { 50% { border-color: rgba(217, 95, 110, .75); box-shadow: 0 0 0 5px rgba(217, 95, 110, .12); } }

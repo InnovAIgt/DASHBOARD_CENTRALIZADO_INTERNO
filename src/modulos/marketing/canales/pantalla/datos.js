@@ -194,7 +194,13 @@ export function nivelMuestra(entregados) {
 
 // ---------------------------------------------------------------- filtros de la página (D29)
 
-export const FILTROS_VACIOS = { desde: '', hasta: '', cargo: '', quitadas: [] }
+/**
+ * Filtros de la página. Formato estándar del portal (D35):
+ * - desde / hasta: Período (se aplica al instante);
+ * - cargos: null = todos, o la lista de cargos marcados en el panel "Filtros" (se aplica con "Aplicar");
+ * - quitadas: campañas desmarcadas en la columna "Campañas" del panel (se aplica con "Aplicar").
+ */
+export const FILTROS_VACIOS = { desde: '', hasta: '', cargos: null, quitadas: [] }
 
 /** "2026-11-11" → "11/11/2026". */
 export const fechaCorta = (iso) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '')
@@ -209,10 +215,13 @@ export function campanasCandidatas(disponibles, filtros) {
     const dia = c.fechaEnvio.slice(0, 10)
     if (filtros.desde && dia < filtros.desde) return false
     if (filtros.hasta && dia > filtros.hasta) return false
-    if (filtros.cargo && c.cargo !== filtros.cargo) return false
+    if (filtros.cargos && !filtros.cargos.includes(c.cargo)) return false
     return true
   })
 }
+
+/** Cargos que existen entre las campañas que cuentan (para la columna "Cargo" del panel). */
+export const cargosDisponibles = (disponibles) => [...new Set((disponibles ?? []).filter((c) => !c.excluida).map((c) => c.cargo))]
 
 /** Campañas elegidas = candidatas menos las que se quitaron en el filtro de campañas. */
 export const campanasElegidas = (disponibles, filtros) => campanasCandidatas(disponibles, filtros).filter((c) => !filtros.quitadas.includes(c.id))
@@ -227,8 +236,46 @@ export function parametroCampanas(disponibles, filtros) {
   return elegidas.length === todas.length ? null : elegidas.map((c) => c.id).join(',')
 }
 
+/**
+ * Explicaciones que no vienen del servidor (reglas de la pantalla). Las usan "¿Cómo se calcula?" en
+ * pantalla y en el PDF, para que digan exactamente lo mismo.
+ * @returns {[string, string][]}
+ */
+export function DEFINICIONES_EXTRA(reglas) {
+  return [
+    ['Pocos datos', `Con menos de ${reglas.minimoEntregados} entregados no se calculan apertura, CTR ni semáforo; el CTOR necesita al menos ${reglas.minimoEntregados} aperturas reales.`],
+    ['Anillos (Excelente / Promedio / Bajo)', `${NOTA_REFERENCIA} Excelente en verde, Promedio en azul, Bajo en amarillo. Rojo solo si la entrega es menor a 90 % (crítico).`],
+    ['Salud del envío', `Entregados + rebote permanente + rebote temporal (+ sin estado) = 100 % de lo enviado. Apertura automática, bajas y quejas son de los entregados y no se suman. Rojo solo para lo crítico: rebote permanente desde ${UMBRALES.rebotesPermanentes.rojo * 100} % o quejas desde ${UMBRALES.quejas.rojo * 100} % de los entregados.`],
+    ['Muestra', `Alta: ${MUESTRA.alta} o más entregados · Media: ${MUESTRA.media} a ${MUESTRA.alta - 1} · Baja: menos de ${MUESTRA.media}.`],
+    ['Filtros', 'Período (por fecha de envío de la campaña), cargo y campañas eligen QUÉ campañas entran; el servidor recalcula todos los totales con esas campañas.'],
+    ['Campañas de prueba', `El nombre contiene ${reglas.patronesCampanaPrueba.map((p) => `"${p}"`).join(', ')} como palabra completa (sin importar mayúsculas ni tildes).`],
+    ['Correos internos', `Dominios ${reglas.dominiosInternos.join(', ')} y sus subdominios.`],
+    ['Asunto, territorio y vendedor', 'El reporte de Brevo no los trae. Se llenarán con el catálogo de campañas (pendiente).'],
+  ]
+}
+
 /** ¿Hay algún filtro puesto? */
-export const hayFiltros = (f) => Boolean(f.desde || f.hasta || f.cargo || f.quitadas.length)
+export const hayFiltros = (f) => Boolean(f.desde || f.hasta || f.cargos || f.quitadas.length)
+
+/** Cantidad de filtros activos DENTRO del panel "Filtros" (número del botón): cargo y campañas. */
+export const filtrosEnPanel = (f) => (f.cargos ? 1 : 0) + (f.quitadas.length ? 1 : 0)
+
+/**
+ * Textos de los filtros activos, para la franja "Filtro activo", la línea de resumen y los chips del PDF.
+ * @returns {{ cifras: string, periodo: string, cargo: string|null, campanas: string|null, campanasDetalle: string|null }}
+ */
+export function textosFiltros({ vista, filtros, disponibles }) {
+  const todas = (disponibles ?? []).filter((c) => !c.excluida)
+  const elegidas = campanasElegidas(disponibles, filtros)
+  const hayPeriodo = filtros.desde || filtros.hasta
+  return {
+    cifras: VISTAS[vista].label,
+    periodo: hayPeriodo ? `${fechaCorta(filtros.desde) || 'inicio'} – ${fechaCorta(filtros.hasta) || 'hoy'}` : 'Todo el histórico',
+    cargo: filtros.cargos ? (filtros.cargos.length ? filtros.cargos.join(', ') : 'Ninguno') : null,
+    campanas: elegidas.length === todas.length ? null : `${elegidas.length} de ${todas.length}`,
+    campanasDetalle: elegidas.length === todas.length ? null : elegidas.map((c) => `#${c.id} ${c.nombre}`).join(' · ') || 'Ninguna',
+  }
+}
 
 /** Criterios del ranking: % más alto = mejor, salvo el rebote permanente (más bajo = mejor). */
 export const CRITERIOS_RANKING = {

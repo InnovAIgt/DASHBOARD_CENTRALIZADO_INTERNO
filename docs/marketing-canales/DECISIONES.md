@@ -581,3 +581,57 @@ solo la lista por persona.
 
 **Control con los CSV de noviembre:** la lista cuadra con la tarjeta en las 3 campañas y en las dos vistas.
 Suma 853 personas sin internos y 854 en Total en Brevo.
+
+## D35 · 17/11/2026 · Mailing con el "marco" estándar del portal (modelo: Activaciones)
+
+**Decisión:** la vista, las gráficas, los datos y los cálculos de Mailing **no cambian**. Lo que se igualó
+con Activaciones es el **marco**:
+- **Encabezado:** línea chica, título y subtítulo, con la **pastilla de estado** debajo: "Consultando la
+  API…", "…puede tardar hasta un minuto", "Actualizado: HH:MM" o "Sin conexión con el servidor de datos".
+- **Tarjeta "FILTROS":**
+  - grupo **Cifras** (Sin internos / Total en Brevo), al instante;
+  - **Período** con calendario y botón para restablecer, al instante;
+  - botón **Filtros** con contador y flecha, que abre el **panel tipo Excel** con columnas **Cargo** y
+    **Campañas** (buscador, "Seleccionar todo", n/m, "Limpiar todo" y **"Aplicar"**);
+  - botón **PDF**;
+  - **botón actualizar redondo** (`?actualizar=1`).
+- **Franja "Filtro activo"**, con "✕ Mostrar todas las campañas", y la línea "Mostrando…" de siempre.
+- **Mensajes:**
+  - círculo de carga en la primera carga;
+  - pastilla y mensaje exacto en los errores, con "Reintentar";
+  - "No se encontraron campañas con los filtros seleccionados" con botón.
+
+**Se quitó:**
+- la tarjeta de chips "Filtro de campañas": las campañas pasaron a la columna "Campañas" del panel;
+- el botón rojo "Actualizar" del encabezado.
+
+**Filtros:** hacen lo mismo que antes; solo cambia el formato. El cargo ahora es una lista con casillas,
+así que se puede marcar más de uno. Siguen eligiendo **qué campañas** entran (`?campanas=`, D29).
+
+**PDF:**
+- usa la herramienta **compartida** `public/assets/js/dashboard-pdf.js`, `.css` y `-logo.js`, **sin modificarla**;
+- es la misma de Activaciones, Facturación por línea y Flujo de ventas v2;
+- los chips de la ventana muestran los filtros activos al exportar.
+
+Módulos:
+1. **Resumen:** campañas del mes, métricas de interacción, salud del envío y destacados.
+2. **Gráficas:** aperturas por cargo, evolución por mes y embudo, como tablas con barras simples.
+3. **Ranking de campañas.**
+4. **¿Cómo se calcula?:** definiciones y **transparencia de datos** (archivos leídos, fuente y exclusiones).
+
+El reporte se arma **solo** con la respuesta de `/api/marketing/mailing`, es decir, solo totales.
+- **La lista por persona no es un módulo y nunca entra.**
+- Si el reporte trajera algo con forma de correo, se bloquea y no se descarga nada.
+- Tampoco se exporta mientras se actualizan los datos ni cuando no hay campañas elegidas.
+
+**Compartido o copiado:**
+- La ventana de PDF se **reutiliza** sin tocarla.
+- La pastilla, el círculo de carga, la barra, el panel y la franja se **copiaron** con el prefijo `.mkt-`, como
+  hizo el Flujo de ventas v2.
+- `estandar.js` no se carga en React: "espía" todas las consultas de la página y afectaría al portal completo.
+- **No se modificaron** `activaciones.*`, `estandar.*` ni `dashboard-pdf.*`, así que ningún otro dashboard
+  se afecta.
+
+**Una sola vista, sin pestañas** (D31).
+
+El menú sigue diciendo "Marketing por canales" hasta que se retire el dashboard viejo.

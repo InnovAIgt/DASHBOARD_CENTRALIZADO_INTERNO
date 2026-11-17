@@ -1,55 +1,188 @@
-// Marketing por canales · barra de filtros estándar, "Transparencia de datos" y "Filtro de campañas".
+// Marketing por canales · barra de filtros con el FORMATO ESTÁNDAR del portal (D35), copiado del
+// dashboard de Activaciones (activaciones.html / activaciones.css, que no se modificaron), igual que el
+// Flujo de ventas v2:
+//   tarjeta "FILTROS" · grupo "Cifras" · Período (con restablecer) · botón "Filtros" con contador →
+//   panel tipo Excel (columnas Cargo y Campañas, con buscador, "todo", n/m, "Limpiar todo" y "Aplicar") ·
+//   botón PDF · botón actualizar redondo.
+// Cifras y Período se aplican al instante; Cargo y Campañas, con "Aplicar".
 // Los filtros solo deciden QUÉ campañas entran; el servidor recalcula los totales (?campanas=, D29).
-// Un solo filtro de cargo: el del panel "Filtros", que cambia toda la página (D32).
-import { useId, useState } from 'react'
-import { Check } from 'lucide-react'
-import { VISTAS, campanasCandidatas, fechaCorta, formatoLectura, formatoNumero, hayFiltros } from './datos.js'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { CalendarDays, ChevronDown, Filter, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import {
+  FILTROS_VACIOS, VISTAS, campanasCandidatas, cargosDisponibles, fechaCorta, filtrosEnPanel, formatoLectura,
+  formatoNumero, hayFiltros, textosFiltros,
+} from './datos.js'
 
-export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros, cargos }) {
-  const [panel, setPanel] = useState(false)
+/** Una columna del panel tipo Excel: buscador, "Seleccionar todo", contador n/m y casillas. */
+function ColumnaXf({ titulo, opciones, marcadas, alCambiar, vacio }) {
+  const [busqueda, setBusqueda] = useState('')
   const id = useId()
-  const cambiar = (cambios) => alCambiarFiltros({ ...filtros, ...cambios })
-  return <div className="mkt-fx">
-    <div className="mkt-fx-bar">
-      <div className="mkt-fx-grupo" role="group" aria-label="Cifras">
-        <span className="mkt-fx-etiqueta">Cifras</span>
-        {Object.values(VISTAS).map((v) => <button key={v.key} type="button" className={`mkt-fxb ${vista === v.key ? 'is-activa' : ''}`}
-          aria-pressed={vista === v.key} onClick={() => alCambiarVista(v.key)}>{v.label}</button>)}
-      </div>
-      <div className="mkt-fx-periodo">
-        <span className="mkt-fx-etiqueta">Período</span>
-        <label className="mkt-solo-lector" htmlFor={`${id}-desde`}>Desde</label>
-        <input id={`${id}-desde`} type="date" value={filtros.desde} max={filtros.hasta || undefined} onChange={(e) => cambiar({ desde: e.target.value })} />
-        <span className="mkt-tenue" aria-hidden="true">—</span>
-        <label className="mkt-solo-lector" htmlFor={`${id}-hasta`}>Hasta</label>
-        <input id={`${id}-hasta`} type="date" value={filtros.hasta} min={filtros.desde || undefined} onChange={(e) => cambiar({ hasta: e.target.value })} />
-      </div>
-      <button type="button" className={`mkt-fxb ${filtros.cargo ? 'is-marcada' : ''}`} aria-expanded={panel} aria-controls={`${id}-panel`}
-        onClick={() => setPanel((v) => !v)}>Filtros{filtros.cargo ? ' (1)' : ''}</button>
-      <button type="button" className="mkt-fxb mkt-fx-limpiar" disabled={!hayFiltros(filtros)}
-        onClick={() => alCambiarFiltros({ desde: '', hasta: '', cargo: '', quitadas: [] })}>Limpiar filtros</button>
+  const texto = busqueda.trim().toLowerCase()
+  const visibles = opciones.filter((o) => !texto || o.etiqueta.toLowerCase().includes(texto))
+  const todas = opciones.length > 0 && opciones.every((o) => marcadas.has(o.valor))
+  const algunas = opciones.some((o) => marcadas.has(o.valor))
+  const refTodo = useRef(null)
+  useEffect(() => { if (refTodo.current) refTodo.current.indeterminate = algunas && !todas }, [algunas, todas])
+  const alternar = (valor) => {
+    const nuevo = new Set(marcadas)
+    if (nuevo.has(valor)) nuevo.delete(valor); else nuevo.add(valor)
+    alCambiar(nuevo)
+  }
+  return <div className="mkt-xf-col">
+    <div className="mkt-xf-cabeza">
+      <span className="mkt-xf-titulo">{titulo}</span>
+      <span className="mkt-xf-cuenta">{opciones.filter((o) => marcadas.has(o.valor)).length}/{opciones.length}</span>
     </div>
-    {panel && <div className="mkt-fx-panel" id={`${id}-panel`}>
-      <label>Cargo
-        <select value={filtros.cargo} onChange={(e) => cambiar({ cargo: e.target.value, quitadas: [] })}>
-          <option value="">Todos</option>
-          {cargos.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </label>
-      <span className="mkt-tenue">El cargo cambia toda la página, incluido el ranking.</span>
-    </div>}
+    <div className="mkt-xf-buscar">
+      <Search size={14} aria-hidden="true" />
+      <label htmlFor={id} className="mkt-solo-lector">Buscar en {titulo}</label>
+      <input id={id} type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} autoComplete="off" />
+    </div>
+    <div className="mkt-xf-lista">
+      {opciones.length === 0 && <p className="mkt-xf-sin">{vacio}</p>}
+      {!texto && opciones.length > 0 && <label className="mkt-xf-item is-todo">
+        <input ref={refTodo} type="checkbox" className="mkt-casilla" checked={todas}
+          onChange={() => alCambiar(todas ? new Set() : new Set(opciones.map((o) => o.valor)))} />
+        <span className="mkt-xf-nombre">Seleccionar todo</span>
+      </label>}
+      {visibles.map((o) => <label key={o.valor} className="mkt-xf-item" title={o.etiqueta}>
+        <input type="checkbox" className="mkt-casilla" checked={marcadas.has(o.valor)} onChange={() => alternar(o.valor)} />
+        <span className="mkt-xf-nombre">{o.etiqueta}</span>
+        {o.extra && <small>{o.extra}</small>}
+      </label>)}
+      {texto && visibles.length === 0 && <p className="mkt-xf-sin">Sin coincidencias.</p>}
+    </div>
   </div>
 }
 
-export function LineaResumen({ datos, vista, filtros }) {
+/** Panel "Filtros": borrador local; se aplica con "Aplicar". */
+function PanelFiltros({ filtros, disponibles, alAplicar, alCerrar }) {
+  const cargos = cargosDisponibles(disponibles)
+  const [marcadosCargo, setMarcadosCargo] = useState(() => new Set(filtros.cargos ?? cargos))
+  const borradorCargos = marcadosCargo.size === cargos.length ? null : [...marcadosCargo]
+  // La columna Campañas muestra las del período y de los cargos marcados en el borrador.
+  const candidatas = campanasCandidatas(disponibles, { ...filtros, cargos: borradorCargos })
+  const [quitadas, setQuitadas] = useState(() => new Set(filtros.quitadas))
+  const marcadasCamp = new Set(candidatas.map((c) => c.id).filter((idc) => !quitadas.has(idc)))
+  const cambiarCampanas = (nuevo) => setQuitadas(new Set(candidatas.map((c) => c.id).filter((idc) => !nuevo.has(idc))))
+
+  const aplicar = () => {
+    alAplicar({ ...filtros, cargos: borradorCargos, quitadas: [...quitadas].filter((idc) => candidatas.some((c) => c.id === idc)) })
+    alCerrar()
+  }
+  const limpiarTodo = () => {
+    alAplicar({ ...filtros, cargos: null, quitadas: [] })
+    alCerrar()
+  }
+  return <div className="mkt-xf-panel" role="dialog" aria-label="Filtros">
+    <div className="mkt-xf-grid">
+      <ColumnaXf titulo="Cargo" opciones={cargos.map((c) => ({ valor: c, etiqueta: c }))} marcadas={marcadosCargo}
+        alCambiar={setMarcadosCargo} vacio="Sin cargos." />
+      <ColumnaXf titulo="Campañas" vacio="Ninguna campaña en el período o cargo elegido."
+        opciones={candidatas.map((c) => ({ valor: c.id, etiqueta: `#${c.id} · ${c.nombre}`, extra: fechaCorta(c.fechaEnvio.slice(0, 10)).slice(0, 5) }))}
+        marcadas={marcadasCamp} alCambiar={cambiarCampanas} />
+    </div>
+    <div className="mkt-xf-pie">
+      <button type="button" className="mkt-xf-limpiar" onClick={limpiarTodo}>Limpiar todo</button>
+      <button type="button" className="mkt-xf-aplicar" onClick={aplicar}>Aplicar</button>
+    </div>
+  </div>
+}
+
+/** Solo para pruebas: el panel abierto se puede dibujar sin hacer clic. */
+export const PanelFiltrosParaPruebas = PanelFiltros
+
+export const ID_BOTON_PDF = 'mktBtnPdf'
+
+export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros, disponibles, cargando, alActualizar }) {
+  const [abierto, setAbierto] = useState(false)
+  const caja = useRef(null)
+  const id = useId()
+  const enPanel = filtrosEnPanel(filtros)
+  // Cerrar el panel al hacer clic fuera o con Escape (como en Activaciones).
+  useEffect(() => {
+    if (!abierto) return undefined
+    const fuera = (e) => { if (caja.current && !caja.current.contains(e.target)) setAbierto(false) }
+    const tecla = (e) => { if (e.key === 'Escape') setAbierto(false) }
+    document.addEventListener('mousedown', fuera)
+    document.addEventListener('keydown', tecla)
+    return () => { document.removeEventListener('mousedown', fuera); document.removeEventListener('keydown', tecla) }
+  }, [abierto])
+
+  return <section className="mkt-filtros-caja" ref={caja} aria-label="Filtros">
+    <span className="mkt-filtros-eyebrow">Filtros</span>
+    <div className="mkt-filtros-barra">
+      <div className="mkt-grupo" role="group" aria-label="Cifras">
+        <span className="mkt-etiqueta-grupo">Cifras</span>
+        {Object.values(VISTAS).map((v) => <button key={v.key} type="button" className={`mkt-btn-grupo ${vista === v.key ? 'is-activo' : ''}`}
+          aria-pressed={vista === v.key} onClick={() => alCambiarVista(v.key)}>{v.label}</button>)}
+      </div>
+
+      <div className="mkt-periodo">
+        <span className="mkt-periodo-etiqueta"><CalendarDays size={15} aria-hidden="true" />Período</span>
+        <label className="mkt-solo-lector" htmlFor={`${id}-desde`}>Desde</label>
+        <input id={`${id}-desde`} type="date" className="mkt-fecha" value={filtros.desde} max={filtros.hasta || undefined}
+          onChange={(e) => alCambiarFiltros({ ...filtros, desde: e.target.value })} />
+        <span className="mkt-periodo-guion" aria-hidden="true">—</span>
+        <label className="mkt-solo-lector" htmlFor={`${id}-hasta`}>Hasta</label>
+        <input id={`${id}-hasta`} type="date" className="mkt-fecha" value={filtros.hasta} min={filtros.desde || undefined}
+          onChange={(e) => alCambiarFiltros({ ...filtros, hasta: e.target.value })} />
+        <button type="button" className="mkt-periodo-limpiar" title="Restablecer período (todo el histórico)" aria-label="Restablecer período"
+          disabled={!filtros.desde && !filtros.hasta} onClick={() => alCambiarFiltros({ ...filtros, desde: '', hasta: '' })}>
+          <RotateCcw size={14} aria-hidden="true" />
+        </button>
+      </div>
+
+      <button type="button" className={`mkt-btn-filtros ${abierto ? 'is-abierto' : ''}`} aria-expanded={abierto} aria-haspopup="dialog"
+        onClick={() => setAbierto((v) => !v)}>
+        <Filter size={16} aria-hidden="true" />Filtros
+        {enPanel > 0 && <span className="mkt-filtros-cuenta" aria-label={`${enPanel} filtro(s) activo(s)`}>{enPanel}</span>}
+        <ChevronDown size={14} className="mkt-chevron" aria-hidden="true" />
+      </button>
+
+      <span className="mkt-filtros-accion">
+        <button type="button" className="dashboard-pdf-trigger mkt-btn-pdf" id={ID_BOTON_PDF} title="Descargar módulos del dashboard en PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          PDF
+        </button>
+        <button type="button" className="mkt-btn-actualizar" onClick={alActualizar} disabled={cargando} title="Actualizar datos" aria-label="Actualizar datos">
+          <RefreshCw size={16} className={cargando ? 'mkt-girando' : ''} aria-hidden="true" />
+        </button>
+      </span>
+    </div>
+    {abierto && <PanelFiltros filtros={filtros} disponibles={disponibles} alAplicar={alCambiarFiltros} alCerrar={() => setAbierto(false)} />}
+  </section>
+}
+
+/** Franja "Filtro activo" (como en Activaciones), con el botón para ver todas las campañas. */
+export function FranjaFiltroActivo({ vista, filtros, disponibles, alCambiarFiltros }) {
+  const t = useMemo(() => textosFiltros({ vista, filtros, disponibles }), [vista, filtros, disponibles])
+  if (!hayFiltros(filtros)) return null
+  const partes = [
+    (filtros.desde || filtros.hasta) && `Período ${t.periodo}`,
+    t.cargo && `Cargo: ${t.cargo}`,
+    t.campanas && `Campañas: ${t.campanas}`,
+  ].filter(Boolean)
+  return <div className="mkt-franja-filtro" role="status">
+    <span><Search size={14} aria-hidden="true" /> Filtro activo: <strong>{partes.join(' · ')}</strong> ({partes.length})</span>
+    <button type="button" onClick={() => alCambiarFiltros(FILTROS_VACIOS)} title="Restablecer todos los filtros">
+      <X size={13} aria-hidden="true" /> Mostrar todas las campañas
+    </button>
+  </div>
+}
+
+export function LineaResumen({ datos, vista, filtros, disponibles }) {
   const t = vista === 'totalBrevo' ? datos.totales.totalBrevo : datos.totales
   const leido = datos.fuente.cache?.leidoEn ?? datos.generado
+  const textos = textosFiltros({ vista, filtros, disponibles })
   const periodo = filtros.desde || filtros.hasta
     ? `del ${fechaCorta(filtros.desde) || 'inicio'} al ${fechaCorta(filtros.hasta) || 'hoy'}`
     : 'todo el histórico'
   return <div className="mkt-fx-resumen">
     Mostrando <strong>{formatoNumero(t.enviados)} correos</strong> de <strong>{formatoNumero(t.campanas)} campaña{t.campanas === 1 ? '' : 's'}</strong>
-    {' '}· {periodo}{filtros.cargo ? ` · ${filtros.cargo}` : ''} · última lectura {formatoLectura(leido)}
+    {' '}· {periodo}{textos.cargo ? ` · ${textos.cargo}` : ''} · última lectura {formatoLectura(leido)}
   </div>
 }
 
@@ -94,32 +227,5 @@ export function Transparencia({ datos }) {
         {exclusiones.duplicadosDescartados > 0 && <p>Correos repetidos descartados: {formatoNumero(exclusiones.duplicadosDescartados)}.</p>}
       </div>
     </div>}
-  </div>
-}
-
-export function FiltroCampanas({ disponibles, filtros, alCambiarFiltros }) {
-  const candidatas = campanasCandidatas(disponibles, filtros)
-  const elegidas = candidatas.filter((c) => !filtros.quitadas.includes(c.id))
-  const alternar = (id) => alCambiarFiltros({
-    ...filtros,
-    quitadas: filtros.quitadas.includes(id) ? filtros.quitadas.filter((x) => x !== id) : [...filtros.quitadas, id],
-  })
-  return <div className="mkt-card mkt-card-compacta">
-    <div className="mkt-filtro-cabeza">
-      <div className="mkt-filtro-titulo">Filtro de campañas <span>— {elegidas.length} de {candidatas.length} seleccionada{candidatas.length === 1 ? '' : 's'}</span></div>
-      <div className="mkt-filtro-botones">
-        <button type="button" className="mkt-fxb" onClick={() => alCambiarFiltros({ ...filtros, quitadas: [] })}>Seleccionar todas</button>
-        <button type="button" className="mkt-fxb" onClick={() => alCambiarFiltros({ ...filtros, quitadas: candidatas.map((c) => c.id) })}>Limpiar selección</button>
-      </div>
-    </div>
-    {candidatas.length === 0 ? <p className="mkt-tenue">Ninguna campaña en el período o cargo elegido.</p>
-      : <div className="mkt-chips" role="group" aria-label="Campañas">
-        {candidatas.map((c) => {
-          const activa = !filtros.quitadas.includes(c.id)
-          return <button key={c.id} type="button" className={`mkt-chip ${activa ? 'is-activa' : ''}`} aria-pressed={activa} onClick={() => alternar(c.id)}>
-            {activa && <Check size={13} aria-hidden="true" />}#{c.id} · {c.nombre}
-          </button>
-        })}
-      </div>}
   </div>
 }

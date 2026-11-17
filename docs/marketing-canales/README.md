@@ -49,7 +49,9 @@ Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que si
 | `servicios/api.js` | Llama a `/api/marketing/mailing`. |
 | `pantalla/datos.js` | En un solo lugar: semáforo (`UMBRALES`), rangos de los anillos (`REFERENCIAS`), metas (`METAS`), muestra (`MUESTRA`), filtros, formatos y fechas. |
 | `pantalla/Mailing.jsx` | La vista en el orden del mockup: resumen, salud, destacados, ranking, ¿cómo se calcula? |
-| `pantalla/Filtros.jsx` | Barra de filtros, línea de resumen, transparencia de datos y filtro de campañas. |
+| `pantalla/Filtros.jsx` | Marco estándar (D35): tarjeta "FILTROS" (Cifras, Período, panel tipo Excel con Cargo y Campañas, PDF y actualizar), franja "Filtro activo", línea de resumen y transparencia de datos. |
+| `pantalla/pdf.js` | Reporte PDF de Mailing para la herramienta compartida `dashboard-pdf.js` (sin modificarla). Solo totales; nunca la lista por persona. |
+| `pantalla/DetallePersonas.jsx` | Lista por persona de una campaña, con clave (D34). |
 | `pantalla/Interaccion.jsx` | Anillos (SVG dibujado a mano). |
 | `pantalla/Graficas.jsx` | Aperturas por cargo, evolución por mes y embudo (dibujados a mano). |
 | `pantalla/DetalleCampana.jsx` | Ventana con el detalle de una campaña. |

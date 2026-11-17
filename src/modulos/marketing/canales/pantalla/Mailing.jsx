@@ -1,18 +1,20 @@
 // Marketing por canales · vista de Mailing (una sola vista, sin pestañas), con el formato del mockup
 // aprobado, que sigue al dashboard original "Campañas de correo" (solo referencia; no se modificó).
-// Orden (D31): encabezado · barra de filtros · transparencia de datos · filtro de campañas ·
+// Orden (D31): encabezado · barra de filtros · transparencia de datos ·
 // resumen del mes · métricas de interacción · salud del envío · destacados · gráficas · embudo ·
 // ranking de campañas · ¿cómo se calcula?
+// "Marco" estándar del portal (D35): encabezado con pastilla de estado, barra de filtros con panel
+// tipo Excel, botón PDF y actualizar redondo, franja "Filtro activo" y mensajes estándar.
 // Todas las cifras vienen calculadas de /api/marketing/mailing; aquí solo se muestran.
-import { useMemo, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Inbox, RefreshCw } from 'lucide-react'
 import { Aviso, Explicacion } from './comunes.jsx'
 import { DetalleCampana } from './DetalleCampana.jsx'
-import { BarraFiltros, FiltroCampanas, LineaResumen, Transparencia } from './Filtros.jsx'
+import { BarraFiltros, FranjaFiltroActivo, LineaResumen, Transparencia } from './Filtros.jsx'
 import { AperturasPorCargo, Embudo, EvolucionPorMes } from './Graficas.jsx'
 import { MetricasInteraccion } from './Interaccion.jsx'
 import {
-  ESTADO_NIVEL, ESTADO_RIESGO, ETIQUETAS, MUESTRA, NIVELES, NOTA_REFERENCIA, UMBRALES, VISTAS, asuntoDe, bloque,
+  DEFINICIONES_EXTRA, ESTADO_NIVEL, ESTADO_RIESGO, ETIQUETAS, FILTROS_VACIOS, MUESTRA, NIVELES, UMBRALES, VISTAS, asuntoDe, bloque,
   campanasDelMes, campanasIncluidas, evaluar, formatoFechaEnvio, formatoMes, formatoNumero, formatoPct, nivelMuestra, ordenarRanking,
   sobreBase, sobreEnviados, tonoRiesgo, ultimoMes,
 } from './datos.js'
@@ -186,55 +188,75 @@ function ComoSeCalcula({ reglas }) {
     <summary>¿Cómo se calcula cada número?</summary>
     <dl>
       {Object.entries(def).map(([clave, texto]) => <div key={clave}><dt>{ETIQUETAS[clave] ?? clave}</dt><dd>{texto}</dd></div>)}
-      <div><dt>Pocos datos</dt><dd>Con menos de {reglas.minimoEntregados} entregados no se calculan apertura, CTR ni semáforo; el CTOR necesita al menos {reglas.minimoEntregados} aperturas reales.</dd></div>
-      <div><dt>Anillos (Excelente / Promedio / Bajo)</dt><dd>{NOTA_REFERENCIA} Excelente en verde, Promedio en azul, Bajo en amarillo. Rojo solo si la entrega es menor a 90 % (crítico).</dd></div>
-      <div><dt>Salud del envío</dt><dd>Entregados + rebote permanente + rebote temporal (+ sin estado) = 100 % de lo enviado. Apertura automática, bajas y quejas son de los entregados y no se suman.
-        Rojo solo para lo crítico: rebote permanente desde {UMBRALES.rebotesPermanentes.rojo * 100} % o quejas desde {UMBRALES.quejas.rojo * 100} % de los entregados.</dd></div>
-      <div><dt>Muestra</dt><dd>Alta: {MUESTRA.alta} o más entregados · Media: {MUESTRA.media} a {MUESTRA.alta - 1} · Baja: menos de {MUESTRA.media}.</dd></div>
-      <div><dt>Filtros</dt><dd>Período (por fecha de envío de la campaña), cargo y campañas eligen QUÉ campañas entran; el servidor recalcula todos los totales con esas campañas.</dd></div>
-      <div><dt>Campañas de prueba</dt><dd>El nombre contiene {reglas.patronesCampanaPrueba.map((p) => `"${p}"`).join(', ')} como palabra completa (sin importar mayúsculas ni tildes).</dd></div>
-      <div><dt>Correos internos</dt><dd>Dominios {reglas.dominiosInternos.join(', ')} y sus subdominios.</dd></div>
-      <div><dt>Asunto, territorio y vendedor</dt><dd>El reporte de Brevo no los trae. Se llenarán con el catálogo de campañas (pendiente).</dd></div>
+      {DEFINICIONES_EXTRA(reglas).map(([nombre, texto]) => <div key={nombre}><dt>{nombre}</dt><dd>{texto}</dd></div>)}
     </dl>
   </details>
 }
 
 // ------------------------------------------------------------------ vista
 
-export function Encabezado({ cargando, alActualizar, subtitulo }) {
+const horaFormato = new Intl.DateTimeFormat('es-GT', { hour: '2-digit', minute: '2-digit' })
+
+/**
+ * Pastilla de estado del encabezado, igual que la del portal (.std-sync de estandar.js / estandar.css,
+ * copiada como en el Flujo de ventas v2): "Consultando la API…" → "…puede tardar hasta un minuto" →
+ * "Actualizado HH:MM" o "Sin conexión con el servidor de datos".
+ */
+function EstadoConsulta({ cargando, error, actualizadoEn }) {
+  const [lento, setLento] = useState(false)
+  useEffect(() => {
+    if (!cargando) { setLento(false); return undefined }
+    const t = setTimeout(() => setLento(true), 2500)
+    return () => clearTimeout(t)
+  }, [cargando])
+  if (cargando) return <p className="mkt-consultando" role="status" aria-live="polite">{lento ? 'Consultando la API… puede tardar hasta un minuto' : 'Consultando la API…'}</p>
+  if (error) return <p className="mkt-estado is-error" role="status">Sin conexión con el servidor de datos</p>
+  return <p className="mkt-estado" role="status">Actualizado: <b>{actualizadoEn ? horaFormato.format(actualizadoEn) : '—'}</b></p>
+}
+
+export function Encabezado({ cargando, error, actualizadoEn, subtitulo }) {
   return <header className="mkt-encabezado">
     <div>
       <div className="mkt-eyebrow">Marketing · Mailing</div>
       <h1 className="mkt-titulo">Campañas de correo</h1>
       <p className="mkt-subtitulo">{subtitulo}</p>
+      <EstadoConsulta cargando={cargando} error={error} actualizadoEn={actualizadoEn} />
     </div>
-    <button type="button" className="mkt-boton-rojo" onClick={alActualizar} disabled={cargando}>
-      <RefreshCw size={16} className={cargando ? 'mkt-girando' : ''} aria-hidden="true" />{cargando ? 'Actualizando…' : 'Actualizar'}
-    </button>
   </header>
+}
+
+/** Mensaje "sin datos" con el formato estándar (título, texto y acción). */
+function SinDatos({ titulo, texto, accion, alAccion }) {
+  return <div className="mkt-sin-datos" role="status">
+    <Inbox size={22} aria-hidden="true" />
+    <div className="mkt-sin-datos-titulo">{titulo}</div>
+    <div className="mkt-sin-datos-texto">{texto}</div>
+    {accion && <button type="button" className="mkt-xf-limpiar" onClick={alAccion}>{accion}</button>}
+  </div>
 }
 
 /**
  * La vista completa. Recibe los datos y el estado de los filtros (los maneja MarketingCanales.jsx).
  */
-export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, filtros, alCambiarFiltros, cargando, error, sinCampanas, alActualizar }) {
+export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, filtros, alCambiarFiltros, cargando, error, actualizadoEn, sinCampanas, alActualizar }) {
   const [elegida, setElegida] = useState(null)
   const def = datos.reglas.definiciones
   const campanas = campanasIncluidas(datos)
   const total = bloque(datos.totales, vista)
-  const cargos = [...new Set((disponibles ?? []).filter((c) => !c.excluida).map((c) => c.cargo))]
   const pctDesconocido = datos.destacados?.metricas?.mejorPais?.pctDesconocido ?? null
 
   return <>
-    <Encabezado cargando={cargando} alActualizar={alActualizar} subtitulo={`RED Intelfon · Campañas de Brevo · fuente: ${datos.fuente.descripcion ?? '—'}`} />
-    <BarraFiltros vista={vista} alCambiarVista={alCambiarVista} filtros={filtros} alCambiarFiltros={alCambiarFiltros} cargos={cargos} />
-    <LineaResumen datos={datos} vista={vista} filtros={filtros} />
+    <Encabezado cargando={cargando} error={error} actualizadoEn={actualizadoEn} subtitulo={`RED Intelfon · Campañas de Brevo · fuente: ${datos.fuente.descripcion ?? '—'}`} />
+    <BarraFiltros vista={vista} alCambiarVista={alCambiarVista} filtros={filtros} alCambiarFiltros={alCambiarFiltros}
+      disponibles={disponibles} cargando={cargando} alActualizar={alActualizar} />
+    <LineaResumen datos={datos} vista={vista} filtros={filtros} disponibles={disponibles} />
+    <FranjaFiltroActivo vista={vista} filtros={filtros} disponibles={disponibles} alCambiarFiltros={alCambiarFiltros} />
     {error && <Aviso tipo="atencion" titulo="No se pudo actualizar">{error} Se muestran los últimos datos leídos.</Aviso>}
 
     <Transparencia datos={datos} />
-    <FiltroCampanas disponibles={disponibles} filtros={filtros} alCambiarFiltros={alCambiarFiltros} />
 
-    {sinCampanas ? <Aviso tipo="neutro" titulo="Ninguna campaña elegida">Ninguna campaña coincide con los filtros. Usa "Limpiar filtros" o "Seleccionar todas".</Aviso> : <>
+    {sinCampanas ? <SinDatos titulo="No se encontraron campañas con los filtros seleccionados"
+      texto="Intenta ajustar el período, el cargo o las campañas elegidas." accion="Mostrar todas las campañas" alAccion={() => alCambiarFiltros(FILTROS_VACIOS)} /> : <>
       <Seccion titulo="Resumen del mes" pista="último mes con envíos" />
       <ResumenDelMes datos={datos} vista={vista} def={def} />
 
@@ -270,9 +292,12 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
 /** Estado cuando todavía no hay fuente configurada o falló la primera lectura. */
 export function MailingSinDatos({ mensaje, tipo, cargando, alActualizar }) {
   return <>
-    <Encabezado cargando={cargando} alActualizar={alActualizar} subtitulo="RED Intelfon · Campañas de Brevo" />
+    <Encabezado cargando={cargando} error={tipo === 'atencion'} subtitulo="RED Intelfon · Campañas de Brevo" />
     <Aviso tipo={tipo} titulo={tipo === 'atencion' ? 'No se pudieron leer los datos de mailing' : 'Fuente de datos no configurada'}>
       <p>{mensaje}</p>
+      <button type="button" className="mkt-xf-limpiar mkt-reintentar" onClick={alActualizar} disabled={cargando}>
+        <RefreshCw size={14} className={cargando ? 'mkt-girando' : ''} aria-hidden="true" /> Reintentar
+      </button>
     </Aviso>
   </>
 }
