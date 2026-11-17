@@ -836,8 +836,7 @@
 
   function hasCustomDateFilter() {
     const period = getCurrentMonthPeriod();
-    return (currentFilter.dateFrom || currentFilter.dateTo) &&
-      (currentFilter.dateFrom !== period.from || currentFilter.dateTo !== period.to);
+    return currentFilter.dateFrom !== period.from || currentFilter.dateTo !== period.to;
   }
 
   function getActiveCountryLabel() {
@@ -1038,6 +1037,8 @@
 
   const WORKFLOW_API_KEY = "b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b";
   const CLIENT_NAMES_API_URL = "https://innovaigt.github.io/Dashboard---flash-altas/datos.json";
+  const STORE_CLIENTES_API_URL = "https://grultaxaxbcruzoeljld.supabase.co/rest/v1/rpc/tablero_cumplimiento_safe";
+  const STORE_CLIENTES_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdydWx0YXhheGJjcnV6b2VsamxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTQ3NzUsImV4cCI6MjEwNzMzMDc3NX0.ztwf9manF8h5JtVxqLnEc48tZ3r95iUjz2SwUw0HW6M";
   const CLIENT_NAME_OVERRIDES = {
     CL000584: "ALVARO DE JESUS PORTILLO"
   };
@@ -1052,7 +1053,7 @@
     return typeof nestedName === "string" ? nestedName.trim() : "";
   }
 
-  function getCompanyName(item) {
+  function getRawCompanyName(item) {
     if (!item || typeof item !== "object") return "";
     const candidates = [
       item.empresa, item.empresaRad, item.nombreEmpresa, item.nombre_empresa,
@@ -1067,6 +1068,20 @@
       if (name) return name;
     }
     return "";
+  }
+
+  function getFallbackCompanyName(item) {
+    if (!item || typeof item !== "object") return "Cliente sin nombre";
+    const code = getClientCode(item);
+    if (code) {
+      return code.startsWith("LD") ? `Prospecto ${code}` : `Cliente ${code}`;
+    }
+    if (item.preOferta) return `Pre-oferta #${item.preOferta}`;
+    return "Cliente sin nombre";
+  }
+
+  function getCompanyName(item) {
+    return getRawCompanyName(item) || getFallbackCompanyName(item);
   }
 
   function getClientCode(item) {
@@ -1143,54 +1158,88 @@
     return `<span style="font-size: 10px; font-weight: 800; color: ${fg}; background: ${bg}; border: 1px solid ${border}; padding: 2px 8px; border-radius: 5px; display: inline-block; white-space: nowrap;">${t}</span>`;
   }
 
-  async function completeMissingCompanyNames(items) {
+  async function completeMissingCompanyNames(items, rawAllItems = []) {
+    const selfCompanyByCode = new Map();
+    [...rawAllItems, ...items].forEach(item => {
+      if (!item || typeof item !== "object") return;
+      const existingName = getRawCompanyName(item);
+      const code = getClientCode(item);
+      if (existingName && code && !selfCompanyByCode.has(code)) {
+        selfCompanyByCode.set(code, existingName);
+      }
+    });
+
     items.forEach(item => {
-      const existingName = getCompanyName(item);
+      const existingName = getRawCompanyName(item) || selfCompanyByCode.get(getClientCode(item)) || "";
       if (existingName) item.empresa = existingName;
     });
 
-    try {
-      const response = await fetch(CLIENT_NAMES_API_URL, { cache: "no-store" });
-      if (!response.ok) throw new Error("la fuente de altas respondió " + response.status);
+    const [altasResult, storeResult] = await Promise.allSettled([
+      fetch(CLIENT_NAMES_API_URL, { cache: "no-store" }),
+      fetch(STORE_CLIENTES_API_URL, {
+        method: "POST",
+        headers: {
+          apikey: STORE_CLIENTES_API_KEY,
+          Authorization: `Bearer ${STORE_CLIENTES_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: "{}",
+        cache: "no-store"
+      })
+    ]);
 
-      const json = await response.json();
-      const rows = Array.isArray(json) ? json : (json.data || json.items || json.results);
-      if (!Array.isArray(rows)) throw new Error("la fuente de altas no devolvió una lista");
+    const companyByCode = new Map();
+    const equipByCode = new Map();
 
-      const companyByCode = new Map();
-      const equipByCode = new Map();
-      rows.forEach(row => {
-        if (!row || typeof row !== "object") return;
-        const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
-        const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
-        if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
-        if (code) {
-          if (!equipByCode.has(code)) equipByCode.set(code, []);
-          equipByCode.get(code).push(row);
+    if (altasResult.status === "fulfilled" && altasResult.value.ok) {
+      try {
+        const json = await altasResult.value.json();
+        const rows = Array.isArray(json) ? json : (json.data || json.items || json.results);
+        if (Array.isArray(rows)) {
+          rows.forEach(row => {
+            if (!row || typeof row !== "object") return;
+            const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
+            const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
+            if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
+            if (code) {
+              if (!equipByCode.has(code)) equipByCode.set(code, []);
+              equipByCode.get(code).push(row);
+            }
+          });
         }
-      });
+      } catch (error) {
+        console.warn("No se pudieron procesar datos desde la fuente de altas:", error.message);
+      }
+    } else if (altasResult.status === "rejected") {
+      console.warn("No se pudieron completar datos adicionales desde la fuente de altas:", altasResult.reason?.message || "error");
+    }
 
-      items.forEach(item => {
-        const code = getClientCode(item);
-        const existingName = getCompanyName(item);
-        const company = existingName || companyByCode.get(code) || "";
-        if (company) item.empresa = company;
-
-        const matches = equipByCode.get(code);
-        if (matches && matches.length) {
-          const exact = matches.find(m => Number(m.cnteqp) === Number(item.cantidad)) || matches[0];
-          if (exact.nomeqp) item._altModelo = String(exact.nomeqp).trim();
-          if (!item.tipoContratacion && exact.tipeqp) item._altTipeqp = String(exact.tipeqp).trim().toUpperCase();
-        }
-      });
-    } catch (error) {
-      console.warn("No se pudieron completar datos adicionales desde la fuente de altas:", error.message);
+    if (storeResult.status === "fulfilled" && storeResult.value.ok) {
+      try {
+        const storeJson = await storeResult.value.json();
+        const storeClientes = Array.isArray(storeJson?.clientes) ? storeJson.clientes : [];
+        storeClientes.forEach(row => {
+          if (!row || typeof row !== "object") return;
+          const code = getClientCode(row);
+          const name = getNameValue(row.nombre || row.cliente || row.razon_social);
+          if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
+        });
+      } catch (error) {
+        console.warn("No se pudieron procesar nombres desde Store clientes:", error.message);
+      }
     }
 
     items.forEach(item => {
-      if (!getCompanyName(item)) {
-        const override = CLIENT_NAME_OVERRIDES[getClientCode(item)];
-        if (override) item.empresa = override;
+      const code = getClientCode(item);
+      const existingName = getRawCompanyName(item);
+      const company = existingName || companyByCode.get(code) || CLIENT_NAME_OVERRIDES[code] || "";
+      if (company) item.empresa = company;
+
+      const matches = equipByCode.get(code);
+      if (matches && matches.length) {
+        const exact = matches.find(m => Number(m.cnteqp) === Number(item.cantidad)) || matches[0];
+        if (exact.nomeqp) item._altModelo = String(exact.nomeqp).trim();
+        if (!item.tipoContratacion && exact.tipeqp) item._altTipeqp = String(exact.tipeqp).trim().toUpperCase();
       }
     });
   }
@@ -1259,7 +1308,7 @@
     if (fetchedData && fetchedData.length > 0) {
       // Filtrar preofertas: las no iniciadas no interesan según indicación expresa
       allData = fetchedData.filter(item => item && item.iniciada !== false && item.estado !== "no_iniciada");
-      await completeMissingCompanyNames(allData);
+      await completeMissingCompanyNames(allData, fetchedData);
       filteredData = [...allData];
       if (textEl) textEl.innerText = "Conectado a API Workflow (" + allData.length + " activas)";
       if (dotEl) dotEl.style.background = "#2f8f76";
@@ -1370,8 +1419,6 @@
 
   // RENDER PRINCIPAL Y FILTRADO
   function renderApp() {
-    const customDate = hasCustomDateFilter();
-
     filteredData = allData.filter(item => {
       // 0. Excluir no iniciadas (todo menos las no iniciadas)
       if (item.iniciada === false || item.estado === "no_iniciada" || item.estado === "no iniciada") return false;
@@ -1409,17 +1456,11 @@
       // 6. Categoría Quick Filter
       if (currentFilter.catQuickFilter !== "ALL" && itemNegocio !== currentFilter.catQuickFilter) return false;
 
-      // 7. Rango de fechas:
-      // En vista por defecto (sin filtro manual de fecha), todas las radicaciones "en_proceso" activas
-      // permanecen visibles junto con las finalizadas/canceladas del período para que cuadren 100%
-      // con los KPIs superiores de procesos actualmente en curso.
-      const keepActiveCarryover = !customDate && item.estado === "en_proceso";
-      if (!keepActiveCarryover && (!currentFilter.openSlaFocus || customDate)) {
-        const itemDate = getItemFilterDate(item);
-        if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
-        if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
-        if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
-      }
+      // 7. Rango de fechas estricto para todos los estados (incluyendo en_proceso)
+      const itemDate = getItemFilterDate(item);
+      if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+      if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+      if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
 
       // 8. Búsqueda de texto
       if (currentFilter.search) {
@@ -1839,7 +1880,6 @@
   };
 
   function getCountryOpenSlaItems(countryCode) {
-    const customDate = hasCustomDateFilter();
     return allData.filter(item => {
       if (!item || item.iniciada === false || item.estado !== "en_proceso") return false;
       const itemPais = String(item.pais || "GT").trim().toUpperCase();
@@ -1855,12 +1895,15 @@
       if (currentFilter.stageQuickFilter !== "todos" && activeStageNum !== currentFilter.stageQuickFilter) return false;
       if (currentFilter.catQuickFilter !== "ALL" && itemNegocio !== currentFilter.catQuickFilter) return false;
 
-      if (customDate) {
-        const itemDate = getItemFilterDate(item);
-        if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
-        if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
-        if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+      if (!currentFilter.openSlaFocus && currentFilter.slas.length < SLA_OPTIONS.length) {
+        if (!currentFilter.slas.includes(getItemSlaCondition(item))) return false;
       }
+
+      const itemDate = getItemFilterDate(item);
+      if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+      if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+      if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+
       if (currentFilter.search) {
         const q = currentFilter.search.toLowerCase().trim();
         const matchClient = getCompanyName(item).toLowerCase().includes(q);
@@ -1936,9 +1979,11 @@
       `;
     }).join("");
 
-    const scopeLabel = hasCustomDateFilter()
-      ? "Procesos en curso · Rango personalizado"
-      : "Procesos actualmente en curso · L–V 8:00 a 18:00";
+    const fmtPeriodDate = (iso) => iso ? iso.split("-").reverse().join("/") : "";
+    const periodRangeLabel = (currentFilter.dateFrom || currentFilter.dateTo)
+      ? `${fmtPeriodDate(currentFilter.dateFrom) || "inicio"} – ${fmtPeriodDate(currentFilter.dateTo) || "hoy"}`
+      : "Histórico completo";
+    const scopeLabel = `Procesos en curso (${periodRangeLabel}) · L–V 8:00 a 18:00`;
 
     return `
       <article class="sla-country-panel ${meta.cls} ${isSingle ? 'is-single' : ''}">
@@ -2067,9 +2112,7 @@
       const countryScopeLabel = getActiveCountryLabel();
       const eyebrowSpan = document.querySelector("#radiosRowEyebrow span:last-child");
       if (eyebrowSpan) {
-        eyebrowSpan.innerText = customDate
-          ? `CONTROL Y ENTREGA DE RADIOS · ${countryScopeLabel.toUpperCase()} (PERÍODO SELECCIONADO)`
-          : `CONTROL Y ENTREGA DE RADIOS · ${countryScopeLabel.toUpperCase()} (ACTIVAS EN CURSO + FINALIZADAS DEL MES)`;
+        eyebrowSpan.innerText = `CONTROL Y ENTREGA DE RADIOS · ${countryScopeLabel.toUpperCase()} (${customDate ? "PERÍODO SELECCIONADO" : "DEL MES ACTUAL"})`;
       }
 
       setElText(
