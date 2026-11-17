@@ -635,3 +635,23 @@ El reporte se arma **solo** con la respuesta de `/api/marketing/mailing`, es dec
 **Una sola vista, sin pestañas** (D31).
 
 El menú sigue diciendo "Marketing por canales" hasta que se retire el dashboard viejo.
+
+---
+
+## D36 · 17/11/2026 · Textos simples y "Transparencia de datos" del PDF en 1 página
+
+**Textos:**
+- La pantalla, la ventana de detalle, la lista por persona y el PDF hablan en palabras simples.
+- No muestran nombres de columnas de Brevo (Open_Date, Send_Date, Total Opens, MPP…).
+- Los nombres siguen igual **en el código**, porque son los que se leen del CSV.
+- **Excepción:** el motivo de un archivo ignorado porque "no parece un reporte de Brevo" nombra las columnas que
+  faltan, para que Marketing pueda corregir el archivo.
+
+**PDF:**
+- "Transparencia de datos" es un resumen de 1 página:
+  - fuente y última lectura;
+  - cantidad de archivos usados e ignorados (solo los ignorados con nombre y motivo);
+  - cantidad de avisos;
+  - correos analizados, correos internos y campañas de prueba como totales.
+- La lista de cada archivo con sus campañas y avisos se queda en la pantalla.
+- El PDF sigue sin incluir personas ni correos.

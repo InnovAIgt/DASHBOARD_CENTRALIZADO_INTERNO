@@ -28,6 +28,8 @@
 import { FECHA_ILEGIBLE } from './filaEstandar.js'
 
 const COLUMNAS_EVENTO = { fechaEntrega: 'Delivered_Date', fechaReboteSuave: 'Soft_Bounce_Date', fechaReboteDuro: 'Hard_Bounce_Date' }
+// Nombre simple de cada evento para los avisos que se ven en pantalla.
+const NOMBRE_EVENTO = { fechaEntrega: 'la fecha de entrega', fechaReboteSuave: 'la fecha de rebote temporal', fechaReboteDuro: 'la fecha de rebote permanente' }
 
 /** Columnas que el CSV DEBE tener (nombre en Brevo → campo interno). */
 const COLUMNAS = {
@@ -90,15 +92,15 @@ export function leerCsvBrevo(contenido) {
     const correo = celda('correo').toLowerCase()
     const fechaEnvio = fechaIso(celda('fechaEnvio'))
 
-    if (!campanaId) { descartar('Fila sin Campaign ID'); continue }
-    if (!correo.includes('@')) { descartar('Fila sin correo válido en Email_ID'); continue }
-    if (!fechaEnvio) { descartar('Fila sin Send_Date válida (DD-MM-YYYY HH:mm:ss)'); continue }
+    if (!campanaId) { descartar('Fila sin número de campaña'); continue }
+    if (!correo.includes('@')) { descartar('Fila sin correo válido'); continue }
+    if (!fechaEnvio) { descartar('Fila sin fecha de envío válida (DD-MM-YYYY HH:mm:ss)'); continue }
 
     const eventos = {}
-    for (const [campo, columna] of Object.entries(COLUMNAS_EVENTO)) {
+    for (const campo of Object.keys(COLUMNAS_EVENTO)) {
       const texto = celda(campo)
       eventos[campo] = texto === '' ? null : fechaIso(texto) ?? FECHA_ILEGIBLE
-      if (eventos[campo] === FECHA_ILEGIBLE) avisar(`Fecha ilegible en ${columna}: el evento se cuenta y, si no se puede ordenar, gana el rebote`)
+      if (eventos[campo] === FECHA_ILEGIBLE) avisar(`Fecha ilegible en ${NOMBRE_EVENTO[campo]}: el evento se cuenta y, si no se puede ordenar, gana el rebote`)
     }
 
     filas.push({

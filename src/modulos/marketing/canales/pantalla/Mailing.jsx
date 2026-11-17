@@ -76,7 +76,7 @@ function SaludEnvio({ m, def }) {
       <KpiRiesgo m={m} campo="rebotesTemporales" etiqueta="Rebote temporal" base="del envío"
         explicacion={`${def.rebotesTemporales}${m.entregadosLuegoRebotados ? ` ${formatoNumero(m.entregadosLuegoRebotados)} se habían entregado y luego rebotaron.` : ''}`} />
       <Kpi estado="info" etiqueta="Apertura automática" valor={formatoNumero(m.soloAperturaAutomatica)} valorClase="mkt-is-info" explicacion={def.soloAperturaAutomatica}>
-        iPhone (Apple MPP) · no cuenta como apertura
+        iPhone · no cuenta como apertura
       </Kpi>
       <KpiRiesgo m={m} campo="bajas" etiqueta="Bajas" base="de los entregados" explicacion={def.bajas} />
       <KpiRiesgo m={m} campo="quejas" etiqueta="Quejas (spam)" base="de los entregados" explicacion={def.quejas} />

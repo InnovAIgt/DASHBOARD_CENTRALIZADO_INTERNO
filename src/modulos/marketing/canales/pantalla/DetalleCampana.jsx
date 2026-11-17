@@ -62,7 +62,7 @@ export function DetalleCampana({ campana, definiciones, pctDesconocido, alCerrar
           <div className="mkt-eyebrow">Campaña #{campana.id} · {formatoMes(campana.mes, true)}</div>
           <h2 id="mkt-detalle-titulo">{campana.nombre}</h2>
           <p className="mkt-tenue">
-            Enviada el <b>{formatoFechaEnvio(campana.fechaEnvio, { conHora: true })}</b> (Send_Date) · Cargo: {campana.cargo} · Asunto: {asuntoDe(campana)}
+            Enviada el <b>{formatoFechaEnvio(campana.fechaEnvio, { conHora: true })}</b> (fecha de envío de Brevo) · Cargo: {campana.cargo} · Asunto: {asuntoDe(campana)}
           </p>
         </div>
         <button type="button" ref={cerrar} className="mkt-boton-icono" aria-label="Cerrar" onClick={alCerrar}><X size={18} /></button>

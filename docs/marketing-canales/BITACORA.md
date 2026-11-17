@@ -363,7 +363,35 @@ fuente de datos", igual que "Otros". No se creó `/api/marketing/redes`.
 
 ---
 
-## Marco estándar del portal (modelo: Activaciones) — 17/11/2026 🔄 (esperando aprobación para commit)
+## Textos simples y PDF más corto — 17/11/2026 🔄 (esperando aprobación para commit)
+
+**Qué cambió (solo textos; los números, cálculos y nombres de columnas no cambian):**
+- "¿Cómo se calcula?" ya no muestra nombres técnicos de columnas de Brevo. Ejemplo: "Personas con fecha de
+  apertura (Open_Date)" ahora dice "Personas que abrieron el correo (Brevo registró cuándo lo abrieron)".
+- "(Send_Date)" ahora dice "(fecha de envío de Brevo)" y "(Apple MPP)" ahora dice "(iPhone)". Cambia en la pantalla,
+  en la ventana de detalle, en la lista por persona y en el PDF.
+- Los avisos de filas descartadas o de fechas ilegibles también usan palabras simples ("Fila sin número de
+  campaña", "Fecha ilegible en la fecha de rebote temporal"…).
+- **PDF:** "Transparencia de datos" queda en **1 página** (D36):
+  - fuente y última lectura;
+  - cantidad de archivos usados e ignorados;
+  - solo los ignorados con su nombre y motivo;
+  - correos analizados, correos internos y campañas de prueba como totales.
+  - El detalle completo sigue en la pantalla. El PDF pasó de 9 a 8 páginas.
+
+**Pruebas:**
+- Pantalla y PDF: 95 OK.
+- Detalle por persona: cuadra en las 3 campañas.
+- Fase 1 y control: OK.
+- Ningún nombre técnico visible en la pantalla, el detalle, el panel, el PDF ni las definiciones.
+- Los números siguen en 853 (sin internos) y 854 (Total en Brevo).
+
+**Única excepción:** si un archivo **no** es un reporte de Brevo, el motivo de "ignorado" nombra las columnas que
+le faltan. Así Marketing sabe qué corregir.
+
+---
+
+## Marco estándar del portal (modelo: Activaciones) — 17/11/2026 ✅ commit `77cbf59`
 
 **Revisión previa (solo lectura):**
 - Activaciones está en `public/dashboards/activaciones/activaciones.html` y `public/assets/css/activaciones.css`.
@@ -568,3 +596,4 @@ Solo se anota **dónde** están. Los valores no se copian aquí.
 | 16/11/2026 | Reglas de Drive: cuenta de empresa, Marketing Editor / cuenta de servicio Lector, nunca borrar CSV viejos. | D20 · CONFIGURAR_DRIVE.md |
 | 16/11/2026 | Entregado o rebote: gana el último evento. Contador "entregados y luego rebotados". Nota visible en "% de apertura" con el número calculado. | D21 · Paso A |
 | 16/11/2026 | Pendientes: catálogo de campañas (asunto, cargo, territorio, marca) y lista de "correos a corregir". | Pendientes |
+| 17/11/2026 | Textos simples en "¿Cómo se calcula?" (sin nombres técnicos); "(fecha de envío de Brevo)" e "(iPhone)"; Transparencia del PDF en 1 página. | D36 · Textos simples |

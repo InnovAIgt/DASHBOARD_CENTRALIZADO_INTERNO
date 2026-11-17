@@ -27,7 +27,7 @@ export const RESULTADOS = [
   { clave: 'baja', texto: 'Se dio de baja' },
   { clave: 'clic', texto: 'Hizo clic' },
   { clave: 'abrio', texto: 'Abrió (lectura real)' },
-  { clave: 'automatico', texto: 'Abrió solo automático (Apple MPP)' },
+  { clave: 'automatico', texto: 'Abrió solo automático (iPhone)' },
   { clave: 'sinAbrir', texto: 'Entregado sin abrir' },
 ]
 

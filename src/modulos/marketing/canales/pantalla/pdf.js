@@ -103,7 +103,7 @@ function seccionResumen({ datos, vista }) {
     kpi(ESTADO_NIVEL[nivelEntrega], 'Entregados', formatoNumero(m.entregados), `${formatoPct(m.pctEntrega)} del envío · ${esc(NIVELES[nivelEntrega].texto)}`),
     riesgo('rebotesPermanentes', 'Rebote permanente', 'del envío'),
     riesgo('rebotesTemporales', 'Rebote temporal', 'del envío'),
-    kpi('info', 'Apertura automática', formatoNumero(m.soloAperturaAutomatica), 'iPhone (Apple MPP) · no cuenta como apertura'),
+    kpi('info', 'Apertura automática', formatoNumero(m.soloAperturaAutomatica), 'iPhone · no cuenta como apertura'),
     riesgo('bajas', 'Bajas', 'de los entregados'),
     riesgo('quejas', 'Quejas (spam)', 'de los entregados'),
   ].join('')
@@ -195,13 +195,11 @@ function seccionCalculo({ datos }) {
     ...DEFINICIONES_EXTRA(r),
   ].map(([n, t]) => `<tr><td><b>${esc(n)}</b></td><td>${esc(t)}</td></tr>`).join('')
 
+  // Transparencia en UNA página: solo conteos y los archivos ignorados con su motivo.
+  // El detalle completo (cada archivo, sus campañas y avisos) se queda en la pantalla.
   const { archivos, exclusiones, fuente } = datos
-  const avisos = archivos.usados.flatMap((u) => [...(u.avisos ?? []), ...(u.filasDescartadas ?? [])].map((a) => ({ archivo: u.archivo, ...a })))
-  const filasArch = [
-    ...archivos.usados.map((u) => [u.archivo, 'Usado', u.campanas.map((c) => `#${c.id} (${formatoNumero(c.filas)} filas)`).join(', ')]),
-    ...archivos.ignorados.map((i) => [i.archivo, 'Ignorado', i.motivo]),
-    ...avisos.map((a) => [a.archivo, 'Aviso', `${a.motivo} (${a.cantidad})`]),
-  ].map(([a, e, d]) => `<tr><td>${esc(a)}</td><td class="c">${esc(e)}</td><td>${esc(d)}</td></tr>`).join('')
+  const avisos = archivos.usados.reduce((s, u) => s + (u.avisos?.length ?? 0) + (u.filasDescartadas?.length ?? 0), 0)
+  const filasIgnorados = archivos.ignorados.map((i) => `<tr><td>${esc(i.archivo)}</td><td>${esc(i.motivo)}</td></tr>`).join('')
   const internos = exclusiones.destinatariosInternos
   const pruebas = exclusiones.campanasPrueba
 
@@ -210,19 +208,20 @@ function seccionCalculo({ datos }) {
     <table><thead><tr><th>Número</th><th>Cómo se calcula</th></tr></thead><tbody>${filasDef}</tbody></table>
   </section>
   <section data-pdf-module="calculo">
-    <h2>Transparencia de datos · archivos leídos<span class="nota-h2">Fuente: ${esc(fuente.descripcion ?? '—')} · última lectura ${esc(formatoLectura(fuente.cache?.leidoEn ?? datos.generado))}${fuente.cache ? ` · se guarda ${fuente.cache.minutos} min` : ''}</span></h2>
-    <table><thead><tr><th>Archivo</th><th class="c">Estado</th><th>Detalle</th></tr></thead><tbody>${filasArch || '<tr><td colspan="3">Sin archivos.</td></tr>'}</tbody></table>
-  </section>
-  <section data-pdf-module="calculo">
-    <h2>Transparencia de datos · exclusiones</h2>
+    <h2>Transparencia de datos<span class="nota-h2">resumen · el detalle de cada archivo está en la pantalla, en "Transparencia de datos"</span></h2>
     <div class="mk-kpis k3">
-      ${kpi('info', 'Correos analizados', formatoNumero(datos.totales.enviados), 'sin correos internos de RED')}
-      ${kpi('na', 'Correos internos de RED', formatoNumero(internos.enviados), internos.porCampana.map((c) => `#${esc(c.id)}: ${formatoNumero(c.enviados)} envío(s)`).join(' · ') || 'ninguno')}
-      ${kpi('na', 'Campañas de prueba', formatoNumero(pruebas.cantidad), pruebas.lista.map((c) => `#${esc(c.id)} ${esc(c.nombre)}`).join(' · ') || 'ninguna')}
+      ${kpi('info', 'Fuente · última lectura', formatoLectura(fuente.cache?.leidoEn ?? datos.generado), `${esc(fuente.descripcion ?? '—')}${fuente.cache ? ` · se guarda ${fuente.cache.minutos} min` : ''}`)}
+      ${kpi('ok', 'Archivos usados', formatoNumero(archivos.usados.length), `${formatoNumero(avisos)} aviso(s) en filas`)}
+      ${kpi(archivos.ignorados.length ? 'warn' : 'na', 'Archivos ignorados', formatoNumero(archivos.ignorados.length), archivos.ignorados.length ? 'nombre y motivo en la tabla de abajo' : 'ninguno')}
     </div>
-    <p class="nota">Los correos internos cuentan en "Total en Brevo" y no en "Sin internos (oficial)". Las campañas de prueba no cuentan en ningún total.
-      ${exclusiones.duplicadosDescartados ? `Correos repetidos descartados: ${formatoNumero(exclusiones.duplicadosDescartados)}.` : ''}
-      Este reporte contiene solo totales: nunca incluye la lista de personas ni correos.</p>
+    <div class="mk-kpis k3" style="margin-top:8px">
+      ${kpi('info', 'Correos analizados', formatoNumero(datos.totales.enviados), 'sin correos internos de RED')}
+      ${kpi('na', 'Correos internos de RED', formatoNumero(internos.enviados), 'cuentan en "Total en Brevo", no en "Sin internos (oficial)"')}
+      ${kpi('na', 'Campañas de prueba', formatoNumero(pruebas.cantidad), 'no cuentan en ningún total')}
+    </div>
+    ${archivos.ignorados.length ? `<h2>Archivos ignorados</h2>
+    <table><thead><tr><th>Archivo</th><th>Motivo</th></tr></thead><tbody>${filasIgnorados}</tbody></table>` : ''}
+    <p class="nota">${exclusiones.duplicadosDescartados ? `Correos repetidos descartados: ${formatoNumero(exclusiones.duplicadosDescartados)}. ` : ''}Este reporte contiene solo totales: nunca incluye la lista de personas ni correos.</p>
   </section>`
 }
 
