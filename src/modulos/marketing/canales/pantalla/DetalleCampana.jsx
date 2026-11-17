@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Aviso, Explicacion, Porcentaje, Tono } from './comunes.jsx'
-import { ETIQUETAS, VISTAS, asuntoDe, formatoFechaEnvio, formatoMes, formatoNumero, formatoPct, sobreBase, tonoRiesgo } from './datos.js'
+import { DetallePersonas } from './DetallePersonas.jsx'
+import { ETIQUETAS, VISTAS, asuntoDe, bloque, formatoFechaEnvio, formatoMes, formatoNumero, formatoPct, sobreBase, tonoRiesgo } from './datos.js'
 
 const FILAS = [
   { campo: 'enviados' },
@@ -39,7 +40,7 @@ function Celda({ m, fila }) {
   </td>
 }
 
-export function DetalleCampana({ campana, definiciones, pctDesconocido, alCerrar }) {
+export function DetalleCampana({ campana, definiciones, pctDesconocido, alCerrar, vista = 'metricas' }) {
   const cerrar = useRef(null)
   useEffect(() => {
     cerrar.current?.focus()
@@ -115,6 +116,10 @@ export function DetalleCampana({ campana, definiciones, pctDesconocido, alCerrar
         </div>
         {campana.duplicadosDescartados > 0 && <p className="mkt-nota">Se descartaron {campana.duplicadosDescartados} correo(s) repetido(s) en esta campaña.</p>}
         {sin.pocosDatos && <p className="mkt-nota"><Tono tono="pocos" /> Menos de 5 entregados: no se calculan porcentajes ni semáforo.</p>}
+
+        {/* Lista por persona (D34): se pide aparte y con clave; respeta "Sin internos / Total en Brevo". */}
+        <DetallePersonas campana={campana} vista={vista} tarjetaPantalla={bloque(campana, vista)} />
+        <p className="mkt-nota">Vista de la lista: <b>{VISTAS[vista].label}</b> (la que está elegida en la página).</p>
       </div>
     </section>
   </div>, document.body)

@@ -183,6 +183,20 @@ correo, la ruta bloquea la respuesta (D11).
 Sin ninguna fuente configurada responde `200` con `fuente.configurada = false` y el mensaje
 "Fuente de datos no configurada" (D12).
 
+## La ruta `/api/marketing/mailing-detalle` (lista por persona, D34)
+
+`GET ?campana=76&vista=metricas|totalBrevo`, con la clave en el encabezado `X-Marketing-Clave`. Devuelve
+la lista por persona de **una** campaña (correo, país, resultado, clics, enlaces y fecha del evento final),
+los conteos por resultado y el **cuadre** con la tarjeta.
+
+**Sí contiene correos de clientes.** Por eso:
+- va aparte de la ruta principal;
+- se pide solo al abrir la ventana de detalle;
+- exige `MARKETING_DETALLE_CLAVE` (mínimo 24 caracteres) y frena los intentos repetidos;
+- no tiene descarga.
+
+En Vercel la atiende `api/marketing/mailing-detalle.js`, y en local, `server.ts`.
+
 ## Variables de entorno (solo servidor, sin `VITE_`)
 
 | Variable | Dónde | Para qué |
@@ -190,6 +204,7 @@ Sin ninguna fuente configurada responde `200` con `fuente.configurada = false` y
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | `.env.local`, Vercel y Coolify | Llave de la cuenta de servicio (JSON o base64). **Secreta.** |
 | `MARKETING_DRIVE_FOLDER_ID` | `.env.local`, Vercel y Coolify | Código de la carpeta de Drive. |
 | `MARKETING_LOCAL_CSV_DIR` | `.env.local` en tu computadora | Ruta de la carpeta local con los CSV de Brevo. |
+| `MARKETING_DETALLE_CLAVE` | `.env.local` y Vercel | Clave de la lista por persona (mínimo 24 caracteres, larga y difícil). **Secreta.** |
 
 ## Cómo probarlo en local
 

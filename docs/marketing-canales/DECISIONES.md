@@ -97,6 +97,10 @@ totales por campaña, mes y país. Como candado, si la respuesta contiene algo c
 se bloquea con un error.
 **Por qué:** los CSV de Brevo tienen datos personales de los destinatarios.
 
+**Actualizado por D34 (17/11/2026):** la ruta principal `/api/marketing/mailing` sigue igual (solo
+totales y con su candado). La única excepción es la **lista por persona** de una campaña, que va por
+una ruta aparte (`/api/marketing/mailing-detalle`), protegida con clave y sin IPs ni motivos de rebote.
+
 ## D12 · 16/11/2026 · Sin fuente configurada: aviso claro, sin error
 
 **Decisión:** si no hay fuente configurada (hoy en Vercel y Docker), la ruta responde 200 con
@@ -489,3 +493,91 @@ Lo que falta para mostrar lo quitado está en REQUISITOS.md, sección "Pendiente
 no se muestra.
 
 **No cambió:** ningún cálculo ni número del servidor. Ningún cálculo usaba metas ni leads.
+
+## D34 · 17/11/2026 · Detalle por persona ("Quién abrió y quién hizo clic") con clave
+
+**Decisión:** la ventana de detalle de una campaña muestra **una fila por persona**, con estas columnas:
+- correo;
+- país (.gt / .sv; si no, "—");
+- resultado;
+- número de clics;
+- enlace(s) que tocó;
+- fecha del evento final.
+
+Encima van los botones de filtro por resultado (con su cantidad) y un buscador por correo. También
+aparece la nota: "Ningún sistema de correo mide si alguien leyó el contenido. Tomamos como lectura la
+apertura real (sin las automáticas del iPhone); el clic es la señal más segura de interés."
+
+**Resultado:** uno solo por persona, con la MISMA regla del estado final (D21). Gana el primero que aplique:
+1. Queja (rojo)
+2. Rebote permanente (rojo)
+3. Rebote temporal (amarillo)
+4. Sin estado (gris)
+5. Se dio de baja (amarillo)
+6. Hizo clic (verde)
+7. Abrió (lectura real) (azul)
+8. Abrió solo automático (Apple MPP) (gris)
+9. Entregado sin abrir (gris)
+
+- Si la persona abrió o hizo clic **antes** de una queja, un rebote, una baja o sin estado, la pastilla lo
+  indica: "· había hecho clic" o "· había abierto".
+- La columna Clics muestra siempre los clics reales.
+- La **fecha del evento final** es la del evento que decide el resultado. Si es ilegible, dice "fecha ilegible".
+- **Enlaces:** solo texto corto (dominio y ruta, sin parámetros), con la dirección completa al pasar el mouse.
+  No son clicables, para no generar clics falsos.
+
+**Vistas y exclusiones:**
+- "Sin internos" quita los correos internos; "Total en Brevo" los incluye, marcados "Interno".
+- Una campaña de prueba responde "excluida".
+- Se aplica el mismo descarte de correos repetidos que en los cálculos.
+
+**Cuadre (obligatorio):** el servidor calcula la tarjeta de la campaña con `calcularMailing` y la compara
+con la lista. Los campos son:
+- enviados y entregados;
+- aperturas reales y personas con clic;
+- rebotes permanentes y temporales;
+- sin estado, bajas y quejas.
+
+La ventana muestra la línea de cuadre y explica por qué el botón "Hizo clic" puede ser menor que
+"personas con clic" (cuenta el resultado final).
+
+Si la tarjeta que se ve en la página no coincide con la de la lista, avisa "Los datos cambiaron desde la
+última lectura: presiona Actualizar". En Vercel, cada función guarda su propia lectura de Drive durante
+15 minutos, así que puede pasar.
+
+**Privacidad y protección:**
+- **Ruta aparte:** `/api/marketing/mailing-detalle?campana=76&vista=metricas`, en `server.ts` y en
+  `api/marketing/mailing-detalle.js` (Vercel). Se pide **solo al abrir la ventana**. La ruta principal
+  no cambia y sigue sin correos.
+- **Clave:** `MARKETING_DETALLE_CLAVE` (solo servidor, sin `VITE_`; en `.env.example` solo el nombre, vacío).
+  - Viaja en el encabezado `X-Marketing-Clave`, nunca en la dirección.
+  - Se compara de forma que no revela cuánto se parece.
+  - En la página vive solo en memoria: al recargar, se vuelve a pedir.
+- **Mínimo 24 caracteres.** Si la clave configurada es más corta, la ruta responde "No disponible" y
+  avisa que es demasiado corta, sin mostrarla.
+- **Freno de intentos:** cada clave incorrecta espera 1 s. Con 5 fallos en 15 minutos, esa conexión queda
+  bloqueada 15 minutos.
+  - **En Vercel el freno no es exacto:** la cuenta vive en la memoria de cada copia de la función, se
+    pierde si Vercel la apaga, y varias copias llevan cuentas separadas.
+  - Por eso la protección principal es la **clave larga** (mínimo 24 caracteres).
+  - La espera de 1 s sí funciona siempre.
+  - Un freno exacto necesitaría una base compartida (por ejemplo Vercel KV): queda pendiente.
+- **Respuestas:**
+  - sin clave configurada o clave corta → 503;
+  - clave incorrecta → 401;
+  - bloqueado → 429;
+  - campaña inexistente → 404;
+  - campaña de prueba → 409;
+  - parámetros malos → 400;
+  - método distinto de GET → 405.
+
+  Siempre van con `Cache-Control: no-store`.
+- **Sin descarga ni exportación.** No se mandan IPs ni motivos de rebote. No se escriben correos ni la
+  clave en los registros ni en archivos.
+- **Pruebas:** solo con correos inventados. Con los CSV reales solo se imprimen conteos.
+
+**Limitación general (pendiente):** el portal no tiene inicio de sesión en el servidor. Esta clave protege
+solo la lista por persona.
+
+**Control con los CSV de noviembre:** la lista cuadra con la tarjeta en las 3 campañas y en las dos vistas.
+Suma 853 personas sin internos y 854 en Total en Brevo.

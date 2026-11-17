@@ -24,7 +24,7 @@ const DESCRIPCION = {
  * Elige la fuente según las variables de entorno del servidor (D15):
  * si Drive está configurado, gana Drive; si no, la carpeta local; si no hay ninguna, "no configurada".
  */
-function elegirFuente(env, fuenteDrive) {
+export function elegirFuente(env, fuenteDrive = obtenerFilasDrive) {
   const cuentaTexto = env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()
   const carpetaId = env.MARKETING_DRIVE_FOLDER_ID?.trim()
   const carpetaLocal = env.MARKETING_LOCAL_CSV_DIR?.trim()

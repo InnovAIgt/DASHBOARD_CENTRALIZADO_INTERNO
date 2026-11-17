@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { obtenerMailing } from './server/marketingMailing.js';
+import { ipDe, obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -40,6 +41,22 @@ app.all('/api/marketing/mailing', async (req, res) => {
     method: req.method,
     actualizar: req.query.actualizar === '1',
     campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
+  });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Marketing por canales · lista por persona de una campaña, protegida con MARKETING_DETALLE_CLAVE (D34).
+// En Vercel esta misma ruta la atiende api/marketing/mailing-detalle.js.
+app.all('/api/marketing/mailing-detalle', async (req, res) => {
+  const resultado = await obtenerDetalleMailing({
+    method: req.method,
+    campana: typeof req.query.campana === 'string' ? req.query.campana : undefined,
+    vista: typeof req.query.vista === 'string' ? req.query.vista : undefined,
+    clave: req.get('x-marketing-clave'),
+    ip: ipDe(req.headers, req.socket.remoteAddress),
   });
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.setHeader('Cache-Control', 'no-store');

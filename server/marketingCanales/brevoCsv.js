@@ -19,6 +19,8 @@
  *       null (no pasó) · '2026-11-05T09:31:00' · FECHA_ILEGIBLE (pasó, pero la fecha no se entiende)
  *   aperturaReal, baja, queja: true/false
  *   aperturasTotales, aperturasApple, clicsTotales: número
+ *   fechaApertura, fechaBaja, fechaQueja: null · fecha ISO · FECHA_ILEGIBLE   (solo para el detalle por persona, D34)
+ *   enlaces: [{ url, fecha }]            // columnas de enlace con fecha de clic — PRIVADO (detalle por persona)
  * }
  * Con las fechas, los cálculos deciden el estado final de cada persona (gana el último evento, D21).
  */
@@ -70,7 +72,12 @@ export function leerCsvBrevo(contenido) {
   }
   if (registros.length === 1) return { ok: false, motivo: 'El archivo solo tiene encabezados, sin filas.' }
 
-  const columnasEnlace = registros[0].filter((c) => /^"?https?:\/\//i.test(c.trim())).length
+  // Columnas de enlace: el encabezado es la URL y el valor, la fecha del clic.
+  const enlacesColumnas = registros[0]
+    .map((c, i) => ({ i, url: c.trim().replace(/^"|"$/g, '') }))
+    .filter((c) => /^https?:\/\//i.test(c.url))
+  const columnasEnlace = enlacesColumnas.length
+  const fechaOpcional = (texto) => (texto === '' ? null : fechaIso(texto) ?? FECHA_ILEGIBLE)
   const filas = []
   const descartadas = {}
   const descartar = (motivo) => { descartadas[motivo] = (descartadas[motivo] ?? 0) + 1 }
@@ -107,6 +114,14 @@ export function leerCsvBrevo(contenido) {
       clicsTotales: entero(celda('clicsTotales')),
       baja: celda('fechaBaja') !== '',
       queja: celda('fechaQueja') !== '',
+      // Solo para el detalle por persona (D34); los cálculos no los usan.
+      fechaApertura: fechaOpcional(celda('fechaApertura')),
+      fechaBaja: fechaOpcional(celda('fechaBaja')),
+      fechaQueja: fechaOpcional(celda('fechaQueja')),
+      enlaces: enlacesColumnas
+        .map((c) => ({ url: c.url, texto: (r[c.i] ?? '').trim() }))
+        .filter((c) => c.texto !== '')
+        .map((c) => ({ url: c.url, fecha: fechaOpcional(c.texto) })),
     })
   }
   return { ok: true, filas, descartadas, avisos, columnasEnlace }

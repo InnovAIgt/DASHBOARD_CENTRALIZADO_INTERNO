@@ -363,7 +363,77 @@ fuente de datos", igual que "Otros". No se creó `/api/marketing/redes`.
 
 ---
 
-## Solo datos reales · quitar tarjetas sin datos — 17/11/2026 🔄 (esperando aprobación para commit)
+## Detalle por persona ("Quién abrió y quién hizo clic") — 17/11/2026 🔄 (esperando aprobación para commit)
+
+**Decisiones de Keily:**
+- protección con clave en el servidor (`MARKETING_DETALLE_CLAVE`, mínimo 24 caracteres);
+- el orden del resultado, con la marca "había hecho clic / había abierto";
+- "Sin estado" en gris;
+- enlaces solo como texto;
+- "Interno" solo en Total en Brevo;
+- el portal se publica solo en Vercel.
+
+**Qué se hizo (D34):**
+- `server/marketingCanales/brevoCsv.js`: la fila estándar suma las fechas de apertura, baja y queja, y
+  los enlaces con su fecha. Los cálculos no los usan.
+- `server/marketingCanales/detallePersonas.js` (nuevo): la lista por persona, con la misma regla de
+  estado final, y el cuadre contra `calcularMailing`.
+- `server/marketingMailingDetalle.js` (nuevo): la clave, el freno de intentos y las respuestas.
+- `api/marketing/mailing-detalle.js` (nuevo, Vercel) y la ruta en `server.ts`.
+- `server/marketingMailing.js`: exporta `elegirFuente` para reutilizarla. No cambia cómo funciona.
+- `.env.example`: `MARKETING_DETALLE_CLAVE=`, vacía.
+- Pantalla:
+  - `pantalla/DetallePersonas.jsx` (nuevo);
+  - `DetalleCampana.jsx` (agrega la sección y recibe la vista);
+  - `Mailing.jsx` (le pasa la vista);
+  - `servicios/api.js` (`pedirDetallePersonas`);
+  - estilos `.mkt-`.
+- **No cambió** ningún número ni cálculo existente; la ruta principal sigue sin correos.
+
+**Cambio de rama a mitad del paso:** Keily trabajó en la rama `leads`. Lo pendiente quedó en el stash
+"cambios antes de leads". Para volver:
+1. El `package-lock.json` suelto de `leads` se guardó en el stash **"pendiente leads"**, que se conserva
+   para cuando Keily vuelva a esa rama.
+2. Se recuperaron solo los 12 archivos del paso 3, sin tocar `.claude/` ni `.vscode/`.
+3. Se verificó que el contenido era idéntico.
+4. Las pruebas dieron 853 / 854.
+5. Se borró el stash "cambios antes de leads".
+
+**Pruebas (0 fallas):**
+- **Fuente:** las pruebas ya no cargan `.env.local` (ahora tiene las variables de Drive). Solo reciben la
+  ruta de la carpeta local de CSV. Ninguna prueba usó el Drive real.
+- **Script del paso 3: 52 revisiones en total.** Incluyen los casos y la protección, con correos y clave
+  inventados, las 6 del cuadre real y las 4 de la ventana.
+  - Resultado y marca de cada persona, país, enlaces cortos y fecha del evento final.
+  - Cuadre en las dos vistas, "Interno" y campaña de prueba.
+  - Protección:
+    - sin clave → 503;
+    - clave corta → 503, sin mostrarla;
+    - clave incorrecta → 401 con espera de 1 s;
+    - el 6.º intento → 429;
+    - otra conexión no se bloquea;
+    - a los 15 minutos vuelve a funcionar;
+    - 404, 409, 400 y 405;
+    - la clave nunca aparece en una respuesta.
+  - La función de Vercel responde igual (200, `no-store`, 401).
+  - La ruta principal sigue sin correos.
+  - La ventana pide la clave al abrir, no tiene descarga y los enlaces son solo texto.
+- **Cuadre con los CSV reales (carpeta local, solo conteos):** cuadra en #74, #75 y #76, en las dos vistas.
+  Suma 853 sin internos y 854 en Total en Brevo.
+- Las pruebas anteriores (pantalla, Paso A, Drive simulado, casos inventados) también dan 0 fallas.
+- `npm run lint` y `npm run build`: sin errores.
+- Captura con datos inventados. El ajuste visto en ella: la columna Correo tiene ahora un ancho mínimo.
+
+**Pendientes nuevos:**
+- **El portal no tiene inicio de sesión en el servidor.** La clave protege solo la lista por persona.
+- **El freno de intentos en Vercel no es exacto**, porque cada copia de la función lleva su propia
+  cuenta. Por eso la clave debe tener al menos 24 caracteres. Un freno exacto necesitaría una base
+  compartida (por ejemplo Vercel KV).
+- Configurar `MARKETING_DETALLE_CLAVE` en `.env.local` y en Vercel. Lo hace Keily.
+
+---
+
+## Solo datos reales · quitar tarjetas sin datos — 17/11/2026 ✅ commit `9ff0157`
 
 **Antes:**
 - La Fase 3 se guardó en el commit `df1a20c`, con la lista de archivos que aprobó Keily.

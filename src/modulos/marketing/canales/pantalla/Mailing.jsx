@@ -263,7 +263,7 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
 
     <ComoSeCalcula reglas={datos.reglas} />
 
-    {elegida && <DetalleCampana campana={elegida} definiciones={def} pctDesconocido={pctDesconocido} alCerrar={() => setElegida(null)} />}
+    {elegida && <DetalleCampana campana={elegida} definiciones={def} pctDesconocido={pctDesconocido} vista={vista} alCerrar={() => setElegida(null)} />}
   </>
 }
 

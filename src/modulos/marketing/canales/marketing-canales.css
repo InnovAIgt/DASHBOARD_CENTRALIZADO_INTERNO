@@ -292,6 +292,36 @@
   .mkt-pct-riesgo.is-rojo { color: var(--mkt-bad-texto); }
   .mkt-pct-riesgo.is-pocos { color: var(--mkt-tenue); }
 
+  /* ---------- Quién abrió y quién hizo clic (detalle por persona, D34) ---------- */
+  .mkt-sin-salto { white-space: nowrap; }
+  .mkt-personas-seccion { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--mkt-borde); }
+  .mkt-personas { display: flex; flex-direction: column; gap: 10px; }
+  .mkt-personas-nota { padding: 10px 14px; border-radius: 6px; border-left: 3px solid var(--mkt-info); background: var(--mkt-caja); font-size: 12px; line-height: 1.5; color: var(--mkt-texto-suave); }
+  .mkt-cuadre { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-tarjeta); font-size: 12.5px; }
+  .mkt-cuadre.is-ok { border-left: 4px solid var(--mkt-ok); }
+  .mkt-cuadre.is-bad { border-left: 4px solid var(--mkt-bad); }
+  .mkt-cuadre-explica { margin-top: 4px; font-size: 11.5px; color: var(--mkt-tenue); }
+  .mkt-cuadre-cambio { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--mkt-warn-texto); }
+  .mkt-personas-filtros { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .mkt-personas-botones { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mkt-personas-botones .mkt-fxb { min-height: 30px; font-size: 12px; }
+  .mkt-filtro-ok:not(.is-activa) { border-color: rgba(47, 143, 118, .6); }
+  .mkt-filtro-info:not(.is-activa) { border-color: rgba(79, 143, 216, .6); }
+  .mkt-filtro-warn:not(.is-activa) { border-color: rgba(197, 150, 0, .6); }
+  .mkt-filtro-bad:not(.is-activa) { border-color: rgba(196, 60, 80, .6); }
+  .mkt-buscador { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--mkt-borde-control); background: var(--mkt-tarjeta); color: var(--mkt-tenue); }
+  .mkt-buscador input { width: 200px; border: none; background: transparent; color: var(--mkt-texto); font-size: 12.5px; }
+  .mkt-buscador input:focus { outline: none; }
+  .mkt-personas-tabla { max-height: 420px; overflow: auto; border-radius: 8px; border: 1px solid var(--mkt-borde); }
+  .mkt-personas-tabla thead th { position: sticky; top: 0; z-index: 1; }
+  .mkt-personas-correo { min-width: 240px; font-family: var(--mkt-mono); font-size: 12px; overflow-wrap: anywhere; }
+  .mkt-personas-enlaces span { display: block; font-size: 12px; color: var(--mkt-texto-suave); white-space: nowrap; cursor: help; }
+  .mkt-personas-pie { font-size: 11.5px; }
+  .mkt-clave { display: flex; flex-direction: column; gap: 8px; }
+  .mkt-clave-fila { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mkt-clave-fila input { flex: 1; min-width: 200px; min-height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--mkt-borde-control); background: var(--mkt-tarjeta); color: var(--mkt-texto); }
+  .mkt-clave-error { font-size: 12.5px; font-weight: 600; color: var(--mkt-warn-texto); }
+
   @media (max-width: 720px) {
     .mkt-pagina { padding: 16px 16px 40px; }
     .mkt-titulo { font-size: 22px; }
