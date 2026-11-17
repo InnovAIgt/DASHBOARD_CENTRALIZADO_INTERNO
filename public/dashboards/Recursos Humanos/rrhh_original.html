@@ -354,6 +354,19 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
 #chartSolicitantes .sx-trackwrap{position:relative;flex:1 1 auto;min-width:0;width:100%}
 #chartSolicitantes .sx-trackwrap>.apx-bartrack{width:100%}
 #chartSolicitantes .sx-nums{position:absolute;left:0;bottom:calc(100% + 2px);display:flex;gap:9px;white-space:nowrap;pointer-events:none;font:700 10px/1 'Segoe UI',system-ui,sans-serif}
+
+/* ===== Ventanas emergentes: mensaje desplegable de cada solicitud ===== */
+.expx-tabla tr[data-sol]{cursor:pointer}
+.expx-tabla tr[data-sol] td:first-child::before{content:'\25B8';display:inline-block;width:14px;margin-right:2px;font-size:10px;color:rgba(255,255,255,.55);transition:transform .15s}
+.expx-tabla tr[data-sol].sol-open td:first-child::before{transform:rotate(90deg)}
+.expx-tabla tr[data-sol]:focus-visible{outline:2px solid #7fb0f0;outline-offset:-2px}
+.expx-tabla tr.sol-det{display:none}
+.expx-tabla tr.sol-open + tr.sol-det{display:table-row}
+.expx-tabla tbody tr.sol-det td,.expx-tabla tbody tr.sol-det:hover td{padding:0;background:rgba(0,0,0,.3)}
+.sol-det-box{width:0;min-width:100%;box-sizing:border-box;padding:12px 18px 14px 30px;border-left:3px solid rgba(255,255,255,.18)}
+.sol-det-lab{display:block;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(232,234,240,.55)}
+.sol-det-txt{margin:6px 0 0;font-size:12px;line-height:1.6;color:#e8eaf0;white-space:pre-wrap;overflow-wrap:anywhere}
+.sol-det-vacio{color:rgba(232,234,240,.55);font-style:italic}
 </style>
 </head>
 <body class="apx-rh-page">
@@ -511,7 +524,7 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
   </div>
   <div class="card apx-card card-top card-top-informe">
     <div class="apx-card-head">
-      <div><h2 class="card-title">Reporte gráfico de cada expediente</h2><p class="card-caption">Ranking expandible con permisos y vacaciones.</p></div>
+      <div><h2 class="card-title">Reporte gráfico del expediente por empleado</h2><p class="card-caption">Expediente de las Acciones de personal de cada empleado, con su detalle incluido</p></div>
       <span class="apx-insight">Todos</span>
     </div>
     <div id="chartSolicitantes"></div>
@@ -1282,6 +1295,24 @@ function renderKpis(filtered) {
     });
   }
 }
+var SOL_ATTR = ' data-sol="1" tabindex="0" aria-expanded="false"';
+function msgSolicitudHtml(r, cols) {
+  var t = String(r.justificacion || '').trim();
+  return '<tr class="sol-det"><td colspan="' + cols + '"><div class="sol-det-box"><span class="sol-det-lab">Mensaje de la solicitud</span>' +
+    '<p class="sol-det-txt' + (t ? '' : ' sol-det-vacio') + '">' + (t ? escapeHtml(t) : 'Esta solicitud no incluye mensaje.') + '</p></div></td></tr>';
+}
+function alternarMensajeSolicitud(tr) {
+  var abierta = tr.classList.toggle('sol-open');
+  tr.setAttribute('aria-expanded', abierta ? 'true' : 'false');
+}
+document.addEventListener('click', function(ev) {
+  var tr = ev.target.closest && ev.target.closest('tr[data-sol]');
+  if (tr) alternarMensajeSolicitud(tr);
+});
+document.addEventListener('keydown', function(ev) {
+  var tr = ev.target;
+  if ((ev.key === 'Enter' || ev.key === ' ') && tr.matches && tr.matches('tr[data-sol]')) { ev.preventDefault(); alternarMensajeSolicitud(tr); }
+});
 var KPI_ROWS = [], KPIX_FOCO = null;
 var KPI_DEF = {
   'total': { cejilla: 'Total de solicitudes', titulo: 'Todas las solicitudes', estados: null },
@@ -1295,6 +1326,7 @@ var KPI_DEF = {
 function abrirDetalleKpi(clave) {
   var def = KPI_DEF[clave];
   if (!def) return;
+  var colAprob = /^[ps]-/.test(clave) ? (clave.charAt(0) === 'p' ? 'Primer aprobador' : 'Segundo aprobador') : null;
   var rows = (def.rows || KPI_ROWS).filter(function(r) { return !def.estados || def.estados.indexOf(r.estado) >= 0; });
   function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
   rows.sort(function(a, b) { return String(nom(a)).localeCompare(String(nom(b)), 'es') || String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')); });
@@ -1315,11 +1347,12 @@ function abrirDetalleKpi(clave) {
   var filas = rows.map(function(r) {
     var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
-    return '<tr class="mesx-fila" style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>';
+    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      (colAprob ? '<td>' + escapeHtml(clave.charAt(0) === 'p' ? (r.jefeInmediato || '—') : shortUser(r.aprobador)) + '</td>' : '') +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
   }).join('');
   document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
-    (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en esta categoría.</div>') + '</div>';
+    (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th>' + (colAprob ? '<th>' + colAprob + '</th>' : '') + '<th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en esta categoría.</div>') + '</div>';
   var bg = document.getElementById('kpixBg');
   bg.classList.add('open');
   bg.setAttribute('aria-hidden', 'false');
@@ -1830,10 +1863,10 @@ function abrirExpedienteSolicitante(ev, idx) {
     var just = r.justificacion ? (r.justificacion.length > 80 ? r.justificacion.slice(0, 78) + '…' : r.justificacion) : '—';
     var estadoColor = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
     var rowBg = estadoColor + '1a'; // 10% opacity
-    return '<tr style="background:' + rowBg + '"><td class="expx-mono">' + escapeHtml(r.id) + '</td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+    return '<tr' + SOL_ATTR + ' style="background:' + rowBg + '"><td class="expx-mono">' + escapeHtml(r.id) + '</td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
       '<td><span class="expx-pill"><i class="expx-dot" style="background:' + estadoColor + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td>' +
       '<td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
-      '<td class="expx-just" title="' + escapeHtml(r.justificacion || '') + '">' + escapeHtml(just) + '</td></tr>';
+      '<td class="expx-just" title="' + escapeHtml(r.justificacion || '') + '">' + escapeHtml(just) + '</td></tr>' + msgSolicitudHtml(r, 6);
   }).join('');
   var tablaHtml = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más reciente a la más antigua</small></h4>' +
     (rows.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>ID</th><th>Tipo</th><th>Duración</th><th>Estado</th><th>Fecha</th><th>Justificación</th></tr></thead><tbody>' + filas + '</tbody></table></div>'
@@ -1963,8 +1996,8 @@ function abrirRegistrosMes(ym) {
   var filas = rows.map(function(r) {
     var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
-    return '<tr class="mesx-fila" style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>';
+    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, 5);
   }).join('');
   document.getElementById('mesxCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
     (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en este mes.</div>') + '</div>';
