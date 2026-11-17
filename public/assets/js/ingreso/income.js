@@ -2587,12 +2587,51 @@ function ultimaGeneracionData() {
   return masReciente([regional.GUATEMALA, regional.EL_SALVADOR, base]);
 }
 
+// Devuelve la fecha calendario del mismo generatedAt que utiliza la pastilla
+// "Actualizado", expresada en la zona horaria oficial del dashboard.
+// No depende de la fecha del último movimiento bancario.
+function fechaISOEnZonaDashboard(fecha) {
+  if (!(fecha instanceof Date) || Number.isNaN(fecha.getTime())) return '';
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONA_HORARIA_DASHBOARD,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(fecha);
+  const valores = Object.fromEntries(partes.map(parte => [parte.type, parte.value]));
+  return `${valores.year}-${valores.month}-${valores.day}`;
+}
+
+function fechaMaximaCalendario() {
+  const generatedAt = ultimaGeneracionData();
+  return generatedAt ? fechaISOEnZonaDashboard(generatedAt) : MAX_DATE;
+}
+
+function actualizarLimitesCalendario() {
+  if (!dateFrom || !dateTo) return;
+
+  const maxCalendario = fechaMaximaCalendario() || MAX_DATE;
+  dateFrom.min = MIN_DATE;
+  dateTo.min = dateFrom.value || MIN_DATE;
+  dateTo.max = maxCalendario;
+  dateFrom.max = dateTo.value || maxCalendario;
+
+  if (dateTo.value && maxCalendario && dateTo.value > maxCalendario) {
+    dateTo.value = maxCalendario;
+  }
+  if (dateFrom.value && dateTo.value && dateFrom.value > dateTo.value) {
+    dateFrom.value = dateTo.value;
+  }
+  dateFrom.max = dateTo.value || maxCalendario;
+}
+
 function renderDataSyncPill() {
   const pill = document.getElementById('dataSyncPill');
   const texto = document.getElementById('dataSyncText');
   if (!pill || !texto) return;
 
   const cuando = ultimaGeneracionData();
+  actualizarLimitesCalendario();
 
   // Sin marca del robot no se promete nada: la pastilla se oculta en vez de
   // decir "recién actualizado" con la hora del navegador.
@@ -2630,11 +2669,12 @@ const periodFilter = document.getElementById('periodFilter');
 
 if (dateFrom && dateTo) {
   dateFrom.min = MIN_DATE;
-  dateFrom.max = MAX_DATE;
   dateTo.min = MIN_DATE;
-  dateTo.max = MAX_DATE;
+  dateTo.max = fechaMaximaCalendario() || MAX_DATE;
+  dateFrom.max = dateTo.max;
   dateFrom.value = MIN_DATE;
-  dateTo.value = MAX_DATE;
+  dateTo.value = dateTo.max;
+  actualizarLimitesCalendario();
 }
 
 function syncPeriodFilterVisibility(target) {
@@ -2645,8 +2685,7 @@ function syncPeriodFilterVisibility(target) {
 
 function syncDateLimits() {
   if (!dateFrom || !dateTo) return;
-  dateFrom.max = dateTo.value || MAX_DATE;
-  dateTo.min = dateFrom.value || MIN_DATE;
+  actualizarLimitesCalendario();
 }
 
 function applyCurrentDateFilter(showAlert = true) {
@@ -2696,7 +2735,7 @@ document.getElementById('applyDateFilter')?.addEventListener('click', () => appl
 document.getElementById('resetDateFilter')?.addEventListener('click', () => {
   if (!dateFrom || !dateTo) return;
   dateFrom.value = MIN_DATE;
-  dateTo.value = MAX_DATE;
+  dateTo.value = fechaMaximaCalendario() || MAX_DATE;
   syncDateLimits();
   applyCurrentDateFilter(false);
 });
@@ -2721,13 +2760,14 @@ function initializeIncomeDashboard() {
     window.DASHBOARD_RAW_TRANSACTIONS = RAW_TRANSACTIONS;
     rebuildTransactionIndex();
 
-    if (dateFrom && dateTo && MIN_DATE && MAX_DATE) {
+    if (dateFrom && dateTo && MIN_DATE) {
       dateFrom.min = MIN_DATE;
-      dateFrom.max = MAX_DATE;
       dateTo.min = MIN_DATE;
-      dateTo.max = MAX_DATE;
+      dateTo.max = fechaMaximaCalendario() || MAX_DATE;
+      dateFrom.max = dateTo.max;
       dateFrom.value = MIN_DATE;
-      dateTo.value = MAX_DATE;
+      dateTo.value = dateTo.max;
+      actualizarLimitesCalendario();
     }
 
     DATA = buildFiltered(dateFrom?.value || MIN_DATE, dateTo?.value || MAX_DATE);
@@ -3445,13 +3485,16 @@ function aplicarDatosDashboard(data) {
   window.DASHBOARD_RAW_TRANSACTIONS = RAW_TRANSACTIONS;
   rebuildTransactionIndex();
 
-  if (dateFrom && dateTo && MIN_DATE && MAX_DATE && !USER_CHANGED_PERIOD) {
+  if (dateFrom && dateTo && MIN_DATE && !USER_CHANGED_PERIOD) {
     dateFrom.min = MIN_DATE;
-    dateFrom.max = MAX_DATE;
     dateTo.min = MIN_DATE;
-    dateTo.max = MAX_DATE;
+    dateTo.max = fechaMaximaCalendario() || MAX_DATE;
+    dateFrom.max = dateTo.max;
     dateFrom.value = MIN_DATE;
-    dateTo.value = MAX_DATE;
+    dateTo.value = dateTo.max;
+    actualizarLimitesCalendario();
+  } else {
+    actualizarLimitesCalendario();
   }
 
   // Reprocesar con buildFiltered para que KPIs, cuentas, resumen diario y
