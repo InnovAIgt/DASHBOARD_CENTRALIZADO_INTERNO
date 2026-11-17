@@ -171,177 +171,87 @@
         </button>
       </div>
 
-      <!-- KPI SLA GLOBAL Y ETAPAS POR PAÍS (GT / SV / LADO A LADO EN TODOS) -->
+      <!-- KPI SLA GLOBAL (GT + SV) Y ETAPAS POR PAÍS -->
       <section class="sla-countries-stage" id="countrySlaDashboardsContainer" aria-label="KPI SLA Global y por etapa"></section>
 
-      <!-- 3 CUADRITOS DE CONTROL DE RADIOS (TOTAL, EN PROCESO, ENTREGADOS) -->
-      <section class="radios-kpi-row" style="margin-bottom: 16px;">
-        <div id="radiosRowEyebrow" style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #c59600;"></span>
-          <span>CONTROL Y ENTREGA DE RADIOS (ACTIVAS EN CURSO + PERÍODO)</span>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-          <!-- 1: Total Radios -->
-          <div class="country-sla-card is-clickable" onclick="navigateToEtapasFilter({ estado: 'todos' })" title="Clic para ver todas las radicaciones en la tabla" style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; transition: all 0.2s;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-              <div>
-                <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em;">Total de Radios</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;" id="kpiTotalRadiosSub">Todas las radicaciones mostradas</div>
-              </div>
-              <div style="font-size: 28px; font-weight: 900; color: #fff; font-family: var(--font-mono); line-height: 1;" id="kpiTotalRadios">—</div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
-              <span id="kpiTotalRadiosFoot">Suma total de equipos</span>
-              <span style="color: #7fb0f0; font-weight: 700;">Ver tabla ↗</span>
-            </div>
-          </div>
-
-          <!-- 2: Radios en Proceso -->
-          <div class="country-sla-card is-clickable" onclick="navigateToEtapasFilter({ estado: 'en_proceso' })" title="Clic para ver radicaciones en proceso" style="background: rgba(26, 29, 39, 0.85); border: 1px solid rgba(79,143,216,0.3); border-radius: 16px; padding: 16px 20px; transition: all 0.2s;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-              <div>
-                <div style="font-size: 11px; font-weight: 800; color: #4f8fd8; text-transform: uppercase; letter-spacing: 0.05em;">Radios en Proceso</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Radicaciones en proceso activo</div>
-              </div>
-              <div style="font-size: 28px; font-weight: 900; color: #4f8fd8; font-family: var(--font-mono); line-height: 1;" id="kpiRadiosEnProceso">—</div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
-              <span>En configuración y entrega</span>
-              <span style="color: #4f8fd8; font-weight: 700;">Ver en proceso ↗</span>
-            </div>
-          </div>
-
-          <!-- 3: Radios Entregados -->
-          <div class="country-sla-card is-clickable" onclick="navigateToEtapasFilter({ estado: 'finalizada' })" title="Clic para ver radicaciones finalizadas" style="background: rgba(26, 29, 39, 0.85); border: 1px solid rgba(47,143,118,0.3); border-radius: 16px; padding: 16px 20px; transition: all 0.2s;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-              <div>
-                <div style="font-size: 11px; font-weight: 800; color: #3f9c85; text-transform: uppercase; letter-spacing: 0.05em;">Radios Entregados</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Radicaciones finalizadas con éxito</div>
-              </div>
-              <div style="font-size: 28px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono); line-height: 1;" id="kpiRadiosEntregados">—</div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px;">
-              <span>Equipos entregados al cliente</span>
-              <span style="color: #2f8f76; font-weight: 700;">Ver finalizadas ↗</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- INVENTARIO DE ANEXOS TEMPORALES Y EQUIPOS (E / S) -->
-      <section class="anexos-kpi-row" aria-label="Inventario de anexos temporales y equipos">
-        <div id="anexosRowEyebrow" style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
-            <span>ANEXOS TEMPORALES, EQUIPOS (E / S) Y CONDICIÓN DE INVENTARIO</span>
-          </div>
-          <span id="anexosRowScopeNote" style="font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: none; letter-spacing: 0;">—</span>
-        </div>
-        <div class="anexos-kpi-grid">
-          <div class="anexos-kpi-card tone-blue is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver desglose completo de anexos y equipos en Categorías">
-            <div class="anexos-kpi-head">
-              <div>
-                <div class="anexos-kpi-label">Anexos Temporales</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="kpiAnexosOffersSub">—</div>
-              </div>
-              <div class="anexos-kpi-val" style="color: #7fb0f0;" id="kpiTotalAnexos">—</div>
-            </div>
-            <div class="anexos-kpi-foot">
-              <span id="kpiAnexosValFoot">—</span>
-              <span style="color: #7fb0f0; font-weight: 700;">Desglose ↗</span>
-            </div>
-          </div>
-
-          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver distribución de Equipos (E) y SIM cards (S)">
-            <div class="anexos-kpi-head">
-              <div>
-                <div class="anexos-kpi-label">Equipos (E) · SIMs (S)</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Desglose en anexos</div>
-              </div>
-              <div class="anexos-kpi-val" style="font-size: 21px;" id="kpiEquiposVsSims">—</div>
-            </div>
-            <div class="anexos-kpi-foot">
-              <span id="kpiTotalDevicesFoot">—</span>
-              <span style="color: #cbd5e1; font-weight: 700;">Ver E / S ↗</span>
-            </div>
-          </div>
-
-          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="Cód. 1: Ver ofertas con inventario Nuevo">
-            <div class="anexos-kpi-head">
-              <div>
-                <div class="anexos-kpi-label" style="color: #3fb898;">Nuevo (Cód. 1)</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="kpiInvNuevoSub">Equipos (E) nuevos</div>
-              </div>
-              <div class="anexos-kpi-val" style="color: #3fb898;" id="kpiInvNuevoCount">—</div>
-            </div>
-            <div class="anexos-kpi-foot">
-              <span id="kpiInvNuevoFoot">—</span>
-              <span style="color: #3fb898; font-weight: 700;">Filtrar ↗</span>
-            </div>
-          </div>
-
-          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="Cód. 2: Ver ofertas con inventario Usado">
-            <div class="anexos-kpi-head">
-              <div>
-                <div class="anexos-kpi-label" style="color: #e2b422;">Usado (Cód. 2)</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="kpiInvUsadoSub">Equipos (E) usados</div>
-              </div>
-              <div class="anexos-kpi-val" style="color: #e2b422;" id="kpiInvUsadoCount">—</div>
-            </div>
-            <div class="anexos-kpi-foot">
-              <span id="kpiInvUsadoFoot">—</span>
-              <span style="color: #e2b422; font-weight: 700;">Filtrar ↗</span>
-            </div>
-          </div>
-
-          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="Cód. 3: Ver ofertas con inventario Refurbished">
-            <div class="anexos-kpi-head">
-              <div>
-                <div class="anexos-kpi-label" style="color: #a78bfa;">Refurbished (Cód. 3)</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="kpiInvRefurbSub">Equipos (E) refurbished</div>
-              </div>
-              <div class="anexos-kpi-val" style="color: #a78bfa;" id="kpiInvRefurbCount">—</div>
-            </div>
-            <div class="anexos-kpi-foot">
-              <span id="kpiInvRefurbFoot">—</span>
-              <span style="color: #a78bfa; font-weight: 700;">Filtrar ↗</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- EXACT 4 KPI ROW (CLICKABLE -> GO TO ETAPAS TABLE) -->
-      <section class="kpi-row-exact">
+      <!-- 4 CUADRITOS UNIFICADOS: RADICACIONES + RADIOS -->
+      <section class="kpi-row-exact" aria-label="Resumen de radicaciones y radios">
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'todos', sla: 'todos' })" title="Clic para ver todas las radicaciones en la tabla">
-          <div>
+          <div class="kpi-main-block">
             <div class="kpi-label">Total de radicaciones</div>
             <div class="kpi-number" id="kpiTotalExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiTotalFootnote">Cargando datos en vivo de API...</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios totales</span>
+            <span class="kpi-paired-val" id="kpiTotalRadios">—</span>
+          </div>
         </div>
 
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'en_proceso', sla: 'todos' })" title="Clic para ver las radicaciones en proceso">
-          <div>
-            <div class="kpi-label">En proceso</div>
+          <div class="kpi-main-block">
+            <div class="kpi-label" style="color: #7fb0f0;">En proceso</div>
             <div class="kpi-number" style="color: #4f8fd8;" id="kpiActiveExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiActiveFootnote">Requieren seguimiento · Clic para ver ↗</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios en proceso</span>
+            <span class="kpi-paired-val" style="color: #7fb0f0;" id="kpiRadiosEnProceso">—</span>
+          </div>
         </div>
 
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'finalizada', sla: 'todos' })" title="Clic para ver las radicaciones finalizadas">
-          <div>
-            <div class="kpi-label">Finalizadas</div>
+          <div class="kpi-main-block">
+            <div class="kpi-label" style="color: #3fb898;">Finalizadas</div>
             <div class="kpi-number" style="color: #2f8f76;" id="kpiDoneExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiDoneFootnote">Procesos completados · Clic para ver ↗</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios entregados</span>
+            <span class="kpi-paired-val" style="color: #3fb898;" id="kpiRadiosEntregados">—</span>
+          </div>
         </div>
 
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'cancelada', sla: 'todos' })" title="Clic para ver las radicaciones canceladas">
-          <div>
-            <div class="kpi-label">Canceladas</div>
+          <div class="kpi-main-block">
+            <div class="kpi-label" style="color: #d95f6e;">Canceladas</div>
             <div class="kpi-number" style="color: #c43c50;" id="kpiCancelledExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiCancelledFootnote">Procesos cancelados · Clic para ver ↗</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios cancelados</span>
+            <span class="kpi-paired-val" style="color: #d95f6e;" id="kpiRadiosCancelados">—</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- EQUIPOS Y SIM CARDS -->
+      <section class="anexos-kpi-row" aria-label="Equipos y SIM Cards">
+        <div id="anexosRowEyebrow" style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
+          <span>EQUIPOS Y SIM CARDS</span>
+        </div>
+        <div class="anexos-kpi-grid">
+          <div class="anexos-kpi-card tone-blue is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de Equipos en Categorías">
+            <div class="anexos-kpi-label" style="color: #7fb0f0;">Equipos</div>
+            <div class="anexos-kpi-val" style="color: #7fb0f0;" id="kpiTotalEquipos">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de SIM Cards en Categorías">
+            <div class="anexos-kpi-label">SIM Cards</div>
+            <div class="anexos-kpi-val" id="kpiTotalSims">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="Ver inventario Nuevo en Categorías">
+            <div class="anexos-kpi-label" style="color: #3fb898;">Nuevo</div>
+            <div class="anexos-kpi-val" style="color: #3fb898;" id="kpiInvNuevoCount">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="Ver inventario Usado en Categorías">
+            <div class="anexos-kpi-label" style="color: #e2b422;">Usado</div>
+            <div class="anexos-kpi-val" style="color: #e2b422;" id="kpiInvUsadoCount">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="Ver inventario Refurbished en Categorías">
+            <div class="anexos-kpi-label" style="color: #a78bfa;">Refurbished</div>
+            <div class="anexos-kpi-val" style="color: #a78bfa;" id="kpiInvRefurbCount">—</div>
+          </div>
         </div>
       </section>
 
@@ -572,17 +482,14 @@
               <button type="button" class="pill-btn" data-invcond="NUEVO">Nuevo</button>
               <button type="button" class="pill-btn" data-invcond="USADO">Usado</button>
               <button type="button" class="pill-btn" data-invcond="REFURBISHED">Refurbished</button>
-              <button type="button" class="pill-btn" data-invcond="MIXTO">Mixto</button>
-              <button type="button" class="pill-btn" data-invcond="SIN ESTADO">Sin estado</button>
-              <button type="button" class="pill-btn" data-invcond="SIN ANEXOS">Sin anexos</button>
             </div>
           </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;" id="inventoryTypeCardsGrid">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;" id="inventoryTypeCardsGrid">
             <!-- Rendered by JS -->
           </div>
         </div>
 
-        <!-- DESGLOSE DE EQUIPOS (E), SIMS (S), TECNOLOGÍAS, PROVEEDORES Y PLANES -->
+        <!-- DESGLOSE DE EQUIPOS (E) Y SIMS (S) POR MODELO -->
         <div class="inv-breakdown-split">
           <div class="inv-panel-box">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
@@ -592,28 +499,19 @@
               </div>
               <span id="equipModelsSummaryBadge" style="font-size: 11px; font-family: var(--font-mono); color: #9ba3b4;">—</span>
             </div>
-            <div class="table-scroll-container" style="max-height: 290px;">
+            <div class="table-scroll-container" style="max-height: 310px;">
               <table class="custom-table" id="equipModelsTable">
                 <thead>
                   <tr>
-                    <th style="width: 58px; text-align: center;">Tipo</th>
+                    <th style="width: 64px; text-align: center;">Tipo</th>
                     <th>Equipo / Modelo</th>
-                    <th style="text-align: center;">Unidades</th>
-                    <th style="text-align: center;">N · U · R</th>
-                    <th style="text-align: center;">Ofertas</th>
+                    <th style="width: 130px; text-align: center;">Unidades</th>
+                    <th style="width: 130px; text-align: center;">Ofertas</th>
                   </tr>
                 </thead>
                 <tbody id="equipModelsTbody"></tbody>
               </table>
             </div>
-          </div>
-
-          <div class="inv-panel-box">
-            <div>
-              <div class="hero-eyebrow" style="color: #c59600; margin-bottom: 2px;">DETALLE TÉCNICO Y VALIDACIÓN</div>
-              <div class="panel-title">Tecnologías, Proveedores, Planes y Licencias</div>
-            </div>
-            <div class="inv-facet-grid" id="equipFacetsGrid"></div>
           </div>
         </div>
 
@@ -2259,8 +2157,17 @@
   }
 
   const COUNTRY_META = {
+    GLOBAL: {
+      code: "GLOBAL",
+      tagText: "GT + SV · GLOBAL",
+      name: "Resumen Global (GT + SV)",
+      upper: "GLOBAL (GT + SV)",
+      cls: "is-global",
+      flagSvg: `<svg class="sla-country-flag" viewBox="0 0 24 18" aria-hidden="true"><rect width="12" height="18" fill="#4997D0"/><rect x="12" width="12" height="18" fill="#003893"/><circle cx="12" cy="9" r="3.4" fill="#C43C50" stroke="#FFFFFF" stroke-width="1"/></svg>`
+    },
     GT: {
       code: "GT",
+      tagText: "GT · OPERACIÓN",
       name: "Guatemala",
       upper: "GUATEMALA",
       cls: "is-gt",
@@ -2268,6 +2175,7 @@
     },
     SV: {
       code: "SV",
+      tagText: "SV · OPERACIÓN",
       name: "El Salvador",
       upper: "EL SALVADOR",
       cls: "is-sv",
@@ -2279,7 +2187,7 @@
     return allData.filter(item => {
       if (!item || item.iniciada === false || item.estado !== "en_proceso") return false;
       const itemPais = String(item.pais || "GT").trim().toUpperCase();
-      if (itemPais !== countryCode) return false;
+      if (countryCode !== "GLOBAL" && itemPais !== countryCode) return false;
       if (!currentFilter.estados.includes("en_proceso") && !currentFilter.openSlaFocus) return false;
       const itemNegocio = String(item.negocio || "").trim().toUpperCase();
       if (currentFilter.negocios.length < NEGOCIO_OPTIONS.length && !currentFilter.negocios.includes(itemNegocio)) return false;
@@ -2316,6 +2224,7 @@
     const meta = COUNTRY_META[countryCode];
     const openItems = getCountryOpenSlaItems(countryCode);
     const totalEnCurso = openItems.length;
+    const navPais = countryCode === "GLOBAL" ? "todos" : countryCode;
 
     let enTiempo = 0;
     let porVencer = 0;
@@ -2387,11 +2296,11 @@
           <div class="sla-country-id">
             ${meta.flagSvg}
             <div>
-              <div class="sla-country-name">Activaciones · ${meta.name}</div>
+              <div class="sla-country-name">${countryCode === "GLOBAL" ? meta.name : `Activaciones · ${meta.name}`}</div>
               <div class="sla-country-scope-note">${scopeLabel}</div>
             </div>
           </div>
-          <span class="sla-country-code-tag">${meta.code} · OPERACIÓN</span>
+          <span class="sla-country-code-tag">${meta.tagText}</span>
         </header>
 
         <!-- 1. KPI SLA GLOBAL -->
@@ -2418,31 +2327,31 @@
 
         <!-- 2. LOS 5 CUADRITOS EN EL ORDEN EXACTO -->
         <div class="sla-status-grid-5">
-          <button type="button" class="sla-status-tile tone-neutral" onclick="navigateToEtapasFilter({ pais: '${countryCode}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_all' })" title="Ver todos los procesos en curso de ${meta.name}">
+          <button type="button" class="sla-status-tile tone-neutral" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_all' })" title="Ver todos los procesos en curso de ${meta.name}">
             <span class="sla-tile-label">Procesos en curso</span>
             <span class="sla-tile-val">${totalEnCurso}</span>
             <span class="sla-tile-action">Ver todos &nearr;</span>
           </button>
 
-          <button type="button" class="sla-status-tile tone-green" onclick="navigateToEtapasFilter({ pais: '${countryCode}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_en_tiempo' })" title="Ver procesos en tiempo (&le; 83.2h) de ${meta.name}">
+          <button type="button" class="sla-status-tile tone-green" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_en_tiempo' })" title="Ver procesos en tiempo (&le; 83.2h) de ${meta.name}">
             <span class="sla-tile-label">En tiempo</span>
             <span class="sla-tile-val">${enTiempo}</span>
             <span class="sla-tile-action">Ver procesos &nearr;</span>
           </button>
 
-          <button type="button" class="sla-status-tile tone-yellow" onclick="navigateToEtapasFilter({ pais: '${countryCode}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_por_vencer' })" title="Ver procesos por vencer (último 20% SLA global) de ${meta.name}">
+          <button type="button" class="sla-status-tile tone-yellow" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_por_vencer' })" title="Ver procesos por vencer (último 20% SLA global) de ${meta.name}">
             <span class="sla-tile-label">Por vencer</span>
             <span class="sla-tile-val">${porVencer}</span>
             <span class="sla-tile-action">Ver procesos &nearr;</span>
           </button>
 
-          <button type="button" class="sla-status-tile tone-red" onclick="navigateToEtapasFilter({ pais: '${countryCode}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_vencido_global' })" title="Ver procesos con SLA global vencido (&gt; 104h) de ${meta.name}">
+          <button type="button" class="sla-status-tile tone-red" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_vencido_global' })" title="Ver procesos con SLA global vencido (&gt; 104h) de ${meta.name}">
             <span class="sla-tile-label">SLA vencido</span>
             <span class="sla-tile-val">${vencidoGlobal}</span>
             <span class="sla-tile-action">Ver procesos &nearr;</span>
           </button>
 
-          <button type="button" class="sla-status-tile tone-purple" onclick="navigateToEtapasFilter({ pais: '${countryCode}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_vencidas_etapa' })" title="Ver procesos con al menos una etapa vencida en ${meta.name}">
+          <button type="button" class="sla-status-tile tone-purple" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_vencidas_etapa' })" title="Ver procesos con al menos una etapa vencida en ${meta.name}">
             <span class="sla-tile-label">Vencidas en etapa</span>
             <span class="sla-tile-val">${vencidasEtapa}</span>
             <span class="sla-tile-action">Ver etapas &nearr;</span>
@@ -2467,22 +2376,22 @@
     const container = document.getElementById("countrySlaDashboardsContainer");
     if (!container) return;
 
+    container.className = "sla-countries-stage";
     if (currentFilter.pais === "GT") {
-      container.className = "sla-countries-stage";
       container.innerHTML = renderCountrySlaPanelHtml("GT", true);
     } else if (currentFilter.pais === "SV") {
-      container.className = "sla-countries-stage";
       container.innerHTML = renderCountrySlaPanelHtml("SV", true);
     } else {
-      container.className = "sla-countries-stage is-split";
-      container.innerHTML = renderCountrySlaPanelHtml("GT", false) + renderCountrySlaPanelHtml("SV", false);
+      container.innerHTML =
+        renderCountrySlaPanelHtml("GLOBAL", true) +
+        `<div class="sla-countries-split-pair">${renderCountrySlaPanelHtml("GT", false)}${renderCountrySlaPanelHtml("SV", false)}</div>`;
     }
   }
 
   function renderResumenKPIs() {
       renderCountrySlaBlocks();
 
-      // 3 KPIs de Radios (Total, En proceso, Entregados) sobre el mismo conjunto filteredData
+      // KPIs unificados de Radicaciones + Radios sobre el mismo conjunto filteredData
       const totalRadios = filteredData.reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
       const radiosEnProceso = filteredData.reduce((sum, i) => sum + getRadiosEnProcesoCount(i), 0);
       const radiosEntregados = filteredData.reduce((sum, i) => sum + getRadiosEntregadosCount(i), 0);
@@ -2490,12 +2399,8 @@
         .filter(i => i.estado === "cancelada")
         .reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
 
-      // 4 KPIs Principales de Radicaciones (cuadran exactamente con los bloques por país de arriba)
       const total = filteredData.length;
-      const enProcesoItems = filteredData.filter(i => i.estado === "en_proceso");
-      const enProceso = enProcesoItems.length;
-      const enProcesoGT = enProcesoItems.filter(i => i.pais === "GT").length;
-      const enProcesoSV = enProcesoItems.filter(i => i.pais === "SV").length;
+      const enProceso = filteredData.filter(i => i.estado === "en_proceso").length;
       const finalizadas = filteredData.filter(i => i.estado === "finalizada").length;
       const canceladas = filteredData.filter(i => i.estado === "cancelada").length;
 
@@ -2504,89 +2409,34 @@
         if (el) el.innerText = val;
       };
 
-      const customDate = hasCustomDateFilter();
-      const countryScopeLabel = getActiveCountryLabel();
-      const eyebrowSpan = document.querySelector("#radiosRowEyebrow span:last-child");
-      if (eyebrowSpan) {
-        eyebrowSpan.innerText = `CONTROL Y ENTREGA DE RADIOS · ${countryScopeLabel.toUpperCase()} (${customDate ? "PERÍODO SELECCIONADO" : "DEL MES ACTUAL"})`;
-      }
-
-      setElText(
-        "kpiTotalRadiosSub",
-        currentFilter.pais === "todos" ? "Todas las radicaciones (GT + SV)" : `Radicaciones de ${countryScopeLabel}`
-      );
+      setElText("kpiTotalExact", total.toLocaleString("es-GT"));
       setElText("kpiTotalRadios", totalRadios.toLocaleString("es-GT"));
+      setElText("kpiActiveExact", enProceso.toLocaleString("es-GT"));
       setElText("kpiRadiosEnProceso", radiosEnProceso.toLocaleString("es-GT"));
+      setElText("kpiDoneExact", finalizadas.toLocaleString("es-GT"));
       setElText("kpiRadiosEntregados", radiosEntregados.toLocaleString("es-GT"));
-      setElText(
-        "kpiTotalRadiosFoot",
-        radiosCancelados > 0
-          ? `${radiosEnProceso} en proceso + ${radiosEntregados} entregados + ${radiosCancelados} canc.`
-          : `${radiosEnProceso} en proceso + ${radiosEntregados} entregados`
-      );
+      setElText("kpiCancelledExact", canceladas.toLocaleString("es-GT"));
+      setElText("kpiRadiosCancelados", radiosCancelados.toLocaleString("es-GT"));
 
-      setElText("kpiTotalExact", total);
-      setElText("kpiTotalFootnote", `${enProceso} en curso + ${finalizadas} fin. + ${canceladas} canc. · ${countryScopeLabel} ↗`);
-      setElText("kpiActiveExact", enProceso);
-      setElText(
-        "kpiActiveFootnote",
-        currentFilter.pais === "todos"
-          ? `${enProcesoGT} GT + ${enProcesoSV} SV en curso · Clic ↗`
-          : `${enProceso} en curso (${currentFilter.pais}) · Clic ↗`
-      );
-      setElText("kpiDoneExact", finalizadas);
-      setElText("kpiDoneFootnote", `Procesos completados (${currentFilter.pais === "todos" ? "GT + SV" : currentFilter.pais}) · Clic ↗`);
-      setElText("kpiCancelledExact", canceladas);
-      setElText("kpiCancelledFootnote", `Procesos cancelados (${currentFilter.pais === "todos" ? "GT + SV" : currentFilter.pais}) · Clic ↗`);
-
-      // KPIs de Anexos Temporales, Equipos (E / S) y Condición de Inventario (Nuevo/Usado/Refurbished)
-      let totalAnexos = 0;
-      let anexosValidados = 0;
-      let ofertasConAnexos = 0;
+      // KPIs de Equipos, SIM Cards y Condición de Inventario (Nuevo / Usado / Refurbished)
       let totalE = 0;
       let totalS = 0;
-      let eNuevo = 0, eUsado = 0, eRefurb = 0, eSinEst = 0;
-      let allNuevo = 0, allUsado = 0, allRefurb = 0;
-      let ofNuevo = 0, ofUsado = 0, ofRefurb = 0;
+      let eNuevo = 0, eUsado = 0, eRefurb = 0;
 
       filteredData.forEach(item => {
         const inv = getItemInventoryData(item);
-        totalAnexos += inv.annexCount;
-        anexosValidados += inv.annexValidated;
-        if (inv.annexCount > 0) ofertasConAnexos++;
         totalE += inv.equiposE;
         totalS += inv.simsS;
         eNuevo += inv.eCond.nuevo;
         eUsado += inv.eCond.usado;
         eRefurb += inv.eCond.refurbished;
-        eSinEst += inv.eCond.sin_estado;
-        allNuevo += inv.allCond.nuevo;
-        allUsado += inv.allCond.usado;
-        allRefurb += inv.allCond.refurbished;
-        if (inv.condition === "NUEVO") ofNuevo++;
-        else if (inv.condition === "USADO") ofUsado++;
-        else if (inv.condition === "REFURBISHED") ofRefurb++;
       });
 
-      const anexosPend = totalAnexos - anexosValidados;
-      setElText("kpiTotalAnexos", totalAnexos.toLocaleString("es-GT"));
-      setElText("kpiAnexosOffersSub", `${ofertasConAnexos} de ${total} ofertas con anexos`);
-      setElText("kpiAnexosValFoot", `${anexosValidados} validados · ${anexosPend} pend.`);
-      setElText("kpiEquiposVsSims", `${totalE} E · ${totalS} S`);
-      setElText("kpiTotalDevicesFoot", `${(totalE + totalS).toLocaleString("es-GT")} ítems en anexos`);
+      setElText("kpiTotalEquipos", totalE.toLocaleString("es-GT"));
+      setElText("kpiTotalSims", totalS.toLocaleString("es-GT"));
       setElText("kpiInvNuevoCount", eNuevo.toLocaleString("es-GT"));
-      setElText("kpiInvNuevoSub", `${ofNuevo} ofertas clasif. Nuevo`);
-      setElText("kpiInvNuevoFoot", `${allNuevo} E+S c/ cód. 1`);
       setElText("kpiInvUsadoCount", eUsado.toLocaleString("es-GT"));
-      setElText("kpiInvUsadoSub", `${ofUsado} ofertas clasif. Usado`);
-      setElText("kpiInvUsadoFoot", `${allUsado} E+S c/ cód. 2`);
       setElText("kpiInvRefurbCount", eRefurb.toLocaleString("es-GT"));
-      setElText("kpiInvRefurbSub", `${ofRefurb} ofertas clasif. Refurbished`);
-      setElText("kpiInvRefurbFoot", `${allRefurb} E+S c/ cód. 3`);
-      setElText(
-        "anexosRowScopeNote",
-        eSinEst > 0 ? `Equipos (E) sin estado clasificado: ${eSinEst}` : `${countryScopeLabel} · En proceso y finalizadas`
-      );
 
       // SLAs para Donut Chart (mismos colores semánticos que las tarjetas de arriba)
       let enTiempo = 0;
@@ -3127,7 +2977,6 @@
       const grid = document.getElementById("categoryCardsGrid");
       const invGrid = document.getElementById("inventoryTypeCardsGrid");
       const equipTbody = document.getElementById("equipModelsTbody");
-      const facetsGrid = document.getElementById("equipFacetsGrid");
       const tbody = document.getElementById("topClientsTbody");
       const detailTbody = document.getElementById("inventoryDetailTbody");
       if (!grid) return;
@@ -3213,28 +3062,36 @@
 
       grid.innerHTML = cardsHtml;
 
-      // Render Distribución por Condición de Inventario (Nuevo / Usado / Refurbished / Mixto / Sin estado / Sin anexos)
-      const condOrder = ["NUEVO", "USADO", "REFURBISHED", "MIXTO", "SIN ESTADO", "SIN ANEXOS"];
+      // Render Distribución por Condición de Inventario (solo Nuevo, Usado, Refurbished)
+      const condOrder = [
+        { condition: "NUEVO", key: "nuevo" },
+        { condition: "USADO", key: "usado" },
+        { condition: "REFURBISHED", key: "refurbished" }
+      ];
       if (invGrid) {
         const invMap = {};
-        condOrder.forEach(c => {
-          invMap[c] = { condition: c, radicaciones: 0, anexos: 0, validados: 0, eCount: 0, sCount: 0, radios: 0 };
+        condOrder.forEach(({ condition }) => {
+          invMap[condition] = { condition, radicaciones: 0, anexos: 0, validados: 0, eCount: 0, sCount: 0, radios: 0 };
         });
 
         filteredData.forEach(item => {
           const inv = getItemInventoryData(item);
-          const bucket = invMap[inv.condition] || invMap["SIN ANEXOS"];
-          bucket.radicaciones += 1;
-          bucket.anexos += inv.annexCount;
-          bucket.validados += inv.annexValidated;
-          bucket.eCount += inv.equiposE;
-          bucket.sCount += inv.simsS;
-          bucket.radios += getTotalRadiosCount(item);
+          condOrder.forEach(({ condition, key }) => {
+            const eQty = inv.eCond[key] || 0;
+            const sQty = inv.sCond[key] || 0;
+            if (eQty > 0 || (inv.equiposE === 0 && sQty > 0)) {
+              const bucket = invMap[condition];
+              bucket.radicaciones += 1;
+              bucket.anexos += inv.annexCount;
+              bucket.validados += inv.annexValidated;
+              bucket.eCount += eQty;
+              bucket.sCount += sQty;
+              bucket.radios += getTotalRadiosCount(item);
+            }
+          });
         });
 
-        const activeBuckets = condOrder
-          .map(k => invMap[k])
-          .filter(b => b.radicaciones > 0 || ["NUEVO", "USADO", "REFURBISHED"].includes(b.condition));
+        const activeBuckets = condOrder.map(c => invMap[c.condition]);
 
         if (filteredData.length === 0) {
           invGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Sin inventario registrado en el período seleccionado.</div>`;
@@ -3267,12 +3124,8 @@
         }
       }
 
-      // Render Tabla de Modelos (Equipos E y SIMs S) + Facetas Técnicas (Tecnologías, Proveedores, Planes, Licencias)
+      // Render Tabla de Modelos (Equipos E y SIMs S)
       const modelStats = new Map();
-      const tecMap = new Map();
-      const provMap = new Map();
-      const planMap = new Map();
-      const licMap = new Map();
       let totalVal = 0, totalPend = 0, sumE = 0, sumS = 0;
 
       filteredData.forEach(item => {
@@ -3288,25 +3141,16 @@
             const label = eq.eqpnm || (eq.tipo === "S" ? "SIM SIN NOMBRE" : "EQUIPO SIN NOMBRE");
             const key = `${eq.tipo}|${label}`;
             if (!modelStats.has(key)) {
-              modelStats.set(key, { tipo: eq.tipo, name: label, count: 0, nuevo: 0, usado: 0, refurbished: 0, sinEstado: 0, offers: 0 });
+              modelStats.set(key, { tipo: eq.tipo, name: label, count: 0, offers: 0 });
             }
             const entry = modelStats.get(key);
             entry.count += 1;
-            if (eq.condKey === "nuevo") entry.nuevo += 1;
-            else if (eq.condKey === "usado") entry.usado += 1;
-            else if (eq.condKey === "refurbished") entry.refurbished += 1;
-            else entry.sinEstado += 1;
             if (!seenModelInOffer.has(key)) {
               seenModelInOffer.add(key);
               entry.offers += 1;
             }
           });
         });
-
-        inv.tecnologias.forEach(t => tecMap.set(t, (tecMap.get(t) || 0) + 1));
-        inv.proveedores.forEach(p => provMap.set(p, (provMap.get(p) || 0) + 1));
-        inv.planesSim.forEach(pl => planMap.set(pl, (planMap.get(pl) || 0) + 1));
-        inv.licencias.forEach(l => licMap.set(l, (licMap.get(l) || 0) + 1));
       });
 
       const equipBadge = document.getElementById("equipModelsSummaryBadge");
@@ -3315,35 +3159,17 @@
       if (equipTbody) {
         const rowsList = Array.from(modelStats.values()).sort((a, b) => b.count - a.count);
         if (rowsList.length === 0) {
-          equipTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:22px; color:var(--text-muted);">Sin equipos ni SIMs en anexos temporales para el período seleccionado.</td></tr>`;
+          equipTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:22px; color:var(--text-muted);">Sin equipos ni SIMs en anexos temporales para el período seleccionado.</td></tr>`;
         } else {
           equipTbody.innerHTML = rowsList.map(m => `
             <tr>
               <td style="text-align: center;"><span class="tipo-eq-pill ${m.tipo === 'S' ? 'is-s' : 'is-e'}">${m.tipo}</span></td>
               <td><strong style="color: #fff; font-size: 11.5px;">${escapeHtml(m.name)}</strong></td>
               <td style="text-align: center; font-family: var(--font-mono); font-weight: 800; color: #fff;">${m.count}</td>
-              <td style="text-align: center; font-family: var(--font-mono); font-size: 11px;">
-                <span style="color:#3fb898;">${m.nuevo}</span> · <span style="color:#e2b422;">${m.usado}</span> · <span style="color:#a78bfa;">${m.refurbished}</span>${m.sinEstado > 0 ? ` <span style="color:#8b909e;">(${m.sinEstado} s/e)</span>` : ""}
-              </td>
               <td style="text-align: center; font-family: var(--font-mono); color: #9ba3b4;">${m.offers}</td>
             </tr>
           `).join("");
         }
-      }
-
-      if (facetsGrid) {
-        const renderFacetBlock = (title, map, emptyMsg) => {
-          const entries = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6);
-          const body = entries.length > 0
-            ? entries.map(([k, v]) => `<div class="inv-facet-row"><span class="inv-facet-name" title="${escapeHtml(k)}">${escapeHtml(k)}</span><span class="inv-facet-count">${v}</span></div>`).join("")
-            : `<div style="font-size:11px; color:var(--text-muted);">${emptyMsg}</div>`;
-          return `<div class="inv-facet-block"><div class="inv-facet-title">${title}</div>${body}</div>`;
-        };
-        facetsGrid.innerHTML =
-          renderFacetBlock("Tecnología (detalle)", tecMap, "Sin dato de tecnología") +
-          renderFacetBlock("Proveedor (detalle)", provMap, "Sin dato de proveedor") +
-          renderFacetBlock("Planes SIM (detalle)", planMap, "Sin planes SIM") +
-          renderFacetBlock("Licencias (detalle)", licMap, "Sin licencias");
       }
 
       // Top 10 Clientes usando filteredData (con Condición de Inventario y E / S)
@@ -3423,7 +3249,14 @@
       if (detailTbody) {
         const detailList = currentFilter.invCondFilter === "ALL"
           ? filteredData
-          : filteredData.filter(item => getItemInventoryData(item).condition === currentFilter.invCondFilter);
+          : filteredData.filter(item => {
+              const inv = getItemInventoryData(item);
+              const k = String(currentFilter.invCondFilter || "").toLowerCase();
+              if (k === "nuevo" || k === "usado" || k === "refurbished") {
+                return (inv.eCond[k] || 0) > 0 || (inv.equiposE === 0 && (inv.sCond[k] || 0) > 0);
+              }
+              return inv.condition === currentFilter.invCondFilter;
+            });
 
         const detailCountBadge = document.getElementById("inventoryDetailCountBadge");
         if (detailCountBadge) {
@@ -3542,11 +3375,12 @@
       const slaText = document.getElementById("stageModalSlaText");
 
       const slaLimit = STAGE_SLAS[stageNum];
-      if (badge) badge.innerText = stageModalCountryScope ? `FASE ${stageNum} · ${stageModalCountryScope}` : `FASE ${stageNum}`;
+      const scopeText = stageModalCountryScope === "GLOBAL" ? "GLOBAL · GT + SV" : stageModalCountryScope;
+      if (badge) badge.innerText = scopeText ? `FASE ${stageNum} · ${scopeText}` : `FASE ${stageNum}`;
       if (title) title.innerText = `${stageNum}. ${STAGE_NAMES[stageNum - 1]}`;
       if (slaText) {
-        slaText.innerText = stageModalCountryScope
-          ? `SLA Límite Oficial: ${slaLimit}h laborables · Procesos en curso (${stageModalCountryScope})`
+        slaText.innerText = scopeText
+          ? `SLA Límite Oficial: ${slaLimit}h laborables · Procesos en curso (${scopeText})`
           : `SLA Límite Oficial: ${slaLimit}h laborables`;
       }
 

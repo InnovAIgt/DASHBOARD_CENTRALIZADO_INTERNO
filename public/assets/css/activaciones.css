@@ -1369,44 +1369,75 @@ display: inline-block;
       .refresh-circle-btn { align-self: flex-end; }
 }
 
-/* EXACT 4 KPI ROW (ONLY IN RESUMEN) */ .kpi-row-exact {
+/* EXACT 4 KPI ROW (UNIFIED RADICACIONES + RADIOS IN RESUMEN) */ .kpi-row-exact {
 display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 14px;
-      margin-top: 18px;
+      margin-bottom: 16px;
 }
 
 .kpi-card-exact {
 background: var(--panel-bg);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 18px 20px;
+      padding: 16px 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      gap: 12px;
       backdrop-filter: blur(10px);
 }
 
+.kpi-card-exact .kpi-main-block {
+display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+}
+
 .kpi-card-exact .kpi-label {
-font-size: 12px;
-      font-weight: 600;
-      color: #8b909e;
-      margin-bottom: 6px;
+font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ba3b4;
+      margin-bottom: 0;
 }
 
 .kpi-card-exact .kpi-number {
-font-family: var(--mono);
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
+font-family: var(--font-mono);
+      font-size: 30px;
+      font-weight: 900;
+      color: #ffffff;
       line-height: 1;
-      margin-bottom: 6px;
+      margin-bottom: 0;
+      font-variant-numeric: tabular-nums;
 }
 
-.kpi-card-exact .kpi-footnote {
+.kpi-card-exact .kpi-paired-radios {
+display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kpi-card-exact .kpi-paired-label {
 font-size: 11px;
+      font-weight: 700;
       color: #8b909e;
-      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+}
+
+.kpi-card-exact .kpi-paired-val {
+font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      color: #e8eaf0;
+      font-variant-numeric: tabular-nums;
 }
 
 .kpi-card-exact.is-clickable {
@@ -1549,13 +1580,14 @@ background: #c43c50 !important;
    RESUMEN SLA POR PAÍS (ESTRUCTURA ORDENADAGT / SV ADAPTADA AL DASHBOARD)
    ========================================================================== */
 .sla-countries-stage {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   margin-bottom: 18px;
 }
 
-.sla-countries-stage.is-split {
+.sla-countries-split-pair {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 20px;
@@ -1572,6 +1604,11 @@ background: #c43c50 !important;
   position: relative;
   overflow: hidden;
   min-width: 0;
+}
+
+.sla-country-panel.is-global {
+  border-color: rgba(196, 60, 80, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 3px 0 #c43c50;
 }
 
 .sla-country-panel.is-gt {
@@ -1593,6 +1630,11 @@ background: #c43c50 !important;
   padding: 10px 14px;
   border-radius: 11px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sla-country-panel.is-global .sla-country-head {
+  background: linear-gradient(90deg, rgba(196, 60, 80, 0.18), rgba(79, 143, 216, 0.1));
+  border-color: rgba(196, 60, 80, 0.35);
 }
 
 .sla-country-panel.is-gt .sla-country-head {
@@ -1636,6 +1678,12 @@ background: #c43c50 !important;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.sla-country-panel.is-global .sla-country-code-tag {
+  background: rgba(196, 60, 80, 0.22);
+  color: #f48c9a;
+  border: 1px solid rgba(196, 60, 80, 0.48);
 }
 
 .sla-country-panel.is-gt .sla-country-code-tag {
@@ -1920,7 +1968,7 @@ background: #c43c50 !important;
 }
 
 @media (max-width: 1360px) {
-  .sla-countries-stage.is-split {
+  .sla-countries-split-pair {
     grid-template-columns: 1fr;
   }
 }
@@ -2017,11 +2065,11 @@ background: #c43c50 !important;
   border: 1px solid var(--border-color);
   border-top-width: 3px;
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 15px 18px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
@@ -2041,15 +2089,8 @@ background: #c43c50 !important;
 .anexos-kpi-card.tone-yellow { border-top-color: #c59600; border-color: rgba(197, 150, 0, 0.34); }
 .anexos-kpi-card.tone-purple { border-top-color: #8b5cf6; border-color: rgba(139, 92, 246, 0.34); }
 
-.anexos-kpi-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .anexos-kpi-label {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2057,27 +2098,17 @@ background: #c43c50 !important;
 }
 
 .anexos-kpi-val {
-  font-family: var(--mono);
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1.05;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
   color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-
-.anexos-kpi-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  font-size: 10.5px;
-  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .inv-breakdown-split {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 20px;
 }
