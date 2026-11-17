@@ -1218,4 +1218,5 @@ html body .bodega-api-updated-row.oc-api-updated-row {
 /* ── Plantilla (dashboard.css + estandar.css): .kpi-grid / .kpi y .card ── */
 .oc-module .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .oc-grid > .card { margin-bottom: 0; }
+.oc-grid > .oc-provider-chart { grid-column: 1 / -1; }
 .oc-report-head { margin-bottom: 16px; }

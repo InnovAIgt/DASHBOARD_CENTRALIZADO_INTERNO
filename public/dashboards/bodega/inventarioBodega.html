@@ -341,6 +341,7 @@
       let inventoryLoadedCountry = null;
       // Informe detallado: filas del API sin combinar (una por país) para ver el dato tal cual llega.
       let inventoryReportRows = [];
+      let inventoryReportSources = null;
       let inventoryReportPage = 1;
       let inventoryLoading = false;
       let inventoryLoadError = '';
@@ -600,7 +601,7 @@
         return includeCountry ? item.pais + ' · ' + label : label;
       }
       const warehouseKey = item => item.pais + " · " + warehouseCode(item);
-      function renderWarehouseDashboard() {
+      function renderWarehouseDashboard(summaryOnly = false) {
         const hasInventory = inventoryLoadedCountry === document.getElementById('inventoryCountry').value;
         const total = inventoryRecords.reduce((sum, item) => sum + item.existencia, 0);
         const sumCondition = value => inventoryRecords.filter(item => {
@@ -628,6 +629,7 @@
         setText('warehouseWorkshop', sumCondition('GESTION TALLER'));
         setText('warehouseRuined', sumCondition('ARRUINADO'));
         setText('warehouseBelowMinimum', underMinimum.length);
+        if (summaryOnly === true) return;
         const warehouseList = document.getElementById('warehouseWarehouseList');
         if (warehouseList) warehouseList.innerHTML = warehouses.length ? warehouses.map(item => {
           const percentage = total ? (item.total / total) * 100 : 0;
@@ -743,6 +745,12 @@
       // Código: coincidencia exacta; si no existe exacta, muestra los códigos que empiezan con lo escrito.
       // General: todas las palabras deben aparecer en algún campo (sin distinguir acentos ni mayúsculas).
       function inventoryReportMatches() {
+        if (inventoryReportSources) {
+          inventoryReportRows = inventoryReportSources.flatMap(({ country, payload }) =>
+            payload.map(item => normalizeReportRow(item, country)))
+            .sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }) || a.pais.localeCompare(b.pais));
+          inventoryReportSources = null;
+        }
         const codeInput = document.getElementById('inventoryReportCode').value.trim();
         const code = codeInput.toLowerCase();
         const terms = foldText(document.getElementById('inventoryReportSearch').value).split(/\s+/).filter(Boolean);
@@ -758,11 +766,12 @@
       }
       function inventoryReportEmpty(title, message) { return `<tr><td colspan="10" class="inventory-report-empty"><strong>${escapeValue(title)}</strong><span>${escapeValue(message)}</span></td></tr>`; }
       function renderInventoryReport() {
+        if (document.getElementById('inventoryReport').hidden) return;
         const { rows, code, codeInput, terms, exact } = inventoryReportMatches();
         const totalPages = Math.ceil(rows.length / INVENTORY_PAGE_SIZE);
         inventoryReportPage = Math.min(Math.max(inventoryReportPage, 1), Math.max(totalPages, 1));
         const status = document.getElementById('inventoryReportStatus');
-        status.textContent = inventoryLoading ? 'Consultando inventario en la API...' : inventoryLoadError;
+        status.textContent = inventoryLoading ? 'Actualizando desde SAP…' : inventoryLoadError;
         status.classList.toggle('is-error', !inventoryLoading && Boolean(inventoryLoadError));
         document.getElementById('inventoryReportCount').textContent = inventoryLoading ? 'Cargando registros...' : `${formatValue(rows.length)} de ${formatValue(inventoryReportRows.length)} registros`;
         document.getElementById('inventoryReportScope').textContent = `Operación: ${inventoryScopeLabel}${code ? (exact ? ' · Código exacto' : ' · Códigos que empiezan con lo escrito') : ''}`;
@@ -771,7 +780,7 @@
         document.getElementById('inventoryReportNext').disabled = inventoryLoading || inventoryReportPage >= totalPages;
         document.getElementById('inventoryReportExport').disabled = inventoryLoading || rows.length === 0;
         const body = document.getElementById('inventoryReportRows');
-        if (inventoryLoading) {
+        if (inventoryLoading && !inventoryLoadedCountry) {
           body.innerHTML = Array.from({ length: 6 }, () => `<tr class="inventory-report-loading">${'<td><span class="inventory-report-skeleton"></span></td>'.repeat(10)}</tr>`).join('');
           return;
         }
@@ -835,6 +844,46 @@
         if (showReport) { renderInventoryReport(); document.getElementById('inventoryReportCode').focus({ preventScroll: true }); }
         document.querySelector('.inventory-page').scrollIntoView({ block: 'start' });
       }
+      let inventoryDatabase;
+      function openInventoryDatabase() {
+        if (!inventoryDatabase) {
+          inventoryDatabase = new Promise(resolve => {
+            if (!window.indexedDB) return resolve(null);
+            const request = window.indexedDB.open('intelfon-inventory', 1);
+            request.onupgradeneeded = () => request.result.createObjectStore('countries');
+            request.onsuccess = () => {
+              const db = request.result;
+              db.onversionchange = () => { db.close(); inventoryDatabase = null; };
+              resolve(db);
+            };
+            request.onerror = request.onblocked = () => resolve(null);
+          }).catch(() => null);
+        }
+        return inventoryDatabase;
+      }
+      async function readInventorySnapshot(country) {
+        const db = await openInventoryDatabase();
+        if (!db) return null;
+        return new Promise(resolve => {
+          const request = db.transaction('countries').objectStore('countries').get(country);
+          request.onsuccess = () => {
+            const result = request.result;
+            resolve(Array.isArray(result?.payload) && Number.isFinite(result.fetchedAt) ? result : null);
+          };
+          request.onerror = () => resolve(null);
+        }).catch(() => null);
+      }
+      async function saveInventorySnapshot(country, snapshot) {
+        const db = await openInventoryDatabase();
+        if (!db) return;
+        try {
+          const store = db.transaction('countries', 'readwrite').objectStore('countries');
+          const previous = store.get(country);
+          previous.onsuccess = () => {
+            if (!previous.result || previous.result.fetchedAt <= snapshot.fetchedAt) store.put(snapshot, country);
+          };
+        } catch { /* El inventario sigue disponible en memoria. */ }
+      }
       async function fetchInventoryCountry(countryCode, signal, forceRefresh) {
         const cached = inventoryPayloadCache.get(countryCode);
         if (!forceRefresh && cached && Date.now() - cached.fetchedAt < INVENTORY_CACHE_TTL) {
@@ -847,7 +896,12 @@
         }
         const payload = await response.json();
         if (!Array.isArray(payload)) throw new TypeError('La respuesta de inventario debe ser un arreglo');
-        return { payload, fetchedAt: Date.now() };
+        const result = { payload, fetchedAt: Date.now() };
+        if (!signal.aborted) {
+          inventoryPayloadCache.set(countryCode, result);
+          void saveInventorySnapshot(countryCode, result);
+        }
+        return result;
       }
       async function loadInventory({ forceRefresh = false } = {}) {
         const refreshButton = document.getElementById('inventoryRefresh');
@@ -865,7 +919,7 @@
         const completedCountries = new Set();
         const showProgress = () => {
           const waiting = countries.filter(code => !completedCountries.has(code));
-          loadStatus.textContent = waiting.length ? 'Consultando inventario en SAP (' + waiting.join(' y ') + '). La consulta puede tardar alrededor de un minuto.' : 'Organizando los datos de inventario…';
+          loadStatus.textContent = waiting.length ? (inventoryLoadedCountry === country ? 'Mostrando los últimos datos disponibles. Actualizando desde SAP (' : 'Consultando inventario en SAP (') + waiting.join(' y ') + ')…' : 'Organizando los datos de inventario…';
         };
         showProgress();
         if (inventoryLoadedCountry !== country) {
@@ -873,6 +927,7 @@
           inventoryLoadedCountry = null;
           inventoryRecords = [];
           inventoryReportRows = [];
+          inventoryReportSources = null;
           inventoryDuplicateCount = 0;
           inventoryScopeLabel = countryLabel;
         }
@@ -881,17 +936,40 @@
         errorBox.hidden = true;
         inventoryLoading = true;
         inventoryLoadError = '';
+        async function displayInventory(results) {
+          const sources = results.map(({ payload }, index) => ({ payload, country: countries[index] }));
+          const normalized = sources.map(source => normalizeRecords(source.payload, source.country));
+          const rawCombined = normalized.flat();
+          inventoryDuplicateCount = rawCombined.length - new Set(rawCombined.map(item => item.codigo)).size;
+          inventoryRecords = combineInventoryRecords(normalized);
+          inventoryReportRows = [];
+          inventoryReportSources = sources;
+          inventoryLoadedCountry = country;
+          inventoryScopeLabel = countryLabel;
+          renderWarehouseDashboard(true);
+          setInventoryUpdatedAt(Math.min(...results.map(result => result.fetchedAt)));
+          await new Promise(resolve => setTimeout(resolve, 32));
+          if (requestId !== inventoryLoadSequence) return;
+          if (inventoryFilters.grupoInventario) {
+            const present = new Set(inventoryRecords.map(item => item.grupoInventario));
+            const kept = inventoryFilters.grupoInventario.filter(group => present.has(group));
+            inventoryFilters.grupoInventario = kept.length ? kept : null;
+          }
+          renderInventoryFilters();
+          renderInventory();
+        }
         let timedOut = false;
         let timeout = null;
         try {
           if (!INVENTORY_API_URL) throw new Error('Endpoint pendiente de configurar');
           renderInventoryReport();
+          if (inventoryLoadedCountry !== country) renderInventory();
           timeout = setTimeout(() => {
             timedOut = true;
             controller.abort();
           }, INVENTORY_TIMEOUT_MS);
           try {
-            const countryResults = await Promise.all(countries.map(countryCode =>
+            const freshResults = Promise.all(countries.map(countryCode =>
               fetchInventoryCountry(countryCode, controller.signal, forceRefresh).then(result => {
                 if (requestId === inventoryLoadSequence) {
                   completedCountries.add(countryCode);
@@ -901,31 +979,28 @@
               }).catch(error => {
                 throw new Error(`${countryCode}: ${error.message || 'error desconocido'}`);
               })
-            )).catch(error => {
-              controller.abort();
-              throw error;
-            });
+            )).then(results => ({ results }), error => ({ error }));
+            if (inventoryLoadedCountry !== country) {
+              const cached = await Promise.race([
+                Promise.all(countries.map(code => inventoryPayloadCache.get(code) || readInventorySnapshot(code))),
+                new Promise(resolve => setTimeout(() => resolve(null), 750))
+              ]);
+              if (requestId !== inventoryLoadSequence) return;
+              if (cached?.every(Boolean)) {
+                await displayInventory(cached);
+                if (requestId !== inventoryLoadSequence) return;
+                showProgress();
+              }
+            }
+            const { results, error } = await freshResults;
             if (requestId !== inventoryLoadSequence) return;
-            countryResults.forEach((result, index) => {
-              inventoryPayloadCache.set(countries[index], result);
-            });
-            const successfulPayloads = countryResults.map(result => result.payload);
-            inventoryScopeLabel = countryLabel;
-            const normalizedSets = successfulPayloads.map((payload, index) => normalizeRecords(payload, countries[index]));
-            const rawCombined = normalizedSets.flat();
-            inventoryDuplicateCount = rawCombined.length - new Set(rawCombined.map(item => item.codigo)).size;
-            inventoryRecords = combineInventoryRecords(normalizedSets);
-            inventoryReportRows = successfulPayloads.flatMap((payload, index) => payload.map(item => normalizeReportRow(item, countries[index])))
-              .sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }) || a.pais.localeCompare(b.pais));
-            inventoryLoadedCountry = country;
-            if (inventoryFilters.grupoInventario) { const present = new Set(inventoryRecords.map(item => item.grupoInventario)); const kept = inventoryFilters.grupoInventario.filter(group => present.has(group)); inventoryFilters.grupoInventario = kept.length ? kept : null; }
+            if (error) { controller.abort(); throw error; }
+            await displayInventory(results);
+            if (requestId !== inventoryLoadSequence) return;
           } finally {
             if (timeout) clearTimeout(timeout);
           }
-          renderInventoryFilters();
-          renderInventory();
           loadWarehousePendingOrders(countries);
-          setInventoryUpdatedAt(Math.min(...countries.map(countryCode => inventoryPayloadCache.get(countryCode).fetchedAt)));
           loadStatus.textContent = "";
           ensureChartJs().then(() => {
             if (requestId === inventoryLoadSequence) renderInventory();
