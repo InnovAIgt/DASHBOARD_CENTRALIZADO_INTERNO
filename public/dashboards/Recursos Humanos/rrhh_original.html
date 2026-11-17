@@ -333,6 +333,27 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
 .expx-tabla tr.dsc-tipo-row td{background:color-mix(in srgb,var(--rc) 22%,transparent)}
 .expx-tabla tr.dsc-tipo-row td:first-child{box-shadow:inset 4px 0 0 var(--rc)}
 .expx-tabla tbody tr.dsc-tipo-row:hover td{background:color-mix(in srgb,var(--rc) 34%,transparent)}
+.kpi-click{cursor:pointer;transition:background .15s,box-shadow .15s}
+.kpi-click:hover,.kpi-click:focus-visible{background:rgba(255,255,255,.07);outline:0;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
+
+/* ==== Ajuste estético: barras de los rankings de aprobadores (más delgadas y más largas) ==== */
+#chartJefe .apx-rank-row,#chartAprobador .apx-rank-row{display:grid !important;grid-template-columns:26px minmax(0,1fr) auto !important;grid-template-areas:"no name val" "no nums val" "no track val" !important;column-gap:10px !important;row-gap:3px !important;align-items:center !important}
+#chartJefe .apx-rank-no,#chartAprobador .apx-rank-no{grid-area:no !important;align-self:center !important}
+#chartJefe .apx-rank-name,#chartAprobador .apx-rank-name{grid-area:name !important;min-width:0 !important;overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important}
+#chartJefe .apx-rank-track,#chartAprobador .apx-rank-track{grid-area:track !important;width:100% !important;height:8px !important;min-height:8px !important;border-radius:999px !important;overflow:hidden !important}
+#chartJefe .apx-rank-fill,#chartAprobador .apx-rank-fill{height:100% !important;border-radius:0 !important}
+#chartJefe .apx-rank-value,#chartAprobador .apx-rank-value{grid-area:val !important;align-self:center !important;text-align:right !important}
+#chartJefe .apx-rank-nums,#chartAprobador .apx-rank-nums{grid-area:nums;display:flex;min-width:0;height:11px;font:700 10px/11px 'Segoe UI',system-ui,sans-serif;white-space:nowrap}
+#chartJefe .apx-rank-nums>span,#chartAprobador .apx-rank-nums>span{flex:0 0 auto;text-align:center;box-sizing:border-box}
+/* ==== Por estado: tooltip en las barras ==== */
+#chartEstado .apx-rank-track{cursor:help}
+#chartEstado .apx-rank-track:hover .apx-rank-fill{filter:brightness(1.2)}
+#chartEstado .apx-estado-row[data-graf],#chartEstado .apx-estado-row[data-graf] .apx-rank-track,#chartJefe .apx-rank-row[data-graf],#chartAprobador .apx-rank-row[data-graf]{cursor:pointer}
+/* ==== Reporte gráfico de cada expediente: detalle numérico sobre las barras ==== */
+#chartSolicitantes .apx-solic-item{padding-top:13px}
+#chartSolicitantes .sx-trackwrap{position:relative;flex:1 1 auto;min-width:0;width:100%}
+#chartSolicitantes .sx-trackwrap>.apx-bartrack{width:100%}
+#chartSolicitantes .sx-nums{position:absolute;left:0;bottom:calc(100% + 2px);display:flex;gap:9px;white-space:nowrap;pointer-events:none;font:700 10px/1 'Segoe UI',system-ui,sans-serif}
 </style>
 </head>
 <body class="apx-rh-page">
@@ -513,6 +534,21 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
       <button type="button" class="expx-cerrar" id="mesxCerrar" aria-label="Cerrar">×</button>
     </div>
     <div class="expx-cuerpo" id="mesxCuerpo"></div>
+  </div>
+</div>
+
+<div class="expx-bg" id="kpixBg" aria-hidden="true">
+  <div class="expx" role="dialog" aria-modal="true" aria-labelledby="kpixTitulo">
+    <div class="expx-cab">
+      <span class="expx-avatar" id="kpixAvatar" aria-hidden="true"></span>
+      <div class="expx-cab-txt">
+        <span class="expx-cejilla" id="kpixCejilla">Detalle de solicitudes</span>
+        <h3 id="kpixTitulo"></h3>
+        <p class="expx-sub" id="kpixSub"></p>
+      </div>
+      <button type="button" class="expx-cerrar" id="kpixCerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div class="expx-cuerpo" id="kpixCuerpo"></div>
   </div>
 </div>
 
@@ -1212,6 +1248,119 @@ function renderKpis(filtered) {
           '</div>';
 
   document.getElementById('kpiRow').innerHTML = html;
+  KPI_ROWS = filtered;
+  var kpiMapa = [['.card-primer', ['p-aprobadas', 'p-pendientes', 'p-rechazadas']], ['.card-segundo', ['s-aprobadas', 's-pendientes', 's-rechazadas']]];
+  kpiMapa.forEach(function(m) {
+    var items = document.querySelectorAll('#kpiRow ' + m[0] + ' .kpi-div-item');
+    m[1].forEach(function(k, i) {
+      if (!items[i]) return;
+      items[i].classList.add('kpi-click');
+      items[i].setAttribute('data-kpi', k);
+      items[i].setAttribute('role', 'button');
+      items[i].setAttribute('tabindex', '0');
+    });
+  });
+  var cardTotal = document.querySelector('#kpiRow .card-total');
+  if (cardTotal) {
+    cardTotal.classList.add('kpi-click');
+    cardTotal.setAttribute('data-kpi', 'total');
+    cardTotal.setAttribute('role', 'button');
+    cardTotal.setAttribute('tabindex', '0');
+  }
+  var kpiRowEl = document.getElementById('kpiRow');
+  if (!kpiRowEl.dataset.kpixBound) {
+    kpiRowEl.dataset.kpixBound = '1';
+    kpiRowEl.addEventListener('click', function(ev) {
+      var t = ev.target.closest('[data-kpi]');
+      if (t) { KPIX_FOCO = t; abrirDetalleKpi(t.getAttribute('data-kpi')); }
+    });
+    kpiRowEl.addEventListener('keydown', function(ev) {
+      var t = ev.target;
+      if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-kpi')) {
+        ev.preventDefault(); KPIX_FOCO = t; abrirDetalleKpi(t.getAttribute('data-kpi'));
+      }
+    });
+  }
+}
+var KPI_ROWS = [], KPIX_FOCO = null;
+var KPI_DEF = {
+  'total': { cejilla: 'Total de solicitudes', titulo: 'Todas las solicitudes', estados: null },
+  'p-aprobadas': { cejilla: 'Primer aprobador', titulo: 'Solicitudes aprobadas', estados: ['Aprobacion RRHH', 'Pendiente Segundo', 'Rechazo RRHH'] },
+  'p-pendientes': { cejilla: 'Primer aprobador', titulo: 'Solicitudes pendientes', estados: ['Ingresada', 'Aval Jefe'] },
+  'p-rechazadas': { cejilla: 'Primer aprobador', titulo: 'Solicitudes rechazadas', estados: ['Rechazo Jefe'] },
+  's-aprobadas': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes aprobadas', estados: ['Aprobacion RRHH'] },
+  's-pendientes': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes pendientes', estados: ['Pendiente Segundo'] },
+  's-rechazadas': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes rechazadas', estados: ['Rechazo RRHH'] }
+};
+function abrirDetalleKpi(clave) {
+  var def = KPI_DEF[clave];
+  if (!def) return;
+  var rows = (def.rows || KPI_ROWS).filter(function(r) { return !def.estados || def.estados.indexOf(r.estado) >= 0; });
+  function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
+  rows.sort(function(a, b) { return String(nom(a)).localeCompare(String(nom(b)), 'es') || String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')); });
+  var empleados = {};
+  rows.forEach(function(r) { empleados[shortUser(r.solicitante)] = 1; });
+  var nEmp = Object.keys(empleados).length;
+  document.getElementById('kpixAvatar').textContent = def.cejilla.charAt(0);
+  document.getElementById('kpixCejilla').textContent = def.cejilla;
+  document.getElementById('kpixTitulo').textContent = def.titulo;
+  document.getElementById('kpixSub').textContent = rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · ' + nEmp + (nEmp === 1 ? ' empleado' : ' empleados');
+  var vistos = {}, leyenda = '';
+  rows.forEach(function(r) {
+    var lab = etiquetaEstadoAPS(r);
+    if (vistos[lab]) return;
+    vistos[lab] = 1;
+    leyenda += '<span><i class="expx-dot" style="background:' + (ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color) + '"></i>' + escapeHtml(lab) + '</span>';
+  });
+  var filas = rows.map(function(r) {
+    var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
+    var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
+    return '<tr class="mesx-fila" style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>';
+  }).join('');
+  document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+    (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en esta categoría.</div>') + '</div>';
+  var bg = document.getElementById('kpixBg');
+  bg.classList.add('open');
+  bg.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  bg.querySelector('.expx').scrollTop = 0;
+  document.getElementById('kpixCerrar').focus();
+}
+function kpixCerrar() {
+  var bg = document.getElementById('kpixBg');
+  if (!bg.classList.contains('open')) return;
+  bg.classList.remove('open');
+  bg.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (KPIX_FOCO && KPIX_FOCO.isConnected && KPIX_FOCO.focus) KPIX_FOCO.focus();
+}
+document.getElementById('kpixCerrar').addEventListener('click', kpixCerrar);
+document.getElementById('kpixBg').addEventListener('click', function(e) { if (e.target === this) kpixCerrar(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') kpixCerrar(); });
+var GRAF_ESTADO = [], GRAF_RANK = {};
+function abrirDetalleGrafica(def, foco) { KPI_DEF['grafica'] = def; KPIX_FOCO = foco; abrirDetalleKpi('grafica'); }
+function abrirDetalleBarra(t) {
+  var p = t.getAttribute('data-graf').split(':');
+  if (p[0] === 'estado') {
+    var e = GRAF_ESTADO[Number(p[1])];
+    if (e) abrirDetalleGrafica({ cejilla: 'Por estado', titulo: e.name, estados: e.estados }, t);
+    return;
+  }
+  var d = (GRAF_RANK[p[0]] || [])[Number(p[1])];
+  if (!d) return;
+  var jefe = p[0] === 'chartJefe';
+  var nombre = jefe ? d.name : (d.name === '—' ? 'Sin asignar' : (nombreCompletoEmpleado(d.name) || d.name));
+  abrirDetalleGrafica({ cejilla: jefe ? 'Primer aprobador' : 'Segundo aprobador', titulo: nombre, estados: null, rows: d.items }, t);
+}
+function bindGraficaClicks(el) {
+  if (el.dataset.grBound) return;
+  el.dataset.grBound = '1';
+  el.addEventListener('click', function(ev) { var t = ev.target.closest('[data-graf]'); if (t) abrirDetalleBarra(t); });
+  el.addEventListener('keydown', function(ev) {
+    var t = ev.target;
+    if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-graf')) { ev.preventDefault(); abrirDetalleBarra(t); }
+  });
 }
 var DESC_AREAS = [];
 var DESC_TIPOS = [];
@@ -1397,12 +1546,12 @@ function renderDonut(filtered) {
   var sumIngAval = (counts['Ingresada'] || 0) + (counts['Aval Jefe'] || 0);
   var data = [];
   if (sumIngAval > 0) {
-    data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#2f8f76' });
+    data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#2f8f76', estados: ['Ingresada', 'Aval Jefe'] });
   }
   var otherStatuses = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
   otherStatuses.forEach(function(s) {
     if (counts[s]) {
-      data.push({ name: statusMeta(s).label, value: counts[s], color: ESTADO_COLOR_GRAFICA[s] || statusMeta(s).color });
+      data.push({ name: statusMeta(s).label, value: counts[s], color: ESTADO_COLOR_GRAFICA[s] || statusMeta(s).color, estados: [s] });
     }
   });
   var total = filtered.length;
@@ -1411,17 +1560,25 @@ function renderDonut(filtered) {
   var max = Math.max.apply(null, data.map(function(d){ return d.value; }).concat([1]));
   var rows = data.map(function(d, i) {
     var pct = total ? (d.value / total * 100).toFixed(1) : '0.0';
-    return '<div class="apx-estado-row" title="' + escapeHtml(d.name) + ': ' + d.value + '">' +
+    return '<div class="apx-estado-row" data-graf="estado:' + i + '" role="button" tabindex="0" title="' + escapeHtml(d.name) + ': ' + d.value + '">' +
       '<span class="apx-estado-name"><span class="apx-dot" style="background:' + d.color + '"></span>' + escapeHtml(d.name) + ' · ' + pct + '%</span>' +
-      '<div class="apx-rank-track"><div class="apx-rank-fill gx-bar-h" style="width:' + (d.value / max * 100).toFixed(1) + '%;background:linear-gradient(90deg,' + d.color + ',' + d.color + '8c);--gx-i:' + i + '"></div></div>' +
+      '<div class="apx-rank-track" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)"><div class="apx-rank-fill gx-bar-h" style="width:' + (d.value / max * 100).toFixed(1) + '%;background:linear-gradient(90deg,' + d.color + ',' + d.color + '8c);--gx-i:' + i + '" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)"></div></div>' +
       '<span class="apx-legend-count">' + d.value + '</span></div>';
   }).join('');
   var top = data.slice().sort(function(a,b){return b.value-a.value;})[0];
   document.getElementById('insightEstado').textContent = top ? top.name + ': ' + top.value : '—';
   el.innerHTML = '<div class="apx-estado"><div class="apx-estado-total"><span class="apx-donut-center-num">' + total + '</span><span class="apx-donut-center-lbl">total de solicitudes</span></div>' +
     rows + '</div>';
+  GRAF_ESTADO = data;
+  bindGraficaClicks(el);
 }
 
+// Une «Ingresada» y «Aval Jefe» (ambos son «Pendiente 1.er aprobador», mismo color) en un solo segmento
+function unirPendientes1(c) {
+  var o = {}; Object.keys(c).forEach(function(k) { o[k] = c[k]; });
+  if (o['Ingresada']) { o['Aval Jefe'] = (o['Aval Jefe'] || 0) + o['Ingresada']; delete o['Ingresada']; }
+  return o;
+}
 var ESTADOS_ORDEN_GRAFICA = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
 function leyendaEstadosHtml(estTot) {
   var guia = [
@@ -1439,6 +1596,7 @@ function leyendaEstadosHtml(estTot) {
 function renderRanking(containerId, data, limit) {
   var el = document.getElementById(containerId);
   var rows = data.slice(0, limit || 8);
+  GRAF_RANK[containerId] = rows;
   if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
   var conEstados = rows.some(function(d){ return d.items; });
@@ -1449,9 +1607,14 @@ function renderRanking(containerId, data, limit) {
   });
   el.innerHTML = (conEstados ? leyendaEstadosHtml(estTot) : '') + '<div class="apx-ranking">' + rows.map(function(d, i){
     var pct = (d.count / max * 100).toFixed(1);
-    var fill;
+    var fill, nums = '';
     if (d.items) {
-      var estCount = conteoEstados(d.items);
+      var estCount = unirPendientes1(conteoEstados(d.items));
+      var accN = 0;
+      nums = '<div class="apx-rank-nums" style="position:relative;width:' + pct + '%">' + ESTADOS_ORDEN_GRAFICA.filter(function(e){ return estCount[e]; }).map(function(e) {
+        var wN = estCount[e] / d.count * 100, cN = accN + wN / 2; accN += wN;
+        return '<span style="position:absolute;left:' + cN.toFixed(2) + '%;transform:translateX(-50%);color:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)">' + estCount[e] + '</span>';
+      }).join('') + '</div>';
       var segs = ESTADOS_ORDEN_GRAFICA.filter(function(e){ return estCount[e]; }).map(function(e) {
         return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
       }).join('');
@@ -1459,13 +1622,15 @@ function renderRanking(containerId, data, limit) {
     } else {
       fill = '<div class="apx-rank-fill gx-bar-h" style="width:' + pct + '%;--gx-i:' + i + '"></div>';
     }
-    return '<div class="apx-rank-row">' +
+    return '<div class="apx-rank-row" data-graf="' + containerId + ':' + i + '" role="button" tabindex="0">' +
       '<span class="apx-rank-no">' + (i+1) + '</span>' +
       '<span class="apx-rank-name" title="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</span>' +
+      nums +
       '<div class="apx-rank-track">' + fill + '</div>' +
       '<span class="apx-rank-value">' + d.count + '</span>' +
     '</div>';
   }).join('') + '</div>';
+  bindGraficaClicks(el);
 }
 
 var AREA_PALETTE = ['#2f8f76', '#4f8fd8', '#c43c50', '#8b909e', '#c59600', '#7fb0f0', '#9e2a4b', '#d95f6e', '#a0aab8'];
@@ -1713,13 +1878,19 @@ function renderSolicitantesChart(filtered) {
   el.innerHTML = guiaHtml + top.map(function(d, idx) {
     var pct = (d.count/max*100).toFixed(1);
     var name = shortUser(d.value);
-    var estCount = conteoEstados(filtered.filter(function(r){ return r.solicitante === d.value; }));
-    var segs = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'].filter(function(e){ return estCount[e]; }).map(function(e) {
+    var estCount = unirPendientes1(conteoEstados(filtered.filter(function(r){ return r.solicitante === d.value; })));
+    var estOrden = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'].filter(function(e){ return estCount[e]; });
+    var accS = 0;
+    var nums = estOrden.map(function(e) {
+      var wS = estCount[e] / d.count * 100, cS = accS + wS / 2; accS += wS;
+      return '<span style="position:absolute;left:' + cS.toFixed(2) + '%;transform:translateX(-50%);color:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)">' + estCount[e] + '</span>';
+    }).join('');
+    var segs = estOrden.map(function(e) {
       return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
     }).join('');
     return '<div class="apx-solic-item"><div class="apx-solic-row">' +
       '<span class="apx-solic-arrow" aria-hidden="true"></span><span class="apx-barlabel" title="' + escapeHtml(name) + '">' + (idx+1) + '. ' + escapeHtml(name) + '</span>' +
-      '<div class="apx-bartrack apx-bartrack-click" role="button" tabindex="0" onclick="abrirExpedienteSolicitante(event,' + idx + ')" title="Ver expediente de ' + escapeHtml(name) + '"><div class="apx-barfill gx-bar-h" style="display:flex;background:none;width:' + pct + '%;--gx-i:' + idx + '">' + segs + '</div></div><span class="apx-barcount">' + d.count + '</span></div></div>';
+      '<div class="sx-trackwrap"><div class="sx-nums" style="display:block;height:10px;width:' + pct + '%">' + nums + '</div><div class="apx-bartrack apx-bartrack-click" role="button" tabindex="0" onclick="abrirExpedienteSolicitante(event,' + idx + ')" title="Ver expediente de ' + escapeHtml(name) + '"><div class="apx-barfill gx-bar-h" style="display:flex;background:none;width:' + pct + '%;--gx-i:' + idx + '">' + segs + '</div></div></div><span class="apx-barcount">' + d.count + '</span></div></div>';
   }).join('');
 }
 
@@ -2622,7 +2793,23 @@ function render() {
   renderSummaryCards(filtered);
   renderDonut(filtered);
 
-  var aprobadores = uniqueCounts(filtered, 'aprobador').map(function(d){ return {name:shortUser(d.value), count:d.count, items:filtered.filter(function(r){ return r.aprobador === d.value; })}; });
+  // Las solicitudes sin aprobador se cuentan con su jefe inmediato hasta que tengan aprobador
+  var aprobadoresMap = new Map();
+  // Jefe inmediato que ya existe como aprobador con otro nombre: se cuenta en esa misma fila
+  var APROBADOR_DE_JEFE = { 'Eduardo Méndez': 'emendez' };
+  var cuentaDeAprobador = {};
+  filtered.forEach(function(r) { if (!segundoSinAsignar(r)) cuentaDeAprobador[shortUser(r.aprobador).toLowerCase()] = r.aprobador; });
+  filtered.forEach(function(r) {
+    var k = r.aprobador;
+    if (segundoSinAsignar(r) && r.jefeInmediato) {
+      var usuarioJefe = APROBADOR_DE_JEFE[r.jefeInmediato];
+      k = usuarioJefe ? (cuentaDeAprobador[usuarioJefe] || usuarioJefe) : r.jefeInmediato;
+    }
+    var o = aprobadoresMap.get(k);
+    if (!o) { o = {name:shortUser(k), count:0, items:[]}; aprobadoresMap.set(k, o); }
+    o.count++; o.items.push(r);
+  });
+  var aprobadores = Array.from(aprobadoresMap.values()).sort(function(a,b){ return b.count - a.count; });
   renderRanking('chartAprobador', aprobadores, 8);
   if (aprobadores.length) document.getElementById('insightAprobador').textContent = aprobadores[0].name + ' · ' + aprobadores[0].count;
 
