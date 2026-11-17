@@ -43,11 +43,25 @@ function elegirFuente(env, fuenteDrive) {
 }
 
 /**
- * @param {{ method: string, actualizar?: boolean }} pedido
+ * Lee el filtro ?campanas=74,75 (D29). Vacío o ausente = todas. Devuelve un Set, null (todas) o { error }.
+ */
+export function leerFiltroCampanas(texto) {
+  if (texto == null || String(texto).trim() === '') return null
+  const ids = String(texto).split(',').map((x) => x.trim()).filter(Boolean)
+  if (ids.length === 0 || ids.length > 500 || ids.some((id) => !/^[A-Za-z0-9_-]{1,40}$/.test(id))) {
+    return { error: 'El parámetro campanas debe ser una lista de Campaign ID separados por comas (por ejemplo 74,75).' }
+  }
+  return new Set(ids)
+}
+
+/**
+ * @param {{ method: string, actualizar?: boolean, campanas?: string }} pedido
  * @param {{ env?: object, fuenteDrive?: Function }} [opciones]  solo para pruebas
  */
-export async function obtenerMailing({ method, actualizar = false }, { env = process.env, fuenteDrive = obtenerFilasDrive } = {}) {
+export async function obtenerMailing({ method, actualizar = false, campanas }, { env = process.env, fuenteDrive = obtenerFilasDrive } = {}) {
   if (method !== 'GET') return json(405, { error: 'Método no permitido. Usa GET.' })
+  const soloCampanas = leerFiltroCampanas(campanas)
+  if (soloCampanas?.error) return json(400, { error: soloCampanas.error })
 
   const fuente = elegirFuente(env, fuenteDrive)
   if (!fuente) {
@@ -86,7 +100,7 @@ export async function obtenerMailing({ method, actualizar = false }, { env = pro
       cache: resultado.cache ? { ...resultado.cache, minutos: MINUTOS_CACHE_DRIVE } : null,
     },
     archivos: resultado.archivos,
-    ...calcularMailing(resultado.filas),
+    ...calcularMailing(resultado.filas, { soloCampanas }),
   }
 
   // Candado de privacidad: si por error algún texto trae un correo, no se envía nada.

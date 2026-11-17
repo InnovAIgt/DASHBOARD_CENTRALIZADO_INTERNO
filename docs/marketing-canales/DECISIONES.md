@@ -198,7 +198,7 @@ La fila estándar guarda las **fechas** de entrega y de rebote, no solo "sí/no"
 **Por qué:** así los números cuadran con la pantalla de Brevo y con el otro dashboard de mailing de
 la empresa. Con la regla anterior, "entregados" incluía a 10 personas que terminaron en rebote.
 
-**Control ("Total en Brevo"):**
+**Control ("Total en Brevo") de D21:**
 - 854 enviados;
 - 719 entregados (#74 = 157, #75 = 308, #76 = 254);
 - 82 rebotes temporales y 53 permanentes;
@@ -206,3 +206,265 @@ la empresa. Con la regla anterior, "entregados" incluía a 10 personas que termi
 - 12 personas con clic.
 
 Todos ✅.
+
+## D22 · 16/11/2026 · Semáforo: rojo solo para lo crítico
+
+**Decisión:**
+- los rebotes, en porcentaje sobre **enviados**;
+- las bajas y quejas, sobre **entregados**, porque solo quien recibió el correo puede darse de baja o
+  quejarse. Esto se ajustó el 16/11/2026, al separar "Salud del envío".
+
+Los umbrales están en un solo lugar (`src/modulos/marketing/canales/pantalla/datos.js`, `UMBRALES`):
+
+| | Verde (bien) | Amarillo (atención) | Rojo (crítico) |
+|---|---|---|---|
+| Rebote permanente | < 2 % | 2 % a < 5 % | ≥ 5 % |
+| Rebote temporal | < 10 % | ≥ 10 % | nunca |
+| Quejas (spam) | 0 | alguna, por debajo de 0.1 % | ≥ 0.1 % |
+| Bajas | < 1 % | ≥ 1 % | nunca |
+| Apertura y clic | gris: "Meta pendiente" | | |
+
+Con menos de 5 entregados no se colorea: dice "pocos datos". La tarjeta "Bajas · Quejas" toma el
+peor de los dos colores.
+
+**El color se decide con el mismo porcentaje que se ve** (redondeado a 1 decimal). Ejemplo: la #75
+tiene 9.97 % de rebote temporal; en pantalla se lee "10.0 %", así que sale **amarillo**. Con la cifra
+sin redondear habría salido verde junto a un "10.0 %", y eso confunde. En quejas, cualquier queja ya
+es amarillo, aunque el porcentaje redondeado diga 0.0 %.
+
+**Por qué:** las metas de apertura y clic todavía no están definidas. El rebote permanente alto sí es
+crítico, porque daña la reputación del remitente.
+Con los datos de noviembre:
+- **rebote permanente:** la #75 (7.0 %), la #76 (8.6 %) y el total (6.2 %) salen en rojo;
+- **rebote temporal:** la #75 ("10.0 %") y la #76 (10.5 %) salen en amarillo.
+
+## D23 · 16/11/2026 · Pantalla: dos cifras con selector, sin recalcular en el navegador
+
+**Actualizado por D25 a D28:** el orden y el estilo de la pestaña cambiaron, y la tabla de campañas
+ahora es el "Ranking de campañas". Lo de abajo sigue vigente.
+
+**Decisión:**
+- El selector **"Sin internos (oficial)" / "Total en Brevo"** cambia todas las cifras de la pestaña
+  Mailing. La ventana de detalle muestra las dos juntas. **Nunca dice "como Brevo".**
+- La API también entrega `totalBrevo` en cada mes y en los totales. La pantalla **no recalcula**
+  ninguna métrica: solo elige el bloque y le da formato.
+- La **fecha de envío sale siempre de `fechaEnvio`** (Send_Date), nunca del nombre de la campaña. Se
+  muestra tal como viene, sin convertir zona horaria. Por ejemplo, la #75 dice 11/11/2026 aunque su
+  nombre diga "NOVIEMBRE 9".
+- **Asunto:** "Pendiente (catálogo)" hasta que exista el catálogo de campañas.
+- **Metas:** "Campañas del mes vs meta", "% apertura" y "% clic" en gris con "Meta pendiente"
+  (`METAS` en `datos.js`).
+- **Países:** solo en la ventana de detalle, en gris, con el aviso del % "Desconocido" (calculado).
+  No se destacan comparaciones por país.
+- **Las campañas de prueba** no van en la tabla principal, sino en "Exclusiones" con su motivo.
+- **Clics:** nota "pueden incluir clics automáticos de antivirus". Aperturas totales y clics en enlaces
+  distintos, con la nota de que la pantalla de Brevo usa otra fórmula.
+- **Redes sociales y Otros:** "Pendiente de fuente de datos", sin cifras. La pestaña "Resumen" no se
+  hace hasta tener Redes.
+
+**Por qué:** que los números coincidan en todas partes y que cada cálculo se explique en pantalla.
+
+## D24 · 16/11/2026 · Lo que NO va en Marketing por canales
+
+**Decisión:** la pestaña Mailing **no** incluye:
+- Lead Scoring;
+- Embudo comercial;
+- Pipeline;
+- nada por empresa.
+
+Esas secciones sí estaban en el dashboard viejo "Campañas de correo".
+
+**Por qué:**
+- **Lead Scoring y Embudo comercial son de Ventas:** cubren lo que pasa *después* del lead, y ese tema
+  ya lo cubre el **Flujo de ventas**.
+- **Lead Scoring muestra datos personales** (contactos priorizados con nombre y correo).
+- **La empresa no viene en el CSV de Brevo.**
+
+Si en el futuro Ventas los necesita, irían en el Flujo de ventas, no aquí.
+
+## D25 · 16/11/2026 · Estilo visual del dashboard viejo, sin copiarlo completo
+
+**Actualizado por D31 (17/11/2026):** el orden y el formato siguen ahora el mockup aprobado. "Comparar
+campañas" y las pestañas Mejores/Peores se quitaron.
+
+**Decisión:** la pestaña Mailing usa el **estilo visual** de "Campañas de correo"
+(`public/dashboards/marketing/mailing-campanas.html`, solo como referencia; ese archivo **no** se modificó):
+- anillos;
+- tarjetas de salud con borde de color;
+- títulos de sección en mayúsculas con borde azul;
+- tabla de ranking;
+- tarjetas de comparación con mini métricas.
+
+No se copió el archivo completo: el ingeniero dijo que "unía todo y no se entendía".
+
+**Orden de la pestaña:**
+1. Campañas del mes vs meta.
+2. Métricas de interacción (anillos).
+3. Leads generados y calificados por campaña: pendiente, porque Prospekt IA no guarda el correo del lead.
+4. Salud del envío.
+5. Ranking de campañas.
+6. Aperturas por cargo.
+7. Por territorio/vendedor: pendiente del catálogo de campañas.
+8. Comparar campañas.
+9. Evolución por mes.
+10. ¿Cómo se calcula cada número?
+
+Exclusiones va como bloque corto entre el 9 y el 10.
+
+**Detalles aprobados:**
+- **El ranking es la tabla de campañas** (una sola tabla):
+  - ordenable por % apertura (por defecto), CTR, CTOR o rebote permanente;
+  - pestañas Mejores/Peores;
+  - las campañas con pocos datos van al final, atenuadas;
+  - al hacer clic se abre la misma ventana de detalle.
+- **Salud del envío:** **Entregados + Rebote permanente + Rebote temporal** suman el 100 % de lo
+  enviado (718 + 53 + 82 = 853; si hubiera "sin estado", también entra). **Bajas · Quejas** va aparte,
+  en el grupo "De los entregados · no se suman a lo anterior", con su % sobre entregados.
+- **Comparar campañas:** se eligen hasta 4. Al abrir están elegidas las 3 más recientes.
+- **Por cargo:** barras horizontales con % de apertura y "X de Y entregados".
+- **Gráficas:** dibujadas a mano (SVG/CSS), sin librerías.
+
+## D26 · 16/11/2026 · Anillos: Excelente / Promedio / Bajo con rangos de referencia
+
+**Decisión:** 4 anillos. Cada uno muestra el % grande, "X de Y", una línea de explicación, la
+etiqueta y sus rangos visibles. Debajo va la nota visible "Referencia general B2B, no es la meta de RED
+(meta pendiente)".
+
+| Anillo | Cálculo | Excelente | Promedio | Bajo | Crítico |
+|---|---|---|---|---|---|
+| ENTREGA | entregados ÷ enviados | ≥ 98 % | 95–98 % | < 95 % | < 90 % |
+| APERTURA | aperturas reales ÷ entregados | ≥ 30 % | 20–30 % | < 20 % | — |
+| CTR | personas con clic ÷ entregados | ≥ 5 % | 2–5 % | < 2 % | — |
+| CTOR | personas con clic ÷ aperturas reales | ≥ 20 % | 10–20 % | < 10 % | — |
+
+- **Sin huecos:** Excelente desde el límite superior; Promedio desde el inferior y por debajo del
+  superior; Bajo por debajo del inferior. Se evalúa el mismo % que se ve (1 decimal), igual que en D22.
+- **Colores:** Excelente verde, Promedio azul, Bajo amarillo. **Rojo solo si la entrega es menor a
+  90 % (Crítico).** Nunca rojo para apertura, CTR ni CTOR.
+- Los rangos están en un solo lugar: `REFERENCIAS` en `datos.js`.
+- **Noviembre (sin internos):**
+  - entrega 84.2 %, 🔴 Crítico;
+  - apertura 20.3 %, 🔵 Promedio;
+  - CTR 1.5 %, 🟡 Bajo;
+  - CTOR 7.5 %, 🟡 Bajo.
+
+## D27 · 16/11/2026 · Cargo tomado del nombre de la campaña
+
+**Decisión:** mientras no exista el catálogo de campañas, el cargo sale del **nombre** de la campaña:
+"GERENTE GENERAL", "GERENTE FINANCIERO" u "GERENTE OPERATIVO", como frase completa y sin importar
+mayúsculas ni tildes. Se acepta "GERENTE FINACIERO", que es como viene el nombre real de la #75. Lo
+demás queda como "Sin cargo".
+
+La lista está en `server/marketingCanales/reglas.js` (`CARGOS`). La API entrega `cargo` por campaña
+y `porCargo` (sin internos y Total en Brevo).
+
+**Cuando exista el catálogo, mandará el catálogo.**
+
+## D28 · 16/11/2026 · Entrega y CTOR calculados en el servidor
+
+**Decisión:** la API entrega `pctEntrega` y `pctCtor` en campañas, meses, cargos y totales. La pantalla
+no los calcula.
+- **`pctEntrega`** = entregados ÷ enviados. Con menos de 5 enviados: pocos datos.
+- **`pctCtor`** = personas con clic ÷ aperturas reales. Con menos de 5 aperturas reales: pocos datos
+  (`pocosDatosCtor`).
+
+**Control:**
+- CTOR: #74 = 1 ÷ 28 = 3.6 %, #75 = 5 ÷ 62 = 8.1 %, #76 = 5 ÷ 56 = 8.9 %, total = 11 ÷ 146 = 7.5 %
+  (sin internos);
+- entrega: 718 ÷ 853 = 84.2 % (sin internos) y 719 ÷ 854 = 84.2 % (Total en Brevo).
+
+## D29 · 17/11/2026 · Filtros de la pantalla: `?campanas=` en el servidor
+
+**Decisión:** el período, el cargo y el filtro de campañas solo deciden **qué campañas** entran.
+
+La pantalla manda esa lista al servidor (`/api/marketing/mailing?campanas=74,75`), y el servidor recalcula
+con los **mismos cálculos de siempre** los meses, cargos, totales y destacados. La pantalla no
+recalcula nada (D23).
+- **Sin filtro** (o con todas las campañas elegidas), la respuesta es idéntica a la de antes.
+- **`disponibles`** trae siempre todas las campañas, para dibujar los chips.
+- **`filtro`** informa qué campañas se pidieron y cuáles no se encontraron.
+- **El período** compara la **fecha de envío** (Send_Date) de cada campaña.
+- **Las campañas de prueba** nunca se ofrecen como chips y siempre se informan en "Transparencia de datos".
+- **Un filtro mal escrito** responde 400.
+- **Si no queda ninguna campaña elegida**, la pantalla muestra un aviso y no consulta.
+
+## D30 · 17/11/2026 · Destacados calculados en el servidor
+
+**Decisión:** la API entrega `destacados` para cada vista (sin internos y Total en Brevo). Solo
+**elige** entre cifras ya calculadas:
+- **Mejor campaña:** el mayor % de apertura entre las campañas con **5 o más entregados**. Si empatan,
+  gana la de más entregados.
+- **Mejor cargo:** igual, entre los cargos (sin "Sin cargo").
+- **Peor entrega:** el menor % de entrega. Si empatan, gana la de más enviados.
+- **Mejor país:** compara solo Guatemala y El Salvador. **Si más del 50 % de los envíos tiene país
+  "Desconocido"**, dice "Pocos datos" con ese %. El país se mide siempre sin internos.
+
+**Noviembre:**
+- mejor campaña: #76 (22.1 %);
+- mejor cargo: Gerente Operativo;
+- peor entrega: #76 (80.8 %);
+- mejor país: Pocos datos (82 % desconocido).
+
+## D31 · 17/11/2026 · Una sola vista con el formato del mockup aprobado
+
+**Decisión:** la pantalla de Mailing sigue el mockup aprobado
+(`mockup-mailing.html`, fuera del repo). Ese mockup sigue el formato del dashboard original
+"Campañas de correo". Se copiaron **los valores** de `dashboard.css`, `mailingCampanas.css` y
+`estandar.css` con el prefijo `.mkt-`; esos archivos **no** se modificaron.
+
+**Orden:**
+1. Encabezado ("Marketing · Mailing", "Campañas de correo" y botón rojo Actualizar).
+2. Barra de filtros estándar (Cifras, Período, Filtros, Limpiar filtros) y la línea "Mostrando…".
+3. Transparencia de datos, con "Ver desglose de exclusiones".
+4. Filtro de campañas (chips).
+5. Resumen del mes.
+6. Métricas de interacción (anillos).
+7. Salud del envío: 6 tarjetas.
+8. Mejor campaña, mejor cargo, peor entrega y mejor país.
+9. Aperturas por cargo y Evolución por mes.
+10. Embudo de conversión.
+11. Ranking de campañas.
+
+"¿Cómo se calcula cada número?" va plegado al final.
+
+**Se quitó:**
+- **Pestañas:** es una sola vista. Redes sociales y Otros no se muestran hasta tener fuente de datos.
+- **"Comparar campañas":** el Ranking de campañas ya compara las campañas. Se puede volver a agregar
+  cuando exista el catálogo con el asunto.
+- **Pestañas Mejores/Peores del ranking:** se ordena de mayor a menor % de apertura, y las campañas con
+  pocos datos van al final.
+
+**Siguen fuera:** Lead Scoring y Embudo comercial (D24).
+
+**Reglas visuales:**
+- **Salud del envío:**
+  - Entregados se colorea por la evaluación de la entrega;
+  - los rebotes, las bajas y las quejas, por su semáforo;
+  - la apertura automática, en azul (dato informativo);
+  - una nota aclara que solo entregados + rebotes suman el 100 %.
+- **Mejor campaña y mejor cargo** se colorean por su evaluación de apertura. Hoy salen en azul
+  (Promedio); el mockup los mostraba en verde.
+- **Aperturas por cargo:** de mayor a menor %, con una escala de 0 a 30 % (se amplía si algún cargo pasa
+  de 30 %) y líneas punteadas en 20 % y 30 %.
+- **Evolución por mes:**
+  - barras en azul/gris, que no son un semáforo;
+  - los colores de estado solo van en las 3 mini tarjetas del último mes;
+  - eje con números redondos;
+  - espacio "Aquí aparecerán los próximos meses" mientras haya menos de 2 meses.
+- **Ranking:**
+  - cada % es una pastilla con su color;
+  - **Muestra:** Alta con 15 o más entregados, Media de 5 a 14, Baja con menos de 5;
+  - el cargo se muestra corto ("G. Operativo") para que entren las 14 columnas.
+- **Rojo:** solo para lo crítico. El rojo del botón Actualizar y del botón activo es el color de acción
+  del portal, no un estado.
+- **Menú:** sigue diciendo "Marketing por canales" hasta que se retire el dashboard viejo.
+
+Reemplaza el orden de D25.
+
+## D32 · 17/11/2026 · Un solo filtro de cargo
+
+**Decisión:** hay **un solo** filtro de cargo: el del panel "Filtros" de la barra de arriba, que cambia
+toda la página, incluido el ranking. El ranking no tiene filtro de cargo propio; solo la casilla
+"Solo muestra suficiente (≥5 entregados)".
+
+**Por qué:** dos filtros de cargo confunden.

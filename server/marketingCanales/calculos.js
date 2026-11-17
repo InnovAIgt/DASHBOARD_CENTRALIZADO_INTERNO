@@ -7,10 +7,13 @@
  * Explicación para usuarios: docs/marketing-canales/README.md
  */
 import {
+  CARGOS,
   DOMINIOS_INTERNOS,
   MINIMO_ENTREGADOS,
   PAISES,
   PATRONES_CAMPANA_PRUEBA,
+  SIN_CARGO,
+  cargoDeCampana,
   esCorreoInterno,
   paisDeCorreo,
   patronDePrueba,
@@ -29,13 +32,17 @@ export const DEFINICIONES = {
   aperturasReales: 'Personas con fecha de apertura (Open_Date). Se cuentan aunque después hayan rebotado.',
   aperturasDeRebotados: 'Personas que abrieron el correo y luego terminaron en rebote. Están dentro de las aperturas reales.',
   soloAperturaAutomatica: 'Sin fecha de apertura pero con aperturas de Apple (MPP): el teléfono abrió el correo solo. NO cuenta como apertura real.',
-  personasConClic: 'Personas con al menos un clic en un enlace.',
-  totalAperturasBrevo: 'Suma de "Total Opens": cuenta cada vez que se abrió, incluso varias veces por persona y las automáticas de Apple. Por eso es mayor que las aperturas reales.',
-  totalClicsBrevo: 'Suma de "Clicked_Links_Count": cuenta cada enlace distinto en el que hizo clic cada persona. Por eso puede ser mayor que las personas con clic.',
+  personasConClic: 'Personas con al menos un clic en un enlace. Pueden incluir clics automáticos de antivirus (algunos revisan los enlaces antes de que la persona abra el correo).',
+  totalAperturasBrevo: 'Aperturas totales (incluye repetidas y automáticas): suma de "Total Opens". Cuenta cada vez que se abrió, incluso varias veces por persona y las automáticas de Apple. No coincide con la pantalla de Brevo, que usa otra fórmula.',
+  totalClicsBrevo: 'Clics en enlaces distintos: suma de "Clicked_Links_Count", cada enlace distinto en el que hizo clic cada persona. Por eso puede ser mayor que las personas con clic. No coincide con la pantalla de Brevo, que usa otra fórmula.',
   bajas: 'Personas que se dieron de baja (Unsubscribe_Date).',
   quejas: 'Personas que marcaron el correo como spam (Complaint_date).',
   pctApertura: `Aperturas reales ÷ entregados. Con menos de ${MINIMO_ENTREGADOS} entregados se muestra "pocos datos". Si alguien abrió y luego rebotó, se indica en notaPctApertura.`,
-  pctClic: `Personas con clic ÷ entregados. Con menos de ${MINIMO_ENTREGADOS} entregados se muestra "pocos datos".`,
+  pctEntrega: `Entrega: entregados ÷ enviados. Con menos de ${MINIMO_ENTREGADOS} enviados se muestra "pocos datos".`,
+  pctClic: `CTR (clics sobre entregados): personas con clic ÷ entregados. Con menos de ${MINIMO_ENTREGADOS} entregados se muestra "pocos datos".`,
+  pctCtor: `CTOR (clics sobre aperturas): personas con clic ÷ aperturas reales. Dice qué tan atractivo fue el contenido para quienes sí abrieron. Con menos de ${MINIMO_ENTREGADOS} aperturas reales se muestra "pocos datos".`,
+  destacados: 'Mejor campaña y mejor cargo: mayor % de apertura entre los que tienen al menos 5 entregados (si empatan, el de más entregados). Peor entrega: menor % de entrega. Mejor país: solo Guatemala y El Salvador; si más del 50 % de los envíos tiene país "Desconocido", dice "Pocos datos".',
+  cargo: 'Cargo al que va dirigida la campaña, tomado del nombre de la campaña (Gerente General, Financiero u Operativo) mientras no exista el catálogo de campañas.',
   totalBrevo: 'Todas las filas del reporte, incluidos los correos internos de RED. Sirve para comparar con lo que muestra Brevo.',
   metricas: 'Sin correos internos de RED. Es la cifra que se usa en porcentajes, totales y meses.',
   mes: 'Mes de la primera fecha de envío (Send_Date) de la campaña.',
@@ -111,20 +118,81 @@ function notaApertura(m) {
     : `Incluye ${n} personas que abrieron el correo y luego tuvieron ${tipo}`
 }
 
-/** Agrega los porcentajes (proporción de 0 a 1, 4 decimales) o null si hay pocos datos. */
+const proporcion = (n, base) => Math.round((n / base) * 10000) / 10000
+
+/**
+ * Agrega los porcentajes (proporción de 0 a 1, 4 decimales) o null si hay pocos datos:
+ * - pctEntrega = entregados ÷ enviados (null con menos de 5 enviados);
+ * - pctApertura y pctClic (CTR) = ÷ entregados (null con menos de 5 entregados: pocosDatos);
+ * - pctCtor = personas con clic ÷ aperturas reales (null con pocosDatos o menos de 5 aperturas reales: pocosDatosCtor).
+ */
 function conPorcentajes(m) {
   const pocosDatos = m.entregados < MINIMO_ENTREGADOS
-  const pct = (n) => (pocosDatos ? null : Math.round((n / m.entregados) * 10000) / 10000)
-  return { ...m, pctApertura: pct(m.aperturasReales), pctClic: pct(m.personasConClic), pocosDatos, notaPctApertura: notaApertura(m) }
+  const pocosDatosCtor = pocosDatos || m.aperturasReales < MINIMO_ENTREGADOS
+  const pct = (n) => (pocosDatos ? null : proporcion(n, m.entregados))
+  return {
+    ...m,
+    pctEntrega: m.enviados < MINIMO_ENTREGADOS ? null : proporcion(m.entregados, m.enviados),
+    pctApertura: pct(m.aperturasReales),
+    pctClic: pct(m.personasConClic),
+    pctCtor: pocosDatosCtor ? null : proporcion(m.personasConClic, m.aperturasReales),
+    pocosDatos,
+    pocosDatosCtor,
+    notaPctApertura: notaApertura(m),
+  }
 }
 
 const porPaisVacio = () => Object.fromEntries(PAISES.map((p) => [p, metricasVacias()]))
 const cerrarPorPais = (pp) => Object.fromEntries(PAISES.map((p) => [p, conPorcentajes(pp[p])]))
 
+/** Más del 50 % de envíos con país "Desconocido" → no se elige "Mejor país" (D30). */
+export const MAXIMO_PAIS_DESCONOCIDO = 0.5
+
+/**
+ * Destacados de una vista ('metricas' = sin internos, 'totalBrevo'). Solo ELIGE entre cifras ya calculadas:
+ * - mejorCampana: mayor % de apertura entre campañas con ≥ 5 entregados (empate: más entregados).
+ * - mejorCargo: igual, entre cargos (sin "Sin cargo").
+ * - peorEntrega: menor % de entrega (empate: más enviados).
+ * - mejorPais: mayor % de apertura entre Guatemala y El Salvador, salvo que más del 50 % de los envíos
+ *   tenga país "Desconocido" → pocosDatos. El país se mide siempre sin internos.
+ */
+function calcularDestacados(incluidas, porCargo, totales, vista) {
+  const de = (o) => (vista === 'totalBrevo' ? o.totalBrevo : o.metricas ?? o)
+  const mejor = (lista, campo, mayor = true) => lista
+    .filter((x) => de(x)[campo] != null)
+    .sort((a, b) => (mayor ? de(b)[campo] - de(a)[campo] : de(a)[campo] - de(b)[campo])
+      || (campo === 'pctEntrega' ? de(b).enviados - de(a).enviados : de(b).entregados - de(a).entregados))[0] ?? null
+  const campana = (c, extra) => c && { id: c.id, nombre: c.nombre, cargo: c.cargo, entregados: de(c).entregados, enviados: de(c).enviados, ...extra(de(c)) }
+
+  const mc = mejor(incluidas, 'pctApertura')
+  const cg = mejor(porCargo.filter((g) => g.cargo !== SIN_CARGO), 'pctApertura')
+  const pe = mejor(incluidas, 'pctEntrega', false)
+
+  const desconocidos = totales.enviados ? totales.porPais.Desconocido.enviados / totales.enviados : null
+  let mejorPais = null
+  if (desconocidos != null) {
+    const pctDesconocido = Math.round(desconocidos * 10000) / 10000
+    if (desconocidos > MAXIMO_PAIS_DESCONOCIDO) mejorPais = { pocosDatos: true, pctDesconocido }
+    else {
+      const p = PAISES.filter((x) => x !== 'Desconocido' && totales.porPais[x].pctApertura != null)
+        .sort((a, b) => totales.porPais[b].pctApertura - totales.porPais[a].pctApertura)[0]
+      mejorPais = p ? { pocosDatos: false, pais: p, pctApertura: totales.porPais[p].pctApertura, pctDesconocido } : { pocosDatos: true, pctDesconocido }
+    }
+  }
+
+  return {
+    mejorCampana: campana(mc, (m) => ({ pctApertura: m.pctApertura })),
+    mejorCargo: cg && { cargo: cg.cargo, pctApertura: de(cg).pctApertura, entregados: de(cg).entregados },
+    peorEntrega: campana(pe, (m) => ({ pctEntrega: m.pctEntrega })),
+    mejorPais,
+  }
+}
+
 /**
  * @param {object[]} filas  filas estándar del canal mailing
+ * @param {{ soloCampanas?: Set<string> | null }} [opciones]  filtro de la pantalla (D29)
  */
-export function calcularMailing(filas) {
+export function calcularMailing(filas, { soloCampanas = null } = {}) {
   // 1. Agrupar por campaña; una persona cuenta una sola vez por campaña (se queda la primera fila).
   const grupos = new Map()
   for (const f of filas) {
@@ -137,7 +205,7 @@ export function calcularMailing(filas) {
   }
 
   // 2. Métricas por campaña.
-  const campanas = [...grupos.values()].map((g) => {
+  const todas = [...grupos.values()].map((g) => {
     const total = metricasVacias()
     const sinInternos = metricasVacias()
     const internos = metricasVacias()
@@ -156,6 +224,7 @@ export function calcularMailing(filas) {
       nombre: g.nombre,
       fechaEnvio,
       mes: fechaEnvio.slice(0, 7),
+      cargo: cargoDeCampana(g.nombre),
       excluida: patron !== null,
       motivoExclusion: patron ? `Campaña de prueba: el nombre coincide con "${patron}".` : null,
       destinatariosInternos: { enviados: internos.enviados, aperturasReales: internos.aperturasReales, personasConClic: internos.personasConClic },
@@ -165,31 +234,65 @@ export function calcularMailing(filas) {
       porPais: cerrarPorPais(porPais),
     }
   })
-  campanas.sort((a, b) => b.fechaEnvio.localeCompare(a.fechaEnvio) || b.id.localeCompare(a.id, undefined, { numeric: true }))
+  todas.sort((a, b) => b.fechaEnvio.localeCompare(a.fechaEnvio) || b.id.localeCompare(a.id, undefined, { numeric: true }))
 
-  // 3. Totales por mes y generales: solo campañas NO excluidas, sin internos.
+  // 2b. Filtro de la pantalla (D29): solo las campañas pedidas. Los cálculos son los mismos;
+  //     solo cambia QUÉ campañas entran en meses, cargos, totales y destacados.
+  //     "disponibles" lista SIEMPRE todas, para dibujar los filtros.
+  const campanas = soloCampanas ? todas.filter((c) => soloCampanas.has(c.id)) : todas
+  const disponibles = todas.map((c) => ({ id: c.id, nombre: c.nombre, fechaEnvio: c.fechaEnvio, mes: c.mes, cargo: c.cargo, excluida: c.excluida }))
+
+  // 3. Totales por mes y generales: solo campañas NO excluidas.
+  //    Cifra oficial = sin internos; además se entrega "totalBrevo" (con internos) para el selector de la pantalla.
   const incluidas = campanas.filter((c) => !c.excluida)
   const meses = new Map()
   const totales = { campanas: 0, ...metricasVacias() }
+  const totalesBrevo = metricasVacias()
   const totalesPorPais = porPaisVacio()
+  const cargos = new Map() // en el orden de CARGOS; "Sin cargo" al final
+  for (const { cargo } of [...CARGOS, { cargo: SIN_CARGO }]) cargos.set(cargo, { cargo, campanas: 0, ...metricasVacias(), brevo: metricasVacias() })
   for (const c of incluidas) {
-    if (!meses.has(c.mes)) meses.set(c.mes, { mes: c.mes, campanas: 0, ...metricasVacias() })
-    const m = meses.get(c.mes)
-    m.campanas += 1
-    sumarMetricas(m, c.metricas)
+    if (!meses.has(c.mes)) meses.set(c.mes, { mes: c.mes, campanas: 0, ...metricasVacias(), brevo: metricasVacias() })
+    for (const grupo of [meses.get(c.mes), cargos.get(c.cargo)]) {
+      grupo.campanas += 1
+      sumarMetricas(grupo, c.metricas)
+      sumarMetricas(grupo.brevo, c.totalBrevo)
+    }
     totales.campanas += 1
     sumarMetricas(totales, c.metricas)
+    sumarMetricas(totalesBrevo, c.totalBrevo)
     for (const p of PAISES) sumarMetricas(totalesPorPais[p], c.porPais[p])
   }
+  const cerrarGrupo = ({ brevo, ...m }) => ({ ...conPorcentajes(m), totalBrevo: { campanas: m.campanas, ...conPorcentajes(brevo) } })
 
-  const pruebas = campanas.filter((c) => c.excluida)
+  // Las campañas de prueba se informan siempre (todas), aunque haya filtro: no entran en los filtros.
+  const pruebas = todas.filter((c) => c.excluida)
   const conInternos = incluidas.filter((c) => c.destinatariosInternos.enviados > 0)
   const sumaInternos = (campo) => conInternos.reduce((s, c) => s + c.destinatariosInternos[campo], 0)
 
+  const porCargo = [...cargos.values()].filter((g) => g.campanas > 0).map(cerrarGrupo)
+  const totalesCerrados = {
+    ...conPorcentajes(totales),
+    porPais: cerrarPorPais(totalesPorPais),
+    totalBrevo: { campanas: totales.campanas, ...conPorcentajes(totalesBrevo) },
+  }
+
   return {
     campanas,
-    meses: [...meses.values()].sort((a, b) => a.mes.localeCompare(b.mes)).map(conPorcentajes),
-    totales: { ...conPorcentajes(totales), porPais: cerrarPorPais(totalesPorPais) },
+    disponibles,
+    filtro: {
+      campanas: soloCampanas ? disponibles.filter((c) => soloCampanas.has(c.id)).map((c) => c.id) : null,
+      noEncontradas: soloCampanas ? [...soloCampanas].filter((id) => !todas.some((c) => c.id === id)) : [],
+    },
+    meses: [...meses.values()].sort((a, b) => a.mes.localeCompare(b.mes)).map(cerrarGrupo),
+    // Por cargo (D27): solo cargos con campañas que cuentan.
+    porCargo,
+    totales: totalesCerrados,
+    // Tarjetas "Mejor campaña", "Mejor cargo", "Peor entrega" y "Mejor país" (D30).
+    destacados: {
+      metricas: calcularDestacados(incluidas, porCargo, totalesCerrados, 'metricas'),
+      totalBrevo: calcularDestacados(incluidas, porCargo, totalesCerrados, 'totalBrevo'),
+    },
     exclusiones: {
       campanasPrueba: {
         cantidad: pruebas.length,
@@ -203,7 +306,7 @@ export function calcularMailing(filas) {
         personasConClic: sumaInternos('personasConClic'),
         porCampana: conInternos.map((c) => ({ id: c.id, nombre: c.nombre, ...c.destinatariosInternos })),
       },
-      duplicadosDescartados: campanas.reduce((s, c) => s + c.duplicadosDescartados, 0),
+      duplicadosDescartados: incluidas.reduce((s, c) => s + c.duplicadosDescartados, 0),
     },
     reglas: {
       patronesCampanaPrueba: PATRONES_CAMPANA_PRUEBA,

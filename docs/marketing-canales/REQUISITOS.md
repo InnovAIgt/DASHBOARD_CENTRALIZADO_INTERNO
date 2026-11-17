@@ -46,9 +46,14 @@ Pedido por Keily García el 16/11/2026. Estado: ✅ hecho · 🔄 en curso · �
 
 | # | Requisito | Estado |
 |---|---|---|
-| R18 | Menú Marketing → "Marketing por canales". Pestaña Mailing: totales, tabla de campañas, evolución mensual, exclusiones y explicación de cálculos. | ⏳ Fase 3 |
-| R19 | Pestañas Redes sociales y Otros: "Pendiente de fuente de datos". | ⏳ Fase 3 |
-| R20 | Colores: rojo solo para lo crítico, amarillo = atención, verde = bien, azul/gris = neutro. Estilos con prefijo `.mkt-`. | ⏳ Fase 3 |
+| R18 | Menú Marketing → "Marketing por canales". Pestaña Mailing: totales, tabla de campañas, evolución mensual, exclusiones y explicación de cálculos. | ✅ Fase 3 |
+| R18a | Selector "Sin internos" / "Total en Brevo" (sin decir "como Brevo"); aperturas reales y automáticas por separado; nota de antivirus en clics; aviso de país "Desconocido"; "pocos datos"; ventana de detalle; botón Actualizar y fecha de lectura. | ✅ Fase 3 |
+| R18b | Fecha de envío siempre de Send_Date (#75 = 11/11). Tarjeta "Campañas del mes vs meta" (meta pendiente). Columna "Asunto" con "Pendiente (catálogo)". | ✅ Fase 3 |
+| R18c | Estilo visual del dashboard viejo (anillos, tarjetas, ranking, comparar), en el orden aprobado de 10 secciones. Anillos Entrega/Apertura/CTR/CTOR con Excelente/Promedio/Bajo y rangos de referencia B2B. CTOR nuevo en el servidor. Aperturas por cargo. Leads y territorio pendientes. Sin Lead Scoring, Embudo, Pipeline ni empresa. | ✅ Fase 3 (D24–D28) |
+| R18d | Formato del mockup aprobado: una sola vista; barra de filtros estándar (cifras, período, filtros, limpiar); transparencia de datos; filtro de campañas; resumen del mes; anillos; salud con 6 tarjetas; mejor campaña, cargo, país y peor entrega; gráficas; embudo; ranking con muestra. Sin Comparar campañas. Un solo filtro de cargo. | ✅ Fase 3 (D29–D32) |
+| R19 | Pestañas Redes sociales y Otros: "Pendiente de fuente de datos". | ✅ Fase 3 → reemplazado por D31: sin pestañas; Redes sociales y Otros no se muestran hasta tener fuente |
+| R19a | Pestaña Redes con datos (Excel de Gaby vía Render) y pestaña "Resumen". | ⏸️ Pendiente |
+| R20 | Colores: rojo solo para lo crítico, amarillo = atención, verde = bien, azul/gris = neutro. Estilos con prefijo `.mkt-`. | ✅ Fase 3 (D22) |
 
 ## Cruce con Prospekt IA
 

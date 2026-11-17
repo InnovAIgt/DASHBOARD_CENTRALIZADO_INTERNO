@@ -1,7 +1,60 @@
 # Marketing · Marketing por canales
 
 > Responsable: Keily García · Inicio: 16 de noviembre de 2026
-> Rama: `feature/marketing-mailing` · Estado: **Fase 2 (Google Drive) — falta la prueba con la llave real**
+> Rama: `feature/marketing-mailing` · Estado: **Fase 3 (pantalla de Mailing)**. Falta la prueba de
+> Drive con la llave real. Redes sociales y Otros: pendientes de fuente de datos (no se muestran).
+
+## La pantalla
+
+Menú **MARKETING → Marketing por canales** (`src/modulos/marketing/canales/`, estilos con prefijo `mkt-`).
+Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que sigue al dashboard original
+"Campañas de correo" (D31). En este orden:
+
+1. **Encabezado:** "Marketing · Mailing", título "Campañas de correo" y botón rojo **Actualizar** (`?actualizar=1`).
+2. **Barra de filtros:** selector **"Sin internos (oficial)" / "Total en Brevo"**, **Período** (fecha de envío),
+   **Filtros** (cargo: el único filtro de cargo, D32) y **Limpiar filtros**. Debajo, "Mostrando X correos
+   de N campañas · … · última lectura".
+3. **Transparencia de datos:** archivos leídos, correos analizados y exclusiones, con "Ver desglose de exclusiones".
+4. **Filtro de campañas:** chips, "Seleccionar todas" y "Limpiar selección".
+5. **Resumen del mes:** campañas del mes vs meta (meta pendiente) y leads generados y calificados
+   (pendiente: Prospekt IA no guarda el correo del lead).
+6. **Métricas de interacción:** 4 anillos (Entrega, Apertura, CTR y CTOR) con Excelente / Promedio / Bajo
+   y sus rangos (D26).
+7. **Salud del envío:** 6 tarjetas (entregados, rebote permanente, rebote temporal, apertura automática,
+   bajas y quejas). Solo entregados + rebotes suman el 100 %.
+8. **Mejor campaña, mejor cargo, peor entrega y mejor país** (D30).
+9. **Aperturas por cargo** y **Evolución por mes.**
+10. **Embudo de conversión.**
+11. **Ranking de campañas.** Ordenado por % de apertura, con la casilla "solo muestra suficiente". Al hacer
+    clic en una fila se abre la **ventana de detalle**.
+
+"¿Cómo se calcula cada número?" va plegado al final.
+
+- **Filtros (D29):** el período, el cargo y los chips eligen campañas, y el servidor recalcula
+  (`?campanas=`). La pantalla no recalcula métricas.
+- **No incluye:** pestañas, Comparar campañas, Redes sociales, Otros, Lead Scoring, Embudo comercial,
+  Pipeline ni nada por empresa (D24, D31).
+- **Colores** (D22, D26, D31):
+  - rojo solo para lo crítico;
+  - amarillo = atención o bajo;
+  - azul = promedio;
+  - verde = bien o excelente;
+  - gris = pendiente o pocos datos.
+- Las explicaciones de la pantalla vienen del servidor (`reglas.definiciones`), así que siempre
+  coinciden con el cálculo.
+
+| Archivo | Qué hace |
+|---|---|
+| `MarketingCanales.jsx` | Vista única: estado de los filtros y carga de datos (`?campanas=`). |
+| `servicios/api.js` | Llama a `/api/marketing/mailing`. |
+| `pantalla/datos.js` | En un solo lugar: semáforo (`UMBRALES`), rangos de los anillos (`REFERENCIAS`), metas (`METAS`), muestra (`MUESTRA`), filtros, formatos y fechas. |
+| `pantalla/Mailing.jsx` | La vista en el orden del mockup: resumen, salud, destacados, ranking, ¿cómo se calcula? |
+| `pantalla/Filtros.jsx` | Barra de filtros, línea de resumen, transparencia de datos y filtro de campañas. |
+| `pantalla/Interaccion.jsx` | Anillos (SVG dibujado a mano). |
+| `pantalla/Graficas.jsx` | Aperturas por cargo, evolución por mes y embudo (dibujados a mano). |
+| `pantalla/DetalleCampana.jsx` | Ventana con el detalle de una campaña. |
+| `pantalla/comunes.jsx` | ⓘ explicación, pastilla del semáforo, "pocos datos", avisos. |
+| `marketing-canales.css` | Estilos encerrados en `.mkt` y `.mkt-ventana`, con los valores del estándar del portal. |
 
 ## ¿Qué es?
 

@@ -170,6 +170,199 @@ Ahora cuenta como rebote (D21).
 
 ---
 
+## Fase 3 · Pantalla de Mailing — 16 y 17/11/2026 ✅
+
+Keily aprobó las diferencias con el mockup (17/11/2026):
+- "Mejor campaña" y "Mejor cargo" se quedan en **azul** (color de su evaluación);
+- porcentajes con espacio;
+- barras de evolución en azul y gris;
+- nombre completo y cargo corto en el ranking;
+- un solo filtro de cargo;
+- sin pestañas.
+
+**Qué se hizo:**
+- `src/modulos/marketing/canales/` (nuevo): la pantalla, con pestañas Mailing, Redes sociales y Otros.
+  Ver la tabla de archivos en el README.
+- `PortalLayout.tsx`: el item "Marketing por canales" en el menú MARKETING, después de
+  "Flujo de ventas", y la línea que muestra la pantalla.
+- `server/marketingCanales/calculos.js`:
+  - los meses y los totales también traen `totalBrevo`;
+  - las explicaciones de aperturas totales y clics en enlaces distintos dicen que la pantalla de
+    Brevo usa otra fórmula;
+  - personas con clic agrega la nota de antivirus.
+
+  **Ningún número cambió.**
+- Docs: D22 (semáforo), D23 (pantalla), README, REQUISITOS.
+- **No se tocó:**
+  - Flujo de ventas;
+  - "Campañas de correo";
+  - otros dashboards;
+  - estilos globales;
+  - `package.json` y `vercel.json`.
+
+**Error encontrado por las pruebas y corregido:** en la vista "Sin internos", la tabla de campañas
+leía la campaña completa en vez de su bloque `metricas`. Se corrigió en `bloque()` de `datos.js`
+antes de mostrar la pantalla.
+
+**Ajuste visto en la foto:** la #75 mostraba "10.0 %" de rebote temporal en verde (el valor real es
+9.97 %). Ahora el color se decide con el mismo porcentaje redondeado que se ve, así que sale amarillo (D22).
+
+**Fotos de la pantalla** (Edge sin ventana, con los datos reales): pestaña Mailing a 1400 px,
+ventana de detalle de la #75 y vista de teléfono a 390 px. Todo cabe en el ancho; solo la tabla se
+desplaza hacia los lados dentro de su recuadro.
+
+**Cambio de diseño pedido antes del commit (16/11/2026):** usar el estilo visual del dashboard viejo
+"Campañas de correo", sin copiarlo completo y sin modificarlo.
+- **Pantalla:**
+  - la pestaña Mailing se reordenó en 10 secciones (D25);
+  - 4 anillos con rangos de referencia B2B (D26);
+  - la tabla de campañas pasó a ser el "Ranking de campañas";
+  - nuevas: "Aperturas por cargo" y "Comparar campañas";
+  - leads y territorio quedan como pendientes;
+  - en "Salud del envío", Bajas · Quejas va aparte ("De los entregados · no se suman"), con % sobre entregados.
+- **Servidor:**
+  - `pctEntrega` y `pctCtor` (D28);
+  - `cargo` y `porCargo` (D27);
+  - explicaciones de entrega, CTOR y cargo.
+- **No va:** Lead Scoring, Embudo comercial, Pipeline ni nada por empresa (D24).
+- `public/dashboards/marketing/mailing-campanas.html` **no se modificó**, y "Campañas de correo" sigue en el menú.
+- **Ajustes vistos en las fotos:** los números de las tablas ya no se parten en dos líneas, y el
+  nombre de la campaña en el ranking tiene un ancho mínimo en teléfono.
+
+**Cambio solo visual, siguiendo el mockup aprobado (17/11/2026):**
+- **Pantalla:**
+  - una sola vista, sin pestañas, con el formato del dashboard original "Campañas de correo" (D31);
+  - nuevos: barra de filtros estándar, transparencia de datos, filtro de campañas, salud con 6 tarjetas,
+    mejor campaña / cargo / país y peor entrega, gráficas del mockup, embudo y ranking con muestra;
+  - se quitó "Comparar campañas";
+  - un solo filtro de cargo (D32).
+- **Servidor (aprobado antes de programar):**
+  - filtro `?campanas=` (D29), en `calculos.js`, `marketingMailing.js`, `api/marketing/mailing.js` y `server.ts`;
+  - `destacados` (D30);
+  - **ningún número existente cambió**.
+- **Archivos:**
+  - nuevos: `Filtros.jsx` y `Graficas.jsx`;
+  - se borró `EvolucionMensual.jsx`;
+  - `PortalLayout.tsx` no se tocó: el menú sigue diciendo "Marketing por canales".
+- **Ajustes vistos al comparar con el mockup:**
+  - aperturas por cargo, de mayor a menor;
+  - eje de evolución con números redondos (0 · 300 · 600 · 900);
+  - el ranking muestra las 14 columnas en pantalla ancha (nombre en dos líneas, cargo corto).
+- **Pruebas:** 60 revisiones de pantalla y servidor con los datos reales. Incluyen:
+  - números aprobados idénticos;
+  - el filtro: suma de campañas, "las 3 = sin filtro", id inexistente, filtro mal escrito → 400;
+  - los destacados, con casos inventados (pocos entregados, país conocido);
+  - muestra;
+  - período, cargo y chips;
+  - el orden de la vista igual al mockup;
+  - que no haya pestañas, Comparar, Redes, Otros, Lead Scoring ni Embudo comercial;
+  - un solo filtro de cargo;
+  - anillos, salud, destacados, gráficas, embudo y ranking;
+  - Total en Brevo;
+  - la vista filtrada;
+  - sin campañas;
+  - la ventana de detalle.
+
+  Las pruebas anteriores del servidor también siguen en 0 fallas.
+
+**Pruebas anteriores (0 fallas):**
+- **Pantalla, con los datos reales: 71 revisiones**, después del cambio de diseño. Además de lo de
+  abajo, revisan:
+  - el orden de las 10 secciones;
+  - que no haya Lead Scoring, Embudo comercial, Pipeline ni empresa;
+  - los anillos: valores, "X de Y", colores (entrega roja, apertura azul, CTR y CTOR amarillos) y rangos visibles;
+  - los límites exactos sin huecos de los 4 rangos;
+  - el CTOR del servidor (3.6 / 8.1 / 8.9 / 7.5 %) y "pocos datos" con menos de 5 aperturas;
+  - la entrega: 84.2 %;
+  - el cargo (incluido "FINACIERO"; "SUBGERENTE GENERAL" → Sin cargo);
+  - salud del envío: 718 + 53 + 82 = 853, con bajas y quejas aparte sobre entregados;
+  - el orden del ranking (mejores, peores, por rebote; pocos datos al final);
+  - comparar (3 al abrir, con 4 métricas cada una);
+  - las barras por cargo.
+- Primera versión de la pantalla: 39 revisiones.
+  - **Fecha** = Send_Date leída directo de los CSV. La #75 dice 11/11/2026 aunque su nombre diga
+    "NOVIEMBRE 9", y no hay corrimiento por zona horaria.
+  - **Cifras** iguales a las tablas aprobadas del Paso A:
+    - Total en Brevo: 854/719/82/53/147/12/10;
+    - Sin internos: 853/718/146/11.
+  - **Semáforo:**
+    - rebote permanente: #75 y #76 en rojo, #74 en verde, total 6.2 % en rojo;
+    - rebote temporal: #76 (10.5 %) y #75 ("10.0 %") en amarillo, total 9.6 % en verde;
+    - los límites exactos de cada umbral;
+    - "pocos datos" sin color.
+  - **Textos de la pantalla:**
+    - sin "@" y sin "como Brevo";
+    - asunto pendiente en las 3 campañas;
+    - metas pendientes;
+    - nota "Incluye 4 personas…";
+    - nota de antivirus;
+    - aviso "El 82 % … Desconocido";
+    - exclusiones;
+    - aviso de un solo mes.
+  - **Ventana de detalle:**
+    - fecha y hora (11/11/2026 15:37);
+    - las dos columnas;
+    - la nota de apertura de la #75 (3);
+    - el correo interno de la #76.
+  - **Casos especiales:** sin fuente (aviso y "Reintentar") y "pocos datos".
+- `npm run lint` y `npm run build`: sin errores.
+- Pruebas del servidor (Paso A, casos inventados, Drive simulado), repetidas: 0 fallas.
+
+---
+
+## Redes sociales · revisión (solo lectura) — 16/11/2026 ⏸️ se deja fuera por ahora
+
+Decisión de Keily: Redes sociales **no** se construye todavía. La pestaña queda como "Pendiente de
+fuente de datos", igual que "Otros". No se creó `/api/marketing/redes`.
+
+**Lo que se encontró (para retomarlo):**
+- **Fuente:** el Excel de Gaby en SharePoint, servido por el servicio de Render
+  `https://dashboard-marketing-ks6o.onrender.com/api/rrss/excel`. Es un servicio aparte en
+  Python (repo InnovAIgt/dashboard-marketing), en el plan gratis de Render.
+  - Si no se usa, se apaga: la primera llamada tardó **32.5 s** y las siguientes, ~1 s.
+- **Devuelve el Excel completo** (`.xlsx`), no una lista de datos. Hay que leerlo en nuestro servidor.
+- **No pide llave:** es público, sin token ni contraseña.
+- **Hoy no funciona:** responde **HTTP 502** con *"SharePoint respondió con estado 404. Es posible
+  que el enlace público haya cambiado o haya expirado."* Se probó dos veces, con el servicio despierto.
+  El servicio está bien; el **enlace público al Excel está roto**.
+- **Librería:** `xlsx` **0.18.5** ya está en `dependencies` del proyecto (no hay que instalar nada).
+- **Lógica existente para reutilizar** (sin modificar el archivo): `public/dashboards/marketing/flujo-ventas.html`,
+  funciones `RRSS_GABY_HEADERS`, `rrssContextoHoja`, `rrssNormalizarFilaGaby`, `rrssConvertirLibroGaby`
+  y `rrssNumero`.
+  - Descarta las filas sin fecha ni red social.
+  - Para Datared, el país es siempre El Salvador.
+- **Hojas esperadas:**
+  - "DATA RED": Datared, El Salvador;
+  - "…GT": RED Intelfon, Guatemala;
+  - "…SV": RED Intelfon, El Salvador.
+- **21 columnas esperadas:**
+  - U1 (fecha), id, Red social, Campaña, Link publicación, Presupuesto pauta;
+  - Alcance, visualizaciones, Clics, Costo x clic, Interacciones, Comentarios, Compartidos;
+  - Mensajes/Leads, Lead calificado, Costo x Lead;
+  - Cierres exitoso (No. clientes), Costo x Cliente, No. de unidades, Costo X Unidad, post_id_meta.
+- **Vercel:** para esperar a que Render despierte (60 s o más), la función necesita
+  `maxDuration: 60` dentro de `api/marketing/redes.js`, sin tocar `vercel.json`. En el plan gratis
+  de Vercel, 60 s es el máximo; en local y Docker no hay límite.
+- **Diseño propuesto** (cuando se retome):
+  - las mismas 3 piezas: fuente Render → lector del libro de Gaby → cálculos;
+  - caché de 15 min y `?actualizar=1`;
+  - espera de 75 s, con el mensaje "Despertando el servidor de redes sociales, puede tardar hasta
+    un minuto" en vez de error;
+  - un mensaje distinto si el enlace de SharePoint está roto;
+  - variable `MARKETING_RRSS_URL`, solo servidor.
+
+**Pendientes de Redes:**
+- Conseguir una copia del Excel de Gaby y un **enlace nuevo** de SharePoint.
+- Confirmar con Gaby:
+  - la moneda del presupuesto por país;
+  - qué cuenta como publicación "programada";
+  - la columna de motivo;
+  - si la meta de 14 publicaciones al mes es total o por marca.
+- El servicio de Render es **público y sin llave**: avisar a Eduardo.
+- Evaluar pasar el servicio de Render al centralizado.
+
+---
+
 ## Pendientes
 
 - **Pedir a Prospekt IA que guarde el correo del lead para el cruce de la Fase 4.**
@@ -179,6 +372,9 @@ Ahora cuenta como rebote (D21).
   Campaign ID, asunto, cargo, territorio/vendedor y marca. Asuntos conocidos:
   - #75: "Reduce tu tiempo muerto";
   - #76: "Producción a ciegas todavía".
+- **Pestaña "Resumen"** (todos los canales juntos): no se hace hasta tener Redes sociales, porque sin
+  Redes no hay datos de leads.
+- **Redes sociales:** ver la sección "Redes sociales · revisión" arriba.
 - **Lista de "correos a corregir"** para Marketing (rebotes permanentes y dominios inválidos).
   Evaluar cómo entregarla. **No mostrar correos de personas en el navegador sin la aprobación de Keily.**
 - Retirar "Campañas de correo" (`mailing-campanas.html`) en otro PR (D13).
