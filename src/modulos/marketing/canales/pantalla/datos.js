@@ -9,13 +9,6 @@ export const VISTAS = {
   totalBrevo: { key: 'totalBrevo', label: 'Total en Brevo', corto: 'Total en Brevo' },
 }
 
-/** Metas: todavía no están definidas → se muestran en gris como "meta pendiente". */
-export const METAS = {
-  campanasPorMes: null,
-  pctApertura: null,
-  pctClic: null,
-}
-
 /**
  * Semáforo de "Salud del envío" (D22). Rojo solo para lo crítico.
  * Rebotes: % sobre ENVIADOS. Bajas y quejas: % sobre ENTREGADOS (solo quien recibió el correo puede darse de baja o quejarse).
@@ -44,7 +37,7 @@ export function sobreBase(m, campo) {
 
 /**
  * Anillos de "Métricas de interacción" (D26): rangos de REFERENCIA general B2B, sin huecos.
- * NO son la meta de RED (meta pendiente). Se evalúa el mismo % que se ve (1 decimal).
+ * NO son la meta de RED. Se evalúa el mismo % que se ve (1 decimal).
  * - Excelente ≥ excelente · Promedio ≥ promedio y < excelente · Bajo < promedio.
  * - Solo la entrega tiene "Crítico" (rojo): < 90 %.
  */
@@ -54,7 +47,7 @@ export const REFERENCIAS = {
   pctClic: { nombre: 'CTR', excelente: 0.05, promedio: 0.02, critico: null },
   pctCtor: { nombre: 'CTOR', excelente: 0.20, promedio: 0.10, critico: null },
 }
-export const NOTA_REFERENCIA = 'Referencia general B2B, no es la meta de RED (meta pendiente).'
+export const NOTA_REFERENCIA = 'Referencia general B2B, no es la meta de RED.'
 
 export const NIVELES = {
   excelente: { texto: 'Excelente', tono: 'verde' },
@@ -109,7 +102,7 @@ const ORDEN_TONO = { pocos: 0, verde: 1, amarillo: 2, rojo: 3 }
 /** El peor de varios tonos (para tarjetas que juntan dos métricas). */
 export const peorTono = (...tonos) => tonos.reduce((a, b) => (ORDEN_TONO[b] > ORDEN_TONO[a] ? b : a), 'pocos')
 
-export const TEXTO_TONO = { verde: 'Bien', amarillo: 'Atención', rojo: 'Crítico', pocos: 'Pocos datos', meta: 'Meta pendiente' }
+export const TEXTO_TONO = { verde: 'Bien', amarillo: 'Atención', rojo: 'Crítico', pocos: 'Pocos datos' }
 
 // ---------------------------------------------------------------- formatos
 
@@ -166,7 +159,7 @@ export function bloque(objeto, vista) {
 /** Campañas que cuentan (las de prueba van aparte, en "Exclusiones"). */
 export const campanasIncluidas = (datos) => (datos?.campanas ?? []).filter((c) => !c.excluida)
 
-/** Último mes con campañas que cuentan, para la tarjeta "Campañas del mes vs meta". */
+/** Último mes con campañas que cuentan, para la tarjeta "Campañas del mes". */
 export function ultimoMes(datos) {
   const meses = datos?.meses ?? []
   return meses.length ? meses[meses.length - 1] : null
@@ -179,7 +172,7 @@ export function pctPaisDesconocido(datos) {
   return t.porPais?.Desconocido?.enviados / t.enviados
 }
 
-/** Campañas del último mes con datos (para la tarjeta "Campañas del mes vs meta"). */
+/** Campañas del último mes con datos (para la tarjeta "Campañas del mes"). */
 export function campanasDelMes(datos, mes) {
   return campanasIncluidas(datos).filter((c) => c.mes === mes)
 }

@@ -66,3 +66,15 @@ Pedido por Keily García el 16/11/2026. Estado: ✅ hecho · 🔄 en curso · �
 | # | Requisito | Estado |
 |---|---|---|
 | R22 | Documentación completa y Pull Request. | ⏳ Fase 5 |
+
+## Pendiente por falta de datos
+
+No se muestran en el dashboard hasta que existan los datos (D33).
+
+| # | Qué | Qué falta |
+|---|---|---|
+| P1 | Leads generados y leads calificados por campaña | Saber en qué sistema se registran y que ese sistema guarde el correo del lead, para cruzarlo con los correos de la campaña. Hoy Prospekt IA no lo guarda. |
+| P2 | Metas (campañas por mes, % de apertura, % de clic) | Que Marketing defina las metas de RED. Hoy los anillos usan una referencia general B2B, que no es la meta. |
+| P3 | Campañas programadas | Una fuente que diga qué campañas están programadas y cuándo; el reporte de Brevo solo trae campañas ya enviadas. |
+| P4 | Territorio por comercial (vendedor) | Que el ingeniero aclare qué es "territorio por comercial" y de dónde sale (probablemente del catálogo de campañas). |
+| P5 | País real del destinatario | Hoy el 82 % de los envíos tiene país "Desconocido", porque el país se deduce de la terminación del correo (.gt / .sv). Hace falta el país en la base de contactos. |

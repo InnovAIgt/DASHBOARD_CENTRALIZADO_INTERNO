@@ -363,6 +363,47 @@ fuente de datos", igual que "Otros". No se creó `/api/marketing/redes`.
 
 ---
 
+## Solo datos reales · quitar tarjetas sin datos — 17/11/2026 🔄 (esperando aprobación para commit)
+
+**Antes:**
+- La Fase 3 se guardó en el commit `df1a20c`, con la lista de archivos que aprobó Keily.
+- Se verificó que no entraran `.env`, `.claude/`, `.vscode/`, `.kiro/`, CSV, llaves ni correos.
+
+**Qué se hizo (D33):**
+- `pantalla/Mailing.jsx`: el Resumen queda solo con "Campañas del mes" (cuántas y cuáles, con fecha de
+  envío). Se quitaron "Campañas del mes vs meta", "Leads generados" y "Leads calificados", y en la nota
+  de los anillos se quitó "(meta pendiente)".
+- `pantalla/datos.js`, `pantalla/comunes.jsx` y `marketing-canales.css`: se quitaron las partes que ya
+  no se usaban (`METAS`, la etiqueta "Meta pendiente" y su estilo).
+- REQUISITOS: sección nueva "Pendiente por falta de datos" (P1 a P5).
+- **No cambió:** el servidor ni ningún número.
+
+**Pruebas:** 63 revisiones de pantalla y servidor con los datos reales, 0 fallas.
+- Todos los números aprobados siguen idénticos.
+- El Resumen muestra solo "Campañas del mes": 3 (y 2 con filtro).
+- Ya no aparecen "meta pendiente", "Leads generados/calificados" ni "/ —".
+- Pruebas del servidor anteriores: 0 fallas.
+- `npm run lint` y `npm run build`: sin errores.
+
+---
+
+## Pendientes de seguridad (fuera de este módulo; NO se cambiaron)
+
+Solo se anota **dónde** están. Los valores no se copian aquí.
+- `server.ts`: las rutas `/api/make/upload` y `/api/history` tienen **direcciones de webhooks de
+  Make.com escritas en el código**, como respaldo si falta la variable de entorno.
+- `.env.example`: tiene **valores reales** en varias variables:
+  - llaves `VITE_…` (que además quedan visibles en el navegador);
+  - SAP (`SAP_API_KEY`, `VITE_SAP_API_KEY`);
+  - Workflow (`WORKFLOW_API_KEY`, `VITE_WORKFLOW_API_KEY`).
+
+  Ese archivo sí se sube al repositorio. Debería tener solo los nombres, vacíos.
+- Sugerencia para quien administre esos módulos:
+  - mover los valores a `.env.local`, Vercel y Coolify;
+  - cambiar (rotar) las llaves que ya estuvieron en el repositorio.
+
+---
+
 ## Pendientes
 
 - **Pedir a Prospekt IA que guarde el correo del lead para el cruce de la Fase 4.**

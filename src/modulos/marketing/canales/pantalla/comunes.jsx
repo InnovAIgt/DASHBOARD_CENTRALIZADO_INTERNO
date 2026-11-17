@@ -17,7 +17,7 @@ export function Explicacion({ texto, etiqueta = 'Cómo se calcula' }) {
   </span>
 }
 
-/** Pastilla del semáforo: verde / amarillo / rojo / pocos datos / meta pendiente. */
+/** Pastilla del semáforo: verde / amarillo / rojo / pocos datos. */
 export function Tono({ tono, texto }) {
   return <span className={`mkt-tono is-${tono}`}>{texto ?? TEXTO_TONO[tono]}</span>
 }

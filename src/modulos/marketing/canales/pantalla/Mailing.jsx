@@ -12,8 +12,8 @@ import { BarraFiltros, FiltroCampanas, LineaResumen, Transparencia } from './Fil
 import { AperturasPorCargo, Embudo, EvolucionPorMes } from './Graficas.jsx'
 import { MetricasInteraccion } from './Interaccion.jsx'
 import {
-  ESTADO_NIVEL, ESTADO_RIESGO, ETIQUETAS, METAS, MUESTRA, NIVELES, NOTA_REFERENCIA, UMBRALES, VISTAS, asuntoDe, bloque,
-  campanasIncluidas, evaluar, formatoFechaEnvio, formatoMes, formatoNumero, formatoPct, nivelMuestra, ordenarRanking,
+  ESTADO_NIVEL, ESTADO_RIESGO, ETIQUETAS, MUESTRA, NIVELES, NOTA_REFERENCIA, UMBRALES, VISTAS, asuntoDe, bloque,
+  campanasDelMes, campanasIncluidas, evaluar, formatoFechaEnvio, formatoMes, formatoNumero, formatoPct, nivelMuestra, ordenarRanking,
   sobreBase, sobreEnviados, tonoRiesgo, ultimoMes,
 } from './datos.js'
 
@@ -29,23 +29,18 @@ function Kpi({ estado = 'na', etiqueta, valor, valorClase = '', explicacion, chi
   </article>
 }
 
-const Pendiente = ({ texto = 'Pendiente' }) => <span className="mkt-pill mkt-b-na">{texto}</span>
-
 // ------------------------------------------------------------------ 5. resumen del mes
+// Solo lo que tiene datos reales (D33): las tarjetas de meta y de leads se quitaron
+// (ver "Pendiente por falta de datos" en docs/marketing-canales/REQUISITOS.md).
 
 function ResumenDelMes({ datos, vista, def }) {
   const mes = ultimoMes(datos)
-  const campanasMes = mes ? bloque(mes, vista).campanas : null
+  if (!mes) return null
+  const delMes = campanasDelMes(datos, mes.mes)
   return <div className="mkt-grid-kpi">
-    <Kpi etiqueta="Campañas del mes vs meta" explicacion={`Campañas que cuentan en el último mes con envíos (${def.mes}). La meta mensual todavía no está definida.`}
-      valor={<>{campanasMes == null ? '—' : formatoNumero(campanasMes)} <span className="mkt-kpi-meta">/ {METAS.campanasPorMes ?? '—'}</span></>}>
-      {mes ? formatoMes(mes.mes, true) : 'Sin campañas'} · <Pendiente texto="Meta pendiente" />
-    </Kpi>
-    <Kpi etiqueta="Leads generados" valor="—" valorClase="mkt-is-na">
-      <Pendiente /> Prospekt IA no guarda el correo del lead
-    </Kpi>
-    <Kpi etiqueta="Leads calificados" valor="—" valorClase="mkt-is-na">
-      <Pendiente /> mismo motivo
+    <Kpi estado="info" etiqueta="Campañas del mes" valor={formatoNumero(bloque(mes, vista).campanas)}
+      explicacion={`Campañas que cuentan en el último mes con envíos (${def.mes}). Las de prueba no cuentan.`}>
+      {formatoMes(mes.mes, true)} · {delMes.map((c) => `#${c.id} ${formatoFechaEnvio(c.fechaEnvio).slice(0, 5)}`).join(' · ')}
     </Kpi>
   </div>
 }
@@ -240,13 +235,13 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
     <FiltroCampanas disponibles={disponibles} filtros={filtros} alCambiarFiltros={alCambiarFiltros} />
 
     {sinCampanas ? <Aviso tipo="neutro" titulo="Ninguna campaña elegida">Ninguna campaña coincide con los filtros. Usa "Limpiar filtros" o "Seleccionar todas".</Aviso> : <>
-      <Seccion titulo="Resumen del mes" pista="metas y leads" />
+      <Seccion titulo="Resumen del mes" pista="último mes con envíos" />
       <ResumenDelMes datos={datos} vista={vista} def={def} />
 
       <Seccion titulo="Métricas de interacción" pista={`porcentajes sobre el total entregado · ${VISTAS[vista].corto}`} />
       <div className="mkt-card">
         <MetricasInteraccion m={total} definiciones={def} />
-        <div className="mkt-note">Rangos de referencia general B2B, <strong>no son la meta de RED</strong> (meta pendiente).
+        <div className="mkt-note">Rangos de referencia general B2B, <strong>no son la meta de RED</strong>.
           {total.notaPctApertura && <> La apertura: {total.notaPctApertura.charAt(0).toLowerCase() + total.notaPctApertura.slice(1)}.</>}
           {' '}Los clics pueden incluir clics automáticos de antivirus.</div>
       </div>

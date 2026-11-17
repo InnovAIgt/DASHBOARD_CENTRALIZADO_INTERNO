@@ -468,3 +468,24 @@ toda la página, incluido el ranking. El ranking no tiene filtro de cargo propio
 "Solo muestra suficiente (≥5 entregados)".
 
 **Por qué:** dos filtros de cargo confunden.
+
+## D33 · 17/11/2026 · El dashboard de Mailing muestra solo lo que tiene datos reales
+
+**Decisión:** se quitaron de "Resumen del mes" las tarjetas sin datos:
+- "Campañas del mes vs meta" (la meta no existe);
+- "Leads generados";
+- "Leads calificados".
+
+El Resumen queda con una sola tarjeta, **"Campañas del mes"**: cuántas campañas cuentan en el último
+mes con envíos y cuáles son, con su fecha de envío. Respeta los filtros y el selector Sin internos /
+Total en Brevo.
+
+La nota de los anillos queda como "Referencia general B2B, no es la meta de RED", sin "(meta pendiente)".
+
+Lo que falta para mostrar lo quitado está en REQUISITOS.md, sección "Pendiente por falta de datos"
+(P1 a P5).
+
+**Por qué:** las tarjetas vacías ("—", "Pendiente") no aportan y distraen. Si una cifra no tiene fuente,
+no se muestra.
+
+**No cambió:** ningún cálculo ni número del servidor. Ningún cálculo usaba metas ni leads.

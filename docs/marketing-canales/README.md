@@ -16,8 +16,8 @@ Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que si
    de N campañas · … · última lectura".
 3. **Transparencia de datos:** archivos leídos, correos analizados y exclusiones, con "Ver desglose de exclusiones".
 4. **Filtro de campañas:** chips, "Seleccionar todas" y "Limpiar selección".
-5. **Resumen del mes:** campañas del mes vs meta (meta pendiente) y leads generados y calificados
-   (pendiente: Prospekt IA no guarda el correo del lead).
+5. **Resumen del mes:** solo "Campañas del mes" (cuántas y cuáles, con su fecha de envío). Las tarjetas
+   sin datos (meta y leads) se quitaron (D33); ver "Pendiente por falta de datos" en REQUISITOS.
 6. **Métricas de interacción:** 4 anillos (Entrega, Apertura, CTR y CTOR) con Excelente / Promedio / Bajo
    y sus rangos (D26).
 7. **Salud del envío:** 6 tarjetas (entregados, rebote permanente, rebote temporal, apertura automática,

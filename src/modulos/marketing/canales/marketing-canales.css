@@ -115,7 +115,6 @@
   .mkt-kpi-label { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--mkt-tenue); }
   .mkt-kpi-value { font-family: var(--mkt-mono); font-size: 28px; font-weight: 700; color: var(--mkt-texto); line-height: 1.15; }
   .mkt-kpi-value.mkt-kpi-texto { font-family: inherit; font-size: 16px; overflow-wrap: anywhere; }
-  .mkt-kpi-meta { font-size: 15px; color: var(--mkt-tenue); }
   .mkt-kpi-sub { margin-top: 4px; font-size: 11px; line-height: 1.45; color: var(--mkt-tenue); }
   .mkt-aclaracion { margin-top: -4px; font-size: 11.5px; color: var(--mkt-tenue); }
   .mkt-aclaracion b { color: var(--mkt-texto-suave); }
@@ -265,7 +264,7 @@
   .mkt-tono.is-verde { color: var(--mkt-ok-texto); }
   .mkt-tono.is-amarillo { color: var(--mkt-warn-texto); }
   .mkt-tono.is-rojo { color: var(--mkt-bad-texto); }
-  .mkt-tono.is-pocos, .mkt-tono.is-meta { color: var(--mkt-tenue); border-color: var(--mkt-borde-fuerte); }
+  .mkt-tono.is-pocos { color: var(--mkt-tenue); border-color: var(--mkt-borde-fuerte); }
 
   /* ---------- Ventana de detalle de campaña ---------- */
   &.mkt-ventana { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; }
