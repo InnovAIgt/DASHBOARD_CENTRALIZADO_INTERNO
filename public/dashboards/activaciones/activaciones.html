@@ -348,35 +348,6 @@
           </div>
         </div>
       </div>
-
-      <!-- SIM CARDS (SECCIÓN INDEPENDIENTE AL FINAL DEL RESUMEN) -->
-      <section class="anexos-kpi-row" aria-label="SIM Cards" style="margin-top: 18px; margin-bottom: 0;">
-        <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #3fb898;"></span>
-          <span>SIM CARDS</span>
-        </div>
-        <div class="anexos-kpi-grid">
-          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de SIM Cards en Categorías">
-            <div class="anexos-kpi-label" style="color: #cbd5e1;">SIM Cards</div>
-            <div class="anexos-kpi-val" style="color: #e2e8f0;" id="kpiTotalSims">—</div>
-          </div>
-
-          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="SIM Cards en estado Nuevo">
-            <div class="anexos-kpi-label" style="color: #3fb898;">Nuevas</div>
-            <div class="anexos-kpi-val" style="color: #3fb898;" id="kpiSimsNuevoCount">—</div>
-          </div>
-
-          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="SIM Cards en estado Usado">
-            <div class="anexos-kpi-label" style="color: #e2b422;">Usadas</div>
-            <div class="anexos-kpi-val" style="color: #e2b422;" id="kpiSimsUsadoCount">—</div>
-          </div>
-
-          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="SIM Cards en estado Refurbished">
-            <div class="anexos-kpi-label" style="color: #a78bfa;">Refurbished</div>
-            <div class="anexos-kpi-val" style="color: #a78bfa;" id="kpiSimsRefurbCount">—</div>
-          </div>
-        </div>
-      </section>
     </div>
 
     <!-- ================= TAB 2: RADICACIONES POR ETAPA ================= -->
@@ -2607,13 +2578,10 @@
 
       // KPIs de Equipos: Equipos = total radios solicitados (cantidad sin renovaciones)
       // Desglose: Radios físicos + Consolas + Condición (Nuevo / Usado / Refurbished)
-      // Aparte al final del Resumen: SIM Cards (Total + Nuevas / Usadas / Refurbished)
       let totalRadiosFisicos = 0;
       let totalConsolas = 0;
       let totalPendingAnx = 0;
       let eqNuevo = 0, eqUsado = 0, eqRefurb = 0;
-      let totalSims = 0;
-      let simNuevo = 0, simUsado = 0, simRefurb = 0;
 
       filteredData.forEach(item => {
         if (isRenovacionItem(item)) return;
@@ -2626,11 +2594,6 @@
         eqNuevo += (inv.eCond.nuevo || 0) + (inv.consoleCond.nuevo || 0);
         eqUsado += (inv.eCond.usado || 0) + (inv.consoleCond.usado || 0);
         eqRefurb += (inv.eCond.refurbished || 0) + (inv.consoleCond.refurbished || 0);
-
-        totalSims += inv.simsS;
-        simNuevo += inv.sCond.nuevo || 0;
-        simUsado += inv.sCond.usado || 0;
-        simRefurb += inv.sCond.refurbished || 0;
       });
 
       setElText("kpiTotalEquipos", totalRadios.toLocaleString("es-GT"));
@@ -2650,11 +2613,6 @@
           eqSubNote.style.display = "none";
         }
       }
-
-      setElText("kpiTotalSims", totalSims.toLocaleString("es-GT"));
-      setElText("kpiSimsNuevoCount", simNuevo.toLocaleString("es-GT"));
-      setElText("kpiSimsUsadoCount", simUsado.toLocaleString("es-GT"));
-      setElText("kpiSimsRefurbCount", simRefurb.toLocaleString("es-GT"));
 
       // SLAs para Donut Chart (mismos colores semánticos que las tarjetas de arriba)
       let enTiempo = 0;
