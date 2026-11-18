@@ -4289,7 +4289,8 @@ let SAC_VIVO_CACHE = null;
 let SAC_DATA_NOTICE = "";
 let SAC_ETAPAS = new Map();
 let SAC_ETAPAS_ERROR = "";
-const SAC_VIVO_URL = "https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-vivo-publico";
+// Por nuestro servidor (server/sacProxy.js): la función rechaza al navegador por CORS.
+const SAC_VIVO_URL = "/api/sac/vivo";
 
 function sacOpenCountryRows(){
   return ALL.filter(r=>r.es_abierto && (filters.pais==="Todos" || r.pais===filters.pais));
@@ -4317,7 +4318,8 @@ function sacVivoPaisIncompleto(p){
        localStorage.removeItem("sac-corte-prueba")
      En prueba local, si la función falla no se muestra ninguna otra fuente.
 ========================================================= */
-const SAC_CORTE_URL = "https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-corte-publico";
+// Por nuestro servidor (server/sacProxy.js → sac-corte-publico): la función rechaza al navegador por CORS.
+const SAC_CORTE_URL = "/api/sac/corte";
 const SAC_CORTE_CONTRATO = "sac-corte-publico/1";
 const SAC_CORTE_CLAVE = "sac-corte-prueba";
 const SAC_LOCAL = h => h==="localhost" || h==="127.0.0.1";
@@ -4332,7 +4334,8 @@ const SAC_NO_DISPONIBLE = "No disponible";
    ÚLTIMO corte válido de esa semana, con su ID y hora. Lo llena una tarea programada del
    backend, aunque nadie tenga abierto el dashboard (ver backend/sac-historico-semanal/).
    Lo usa la vista «Al cierre de cada semana» de la gráfica; se lee en segundo plano. */
-const SAC_HIST_URL = "https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-historico-semanal";
+// Por nuestro servidor (server/sacProxy.js → sac-historico-semanal): la función rechaza al navegador por CORS.
+const SAC_HIST_URL = "/api/sac/historico";
 const SAC_HIST_CONTRATO = "sac-historico-semanal/1";
 const SAC_HIST_CLAVE = "sac-historico-prueba";   // solo en localhost: URL de una función local de prueba
 let SAC_HIST = {estado:"pendiente", motivo:"", semanas:new Map(), local:false};

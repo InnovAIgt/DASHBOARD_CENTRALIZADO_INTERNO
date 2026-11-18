@@ -14,9 +14,6 @@ services:
         VITE_FX_URL: ${VITE_FX_URL:-https://excel-parser-m9q8.onrender.com/api/tipo-cambio}
         VITE_CLIENTES_SUPABASE_URL: ${VITE_CLIENTES_SUPABASE_URL:-https://grultaxaxbcruzoeljld.supabase.co}
         VITE_CLIENTES_SUPABASE_KEY: ${VITE_CLIENTES_SUPABASE_KEY:-}
-        VITE_SAC_VIVO_URL: ${VITE_SAC_VIVO_URL:-https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-vivo-publico}
-        VITE_SAC_CORTE_URL: ${VITE_SAC_CORTE_URL:-https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-corte-publico}
-        VITE_SAC_HIST_URL: ${VITE_SAC_HIST_URL:-https://erjmqjcjggxbktxcogkm.supabase.co/functions/v1/sac-historico-semanal}
         VITE_RRHH_VIVO_URL: ${VITE_RRHH_VIVO_URL:-https://alkaqpxcrmbzhgcwpynj.supabase.co/functions/v1/rrhh-vivo-publico}
         VITE_SIMS_API_BASE: ${VITE_SIMS_API_BASE:-https://mso-api-proxy-sims.onrender.com/api/mso}
         VITE_BREVO_API_KEY: ${VITE_BREVO_API_KEY:-}
@@ -44,6 +41,10 @@ services:
       RED_API_KEY: ${RED_API_KEY:-}
       SAP_API_KEY: ${SAP_API_KEY:-}
       WORKFLOW_API_KEY: ${WORKFLOW_API_KEY:-}
+      # Servicio al Cliente: opcionales, vacías = dirección actual de cada función (server/sacProxy.js)
+      SAC_CORTE_URL: ${SAC_CORTE_URL:-}
+      SAC_VIVO_URL: ${SAC_VIVO_URL:-}
+      SAC_HIST_URL: ${SAC_HIST_URL:-}
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       MAKE_WEBHOOK_URL: ${MAKE_WEBHOOK_URL:-https://hook.eu2.make.com/uf2f68usry02c9ljgb8wcoy634ymbkcf}
       HISTORY_WEBHOOK_URL: ${HISTORY_WEBHOOK_URL:-https://hook.eu2.make.com/fa2xcbqi6a9aupb9bby5wqp5wuelk9ea}
