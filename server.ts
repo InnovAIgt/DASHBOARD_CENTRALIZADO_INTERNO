@@ -6,6 +6,7 @@ import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { obtenerMailing } from './server/marketingMailing.js';
 import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
 import { obtenerRedes } from './server/marketingRedes.js';
+import { reenviarSac } from './server/sacProxy.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -77,6 +78,15 @@ app.all('/api/marketing/redes', async (req, res) => {
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Servicio al Cliente · datos de SAC por el servidor (solo lectura, evita el bloqueo CORS de las Edge Functions).
+// /api/sac/corte, /api/sac/vivo y /api/sac/historico. En Vercel las atienden api/sac/*.js.
+app.all('/api/sac/:fuente(corte|vivo|historico)', async (req, res) => {
+  const i = req.originalUrl.indexOf('?');
+  const resultado = await reenviarSac({ fuente: req.params.fuente, method: req.method, query: i < 0 ? '' : req.originalUrl.slice(i) });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });
 
