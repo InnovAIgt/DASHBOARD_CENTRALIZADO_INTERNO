@@ -237,12 +237,18 @@
           </div>
 
           <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Radios físicos identificados en anexos">
-            <div class="anexos-kpi-label" style="color: #cbd5e1;">Radios</div>
+            <div>
+              <div class="anexos-kpi-label" style="color: #cbd5e1;">Radios</div>
+              <div class="anexos-kpi-sub" id="kpiRadiosSubNote" style="display: none;"></div>
+            </div>
             <div class="anexos-kpi-val" style="color: #e2e8f0;" id="kpiTotalRadiosEquipos">—</div>
           </div>
 
           <div class="anexos-kpi-card tone-cyan is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Consolas / aplicativos en anexos">
-            <div class="anexos-kpi-label" style="color: #38bdf8;">Consolas</div>
+            <div>
+              <div class="anexos-kpi-label" style="color: #38bdf8;">Consolas</div>
+              <div class="anexos-kpi-sub" id="kpiConsolasSubNote" style="display: none;"></div>
+            </div>
             <div class="anexos-kpi-val" style="color: #38bdf8;" id="kpiTotalConsolas">—</div>
           </div>
 
@@ -308,7 +314,7 @@
               <!-- Rendered by JS -->
             </svg>
             <div style="position: absolute; text-align: center;">
-              <div style="font-size: 26px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutTotalCount">44</div>
+              <div style="font-size: 26px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutTotalCount">—</div>
               <div style="font-size: 10px; font-weight: 800; color: #8b909e; text-transform: uppercase;">Total Radicaciones</div>
             </div>
           </div>
@@ -319,7 +325,7 @@
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: #2f8f76; display: inline-block;"></span>
                 <span style="font-size: 11px; color: #3f9c85; font-weight: 700;">En Tiempo</span>
               </div>
-              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutEnTiempoCount">19</span>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutEnTiempoCount">—</span>
             </div>
 
             <div onclick="navigateToEtapasFilter({ sla: 'por_vencer' })" style="cursor: pointer; background: rgba(197,150,0, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(197,150,0, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Por Vencer">
@@ -327,7 +333,7 @@
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: #c59600; display: inline-block;"></span>
                 <span style="font-size: 11px; color: #c59600; font-weight: 700;">Por Vencer</span>
               </div>
-              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutPorVencerCount">7</span>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutPorVencerCount">—</span>
             </div>
 
             <div onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" style="cursor: pointer; background: rgba(139, 92, 246, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.28); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas por Etapa">
@@ -335,7 +341,7 @@
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; display: inline-block;"></span>
                 <span style="font-size: 11px; color: #a78bfa; font-weight: 700;">Venc. Etapa</span>
               </div>
-              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasEtapaCount">18</span>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasEtapaCount">—</span>
             </div>
 
             <div onclick="navigateToEtapasFilter({ sla: 'vencidas_global' })" style="cursor: pointer; background: rgba(217,95,110, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(217,95,110, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas SLA Global">
@@ -343,7 +349,7 @@
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: #c43c50; display: inline-block;"></span>
                 <span style="font-size: 11px; color: #d95f6e; font-weight: 700;">Venc. Global</span>
               </div>
-              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasGlobalCount">1</span>
+              <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasGlobalCount">—</span>
             </div>
           </div>
         </div>
@@ -1217,9 +1223,9 @@
     if (txt === "refurbished") return "refurbished";
 
     const nameUpper = String((eq.eqpnm ?? eq.eqpnam) || "").trim().toUpperCase();
-    if (nameUpper.includes("REFURBISHED")) return "refurbished";
-    if (nameUpper.includes("USADO")) return "usado";
-    if (nameUpper.includes("NUEVO")) return "nuevo";
+    if (nameUpper.includes("REFURB")) return "refurbished";
+    if (nameUpper.includes("USAD")) return "usado";
+    if (nameUpper.includes("NUEV")) return "nuevo";
     return "sin_estado";
   }
 
@@ -1623,7 +1629,7 @@
     `;
   }
 
-  async function completeMissingCompanyNames(items, rawAllItems = []) {
+  function applySyncCompanyNames(items, rawAllItems = []) {
     const selfCompanyByCode = new Map();
     [...rawAllItems, ...items].forEach(item => {
       if (!item || typeof item !== "object") return;
@@ -1634,28 +1640,55 @@
       }
     });
 
+    let missingCount = 0;
     items.forEach(item => {
-      const existingName = getPrimaryCompanyName(item) || selfCompanyByCode.get(getClientCode(item)) || getContactName(item) || "";
-      if (existingName) item.empresa = existingName;
+      if (!item || typeof item !== "object") return;
+      const code = getClientCode(item);
+      const existingName = getPrimaryCompanyName(item)
+        || selfCompanyByCode.get(code)
+        || getContactName(item)
+        || CLIENT_NAME_OVERRIDES[code]
+        || "";
+      if (existingName) {
+        item.empresa = existingName;
+      } else {
+        missingCount++;
+      }
     });
+    return { selfCompanyByCode, missingCount };
+  }
 
-    const [altasResult, storeResult] = await Promise.allSettled([
-      fetch(CLIENT_NAMES_API_URL, { cache: "no-store" }),
-      fetch(STORE_CLIENTES_API_URL, {
-        method: "POST",
-        headers: {
-          apikey: STORE_CLIENTES_API_KEY,
-          Authorization: `Bearer ${STORE_CLIENTES_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: "{}",
-        cache: "no-store"
-      })
-    ]);
+  async function completeMissingCompanyNames(items, rawAllItems = []) {
+    const { selfCompanyByCode, missingCount } = applySyncCompanyNames(items, rawAllItems);
+    if (missingCount === 0) return 0;
+
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 7000) : null;
+    const signalOpts = controller ? { signal: controller.signal } : {};
+
+    let altasResult, storeResult;
+    try {
+      [altasResult, storeResult] = await Promise.allSettled([
+        fetch(CLIENT_NAMES_API_URL, { cache: "no-store", ...signalOpts }),
+        fetch(STORE_CLIENTES_API_URL, {
+          method: "POST",
+          headers: {
+            apikey: STORE_CLIENTES_API_KEY,
+            Authorization: `Bearer ${STORE_CLIENTES_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: "{}",
+          cache: "no-store",
+          ...signalOpts
+        })
+      ]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
 
     const companyByCode = new Map();
 
-    if (altasResult.status === "fulfilled" && altasResult.value.ok) {
+    if (altasResult && altasResult.status === "fulfilled" && altasResult.value.ok) {
       try {
         const json = await altasResult.value.json();
         const rows = Array.isArray(json) ? json : (json.data || json.items || json.results);
@@ -1670,11 +1703,11 @@
       } catch (error) {
         console.warn("No se pudieron procesar nombres desde la fuente de altas:", error.message);
       }
-    } else if (altasResult.status === "rejected") {
+    } else if (altasResult && altasResult.status === "rejected") {
       console.warn("No se pudieron completar nombres adicionales desde la fuente de altas:", altasResult.reason?.message || "error");
     }
 
-    if (storeResult.status === "fulfilled" && storeResult.value.ok) {
+    if (storeResult && storeResult.status === "fulfilled" && storeResult.value.ok) {
       try {
         const storeJson = await storeResult.value.json();
         const storeClientes = Array.isArray(storeJson?.clientes) ? storeJson.clientes : [];
@@ -1689,12 +1722,18 @@
       }
     }
 
+    let updatedCount = 0;
     items.forEach(item => {
+      if (!item || typeof item !== "object") return;
       const code = getClientCode(item);
       const primary = getPrimaryCompanyName(item);
       const company = primary || selfCompanyByCode.get(code) || companyByCode.get(code) || getContactName(item) || CLIENT_NAME_OVERRIDES[code] || "";
-      if (company) item.empresa = company;
+      if (company && company !== item.empresa) {
+        item.empresa = company;
+        updatedCount++;
+      }
     });
+    return updatedCount;
   }
 
   function renderApiUpdateTimestamp(isoString = null) {
@@ -1765,11 +1804,27 @@
     if (fetchedData && fetchedData.length > 0) {
       // Filtrar preofertas: las no iniciadas no interesan según indicación expresa
       allData = fetchedData.filter(item => item && item.iniciada !== false && item.estado !== "no_iniciada");
-      await completeMissingCompanyNames(allData, fetchedData);
+      const { missingCount } = applySyncCompanyNames(allData, fetchedData);
       filteredData = [...allData];
       renderApiUpdateTimestamp(apiMetaGeneratedAt);
       if (textEl) textEl.innerText = "Conectado a API Workflow (" + allData.length + " activas)";
       if (dotEl) dotEl.style.background = "#2f8f76";
+
+      renderApp();
+      if (typeof renderActInformeDetallado === "function") {
+        renderActInformeDetallado();
+      }
+
+      if (missingCount > 0) {
+        completeMissingCompanyNames(allData, fetchedData).then(updated => {
+          if (updated > 0) {
+            renderApp();
+            if (typeof renderActInformeDetallado === "function") {
+              renderActInformeDetallado();
+            }
+          }
+        }).catch(() => {});
+      }
     } else {
       console.error("No se pudo obtener datos de la API de Workflow.");
       if (textEl) textEl.innerText = "Error de conexión con API Workflow";
@@ -1778,11 +1833,10 @@
         errBanner.style.display = "block";
         errBanner.innerText = "No se pudieron obtener las preofertas desde la API en vivo de Workflow (https://workflow.red.com.gt/api/integraciones/dashboard/preofertas). Verifica tu conexión o credenciales.";
       }
-    }
-
-    renderApp();
-    if (typeof renderActInformeDetallado === "function") {
-      renderActInformeDetallado();
+      renderApp();
+      if (typeof renderActInformeDetallado === "function") {
+        renderActInformeDetallado();
+      }
     }
   }
 
@@ -2581,6 +2635,8 @@
       let totalRadiosFisicos = 0;
       let totalConsolas = 0;
       let totalPendingAnx = 0;
+      let radiosSinEstado = 0;
+      let consolasSinEstado = 0;
       let eqNuevo = 0, eqUsado = 0, eqRefurb = 0;
 
       filteredData.forEach(item => {
@@ -2590,6 +2646,8 @@
         totalRadiosFisicos += inv.equiposE;
         totalConsolas += inv.consolasCount;
         totalPendingAnx += Math.max(0, itemTotal - inv.equiposE - inv.consolasCount);
+        radiosSinEstado += inv.eCond.sin_estado || 0;
+        consolasSinEstado += inv.consoleCond.sin_estado || 0;
 
         eqNuevo += (inv.eCond.nuevo || 0) + (inv.consoleCond.nuevo || 0);
         eqUsado += (inv.eCond.usado || 0) + (inv.consoleCond.usado || 0);
@@ -2611,6 +2669,28 @@
         } else {
           eqSubNote.textContent = "";
           eqSubNote.style.display = "none";
+        }
+      }
+
+      const radiosSubNote = document.getElementById("kpiRadiosSubNote");
+      if (radiosSubNote) {
+        if (radiosSinEstado > 0) {
+          radiosSubNote.textContent = `${radiosSinEstado.toLocaleString("es-GT")} sin estado`;
+          radiosSubNote.style.display = "block";
+        } else {
+          radiosSubNote.textContent = "";
+          radiosSubNote.style.display = "none";
+        }
+      }
+
+      const consolasSubNote = document.getElementById("kpiConsolasSubNote");
+      if (consolasSubNote) {
+        if (consolasSinEstado > 0) {
+          consolasSubNote.textContent = `${consolasSinEstado.toLocaleString("es-GT")} sin plan/estado`;
+          consolasSubNote.style.display = "block";
+        } else {
+          consolasSubNote.textContent = "";
+          consolasSubNote.style.display = "none";
         }
       }
 
@@ -4892,6 +4972,7 @@
     bindEventHandlers();
     renderChecklistCols();
     renderApiUpdateTimestamp();
+    renderDonutSvg(0, 0, 0, 0, 0);
     loadDataFromApi();
   });
 </script>
