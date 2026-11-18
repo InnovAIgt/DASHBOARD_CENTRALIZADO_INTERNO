@@ -16,9 +16,9 @@
      }
     ],
     "currency": "USD",
-    "file": "Lote 20261118080239 - 2 archivos",
+    "file": "Lote 20261118120003 - 2 archivos",
     "fileCut": "16/11/2026",
-    "generatedAt": "18/11/2026 14:03",
+    "generatedAt": "18/11/2026 18:00",
     "latestMovement": "16/11/2026",
     "mixedCountries": false,
     "movementCount": 462
@@ -9457,9 +9457,9 @@
      }
     ],
     "currency": "GTQ",
-    "file": "Lote 20261118080239 - 2 archivos",
+    "file": "Lote 20261118120003 - 2 archivos",
     "fileCut": "17/11/2026",
-    "generatedAt": "18/11/2026 14:03",
+    "generatedAt": "18/11/2026 18:00",
     "latestMovement": "17/11/2026",
     "mixedCountries": false,
     "movementCount": 444
@@ -36435,7 +36435,7 @@
   }
  },
  "meta": {
-  "file": "Lote 20261118080239 - 2 archivos",
+  "file": "Lote 20261118120003 - 2 archivos",
   "fileCut": "17/11/2026",
   "latestMovement": "17/11/2026",
   "currency": "MULTI",
@@ -36461,7 +36461,7 @@
     "currency": "USD"
    }
   ],
-  "generatedAt": "18/11/2026 14:03"
+  "generatedAt": "18/11/2026 18:00"
  },
  "totals": {
   "initial": 2611170.03,
