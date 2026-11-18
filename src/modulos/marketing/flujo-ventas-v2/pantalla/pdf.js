@@ -10,7 +10,7 @@
 // public/dashboards/activaciones/activaciones.html, solo se leyó) con el contenido de la v2.
 // Nunca incluye el teléfono del cliente.
 import { formatNumber, PIPELINE_STAGES, qualificationLabel } from '../utils/analytics.js'
-import { conversionCalificados, datosVistaGeneral, tarjetasEjecutivos } from './datos.js'
+import { conversionCalificados, datosVistaGeneral, mesesResumen, resumenLeads, soloCalificados, tarjetasEjecutivos, tonoConversionTotal } from './datos.js'
 
 // Mismos valores que comunes.jsx (se repiten aquí para que este archivo no dependa de pantallas).
 const CODIGO_PAIS = { Guatemala: 'GT', 'El Salvador': 'SV' }
@@ -95,32 +95,38 @@ export function nombreArchivoPdf({ filters, periodo }) {
 // por posición; así se respeta la regla de colores (rojo solo para lo vencido, D12).
 const kpi = (lbl, num, sub, color) => `<div class="period-kpi" style="border-top-color:${color} !important;"><div class="lbl">${esc(lbl)}</div><div class="num" style="color:${color} !important;">${esc(num)}</div><div class="sub">${esc(sub)}</div></div>`
 
-export function seccionesReporte({ leads, summary, baseEjecutivos, informe }) {
+export function seccionesReporte({ leads, summary, baseEjecutivos, informe, filters }) {
   const datos = datosVistaGeneral(leads)
   const conv = conversionCalificados(leads)
+  // D19: el Resumen del PDF dice lo mismo que la pantalla (lógica del dashboard de leads).
+  const calificado = soloCalificados(filters)
+  const res = resumenLeads(leads)
+  const s0 = res.general
+  const colorConv = (r) => ({ verde: '#2f8f76', amarillo: '#b58900', neutro: '#6b7280' }[tonoConversionTotal(r)])
 
   // 01 Resumen · página 1: países, indicadores y leads por mes
-  const paises = datos.countries.map((c) => `<div class="box country"><div><div class="name">${esc(c.country)} (${esc(CODIGO_PAIS[c.country])})</div>
-      <div class="sub">${formatNumber(c.total)} leads · ${formatNumber(c.qualified)} calificados · ${formatNumber(c.won)} ganados · ${c.won ? formatNumber(Math.round(c.avgUnits)) : '—'} u/cierre</div></div>
-      <div><div class="pct" style="color:#4f8fd8;">${esc(formatearRatio(c.conversion.ratio))}</div><div class="tag" style="color:#4f8fd8;">Conversión de calificados</div></div></div>`).join('')
+  const paises = res.paises.map((c) => `<div class="box country"><div><div class="name">${esc(c.country)} (${esc(CODIGO_PAIS[c.country])})</div>
+      <div class="sub">${formatNumber(c.total)} leads · ${formatNumber(c.won)} ganados · ${formatNumber(c.units)} unidades · ${c.won ? formatNumber(Math.round(c.avgUnits)) : '—'} u/cierre</div></div>
+      <div><div class="pct" style="color:${colorConv(c.conversion)};">${esc(formatearRatio(c.conversion))}</div><div class="tag" style="color:${colorConv(c.conversion)};">Conversión (ganados ÷ leads)</div></div></div>`).join('')
   const kpis = [
-    kpi('Total leads', formatNumber(summary.total), `${formatNumber(summary.open)} abiertos`, '#151821'),
-    kpi('Calificados', formatNumber(summary.qualified), `${formatNumber(summary.unqualified)} no calificados`, '#4f8fd8'),
-    kpi('Ganados', formatNumber(summary.won), `${formatNumber(conv.ganadosCalificados)} de calificados · ${formatNumber(conv.ganadosNoCalificados)} de no calificados`, '#2f8f76'),
-    kpi('Conversión de calificados', formatearRatio(conv.ratio), `${formatNumber(conv.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conv.calificados)} calificados`, '#4f8fd8'),
-    kpi('Unidades vendidas', formatNumber(summary.units), 'En leads ganados', '#151821'),
-    kpi('Unidades por cierre', summary.won ? formatNumber(Math.round(summary.avgUnits)) : '—', summary.won ? `${formatNumber(summary.units)} unidades ÷ ${formatNumber(summary.won)} ganados` : 'Sin ganados', '#6b7280'),
+    kpi('Total leads', formatNumber(s0.total), calificado ? 'Solo calificados (filtro)' : `${formatNumber(s0.qualified)} calificados · ${formatNumber(s0.unqualified)} no calificados`, '#151821'),
+    kpi('Ganados', formatNumber(s0.won), '= "Radicados" en el dashboard de leads', '#2f8f76'),
+    kpi('Unidades vendidas', formatNumber(s0.units), 'En leads ganados', '#b58900'),
+    kpi('Unid. promedio por cierre', s0.won ? formatNumber(Math.round(s0.avgUnits)) : '—', s0.won ? `${formatNumber(s0.units)} unidades ÷ ${formatNumber(s0.won)} ganados` : 'Sin ganados', '#6b7280'),
+    kpi('Conversión', formatearRatio(s0.conversion), `${formatNumber(s0.won)} ganados ÷ ${formatNumber(s0.total)} leads`, colorConv(s0.conversion)),
+    ...(calificado ? [] : [kpi('Conversión de calificados', formatearRatio(conv.ratio), `${formatNumber(conv.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conv.calificados)} calificados`, '#4f8fd8')]),
   ].join('')
-  const filasMes = datos.months.length
-    ? datos.months.map((m) => `<tr><td>${esc(mesLargo(m.month))}</td><td class="c">${formatNumber(m.total)}</td><td class="c">${formatNumber(m.qualified)}</td><td class="c">${formatNumber(m.noCalificados)}</td><td class="c">${formatNumber(m.won)}</td><td class="c">${formatNumber(m.units)}</td><td class="c">${esc(formatearRatio(m.conversion.ratio))}</td></tr>`).join('')
-    : '<tr><td colspan="7" class="c">Sin meses con datos</td></tr>'
+  const meses = mesesResumen(leads)
+  const filasMes = meses.length
+    ? meses.map((m) => `<tr><td>${esc(mesLargo(m.month))}</td><td class="c">${formatNumber(m.total)}</td><td class="c">${formatNumber(m.qualified)}</td>${calificado ? '' : `<td class="c">${formatNumber(m.unqualified)}</td>`}<td class="c">${formatNumber(m.won)}</td><td class="c">${esc(formatearRatio(m.conversion))}</td><td class="c">${m.won ? formatNumber(Math.round(m.avgUnits)) : '—'}</td><td class="c">${formatNumber(m.units)}</td></tr>`).join('')
+    : `<tr><td colspan="${calificado ? 7 : 8}" class="c">Sin meses con datos</td></tr>`
   const resumen1 = `<section data-pdf-module="resumen">
   <h2>01 · Resumen — tarjetas por país e indicadores</h2>
   <div class="grid2">${paises}</div>
   <h2>Indicadores del período</h2>
   <div class="period-kpis">${kpis}</div>
   <h2>Leads por mes (ganados por fecha de cierre; el resto por fecha de creación)</h2>
-  <table><thead><tr><th>Mes</th><th class="c">Leads</th><th class="c">Calificados</th><th class="c">No calificados</th><th class="c">Ganados</th><th class="c">Unidades</th><th class="c">Conv. calificados</th></tr></thead><tbody>${filasMes}</tbody></table>
+  <table><thead><tr><th>Mes</th><th class="c">Total leads</th><th class="c">Calificados</th>${calificado ? '' : '<th class="c">No calificados</th>'}<th class="c">Ganados</th><th class="c">Conversión</th><th class="c">Unid. promedio</th><th class="c">Unidades</th></tr></thead><tbody>${filasMes}</tbody></table>
   </section>`
 
   // 01 Resumen · página 2: embudo por etapa
@@ -175,7 +181,7 @@ export function seccionesReporte({ leads, summary, baseEjecutivos, informe }) {
   <tbody>${visibles.map(filaInf).join('') || '<tr><td colspan="10" class="c">Ningún lead coincide con la vista o la búsqueda</td></tr>'}</tbody></table>
   </section>`
 
-  return { resumen: resumen1 + resumen2, ejecutivos, informe: informeSec, conversion: conv, filasInforme: todas.length, filasInformeEnPdf: visibles.length }
+  return { resumen: resumen1 + resumen2, ejecutivos, informe: informeSec, conversion: conv, conversionTotal: s0.conversion, filasInforme: todas.length, filasInformeEnPdf: visibles.length }
 }
 
 /** HTML completo del reporte (misma plantilla que el reporte de Activaciones). */
@@ -183,7 +189,7 @@ export function construirReporte({ seleccion, leads, summary, baseEjecutivos, fi
   const nombres = Object.fromEntries(MODULOS_PDF.map((m) => [m.id, m.name]))
   const modulos = seleccion.map((id) => nombres[id]).filter(Boolean).join(' · ')
   const f = textosFiltros({ filters, periodo, total: leads.length })
-  const s = seccionesReporte({ leads, summary, baseEjecutivos, informe })
+  const s = seccionesReporte({ leads, summary, baseEjecutivos, informe, filters })
   const ahora = new Date()
   const fechaEmision = `${ahora.toLocaleDateString('es-SV', { year: 'numeric', month: 'long', day: 'numeric' })} a las ${ahora.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' })}`
   const base = `${window.location.origin}/`
@@ -212,7 +218,7 @@ export function construirReporte({ seleccion, leads, summary, baseEjecutivos, fi
     .module-summary { margin: 10px 0 12px; padding: 8px 12px; background: #e8eaf0; border-left: 4px solid #c43c50; border-radius: 4px; color: #8b909e; font-size: 10px; }
     h2 { font-size: 13px; text-transform: uppercase; margin: 16px 0 8px; color: #151821; border-bottom: 1px solid #e8eaf0; padding-bottom: 4px; }
     .nota-h2 { display: block; margin-top: 3px; font-size: 9px; font-weight: 600; text-transform: none; color: #8b909e; }
-    .period-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .period-kpis { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; }
     .period-kpi { min-width: 0; overflow: hidden; border: 1px solid #e8eaf0; border-top: 6px solid #151821; border-radius: 8px; padding: 11px 10px; background: #fff; page-break-inside: avoid; }
     .period-kpi .lbl { font-size: 9px; font-weight: 800; letter-spacing: .1em; color: #8b909e; text-transform: uppercase; }
     .period-kpi .num { font-size: 18px; font-weight: 900; margin-top: 8px; white-space: nowrap; }
@@ -248,7 +254,7 @@ export function construirReporte({ seleccion, leads, summary, baseEjecutivos, fi
       <div class="filtro">Filtros aplicados: <b>${esc(f.periodo)}</b> | País: <b>${esc(f.pais)}</b><br>${esc(detalle)}</div>
     </div>
   </div><div class="head-right"><div>Fecha de Emisión: <b>${esc(fechaEmision)}</b></div>
-    <div class="pill">Conversión de calificados: ${esc(formatearRatio(s.conversion.ratio))}</div></div></div>
+    <div class="pill">Conversión: ${esc(formatearRatio(s.conversionTotal))}</div></div></div>
   <div class="module-summary"><b>Módulos incluidos:</b> ${esc(modulos)}</div>
   ${seleccion.includes('resumen') ? s.resumen : ''}
   ${seleccion.includes('ejecutivos') ? s.ejecutivos : ''}

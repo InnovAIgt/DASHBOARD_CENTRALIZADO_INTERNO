@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { obtenerMailing } from './server/marketingMailing.js';
 import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
+import { obtenerRedes } from './server/marketingRedes.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -63,6 +64,16 @@ app.all('/api/marketing/mailing-detalle', async (req, res) => {
     cargos: typeof req.query.cargos === 'string' ? req.query.cargos : undefined,
     tarjeta: typeof req.query.tarjeta === 'string' ? req.query.tarjeta : undefined,
   });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Marketing · Redes sociales: métricas del Excel de RRSS (docs/marketing-redes/README.md).
+// En Vercel esta misma ruta la atiende api/marketing/redes.js.
+app.all('/api/marketing/redes', async (req, res) => {
+  const resultado = await obtenerRedes({ method: req.method });
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', resultado.contentType);

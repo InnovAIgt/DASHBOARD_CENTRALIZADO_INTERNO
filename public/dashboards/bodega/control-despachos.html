@@ -2645,6 +2645,7 @@
   <link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
   <link rel="stylesheet" href="../../assets/css/control-despachos.css?v=20261021tokens">
   <script src="../../assets/js/estandar.js?v=20261021barras"></script>
+  <script src="../../assets/js/bodega-months.js"></script>
 </head>
 
 <body>
@@ -2657,16 +2658,17 @@
     <header class="page-header hero hero-top">
       <div class="page-eyebrow">Operaciones de Bodega</div>
       <h1 class="page-title">Control de despachos de bodega</h1>
-      <p class="page-sub">Monitoreo de facturas, antigüedad y cumplimiento de SLA</p>
+      <p class="page-sub">Seguimiento de facturas pendientes y despachadas. Verde: hasta 2 días · Amarillo: 3 días · Rojo: más de 3 días.</p>
       <div class="hero-meta">
-        <span id="heroTime">Actualizado —</span>
+        <span id="heroTime">Datos sin actualizar</span>
         <span class="vsep"></span>
         <span id="heroCount">0 facturas</span>
         <span class="vsep"></span>
-        <span id="heroSla">SLA 0.0%</span>
+        <span id="heroSla">Fuera de plazo —</span>
       </div>
     </header>
 
+    <div id="apiEstado" class="api-estado oculto" role="status"></div>
     <!-- ============ FILTROS ============ -->
     <section class="filterbar">
       <div class="filter-line">
@@ -2686,9 +2688,9 @@
         <div class="fg fg-periodo">
           <span class="flabel">Periodo</span>
           <div class="periodo-box">
-            <input type="date" id="fDesde" />
+            <input type="month" id="fDesde" />
             <span class="dash">—</span>
-            <input type="date" id="fHasta" />
+            <input type="month" id="fHasta" />
             <button class="icon-btn" id="btnPeriodo" title="Aplicar periodo"><svg class="ic" width="19" height="19"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
                 stroke-linejoin="round" aria-hidden="true">
@@ -2781,7 +2783,7 @@
                 id="cntBusq">0/0</span></div>
             <div class="fcol-fields">
               <label class="flabel" for="fCorte">Fecha de corte</label>
-              <input type="date" id="fCorte" />
+              <input type="date" id="fCorte" readonly />
               <label class="flabel" for="fCliente">Cliente</label>
               <input type="text" id="fCliente" placeholder="Código o nombre…" autocomplete="off" />
               <label class="flabel" for="fFactura">Número de factura</label>
@@ -2818,10 +2820,20 @@
     <!-- ================= RESUMEN ================= -->
     <div class="section active" id="sec-resumen">
 
+      <div class="estado-grid kpi-grid" id="estadoGrid">
+        <div class="kpi"><div class="kpi-label">Pendientes de despacho</div><div class="kpi-value" id="eAbiertas">—</div><div class="kpi-sub" id="eAbiertasSub">—</div></div>
+        <button type="button" class="estado kpi" data-pending-semaphore="AMARILLO"><div class="kpi-label">Por vencer · 3 días</div><div class="kpi-value" id="ePorVencer">—</div><div class="kpi-sub" id="ePorVencerSub">—</div></button>
+        <button type="button" class="estado kpi" data-pending-semaphore="ROJO"><div class="kpi-label">Vencidas · más de 3 días</div><div class="kpi-value" id="eVencidas">—</div><div class="kpi-sub" id="eVencidasSub">—</div></button>
+        <div class="kpi"><div class="kpi-label">Despachadas a tiempo · hasta 3 días</div><div class="kpi-value" id="eEtapa">—</div><div class="kpi-sub" id="eEtapaSub">—</div></div>
+      </div>
+      <div class="panel table-panel">
+        <div class="table-head"><div><h2 class="panel-title">Facturas pendientes de despacho</h2><p class="panel-sub">Las 10 más antiguas según los filtros.</p></div><button class="btn" id="verPendientes" type="button">Ver todas las pendientes</button></div>
+        <div class="table-scroll"><table class="detail"><thead><tr><th>Factura</th><th>Cliente</th><th>País</th><th>Emisión</th><th>Días</th><th>Estado</th></tr></thead><tbody id="priorityBody"></tbody></table></div>
+      </div>
       <!-- SLA por país -->
       <div class="sla-grid">
         <div class="kpi sla-card">
-          <div class="kpi-label">SLA global · Guatemala</div>
+          <div class="kpi-label">Fuera de plazo · Guatemala</div>
           <div class="kpi-value" id="slaGT">0.0%</div>
           <div class="kpi-sub sla-formula" id="slaGTFormula" hidden>0 / 0 × 100</div>
           <div class="kpi-sub sla-note" id="slaGTNote">—</div>
@@ -2829,41 +2841,12 @@
         </div>
 
         <div class="kpi sla-card">
-          <div class="kpi-label">SLA global · El Salvador</div>
+          <div class="kpi-label">Fuera de plazo · El Salvador</div>
           <div class="kpi-value" id="slaSV">0.0%</div>
           <div class="kpi-sub sla-formula" id="slaSVFormula" hidden>0 / 0 × 100</div>
           <div class="kpi-sub sla-note" id="slaSVNote">—</div>
           <div class="sla-bar" hidden><i id="slaSVBar" style="width:0%"></i></div>
         </div>
-      </div>
-
-      <!-- Clasificación de estados SLA (referencia imagen 3) -->
-      <div class="estado-grid kpi-grid" id="estadoGrid">
-        <button type="button" class="estado kpi" data-filtro="estado" data-valor="Abierta">
-          <div class="kpi-label">Abiertas</div>
-          <div class="kpi-value" id="eAbiertas">0</div>
-          <div class="kpi-sub" id="eAbiertasSub">—</div>
-        </button>
-        <button type="button" class="estado kpi" data-filtro="semaforo" data-valor="VERDE">
-          <div class="kpi-label">En tiempo · 0 a 2 días</div>
-          <div class="kpi-value" id="eEnTiempo">0</div>
-          <div class="kpi-sub" id="eEnTiempoSub">—</div>
-        </button>
-        <button type="button" class="estado kpi" data-filtro="semaforo" data-valor="AMARILLO">
-          <div class="kpi-label">Por vencer · 3 días</div>
-          <div class="kpi-value" id="ePorVencer">0</div>
-          <div class="kpi-sub" id="ePorVencerSub">—</div>
-        </button>
-        <button type="button" class="estado kpi" data-filtro="semaforo" data-valor="ROJO">
-          <div class="kpi-label">Vencidas SLA · más de 3 días</div>
-          <div class="kpi-value" id="eVencidas">0</div>
-          <div class="kpi-sub" id="eVencidasSub">—</div>
-        </button>
-        <button type="button" class="estado kpi" data-filtro="estado" data-valor="Cerrada">
-          <div class="kpi-label">Cerradas fuera de SLA</div>
-          <div class="kpi-value" id="eEtapa">0</div>
-          <div class="kpi-sub" id="eEtapaSub">—</div>
-        </button>
       </div>
 
       <!-- KPIs -->
@@ -2903,24 +2886,24 @@
                     aria-hidden="true">
                     <path d="M4 17l5-5 4 3.5L20 8" />
                     <path d="M15.5 8H20v4.5" />
-                  </svg></span>Entradas, cierres y backlog por semana</div>
-              <div class="panel-sub">Compara las facturas emitidas, despachadas y el backlog abierto al cierre de cada
+                  </svg></span>Facturas emitidas, despachadas y pendientes por semana</div>
+              <div class="panel-sub">Compara las facturas emitidas, despachadas y las que seguían pendientes al cierre de cada
                 semana.</div>
             </div>
             <div class="weekly-ctl">
               <div class="fgroup">
                 <label class="flabel" for="wDesde">Desde</label>
-                <input type="date" id="wDesde" />
+                <input type="month" id="wDesde" />
               </div>
               <div class="fgroup">
                 <label class="flabel" for="wHasta">Hasta</label>
-                <input type="date" id="wHasta" />
+                <input type="month" id="wHasta" />
               </div>
               <div class="fgroup">
                 <span class="flabel">&nbsp;</span>
                 <div style="display:flex;gap:8px">
                   <button class="btn btn-primary" id="wApply">Aplicar</button>
-                  <button class="btn" id="wLast12">Últimas 12 semanas</button>
+                  <button class="btn" id="wLast12">Mes actual</button>
                 </div>
               </div>
             </div>
@@ -2948,7 +2931,7 @@
                     aria-hidden="true">
                     <circle cx="12" cy="12" r="8.5" />
                     <path d="M12 7.4V12l3 1.8" />
-                  </svg></span>Composición del semáforo</div>
+                  </svg></span>Facturas por estado del plazo</div>
               <div class="panel-sub">En tiempo · Por vencer · Vencidas</div>
             </div>
           </div>
@@ -3006,7 +2989,7 @@
                   <path d="M14.5 3v4.5H19" />
                   <path d="M8.5 13h7M8.5 17h4.5" />
                 </svg></span>Informe detallado</div>
-            <div class="panel-sub">Una fila por factura única · clic en un encabezado para ordenar</div>
+            <div class="panel-sub">Una fila por factura. Abrí el detalle de artículos desde el número de factura. La fecha informada se considera confirmada solo en facturas cerradas con fecha válida hasta el corte.</div>
           </div>
           <div class="table-tools">
             <span class="count-pill" id="detCount">0 facturas</span>
@@ -3019,6 +3002,7 @@
               </svg> Excel</button>
           </div>
         </div>
+        <p class="panel-sub" id="dispatchDateCheck" role="status"></p>
         <div class="detail-search">
           <svg class="ic" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -3034,13 +3018,13 @@
                 <th data-key="pais">País<span class="arrow">▾</span></th>
                 <th data-key="numeroFactura">Número factura<span class="arrow">▾</span></th>
                 <th data-key="fechaEmision">Fecha emisión<span class="arrow">▾</span></th>
-                <th data-key="fechaDespacho">Fecha despacho<span class="arrow">▾</span></th>
+                <th data-key="fechaDespacho">Fecha informada<span class="arrow">▾</span></th>
                 <th data-key="estatus">Estatus<span class="arrow">▾</span></th>
                 <th data-key="codigoCliente">Código cliente<span class="arrow">▾</span></th>
                 <th data-key="nombreCliente">Nombre cliente<span class="arrow">▾</span></th>
                 <th data-key="totalFactura" class="num-cell">Total factura<span class="arrow">▾</span></th>
                 <th data-key="diasEmitida" class="num-cell">Días emitida<span class="arrow">▾</span></th>
-                <th data-key="semaforo">Semáforo<span class="arrow">▾</span></th>
+                <th data-key="semaforo">Estado del plazo<span class="arrow">▾</span></th>
               </tr>
             </thead>
             <tbody id="detBody"></tbody>
@@ -3182,6 +3166,7 @@
        la credencial. GitHub Actions actualiza ./data/facturas.json
        y el dashboard consume ese último snapshot publicado.
        ========================================================= */
+    let sourceState = 'loading';
     let FACTURAS = [];      // se llena al arrancar
     let META_API = { ultimoExito: null, intervaloMin: 5, fuente: '', error: null };
 
@@ -3194,6 +3179,7 @@
           numeroFactura: String(r.numeroFactura),
           fechaEmision: r.fechaEmision || '',
           fechaDespacho: r.fechaDespacho || '',
+          articulos: Array.isArray(r.detalleArticulos) ? r.detalleArticulos : [],
           estatus: r.estatus || '',
           codigoCliente: r.codigoCliente || '',
           nombreCliente: r.nombreCliente || '',
@@ -3211,7 +3197,7 @@
     }
 
     function pintarHora() {
-      var el = document.getElementById('apiHora');
+      var el = document.getElementById('heroTime');
       if (!el || !META_API.ultimoExito) return;
       var d = new Date(META_API.ultimoExito);
       el.textContent = 'Datos del ' + d.toLocaleString('es-GT',
@@ -3232,17 +3218,18 @@
         FACTURAS = adaptarFacturas(j.facturas);
         META_API = j.meta || META_API;
 
+        sourceState = FACTURAS.length ? 'ready' : 'empty';
         if (!FACTURAS.length) {
-          marcarEstado('Sin datos disponibles. Ejecutá el workflow de actualización o revisá la consulta a SAP.', 'error');
+          marcarEstado('La fuente de despachos no devolvió facturas.', 'error');
           FACTURAS = [];
         } else if (j.meta && j.meta.error) {
-          marcarEstado('⚠ Mostrando el último dato guardado. La API responde: ' + j.meta.error, 'aviso');
+          marcarEstado('Mostrando los últimos datos publicados. La actualización de origen reportó un error.', 'aviso');
         } else {
           marcarEstado('');
         }
         pintarHora();
 
-        recalcularRangos();
+        actualizarPeriodoMensual();
         aplicarFiltros();
 
         if (FACTURAS.length) {
@@ -3250,29 +3237,13 @@
         }
       } catch (e) {
         console.error('Error al cargar datos:', e);
-        FACTURAS = [];
-        marcarEstado('No se pudo cargar el snapshot de datos. Verificá que GitHub Actions haya generado data/facturas.json.', 'error');
+        sourceState = FACTURAS.length ? 'ready' : 'error';
+        marcarEstado(FACTURAS.length ? 'No se pudo actualizar. Se mantienen los últimos datos cargados.' : 'No se pudo cargar la información de despachos.', FACTURAS.length ? 'aviso' : 'error');
         aplicarFiltros();
       }
     }
 
-    /* DATA_MIN / DATA_MAX se recalculan con cada carga */
-    let DATA_MIN = null, DATA_MAX = null;
-    function recalcularRangos() {
-      if (!FACTURAS.length) { DATA_MIN = null; DATA_MAX = null; return; }
-      var fechas = FACTURAS.map(function (f) { return f.fechaEmision; })
-        .filter(function (x) { return !!x; }).sort();
-      DATA_MIN = fechas.length ? fechas[0] : null;
-      DATA_MAX = fechas.length ? fechas[fechas.length - 1] : null;
-      if (DATA_MIN && DATA_MAX) {
-        state.desde = DATA_MIN;
-        state.hasta = DATA_MAX;
-        if (el.desde && !el.desde.value) el.desde.value = DATA_MIN;
-        if (el.hasta && !el.hasta.value) el.hasta.value = DATA_MAX;
-        if (el.wDesde) el.wDesde.value = DATA_MIN;
-        if (el.wHasta) el.wHasta.value = DATA_MAX;
-      }
-    }
+
 
     const PAIS_LABEL = { GT: "Guatemala", SV: "El Salvador" };
     /* Banderas en SVG embebido (base64): no dependen del soporte de emoji del sistema */
@@ -3304,7 +3275,7 @@
       return isNaN(d.getTime()) ? null : d;
     }
     function toISO(d) { return d.toISOString().slice(0, 10); }
-    function hoyISO() { var d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+    function hoyISO() { return window.BodegaMonths.today(); }
     function shiftISO(iso, dias) {
       var d = parseDate(iso);
       if (!d) return iso || '';
@@ -3319,9 +3290,9 @@
       d.setUTCDate(d.getUTCDate() - (d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1));
       return toISO(d);
     }
-    function etiquetaSemana(lunesISO) {
+    function etiquetaSemana(lunesISO, hasta) {
       var d = parseDate(lunesISO);
-      var fin = new Date(d.getTime() + 6 * DIAS_MS);
+      var fin = parseDate(hasta) || new Date(d.getTime() + 6 * DIAS_MS);
       var mes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
       return d.getUTCDate() + " " + mes[d.getUTCMonth()] + " – " + fin.getUTCDate() + " " + mes[fin.getUTCMonth()];
     }
@@ -3350,18 +3321,25 @@
        state.baseSLA = 'cierre'  → base según estado (más fiel)
        state.baseSLA = 'corte'   → todo contra la fecha de corte
        ------------------------------------------------------------ */
+    function fechaDespachoConfirmada(f, corte) {
+      const despacho = parseDate(f.fechaDespacho);
+      const emision = parseDate(f.fechaEmision);
+      const limite = parseDate(corte);
+      return f.estatus === 'Cerrada' && despacho && emision && limite && despacho >= emision && despacho <= limite ? f.fechaDespacho : '';
+    }
     function fechaReferencia(f) {
       if (state.baseSLA === 'corte') return state.corte;
       /* Las canceladas no tienen un ciclo de atencion que medir:
          se evaluan contra la fecha de corte. */
       if (f.estatus === 'Cancelada') return state.corte;
-      if (f.estatus === 'Cerrada' && f.fechaDespacho) return f.fechaDespacho;
+      if (f.estatus === 'Cerrada') return fechaDespachoConfirmada(f, state.corte);
       return state.corte;
     }
     function diasEmitida(f, corte) {
       return diasEntre(f.fechaEmision, fechaReferencia(f));
     }
     /* Reglas exactas del semáforo */
+    const plazoLabel = estado => ({ VERDE: 'En tiempo', AMARILLO: 'Por vencer', ROJO: 'Vencida' })[estado] || 'Sin fecha';
     function getSemaforo(d) {
       if (d === null || d === undefined) return "";
       if (d <= 2) return "VERDE";
@@ -3395,11 +3373,11 @@
        4. ESTADO
        ========================================================= */
     const state = {
-      pais: "", desde: DATA_MIN, hasta: DATA_MAX, corte: hoyISO(),
+      pais: "", desde: "", hasta: "", corte: hoyISO(),
       estado: "", semaforo: "", cliente: "", factura: "", soloVencidas: false,
       /* base del SLA: "cierre" (segun estado) | "corte" (todo contra la fecha de corte) */
       baseSLA: "cierre",
-      sortKey: "fechaEmision", sortDir: "desc", page: 1, pageSize: 50,
+      sortKey: "diasEmitida", sortDir: "desc", page: 1, pageSize: 50,
       /* gráfica semanal */
       wDesde: null, wHasta: null
     };
@@ -3419,7 +3397,8 @@
     function aplicarFiltros() {
       /* Sin datos todavía: no se aplica nada (evita rangos nulos) */
       if (!FACTURAS.length) {
-        try { renderTabla(); marcarTarjetas(); } catch (e) { }
+        vista = [];
+        render();
         return;
       }
       const corte = state.corte;
@@ -3440,7 +3419,7 @@
         var dias = diasEmitida(f, corte);
         return {
           pais: f.pais, docEntry: f.docEntry, numeroFactura: f.numeroFactura,
-          fechaEmision: f.fechaEmision, fechaDespacho: f.fechaDespacho, estatus: f.estatus,
+          fechaEmision: f.fechaEmision, fechaDespacho: f.fechaDespacho, estatus: f.estatus, articulos: f.articulos,
           codigoCliente: f.codigoCliente, nombreCliente: f.nombreCliente, totalFactura: f.totalFactura,
           diasEmitida: dias, semaforo: getSemaforo(dias)
         };
@@ -3450,7 +3429,7 @@
         vista = vista.filter(function (f) { return f.semaforo === state.semaforo; });
       }
       if (state.soloVencidas) {
-        vista = vista.filter(function (f) { return f.diasEmitida > 3; });
+        vista = vista.filter(function (f) { return f.estatus === "Abierta" && f.diasEmitida > 3; });
       }
       ordenarVista();
       render();
@@ -3470,86 +3449,13 @@
       const gt = calcularSLA(dePais('GT'));
       const sv = calcularSLA(dePais('SV'));
 
-      /* Cuando hay un filtro de estado activo, la tarjeta SLA muestra la tasa de
-         cumplimiento de ese estado:  tasa = facturas en tiempo ÷ total
-           Abiertas   12 / 716   = 0.017
-           Cerradas   77 / 3,238 = 0.024
-           Canceladas  0 / 5     = 0.000
-         Sin filtro de estado se mantiene el SLA de antigüedad (> 3 días ÷ total × 100). */
-      if (state.estado) {
-        var tasa = function (rows) {
-          var t = rows.length;
-          var v = rows.filter(function (f) { return f.semaforo === 'VERDE'; }).length;
-          /* Porcentaje: (en tiempo ÷ total) × 100
-             12/716 × 100 = 1.68%   ·   77/3,238 × 100 = 2.38%   ·   0/5 × 100 = 0.00% */
-          return {
-            valor: t > 0 ? ((v / t) * 100).toFixed(2) + "%" : "0.00%",
-            frac: v + " / " + fmtNum(t) + " × 100",
-            pct: t > 0 ? (v / t) * 100 : 0
-          };
-        };
-        var tg = tasa(dePais('GT'));
-        var ts = tasa(dePais('SV'));
-
-        setText('slaGT', tg.valor);
-        setText('slaGTFormula', tg.frac);
-        document.getElementById('slaGTBar').style.width = Math.min(100, tg.pct) + "%";
-        setText('slaGTNote', "Tasa de facturas en tiempo · " + state.estado);
-
-        setText('slaSV', ts.valor);
-        setText('slaSVFormula', ts.frac);
-        document.getElementById('slaSVBar').style.width = Math.min(100, ts.pct) + "%";
-        setText('slaSVNote', "Tasa de facturas en tiempo · " + state.estado);
-      } else {
-        setText('slaGT', fmtPct1(gt.sla));
-        setText('slaGTFormula', fmtNum(gt.casosMayoresA3Dias) + " / " + fmtNum(gt.totalCasos) + " × 100");
-        document.getElementById('slaGTBar').style.width = Math.min(100, gt.sla) + "%";
-        setText('slaGTNote', fmtNum(gt.casosMayoresA3Dias) + " de " + fmtNum(gt.totalCasos) + " facturas con antigüedad > 3 días");
-
-        setText('slaSV', fmtPct1(sv.sla));
-        setText('slaSVFormula', fmtNum(sv.casosMayoresA3Dias) + " / " + fmtNum(sv.totalCasos) + " × 100");
-        document.getElementById('slaSVBar').style.width = Math.min(100, sv.sla) + "%";
-        setText('slaSVNote', fmtNum(sv.casosMayoresA3Dias) + " de " + fmtNum(sv.totalCasos) + " facturas con antigüedad > 3 días");
-      }
-
-      /* Clasificación de estados SLA */
-      /* Clasificación de estados SLA.
-         El semáforo depende SOLO de la antigüedad contra la fecha de corte, así que
-         se aplica a TODAS las facturas del filtro (abiertas, cerradas o canceladas).
-         Antes se calculaba solo sobre las abiertas y devolvía 0 al filtrar por Cerrada. */
-      var abiertas = vista.filter(function (f) { return f.estatus === 'Abierta'; });
-      var enTiempo = vista.filter(function (f) { return f.semaforo === 'VERDE'; });
-      var porVencer = vista.filter(function (f) { return f.semaforo === 'AMARILLO'; });
-      var vencidas = vista.filter(function (f) { return f.semaforo === 'ROJO'; });
-      /* Cerradas fuera de SLA: se miden contra su propia fecha de despacho */
-      var cerradasSLA = vista.filter(function (f) { return f.estatus === 'Cerrada' && f.semaforo === 'ROJO'; });
-      var totalCerradas = vista.filter(function (f) { return f.estatus === 'Cerrada'; }).length;
-
-      setText('eAbiertas', fmtNum(abiertas.length));
-      setText('eEnTiempo', fmtNum(enTiempo.length));
-      setText('ePorVencer', fmtNum(porVencer.length));
-      setText('eVencidas', fmtNum(vencidas.length));
-      setText('eEtapa', fmtNum(cerradasSLA.length));
-      /* Cada tarjeta dice sobre cuántas facturas del filtro se calculó */
-      setText('eAbiertasSub', fmtNum(abiertas.length) + " de " + fmtNum(vista.length));
-      setText('eEnTiempoSub', fmtNum(enTiempo.length) + " de " + fmtNum(vista.length));
-      setText('ePorVencerSub', fmtNum(porVencer.length) + " de " + fmtNum(vista.length));
-      setText('eVencidasSub', fmtNum(vencidas.length) + " de " + fmtNum(vista.length));
-      setText('eEtapaSub', fmtNum(cerradasSLA.length) + " de " + fmtNum(totalCerradas) + " cerradas");
-      /* Porcentaje de facturas en tiempo sobre el total del filtro activo */
-      /* ------------------------------------------------------------
-         TASA DE CUMPLIMIENTO POR ESTADO
-         Formula oficial:  tasa = facturas en tiempo ÷ total del estado
-         Se muestra como decimal (0.017, 0.024, 0.000) segun la
-         referencia operativa:
-    
-           Abiertas   12 / 716   = 0.017
-           Cerradas   77 / 3,238 = 0.024
-           Canceladas  0 / 5     = 0.000
-    
-         Las canceladas se miden contra la fecha de corte (no tienen
-         ciclo de atencion que medir) y por eso su tasa tiende a 0.
-         ------------------------------------------------------------ */
+      [['GT', gt], ['SV', sv]].forEach(function ([pais, ratio]) {
+        setText('sla' + pais, ratio.totalCasos ? fmtPct1(ratio.sla) : '—');
+        setText('sla' + pais + 'Formula', fmtNum(ratio.casosMayoresA3Dias) + ' / ' + fmtNum(ratio.totalCasos) + ' × 100');
+        document.getElementById('sla' + pais + 'Bar').style.width = ratio.sla + '%';
+        setText('sla' + pais + 'Note', fmtNum(ratio.casosMayoresA3Dias) + ' de ' + fmtNum(ratio.totalCasos) + ' facturas con más de 3 días');
+      });
+      renderPrioridades();
       /* KPIs */
       const verde = vista.filter(function (f) { return f.semaforo === 'VERDE'; }).length;
       const amari = vista.filter(function (f) { return f.semaforo === 'AMARILLO'; }).length;
@@ -3566,7 +3472,7 @@
 
 
       setText('heroCount', fmtNum(vista.length) + " facturas únicas");
-      setText('heroSla', "SLA " + fmtPct1(g.sla));
+      setText('heroSla', g.totalCasos ? 'Fuera de plazo · ' + fmtPct1(g.sla) : 'Fuera de plazo —');
 
     }
 
@@ -3611,33 +3517,38 @@
       /* Se construye el rango de semanas (lunes) que cae dentro del periodo */
       var luneses = [];
       var cur = parseDate(lunesDe(desde));
-      if (cur < dIni) cur = new Date(cur.getTime() + 7 * DIAS_MS);
+
       while (cur <= dFin) { luneses.push(toISO(cur)); cur = new Date(cur.getTime() + 7 * DIAS_MS); }
       if (!luneses.length) return { labels: [], emitidas: [], despachadas: [], backlog: [] };
 
       var emitidas = [], despachadas = [], backlog = [], labels = [];
       for (var i = 0; i < luneses.length; i++) {
-        var iniS = parseDate(luneses[i]).getTime();
-        var finS = iniS + 6 * DIAS_MS;
+        const lunes = parseDate(luneses[i]).getTime();
+        var iniS = Math.max(lunes, dIni.getTime());
+        var finS = Math.min(lunes + 6 * DIAS_MS, dFin.getTime());
         var em = 0, de = 0, abierto = 0;
         FACTURAS.forEach(function (f) {
-          var fe = parseDate(f.fechaEmision).getTime();
-          var fd = parseDate(f.fechaDespacho) ? parseDate(f.fechaDespacho).getTime() : null;
+          if (state.pais && f.pais !== state.pais) return;
+          const emision = parseDate(f.fechaEmision);
+          if (!emision) return;
+          var fe = emision.getTime();
+          const despacho = parseDate(fechaDespachoConfirmada(f, state.corte));
+          var fd = despacho ? despacho.getTime() : null;
           var sinDespachar = (fd === null || fd > finS);
           /* Emitidas: las que nacen dentro de la semana */
           if (fe >= iniS && fe <= finS) {
             em++;
             /* Backlog: sigue abierta al cierre de esa semana */
-            if (sinDespachar) abierto++;
+            if (sinDespachar && (f.estatus === 'Abierta' || fd !== null)) abierto++;
           } else if (fe < iniS) {
             /* Heredadas: yavenues antes del rango, solo cuentan si seguem abiertas */
-            if (sinDespachar) abierto++;
+            if (sinDespachar && (f.estatus === 'Abierta' || fd !== null)) abierto++;
           }
           /* Despachadas: las cerradas dentro de la semana */
           if (fd !== null && fd >= iniS && fd <= finS) de++;
         });
         emitidas.push(em); despachadas.push(de); backlog.push(abierto);
-        labels.push(etiquetaSemana(luneses[i]));
+        labels.push(etiquetaSemana(toISO(new Date(iniS)), toISO(new Date(finS))));
       }
       return { labels: labels, emitidas: emitidas, despachadas: despachadas, backlog: backlog };
     }
@@ -3816,7 +3727,42 @@
       });
     }
 
+    function emptyMessage(readyMessage) {
+      return ({ loading: 'Cargando facturas…', empty: 'La fuente no devolvió facturas.', error: 'No se pudo cargar la información de despachos.' })[sourceState] || readyMessage;
+    }
+
+    function renderPrioridades() {
+      const pendientes = vista.filter(f => f.estatus === 'Abierta').sort((a, b) => (b.diasEmitida ?? -1) - (a.diasEmitida ?? -1));
+      const despachadas = vista.filter(f => fechaDespachoConfirmada(f, state.corte));
+      const aTiempo = despachadas.filter(f => {
+        const dias = diasEntre(f.fechaEmision, f.fechaDespacho);
+        return dias !== null && dias <= 3;
+      }).length;
+      [['eAbiertas', pendientes.length, 'Facturas abiertas'],
+       ['ePorVencer', pendientes.filter(f => f.semaforo === 'AMARILLO').length, 'Facturas pendientes con 3 días'],
+       ['eVencidas', pendientes.filter(f => f.semaforo === 'ROJO').length, 'Facturas pendientes con más de 3 días'],
+       ['eEtapa', aTiempo, fmtNum(despachadas.length) + ' facturas con fecha de despacho']
+      ].forEach(([id, value, description]) => {
+        setText(id, sourceState === 'ready' ? fmtNum(value) : '—');
+        setText(id + 'Sub', description);
+      });
+      document.getElementById('verPendientes').disabled = !pendientes.length;
+      document.getElementById('priorityBody').innerHTML = pendientes.length ? pendientes.slice(0, 10).map(f =>
+        '<tr><td><strong>' + escapeHtml(f.numeroFactura) + '</strong></td><td>' + escapeHtml(f.nombreCliente) + '</td><td>' + escapeHtml(f.pais) + '</td><td>' + escapeHtml(f.fechaEmision) + '</td><td>' + (f.diasEmitida ?? '—') + '</td><td><span class="pill ' + f.semaforo.toLowerCase() + '">' + plazoLabel(f.semaforo) + '</span></td></tr>'
+      ).join('') : '<tr><td colspan="6"><div class="empty">' + emptyMessage('Sin facturas pendientes para estos filtros.') + '</div></td></tr>';
+    }
+
+    function renderArticulosFactura(f) {
+      if (!f.articulos.length) return '<strong>' + escapeHtml(f.numeroFactura) + '</strong>';
+      const articulos = f.articulos.map(item =>
+        '<li>' + escapeHtml(item.CodigoArticulo) + ' · ' + escapeHtml(item.Descripcion) + ' · Cantidad: ' + escapeHtml(item.Cantidad ?? '—') + '</li>'
+      ).join('');
+      return '<details><summary><strong>' + escapeHtml(f.numeroFactura) + '</strong></summary><ul>' + articulos + '</ul></details>';
+    }
     function renderTabla() {
+      const abiertasConFecha = vista.filter(f => f.estatus === 'Abierta' && f.fechaDespacho).length;
+      const cerradasSinConfirmar = vista.filter(f => f.estatus === 'Cerrada' && !fechaDespachoConfirmada(f, state.corte)).length;
+      setText('dispatchDateCheck', vista.length ? fmtNum(abiertasConFecha) + ' abiertas con fecha informada · ' + fmtNum(cerradasSinConfirmar) + ' cerradas sin fecha confirmada al corte' : '');
       var inputBusqueda = document.getElementById('detalleBusqueda');
       var q = (inputBusqueda ? inputBusqueda.value : '').trim().toLowerCase();
 
@@ -3833,7 +3779,7 @@
             f.nombreCliente,
             f.totalFactura,
             f.diasEmitida,
-            f.semaforo
+            f.semaforo, plazoLabel(f.semaforo)
           ].join(' ').toLowerCase();
           return texto.indexOf(q) !== -1;
         });
@@ -3853,7 +3799,7 @@
       setText('pgNum', state.page + " / " + pages);
 
       if (!rows.length) {
-        el.body.innerHTML = '<tr><td colspan="10"><div class="empty">No hay facturas que cumplan el filtro seleccionado</div></td></tr>';
+        el.body.innerHTML = '<tr><td colspan="10"><div class="empty">' + emptyMessage('Sin resultados para estos filtros.') + '</div></td></tr>';
         return;
       }
       var html = "";
@@ -3861,7 +3807,7 @@
         var f = rows[i];
         html += '<tr>' +
           '<td><span class="cty">' + flagHTML(f.pais) + ' ' + f.pais + '</span></td>' +
-          '<td><strong>' + escapeHtml(f.numeroFactura) + '</strong></td>' +
+          '<td>' + renderArticulosFactura(f) + '</td>' +
           '<td>' + escapeHtml(f.fechaEmision) + '</td>' +
           '<td style="color:var(--muted)">' + escapeHtml(f.fechaDespacho) + '</td>' +
           '<td><span class="status ' + (f.estatus || '').toLowerCase() + '">' + escapeHtml(f.estatus) + '</span></td>' +
@@ -3869,11 +3815,11 @@
           '<td class="cl-cell" title="' + escapeHtml(f.nombreCliente) + '">' + escapeHtml(f.nombreCliente) + '</td>' +
           '<td class="num-cell">' + fmtMonto(f.pais, f.totalFactura) + '</td>' +
           '<td class="num-cell">' + (f.diasEmitida === null ? '—' : f.diasEmitida) + '</td>' +
-          '<td><span class="pill ' + f.semaforo.toLowerCase() + '">' + f.semaforo + '</span></td></tr>';
+          '<td><span class="pill ' + f.semaforo.toLowerCase() + '">' + plazoLabel(f.semaforo) + '</span></td></tr>';
       }
       el.body.innerHTML = html;
 
-      document.querySelectorAll('table.detail thead th').forEach(function (th) {
+      document.querySelectorAll('#sec-detalle table.detail thead th[data-key]').forEach(function (th) {
         th.classList.toggle('sorted', th.dataset.key === state.sortKey);
         var a = th.querySelector('.arrow');
         if (a) a.textContent = (th.dataset.key === state.sortKey) ? (state.sortDir === 'asc' ? '▲' : '▼') : '▾';
@@ -3906,7 +3852,7 @@
        ========================================================= */
     /* Refleja en las tarjetas cuál es el filtro activo */
     function marcarTarjetas() {
-      document.querySelectorAll('.estado').forEach(function (c) {
+      document.querySelectorAll('.estado[data-filtro]').forEach(function (c) {
         var f = c.dataset.filtro, v = c.dataset.valor;
         var on = (f === 'semaforo' ? state.semaforo === v : state.estado === v);
         c.classList.toggle('activo', on);
@@ -3929,31 +3875,40 @@
       renderTabla();
       marcarTarjetas();
       contarOpciones(); contarChecks();
-      stamp();
     }
 
-    /* Marca de tiempo compartida por la barra superior y el encabezado */
-    function stamp() {
-      var s = 'Actualizado ' + new Date().toLocaleString('es-GT', {
-        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
-      });
-      setText('heroTime', s.replace('Actualizado ', ''));
-    }
 
     function refrescar() { state.page = 1; aplicarFiltros(); }
 
+    const months = window.BodegaMonths;
+    let lastPeriodDate;
     function sincronizarSemanal() {
-      /* La gráfica semanal sigue el rango de fechas principal salvo que
-         el usuario haya ajustado su propio rango. */
-      el.wDesde.value = state.wDesde || state.desde;
-      el.wHasta.value = state.wHasta || state.hasta;
+      el.wDesde.value = (state.wDesde || state.desde).slice(0, 7);
+      el.wHasta.value = (state.wHasta || state.hasta).slice(0, 7);
+      el.wDesde.max = el.wHasta.max = state.corte.slice(0, 7);
+    }
+    function actualizarPeriodoMensual(reset = false) {
+      const today = hoyISO();
+      const monthChanged = lastPeriodDate && lastPeriodDate.slice(0, 7) !== today.slice(0, 7);
+      months.setRange(el.desde, el.hasta, lastPeriodDate, reset);
+      if (monthChanged && state.wDesde && state.wHasta) {
+        months.setRange(el.wDesde, el.wHasta, lastPeriodDate);
+        state.wDesde = months.start(el.wDesde.value);
+        state.wHasta = months.end(el.wHasta.value, today);
+      } else if (state.wHasta) {
+        state.wHasta = months.end(state.wHasta.slice(0, 7), today);
+      }
+      state.corte = el.corte.value = lastPeriodDate = today;
+      state.desde = months.start(el.desde.value);
+      state.hasta = months.end(el.hasta.value, today);
+      sincronizarSemanal();
     }
 
     function reiniciar() {
-      state.pais = ""; state.desde = DATA_MIN; state.hasta = DATA_MAX; state.corte = hoyISO();
+      state.pais = "";
       state.estado = ""; state.semaforo = ""; state.cliente = ""; state.factura = ""; state.soloVencidas = false;
       state.wDesde = null; state.wHasta = null;
-      el.desde.value = state.desde; el.hasta.value = state.hasta; el.corte.value = state.corte;
+      actualizarPeriodoMensual(true);
       el.cliente.value = ""; el.factura.value = "";
       var detalleBusqueda = document.getElementById('detalleBusqueda');
       if (detalleBusqueda) detalleBusqueda.value = "";
@@ -3968,18 +3923,9 @@
     }
 
     function aplicarPreset(key) {
-      var hoy = hoyISO();
-      document.querySelectorAll('.presets .chip[data-preset]').forEach(function (c) {
-        c.classList.toggle('active', c.dataset.preset === key);
-      });
-      if (key === 'all') { state.desde = DATA_MIN; state.hasta = DATA_MAX; state.corte = hoy; state.soloVencidas = false; }
-      else if (key === '7') { state.desde = shiftISO(hoy, -7); state.hasta = DATA_MAX; state.corte = hoy; state.soloVencidas = false; }
-      else if (key === '30') { state.desde = shiftISO(hoy, -30); state.hasta = DATA_MAX; state.corte = hoy; state.soloVencidas = false; }
-      else if (key === 'month') { state.desde = hoy.slice(0, 8) + '01'; state.hasta = DATA_MAX; state.corte = hoy; state.soloVencidas = false; }
-      else if (key === 'riesgo') { state.desde = DATA_MIN; state.hasta = DATA_MAX; state.corte = hoy; state.soloVencidas = true; }
-      state.wDesde = null; state.wHasta = null;
-      el.desde.value = state.desde; el.hasta.value = state.hasta; el.corte.value = state.corte;
-      sincronizarSemanal();
+      state.soloVencidas = key === 'riesgo';
+      state.wDesde = state.wHasta = null;
+      actualizarPeriodoMensual(true);
       refrescar();
     }
 
@@ -4009,9 +3955,13 @@
       c.addEventListener('click', function () { aplicarPreset(c.dataset.preset); });
     });
 
-    el.desde.addEventListener('change', function () { state.desde = this.value || DATA_MIN; state.wDesde = null; sincronizarSemanal(); refrescar(); });
-    el.hasta.addEventListener('change', function () { state.hasta = this.value || DATA_MAX; state.wHasta = null; sincronizarSemanal(); refrescar(); });
-    el.corte.addEventListener('change', function () { state.corte = this.value || hoyISO(); refrescar(); });
+    function aplicarPeriodoMensual() {
+      state.wDesde = state.wHasta = null;
+      actualizarPeriodoMensual();
+      refrescar();
+    }
+    el.desde.addEventListener('change', aplicarPeriodoMensual);
+    el.hasta.addEventListener('change', aplicarPeriodoMensual);
 
     var debounce;
     el.cliente.addEventListener('input', function () { var v = this.value; clearTimeout(debounce); debounce = setTimeout(function () { state.cliente = v; refrescar(); }, 220); });
@@ -4019,15 +3969,15 @@
 
     /* Controles de la gráfica semanal */
     document.getElementById('wApply').addEventListener('click', function () {
-      state.wDesde = el.wDesde.value || null;
-      state.wHasta = el.wHasta.value || null;
+      months.setRange(el.wDesde, el.wHasta, lastPeriodDate);
+      state.wDesde = months.start(el.wDesde.value);
+      state.wHasta = months.end(el.wHasta.value, state.corte);
       renderSemanal();
     });
     document.getElementById('wLast12').addEventListener('click', function () {
-      state.wHasta = state.hasta;
-      state.wDesde = shiftISO(state.hasta, -12 * 7);
-      el.wDesde.value = state.wDesde;
-      el.wHasta.value = state.wHasta;
+      state.wDesde = months.start(state.corte.slice(0, 7));
+      state.wHasta = state.corte;
+      sincronizarSemanal();
       renderSemanal();
     });
 
@@ -4150,12 +4100,7 @@
       cerrarPop();   /* solo oculta: el filtro ya fue aplicado al marcar */
     });
     /* El boton del periodo aplica y refresca */
-    document.getElementById('btnPeriodo').addEventListener('click', function () {
-      state.desde = document.getElementById('fDesde').value || DATA_MIN;
-      state.hasta = document.getElementById('fHasta').value || DATA_MAX;
-      state.wDesde = null; state.wHasta = null;
-      sincronizarSemanal(); refrescar();
-    });
+    document.getElementById('btnPeriodo').addEventListener('click', aplicarPeriodoMensual);
 
     /* =========================================================
        VENTANA DE DETALLE POR ESTADO
@@ -4202,7 +4147,7 @@
             '<td class="md-cliente" title="' + escapeHtml(f.nombreCliente) + '">' + escapeHtml(f.nombreCliente) + '</td>' +
             '<td class="num-cell">' + fmtMonto(f.pais, f.totalFactura) + '</td>' +
             '<td class="num-cell md-dias">' + (f.diasEmitida === null ? '—' : f.diasEmitida) + '</td>' +
-            '<td><span class="pill ' + sem + '">' + f.semaforo + '</span></td></tr>';
+            '<td><span class="pill ' + sem + '">' + plazoLabel(f.semaforo) + '</span></td></tr>';
         }).join('')
         : '<tr><td colspan="9"><div class="empty">No hay facturas en este estado con el filtro actual</div></td></tr>';
       document.getElementById('modalDet').removeAttribute('hidden');
@@ -4236,7 +4181,7 @@
     });
 
     /* Las tarjetas de estado: filtran el dashboard y abren la ventana de detalle */
-    document.querySelectorAll('.estado').forEach(function (card) {
+    document.querySelectorAll('.estado[data-filtro]').forEach(function (card) {
       card.addEventListener('click', function () {
         var f = card.dataset.filtro, v = card.dataset.valor;
         /* Si ya estaba activa, se quita el filtro */
@@ -4262,6 +4207,17 @@
       state.semaforo = '';
       refrescar();
     });
+    function verPendientes(semaforo) {
+      state.semaforo = pop.semaforo = semaforo;
+      state.soloVencidas = false;
+      state.estado = pop.estado = 'Abierta';
+      state.sortKey = 'diasEmitida';
+      state.sortDir = 'desc';
+      refrescar();
+      document.querySelector('.tab[data-tab="detalle"]').click();
+    }
+    document.getElementById('verPendientes').addEventListener('click', () => verPendientes(state.semaforo));
+    document.querySelectorAll('[data-pending-semaphore]').forEach(button => button.addEventListener('click', () => verPendientes(button.dataset.pendingSemaphore)));
     document.getElementById('btnExport').addEventListener('click', exportarCSV);
 
     var detalleBusqueda = document.getElementById('detalleBusqueda');
@@ -4281,7 +4237,7 @@
       var total = vista.length;
       if (q) {
         total = vista.filter(function (f) {
-          return [f.pais, f.numeroFactura, f.fechaEmision, f.fechaDespacho, f.estatus, f.codigoCliente, f.nombreCliente, f.totalFactura, f.diasEmitida, f.semaforo]
+          return [f.pais, f.numeroFactura, f.fechaEmision, f.fechaDespacho, f.estatus, f.codigoCliente, f.nombreCliente, f.totalFactura, f.diasEmitida, f.semaforo, plazoLabel(f.semaforo)]
             .join(' ').toLowerCase().indexOf(q) !== -1;
         }).length;
       }
@@ -4289,7 +4245,7 @@
       renderTabla();
     });
 
-    document.querySelectorAll('table.detail thead th').forEach(function (th) {
+    document.querySelectorAll('#sec-detalle table.detail thead th[data-key]').forEach(function (th) {
       th.addEventListener('click', function () {
         var k = th.dataset.key;
         if (state.sortKey === k) { state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; }
@@ -4302,22 +4258,18 @@
        12. INIT
        ========================================================= */
     (function init() {
-      el.desde.value = state.desde; el.hasta.value = state.hasta; el.corte.value = state.corte;
+      actualizarPeriodoMensual(true);
       el.pgSize.value = state.pageSize;
       document.querySelectorAll('.presets .chip[data-preset]').forEach(function (c) {
         c.classList.toggle('active', c.dataset.preset === 'all');
       });
-      /* Rango inicial de la gráfica semanal: últimas 12 semanas */
-      state.wHasta = state.hasta;
-      state.wDesde = shiftISO(state.hasta, -12 * 7);
-      sincronizarSemanal();
+
 
       /* Los datos llegan del snapshot generado por GitHub Actions. */
       try { aplicarFiltros(); } catch (e) { console.error('Error inicial:', e); }
       cargarDatos();
       setInterval(function () { cargarDatos(); }, 60000);
 
-      setInterval(stamp, 1000);
 
       var intentos = 0;
       var esperarChart = setInterval(function () {

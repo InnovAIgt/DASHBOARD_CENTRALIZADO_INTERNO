@@ -168,7 +168,8 @@ function FlujoVentasV2Contenido() {
     </div>}
 
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
-    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} summary={summary} contexto={contexto} paisFiltro={paisFiltro} />}
+    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} filters={filters} contexto={contexto} paisFiltro={paisFiltro}
+      leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} onIrEjecutivos={() => setPestana('ejecutivos')} />}
     {leads.length > 0 && pestana === 'ejecutivos' && <Ejecutivos leads={filtrados} leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo}
       vistaKey={informeVista} setVistaKey={setInformeVista} busqueda={informeBusqueda} setBusqueda={setInformeBusqueda} />}

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, Sun, Moon, ShieldCheck, Database, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useReport } from '../../context/ReportContext';
-import { SecretsModal } from '../modals/SecretsModal';
 import { OverviewView } from '../views/OverviewView';
 import { BankDetailView } from '../views/BankDetailView';
 import { DailyFlowView } from '../views/DailyFlowView';
@@ -14,6 +12,7 @@ import { UsersView } from '../views/UsersView';
 import { RegionStatusBar } from './RegionStatusBar';
 import { FlujoVentasV2 } from '../../modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx';
 import { MarketingCanales } from '../../modulos/marketing/canales/MarketingCanales.jsx';
+import { MarketingRedes } from '../../modulos/marketing/redes/MarketingRedes.jsx';
 
 interface NavSectionDef {
   id: string;
@@ -52,20 +51,14 @@ export const PortalLayout: React.FC = () => {
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isSecretsModalOpen, setIsSecretsModalOpen] = useState(false);
-  const [isLightMode, setIsLightMode] = useState(false);
   const [bankSubView, setBankSubView] = useState<string>('overview');
   // Flujo de ventas v2: el menú lateral se esconde y se asoma al acercar el mouse al borde izquierdo.
   // Solo aplica en esa página; los demás dashboards no cambian (estilos en flujo-ventas-v2.css).
   const [menuAsomado, setMenuAsomado] = useState(false);
 
   useEffect(() => {
-    if (isLightMode) {
-      document.documentElement.classList.add('theme-light');
-    } else {
-      document.documentElement.classList.remove('theme-light');
-    }
-  }, [isLightMode]);
+    document.documentElement.classList.remove('theme-light');
+  }, []);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => {
@@ -152,6 +145,12 @@ export const PortalLayout: React.FC = () => {
           // Marketing por canales: módulo src/modulos/marketing/canales (docs/marketing-canales/README.md)
           id: 'marketing-canales',
           label: 'Marketing por canales',
+          hasData: true
+        },
+        {
+          // Redes sociales: módulo src/modulos/marketing/redes (docs/marketing-redes/README.md)
+          id: 'marketing-redes',
+          label: 'Redes sociales',
           hasData: true
         }
       ]
@@ -336,6 +335,11 @@ export const PortalLayout: React.FC = () => {
       return <MarketingCanales />;
     }
 
+    // Marketing · Redes sociales: componente React del módulo src/modulos/marketing/redes
+    if (currentItem.id === 'marketing-redes') {
+      return <MarketingRedes />;
+    }
+
     // If it has an external dashboard file (like mailing-campanas.html)
     if (currentItem.archivo) {
       return (
@@ -470,41 +474,13 @@ export const PortalLayout: React.FC = () => {
         {/* Sidebar Footer */}
         <div className="portal-sidebar-footer">
           {/* User profile card */}
-          <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-red-600/80 text-white font-bold text-xs flex items-center justify-center border border-red-400/40">
-                F
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-bold text-slate-100 leading-tight">F</div>
-                <div className="text-[10px] text-slate-400">Administrador</div>
-              </div>
+          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-white/5 border border-white/5 mb-3">
+            <div className="w-8 h-8 rounded-full bg-red-600/80 text-white font-bold text-xs flex items-center justify-center border border-red-400/40">
+              F
             </div>
-
-            <div className="flex items-center gap-1">
-              {/* Theme Toggle (Dark / Light) */}
-              <button
-                type="button"
-                onClick={() => setIsLightMode(prev => !prev)}
-                className="p-1.5 rounded-md hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-                title={isLightMode ? 'Cambiar a Modo Oscuro' : 'Cambiar a Modo Claro'}
-              >
-                {isLightMode ? (
-                  <Moon className="w-3.5 h-3.5 text-slate-400" />
-                ) : (
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                )}
-              </button>
-
-              {/* Secrets Vercel & APIs button */}
-              <button
-                type="button"
-                onClick={() => setIsSecretsModalOpen(true)}
-                className="p-1.5 rounded-md hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
-                title="Variables de entorno para Vercel y Webhooks"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-red-500" />
-              </button>
+            <div className="text-left min-w-0">
+              <div className="text-xs font-bold text-slate-100 leading-tight truncate">F</div>
+              <div className="text-[10px] text-slate-400 truncate">Administrador</div>
             </div>
           </div>
 
@@ -544,12 +520,6 @@ export const PortalLayout: React.FC = () => {
           {renderActiveContent()}
         </main>
       </div>
-
-      {/* Secrets & Vercel Configuration Modal */}
-      <SecretsModal
-        isOpen={isSecretsModalOpen}
-        onClose={() => setIsSecretsModalOpen(false)}
-      />
     </div>
   );
 };

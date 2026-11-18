@@ -1,85 +1,101 @@
-// Flujo de ventas v2 · vista general: tarjetas por país, indicadores, gráficas y tablas.
+// Flujo de ventas v2 · pestaña Resumen (DECISIONES D19: "Resumen con la lógica del dashboard de leads").
+// 4 bloques, en este orden:
+//   1. Tarjetas por país + franja de indicadores (summarize / byCountry, como el dashboard de leads).
+//   2. "Leads por mes" con 3 vistas: Gráfica, Embudo y Tabla por país (LeadsPorMes.jsx).
+//   3. "Recorrido de los leads": SIN CAMBIOS (lógica propia, D13/D16).
+//   4. "Top 5 ejecutivos: leads recibidos vs. ganados" (TopEjecutivos.jsx).
+// Filtro "Calificado" (el de siempre): una sola conversión y sin lo de no calificados. Con "Todos":
+// Conversión (ganados ÷ total) + Conversión de calificados (D10) como dato extra.
+// Todo número abre su detalle con las ventanas que ya existían (DetalleLeads, DetalleMes,
+// DetalleEtapa y DetalleAsesor).
 import { useMemo, useState } from 'react'
 import { formatNumber } from '../utils/analytics.js'
 import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
-import { conversionCalificados, datosVistaGeneral, INDICADORES, recorridoLeads } from './datos.js'
-import { leadReferenceMonth } from '../utils/leads.js'
-import { GraficaMensual, Leyenda, SERIES_MES, TarjetasPais } from './graficas.jsx'
+import { embudoEtapas, fichaCoaching, INDICADORES, recorridoLeads, resumenLeads, soloCalificados, tonoConversion, tonoConversionTotal } from './datos.js'
+import { COLOR_TONO, TarjetasPais } from './graficas.jsx'
+import { LeadsPorMes } from './LeadsPorMes.jsx'
 import { RecorridoLeads } from './RecorridoLeads.jsx'
-import { DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
+import { TopEjecutivos } from './TopEjecutivos.jsx'
+import { DetalleAsesor, DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
-function Panel({ titulo, subtitulo, accion, className = '', children }) {
-  return <section className={`fv2-panel ${className}`}>
-    <header className="fv2-panel-cabeza">
-      <div>
-        <div className="fv2-panel-titulo">{titulo}</div>
-        {subtitulo && <div className="fv2-panel-sub">{subtitulo}</div>}
-      </div>
-      {accion}
-    </header>
-    {children}
-  </section>
-}
-
-function Indicador({ etiqueta, valor, nota, color, onAbrir }) {
-  return <button type="button" className="fv2-kpi" onClick={onAbrir} title={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
-    <span className="fv2-kpi-etiqueta">{etiqueta}</span>
-    <span className="fv2-kpi-numero" style={color ? { color } : undefined}>{valor}</span>
-    <span className="fv2-kpi-nota">{nota}</span>
+function Dato({ icono, etiqueta, valor, nota, color, title, onAbrir }) {
+  return <button type="button" className="fv2-res-franja-dato" onClick={onAbrir} title={title} aria-label={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
+    <span className="fv2-res-franja-icono" aria-hidden="true">{icono}</span>
+    <b style={color ? { color } : undefined}>{valor}</b>
+    <span className="fv2-res-franja-texto"><strong>{etiqueta}</strong><small>{nota}</small></span>
   </button>
 }
 
 /**
- * 6 indicadores. Las cifras salen de summarize() de la lógica copiada, salvo la conversión de
- * calificados y el desglose de ganados, que salen de conversionCalificados() (corregida, D10).
+ * Franja de una sola línea con los 5 indicadores del dashboard de leads (KpiGrid): Total leads,
+ * Ganados (allá "Radicados"), Unidades vendidas, Unidades promedio por cierre y Conversión.
+ * Con "Todos" se agrega la Conversión de calificados (D10).
  */
-// Total leads, Calificados, Ganados y Unidades por cierre ya están en las tarjetas por país, así
-// que aquí solo quedan los que no se repiten (12/11/2026).
-function Indicadores({ summary, conversion, onAbrir }) {
-  return <section className="fv2-kpis">
-    <Indicador etiqueta="Conversión de calificados" valor={formatearRatio(conversion.ratio)} color={COLORES.azulClaro} nota={`${formatNumber(conversion.ganadosCalificados)} ganados calificados ÷ ${formatNumber(conversion.calificados)} calificados`} onAbrir={() => onAbrir('conversion')} />
-    <Indicador etiqueta="Unidades vendidas" valor={formatNumber(summary.units)} nota="En leads ganados" onAbrir={() => onAbrir('unidades')} />
+function FranjaIndicadores({ resumen, calificado, onAbrir }) {
+  const s = resumen.general
+  const c = resumen.calificados
+  return <section className="fv2-res-franja" aria-label="Indicadores generales">
+    <Dato icono="👥" etiqueta="Total leads" valor={formatNumber(s.total)} color={COLORES.azulClaro}
+      nota={calificado ? 'Solo calificados (filtro)' : `${formatNumber(s.qualified)} calificados · ${formatNumber(s.unqualified)} no calificados`}
+      title={`${formatNumber(s.total)} leads con los filtros activos`} onAbrir={() => onAbrir('total')} />
+    <Dato icono="✅" etiqueta="Ganados" valor={formatNumber(s.won)} color={COLORES.verdeClaro} nota={'= "Radicados" en el dashboard de leads'}
+      title={`${formatNumber(s.won)} ganados (${formatNumber(s.open)} leads aún abiertos)`} onAbrir={() => onAbrir('ganados')} />
+    <Dato icono="📦" etiqueta="Unidades vendidas" valor={formatNumber(s.units)} color="#e0b52e" nota="En leads ganados"
+      title={`Σ unidades en leads ganados: ${formatNumber(s.units)}`} onAbrir={() => onAbrir('unidades')} />
+    <Dato icono="🧮" etiqueta="Unid. promedio por cierre" valor={s.won ? formatNumber(Math.round(s.avgUnits)) : '—'}
+      nota={s.won ? `${formatNumber(s.units)} unidades ÷ ${formatNumber(s.won)} ganados` : 'Sin cierres con éxito'}
+      title={s.won ? `${formatNumber(s.units)} ÷ ${formatNumber(s.won)} = ${(s.avgUnits).toFixed(2)}` : 'Sin ganados'} onAbrir={() => onAbrir('porCierre')} />
+    <Dato icono="📈" etiqueta="Conversión" valor={formatearRatio(s.conversion)} color={COLOR_TONO[tonoConversionTotal(s.conversion)]}
+      nota={`${formatNumber(s.won)} ganados ÷ ${formatNumber(s.total)} leads`}
+      title={`Ganados ÷ total de leads = ${formatNumber(s.won)} ÷ ${formatNumber(s.total)}`} onAbrir={() => onAbrir('conversionTotal')} />
+    {!calificado && <Dato icono="🎯" etiqueta="Conversión de calificados" valor={formatearRatio(c.ratio)} color={COLOR_TONO[tonoConversion(c.ratio)]}
+      nota={`${formatNumber(c.ganadosCalificados)} ganados calificados ÷ ${formatNumber(c.calificados)} calificados`}
+      title="Dato extra (D10): ganados que eran calificados ÷ calificados" onAbrir={() => onAbrir('conversion')} />}
   </section>
 }
 
-// Pestaña Resumen (4.0b): tarjetas por país → indicadores (Conversión y Unidades) → "Leads por mes" → "Recorrido de los leads".
-// "Desempeño por ejecutivo", "Resultados por ejecutivo" y "Resultados mensuales" pasaron a la
-// pestaña Ejecutivos (tarjetas). El detalle mensual por país se abre desde la gráfica.
-export function VistaGeneral({ leads, summary, contexto, paisFiltro }) {
+export function VistaGeneral({ leads, filters, contexto, paisFiltro, leadsEquipo, baseEjecutivos, onIrEjecutivos }) {
   const [mesSel, setMesSel] = useState(null)
   const [indicadorSel, setIndicadorSel] = useState(null) // { clave, leads, titulo? }
   const [etapaSel, setEtapaSel] = useState(null)
-  const datos = useMemo(() => datosVistaGeneral(leads), [leads])
-  const conversion = useMemo(() => conversionCalificados(leads), [leads])
-  const recorrido = useMemo(() => recorridoLeads(datos.embudo), [datos.embudo])
-  // Decisión A (D16): la ventana de etapa recibe el mismo resaltado amarillo que el recorrido
-  // (menor % de paso con al menos 5 leads), sin cambiar su código: solo se le pasa otro mayorCaida.
-  const embudoVentana = useMemo(() => ({ ...datos.embudo, mayorCaida: recorrido.frenado?.hasta ?? null }), [datos.embudo, recorrido])
-  // Detalle mensual de un mes de la gráfica, con el filtro de país actual (Todos, GT o SV).
-  const abrirMes = (fila) => setMesSel({ month: fila.month, country: paisFiltro, leads: leads.filter((l) => leadReferenceMonth(l) === fila.month) })
+  const [asesorSel, setAsesorSel] = useState(null)
+  const calificado = soloCalificados(filters)
+  const resumen = useMemo(() => resumenLeads(leads), [leads])
+  const embudo = useMemo(() => embudoEtapas(leads), [leads])
+  const recorrido = useMemo(() => recorridoLeads(embudo), [embudo])
+  // Decisión A (D16): la ventana de etapa recibe el mismo resaltado amarillo que el recorrido.
+  const embudoVentana = useMemo(() => ({ ...embudo, mayorCaida: recorrido.frenado?.hasta ?? null }), [embudo, recorrido])
+  // Ventana del ejecutivo: mismos datos que abre la pestaña Ejecutivos (ranking y equipo, D17).
+  const coaching = useMemo(() => (asesorSel ? fichaCoaching(leads, leadsEquipo ?? leads, baseEjecutivos ?? []) : null), [asesorSel, leads, leadsEquipo, baseEjecutivos])
+  const abrirDato = (clave, lista, titulo) => setIndicadorSel({ clave, leads: lista, titulo })
+  // Detalle del mes: de la gráfica o el embudo, con el país del filtro; de la tabla, con su país.
+  const abrirMes = ({ month, country, leads: delMes }) => setMesSel({ month, country: country ?? paisFiltro, leads: delMes })
 
   return <div className="fv2-vista">
-    <TarjetasPais paises={datos.countries} onAbrir={(clave, pais) => setIndicadorSel({
-      clave,
-      leads: leads.filter((lead) => lead.pais === pais),
-      titulo: `${INDICADORES[clave].titulo} · ${pais}`,
-    })} />
+    <TarjetasPais paises={resumen.paises} calificado={calificado} tono={tonoConversionTotal} onAbrir={(clave, pais) => abrirDato(
+      clave, leads.filter((lead) => lead.pais === pais), `${INDICADORES[clave].titulo} · ${pais}`,
+    )} />
 
-    <Indicadores summary={summary} conversion={conversion} onAbrir={(clave) => setIndicadorSel({ clave, leads })} />
+    <FranjaIndicadores resumen={resumen} calificado={calificado} onAbrir={(clave) => abrirDato(clave, leads)} />
 
-    <Panel titulo="Leads por mes" subtitulo="Columnas: calificados + no calificados = leads del mes. Línea: ganados, con su escala a la derecha. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación. Clic en un mes para ver su detalle." accion={<Leyenda items={SERIES_MES} />}>
-      {datos.months.length ? <GraficaMensual filas={datos.months} onMes={abrirMes} /> : <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
-    </Panel>
+    <LeadsPorMes leads={leads} calificado={calificado} onDato={abrirDato} onMes={abrirMes} />
 
-    {/* "Recorrido de los leads" (D16): reemplaza al diseño anterior del embudo por etapa. */}
+    {/* "Recorrido de los leads" (D16): sin cambios. */}
     <section className="fv2-panel">
       {leads.length
         ? <RecorridoLeads recorrido={recorrido} titulo="Recorrido de los leads" subtitulo="Así avanzan los leads calificados por las 6 etapas de venta" onClickEtapa={setEtapaSel} />
         : <Vacio titulo="Sin leads con los filtros actuales" />}
     </section>
 
+    <TopEjecutivos leads={leads} calificado={calificado} onDato={abrirDato} onIrEjecutivos={onIrEjecutivos}
+      onAsesor={(name, country) => setAsesorSel({ name, country })} />
+
     {indicadorSel && <DetalleLeads {...indicadorSel} onClose={() => setIndicadorSel(null)} />}
     {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leads} embudo={embudoVentana} contexto={contexto} onClose={() => setEtapaSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
+    {asesorSel && coaching && <DetalleAsesor name={asesorSel.name} country={asesorSel.country} leads={leads} month={null}
+      ranking={coaching.fichas.find((f) => f.name === asesorSel.name)?.ranking}
+      equipo={{ ratio: coaching.equipo.conversion.ratio, embudo: coaching.equipo.embudo }}
+      onClose={() => setAsesorSel(null)} />}
   </div>
 }
