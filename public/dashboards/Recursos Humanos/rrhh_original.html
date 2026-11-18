@@ -862,12 +862,7 @@ async function loadFromSupabase() {
     }
   }
   try {
-var hoyGT = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/Guatemala',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date());
+var hoyGT = todayIso();
 
 ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
   return r.fechaSolicitud &&
@@ -878,10 +873,7 @@ ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
 
 applyActiveScope();
 
-PERIODO = {
-  desde: '2026-09-01',
-  hasta: hoyGT
-};
+PERIODO = defaultPeriodo();
 
 syncPeriodInputs();
     setLoadStatus(aviso, aviso ? 'error' : 'hidden');
@@ -982,7 +974,14 @@ function opDe(pais) {
 }
 function pad2(n) { return String(n).padStart(2, '0'); }
 function isoFromDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-function todayIso() { return isoFromDate(new Date()); }
+function todayIso() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guatemala',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+}
 function isoToDmy(iso) {
   if (!iso) return '';
   var p = iso.split('-');
@@ -997,8 +996,8 @@ function parseDmy(txt) {
   return isoFromDate(dt);
 }
 function defaultPeriodo() {
-  var fechas = ALL_RECORDS.map(function(r) { return r.fechaSolicitud; }).filter(Boolean).sort();
-  return { desde: fechas[0] || '2026-09-01', hasta: fechas[fechas.length - 1] || todayIso() };
+  var hoy = todayIso();
+  return { desde: hoy.slice(0, 8) + '01', hasta: hoy };
 }
 function xfLabel(key, value) {
   if (key === 'estado') return value;

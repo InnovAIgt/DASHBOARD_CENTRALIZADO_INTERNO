@@ -4927,9 +4927,9 @@ function initFilterBar(){
   XF_COLUMNAS[3].items = SLA_OPCIONES.map(([key])=>SLA_LABEL[key]);   // SLA_LABEL: en la prueba del corte, «Sin clasificación»
   xfReiniciar(xfAplicado);
 
-  // Período por defecto: primer y último caso de los datos.
-  const fechas = ALL.map(r=>gtDateOnly(r.fecha_creacion)).filter(Boolean).sort();
-  periodoDefecto = [fechas[0] || "", fechas[fechas.length-1] || ""];
+  // Período por defecto: día 1 del mes actual al día actual (hora de Guatemala).
+  const hoy = gtDateOnly(new Date().toISOString()) || formatDateOnly(sacHoyGT());
+  periodoDefecto = [hoy ? `${hoy.slice(0, 8)}01` : "", hoy || ""];
   resetPeriodo();
 
   // Operaciones
@@ -5117,8 +5117,7 @@ function syncEstadoDerivado(){
 }
 
 function applyFilters(){
-  const periodoActivo =
-    filters.desde!==periodoDefecto[0] || filters.hasta!==periodoDefecto[1];
+  const periodoActivo = Boolean(filters.desde || filters.hasta);
   const estadoOn = xfActiva("estado");
   const categoriaOn = xfActiva("categoria");
   const etapaOn = xfActiva("etapa");

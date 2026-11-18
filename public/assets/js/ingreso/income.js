@@ -2602,17 +2602,37 @@ function fechaISOEnZonaDashboard(fecha) {
   return `${valores.year}-${valores.month}-${valores.day}`;
 }
 
+function fechaHoyDashboard() {
+  return fechaISOEnZonaDashboard(new Date());
+}
+
+function rangoMesActualDashboard() {
+  const hoy = fechaHoyDashboard();
+  if (!hoy) return { from: MIN_DATE || '', to: MAX_DATE || '' };
+  return {
+    from: `${hoy.slice(0, 8)}01`,
+    to: hoy
+  };
+}
+
 function fechaMaximaCalendario() {
   const generatedAt = ultimaGeneracionData();
-  return generatedAt ? fechaISOEnZonaDashboard(generatedAt) : MAX_DATE;
+  const candidates = [
+    generatedAt ? fechaISOEnZonaDashboard(generatedAt) : '',
+    MAX_DATE,
+    fechaHoyDashboard()
+  ].filter(Boolean).sort();
+  return candidates[candidates.length - 1] || '';
 }
 
 function actualizarLimitesCalendario() {
   if (!dateFrom || !dateTo) return;
 
+  const mesInicio = rangoMesActualDashboard().from;
+  const minCalendario = [MIN_DATE, mesInicio].filter(Boolean).sort()[0] || '';
   const maxCalendario = fechaMaximaCalendario() || MAX_DATE;
-  dateFrom.min = MIN_DATE;
-  dateTo.min = dateFrom.value || MIN_DATE;
+  dateFrom.min = minCalendario;
+  dateTo.min = dateFrom.value || minCalendario;
   dateTo.max = maxCalendario;
   dateFrom.max = dateTo.value || maxCalendario;
 
@@ -2668,12 +2688,9 @@ const dateTo = document.getElementById('dateTo');
 const periodFilter = document.getElementById('periodFilter');
 
 if (dateFrom && dateTo) {
-  dateFrom.min = MIN_DATE;
-  dateTo.min = MIN_DATE;
-  dateTo.max = fechaMaximaCalendario() || MAX_DATE;
-  dateFrom.max = dateTo.max;
-  dateFrom.value = MIN_DATE;
-  dateTo.value = dateTo.max;
+  const defPeriod = rangoMesActualDashboard();
+  dateFrom.value = defPeriod.from;
+  dateTo.value = defPeriod.to;
   actualizarLimitesCalendario();
 }
 
@@ -2734,10 +2751,13 @@ dateTo?.addEventListener('change', () => { syncDateLimits(); applyCurrentDateFil
 document.getElementById('applyDateFilter')?.addEventListener('click', () => applyCurrentDateFilter(true));
 document.getElementById('resetDateFilter')?.addEventListener('click', () => {
   if (!dateFrom || !dateTo) return;
-  dateFrom.value = MIN_DATE;
-  dateTo.value = fechaMaximaCalendario() || MAX_DATE;
+  const defPeriod = rangoMesActualDashboard();
+  dateFrom.value = defPeriod.from;
+  dateTo.value = defPeriod.to;
   syncDateLimits();
-  applyCurrentDateFilter(false);
+  USER_CHANGED_PERIOD = false;
+  DATA = buildFiltered(dateFrom.value, dateTo.value);
+  renderAll();
 });
 
 function initializeIncomeDashboard() {
@@ -2760,20 +2780,18 @@ function initializeIncomeDashboard() {
     window.DASHBOARD_RAW_TRANSACTIONS = RAW_TRANSACTIONS;
     rebuildTransactionIndex();
 
-    if (dateFrom && dateTo && MIN_DATE) {
-      dateFrom.min = MIN_DATE;
-      dateTo.min = MIN_DATE;
-      dateTo.max = fechaMaximaCalendario() || MAX_DATE;
-      dateFrom.max = dateTo.max;
-      dateFrom.value = MIN_DATE;
-      dateTo.value = dateTo.max;
+    const defPeriod = rangoMesActualDashboard();
+    if (dateFrom && dateTo) {
+      dateFrom.value = defPeriod.from;
+      dateTo.value = defPeriod.to;
       actualizarLimitesCalendario();
     }
 
-    DATA = buildFiltered(dateFrom?.value || MIN_DATE, dateTo?.value || MAX_DATE);
+    DATA = buildFiltered(dateFrom?.value || defPeriod.from, dateTo?.value || defPeriod.to);
     renderAll();
   } else {
-    DATA = buildFiltered(MIN_DATE || '', MAX_DATE || '');
+    const defPeriod = rangoMesActualDashboard();
+    DATA = buildFiltered(defPeriod.from || MIN_DATE || '', defPeriod.to || MAX_DATE || '');
     renderAll();
   }
 
@@ -3485,13 +3503,10 @@ function aplicarDatosDashboard(data) {
   window.DASHBOARD_RAW_TRANSACTIONS = RAW_TRANSACTIONS;
   rebuildTransactionIndex();
 
-  if (dateFrom && dateTo && MIN_DATE && !USER_CHANGED_PERIOD) {
-    dateFrom.min = MIN_DATE;
-    dateTo.min = MIN_DATE;
-    dateTo.max = fechaMaximaCalendario() || MAX_DATE;
-    dateFrom.max = dateTo.max;
-    dateFrom.value = MIN_DATE;
-    dateTo.value = dateTo.max;
+  const defPeriod = rangoMesActualDashboard();
+  if (dateFrom && dateTo && !USER_CHANGED_PERIOD) {
+    dateFrom.value = defPeriod.from;
+    dateTo.value = defPeriod.to;
     actualizarLimitesCalendario();
   } else {
     actualizarLimitesCalendario();
@@ -3501,8 +3516,8 @@ function aplicarDatosDashboard(data) {
   // totales salgan calculados sobre el período activo (igual que al hacer
   // clic en un país). Sin esto, la primera pintada después del F5 dejaba
   // data vieja hasta que se cambiaba de país y se regresaba.
-  const desdePeriodo = (dateFrom && dateFrom.value) || MIN_DATE || '';
-  const hastaPeriodo = (dateTo && dateTo.value) || MAX_DATE || '';
+  const desdePeriodo = (dateFrom && dateFrom.value) || defPeriod.from || MIN_DATE || '';
+  const hastaPeriodo = (dateTo && dateTo.value) || defPeriod.to || MAX_DATE || '';
   if (desdePeriodo && hastaPeriodo) {
     DATA = buildFiltered(desdePeriodo, hastaPeriodo);
     window.DATA = DATA;

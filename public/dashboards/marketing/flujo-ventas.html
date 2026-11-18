@@ -502,15 +502,20 @@ function activarSeg(cont, boton){
 }
 const ventana = () => ({ desde: $("desde").value || null, hasta: $("hasta").value || null });
 
-/* El período arranca con el rango de fechas de los datos, como los demás dashboards.
-   Mostrar el rango completo equivale a no filtrar (los leads sin fecha siguen entrando).
-   Si llegan datos nuevos y el usuario no cambió el período, el rango se actualiza. */
-var RANGO_PERIODO = { desde: "", hasta: "" };
-function rangoPeriodo(fechas){
-  const v = fechas.filter(Boolean).sort();
-  if(!v.length) return;
+/* El período arranca del día 1 del mes actual al día actual (hora de Guatemala). */
+function periodoMesActualGT(){
+  const hoy = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Guatemala",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+  return { desde: `${hoy.slice(0, 8)}01`, hasta: hoy };
+}
+var RANGO_PERIODO = periodoMesActualGT();
+function rangoPeriodo(){
   const antes = RANGO_PERIODO;
-  RANGO_PERIODO = { desde: v[0], hasta: v[v.length - 1] };
+  RANGO_PERIODO = periodoMesActualGT();
   if(!$("desde").value || $("desde").value === antes.desde) $("desde").value = RANGO_PERIODO.desde;
   if(!$("hasta").value || $("hasta").value === antes.hasta) $("hasta").value = RANGO_PERIODO.hasta;
 }
@@ -692,7 +697,8 @@ function crearBarraFx(raiz, {grupos, grupo:grupoInicial, onCambio, onReset, opDe
   const limitar = () => { hasta.min = desde.value; desde.max = hasta.value; };
   desde.addEventListener("change", ()=>{ if(hasta.value && desde.value > hasta.value) hasta.value = desde.value; limitar(); onCambio(); });
   hasta.addEventListener("change", ()=>{ if(desde.value && hasta.value < desde.value) desde.value = hasta.value; limitar(); onCambio(); });
-  const resetPeriodo = () => { desde.value = RANGO_PERIODO.desde; hasta.value = RANGO_PERIODO.hasta; limitar(); };
+  const resetPeriodo = () => { RANGO_PERIODO = periodoMesActualGT(); desde.value = RANGO_PERIODO.desde; hasta.value = RANGO_PERIODO.hasta; limitar(); };
+  resetPeriodo();
   q(".period-reset").addEventListener("click", ()=>{ resetPeriodo(); onCambio(); });
 
   /* ---- Filtros combinados tipo Excel ---- */

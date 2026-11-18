@@ -2044,7 +2044,7 @@ background: #c43c50 !important;
 
 .anexos-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -2270,7 +2270,7 @@ background: #c43c50 !important;
 
 @media (max-width: 1200px) {
   .anexos-kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .inv-breakdown-split {
     grid-template-columns: 1fr;

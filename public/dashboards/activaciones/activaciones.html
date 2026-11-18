@@ -221,21 +221,16 @@
         </div>
       </section>
 
-      <!-- EQUIPOS Y SIM CARDS -->
-      <section class="anexos-kpi-row" aria-label="Equipos y SIM Cards">
+      <!-- EQUIPOS -->
+      <section class="anexos-kpi-row" aria-label="Equipos">
         <div id="anexosRowEyebrow" style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
           <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
-          <span>EQUIPOS Y SIM CARDS</span>
+          <span>EQUIPOS</span>
         </div>
         <div class="anexos-kpi-grid">
           <div class="anexos-kpi-card tone-blue is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de Equipos en Categorías">
             <div class="anexos-kpi-label" style="color: #7fb0f0;">Equipos</div>
             <div class="anexos-kpi-val" style="color: #7fb0f0;" id="kpiTotalEquipos">—</div>
-          </div>
-
-          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de SIM Cards en Categorías">
-            <div class="anexos-kpi-label">SIM Cards</div>
-            <div class="anexos-kpi-val" id="kpiTotalSims">—</div>
           </div>
 
           <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="Ver inventario Nuevo en Categorías">
@@ -1109,21 +1104,43 @@
       .replace(/'/g, "&#39;");
   }
 
+  function isEmptyNameText(text) {
+    const trimmed = String(text == null ? "" : text).trim();
+    if (!trimmed) return true;
+    return /^(null|undefined|n\/a|na|none|-+)$/i.test(trimmed);
+  }
+
   function getNameValue(value) {
-    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "string") {
+      const t = value.trim();
+      return isEmptyNameText(t) ? "" : t;
+    }
     if (!value || typeof value !== "object") return "";
     const nestedName = value.nombre || value.name || value.nombreCompleto || value.fullName
       || value.contacto || value.cliente || value.nombre_contacto || value.contactName
       || value.contact_name;
-    return typeof nestedName === "string" ? nestedName.trim() : "";
+    if (typeof nestedName !== "string") return "";
+    const t = nestedName.trim();
+    return isEmptyNameText(t) ? "" : t;
   }
 
-  function getRawCompanyName(item) {
+  function getPrimaryCompanyName(item) {
     if (!item || typeof item !== "object") return "";
     const candidates = [
       item.empresa, item.empresaRad, item.nombreEmpresa, item.nombre_empresa,
       item.razonSocial, item.razon_social, item.clienteNombre, item.cliente_nombre,
-      item.nombreCliente, item.nombre_cliente, item.clinam, item.cliente,
+      item.nombreCliente, item.nombre_cliente, item.clinam, item.cliente
+    ];
+    for (const candidate of candidates) {
+      const name = getNameValue(candidate);
+      if (name) return name;
+    }
+    return "";
+  }
+
+  function getContactName(item) {
+    if (!item || typeof item !== "object") return "";
+    const candidates = [
       item.contacto, item.nombreContacto, item.nombre_contacto, item.contactoNombre,
       item.contactName, item.contact_name, item.personaContacto, item.persona_contacto,
       item.nombreCompleto, item.fullName, item.nombre, item.name
@@ -1133,6 +1150,10 @@
       if (name) return name;
     }
     return "";
+  }
+
+  function getRawCompanyName(item) {
+    return getPrimaryCompanyName(item) || getContactName(item);
   }
 
   function getFallbackCompanyName(item) {
@@ -1158,6 +1179,10 @@
     return String(item.codigo || item.codCliente || item.cod_cliente || item.clicod || "")
       .trim()
       .toUpperCase();
+  }
+
+  function isRenovacionItem(item) {
+    return String((item && item.negocio) || "").trim().toUpperCase() === "RENOVACION";
   }
 
   function getContractType(item) {
@@ -1188,8 +1213,10 @@
   }
 
   function getItemInventoryData(item) {
+    const currencySymbol = String((item && item.pais) || "GT").trim().toUpperCase() === "SV" ? "$" : "Q";
     if (!item || typeof item !== "object") {
       return {
+        isRenovacion: false,
         hasAnexosField: false,
         annexCount: 0,
         annexValidated: 0,
@@ -1219,10 +1246,40 @@
     const cached = itemInventoryCache.get(item);
     if (cached) return cached;
 
+    if (isRenovacionItem(item)) {
+      const omitted = {
+        isRenovacion: true,
+        hasAnexosField: false,
+        annexCount: 0,
+        annexValidated: 0,
+        annexPending: 0,
+        equiposE: 0,
+        simsS: 0,
+        totalDevices: 0,
+        eCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        sCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        allCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        condition: "NO APLICA",
+        eModels: [],
+        sModels: [],
+        annexList: [],
+        detalleRows: [],
+        detalleModels: [],
+        tecnologias: [],
+        proveedores: [],
+        planesSim: [],
+        licencias: [],
+        unitEquipoAvg: null,
+        unitPlanAvg: null,
+        currencySymbol
+      };
+      itemInventoryCache.set(item, omitted);
+      return omitted;
+    }
+
     const hasAnexosField = Array.isArray(item.anexosTemporales);
     const rawAnexos = hasAnexosField ? item.anexosTemporales : [];
     const rawDetalle = Array.isArray(item.detalle) ? item.detalle : [];
-    const currencySymbol = String(item.pais || "GT").trim().toUpperCase() === "SV" ? "$" : "Q";
 
     const eCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
     const sCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
@@ -1419,20 +1476,27 @@
   }
 
   function getTotalRadiosCount(item) {
-    return Number(item && item.cantidad) || 0;
+    if (!item || isRenovacionItem(item)) return 0;
+    return Number(item.cantidad) || 0;
   }
 
   function getRadiosEntregadosCount(item) {
-    if (!item) return 0;
+    if (!item || isRenovacionItem(item)) return 0;
     return item.estado === "finalizada" ? (Number(item.cantidad) || 0) : 0;
   }
 
   function getRadiosEnProcesoCount(item) {
-    if (!item) return 0;
+    if (!item || isRenovacionItem(item)) return 0;
     return item.estado === "en_proceso" ? (Number(item.cantidad) || 0) : 0;
   }
 
   function formatRadiosEntregaCell(item) {
+    if (isRenovacionItem(item)) {
+      return `
+        <strong style="font-family: var(--font-mono); font-size: 12px; color: #8b909e;">—</strong>
+        <div style="font-size: 9px; color: #8b909e; font-weight: 600;">Omitido (Renovación)</div>
+      `;
+    }
     const total = getTotalRadiosCount(item);
     const entregados = getRadiosEntregadosCount(item);
     if (item.estado === "finalizada") {
@@ -1462,10 +1526,18 @@
     else if (t === "MIXTO") cls = "is-mixto";
     else if (t === "SIN ESTADO") cls = "is-sin-estado";
     else if (t === "PEND. ANEXO") cls = "is-pend-anexo";
+    else if (t === "NO APLICA" || t === "OMITIDO") cls = "is-sin-anexos";
     return `<span class="inv-cond-badge ${cls}">${escapeHtml(t)}</span>`;
   }
 
   function formatInventoryCell(item) {
+    if (isRenovacionItem(item)) {
+      return `
+        ${getInventoryBadgeHtml("NO APLICA")}
+        <div class="inv-submeta">Renovación</div>
+        <div class="inv-submeta" style="color: #8b909e;">Omitida en equipos</div>
+      `;
+    }
     const inv = getItemInventoryData(item);
     const model = escapeHtml(getRadioModel(item));
     const techProv = [inv.tecnologias[0], inv.proveedores[0]].filter(Boolean).join(" · ");
@@ -1491,15 +1563,15 @@
     const selfCompanyByCode = new Map();
     [...rawAllItems, ...items].forEach(item => {
       if (!item || typeof item !== "object") return;
-      const existingName = getRawCompanyName(item);
+      const existingCompany = getPrimaryCompanyName(item);
       const code = getClientCode(item);
-      if (existingName && code && !selfCompanyByCode.has(code)) {
-        selfCompanyByCode.set(code, existingName);
+      if (existingCompany && code && !selfCompanyByCode.has(code)) {
+        selfCompanyByCode.set(code, existingCompany);
       }
     });
 
     items.forEach(item => {
-      const existingName = getRawCompanyName(item) || selfCompanyByCode.get(getClientCode(item)) || "";
+      const existingName = getPrimaryCompanyName(item) || selfCompanyByCode.get(getClientCode(item)) || getContactName(item) || "";
       if (existingName) item.empresa = existingName;
     });
 
@@ -1527,7 +1599,7 @@
           rows.forEach(row => {
             if (!row || typeof row !== "object") return;
             const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
-            const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
+            const name = getNameValue(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "");
             if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
           });
         }
@@ -1555,8 +1627,8 @@
 
     items.forEach(item => {
       const code = getClientCode(item);
-      const existingName = getRawCompanyName(item);
-      const company = existingName || companyByCode.get(code) || CLIENT_NAME_OVERRIDES[code] || "";
+      const primary = getPrimaryCompanyName(item);
+      const company = primary || selfCompanyByCode.get(code) || companyByCode.get(code) || getContactName(item) || CLIENT_NAME_OVERRIDES[code] || "";
       if (company) item.empresa = company;
     });
   }
@@ -2440,22 +2512,19 @@
       setElText("kpiCancelledExact", canceladas.toLocaleString("es-GT"));
       setElText("kpiRadiosCancelados", radiosCancelados.toLocaleString("es-GT"));
 
-      // KPIs de Equipos, SIM Cards y Condición de Inventario (Nuevo / Usado / Refurbished)
+      // KPIs de Equipos y Condición de Inventario (Nuevo / Usado / Refurbished)
       let totalE = 0;
-      let totalS = 0;
       let eNuevo = 0, eUsado = 0, eRefurb = 0;
 
       filteredData.forEach(item => {
         const inv = getItemInventoryData(item);
         totalE += inv.equiposE;
-        totalS += inv.simsS;
         eNuevo += inv.eCond.nuevo;
         eUsado += inv.eCond.usado;
         eRefurb += inv.eCond.refurbished;
       });
 
       setElText("kpiTotalEquipos", totalE.toLocaleString("es-GT"));
-      setElText("kpiTotalSims", totalS.toLocaleString("es-GT"));
       setElText("kpiInvNuevoCount", eNuevo.toLocaleString("es-GT"));
       setElText("kpiInvUsadoCount", eUsado.toLocaleString("es-GT"));
       setElText("kpiInvRefurbCount", eRefurb.toLocaleString("es-GT"));
@@ -3035,11 +3104,14 @@
           catS += inv.simsS;
         });
 
-        const condChips = [
-          eN > 0 ? `<span class="inv-cond-badge is-nuevo">Nuevo: ${eN}</span>` : "",
-          eU > 0 ? `<span class="inv-cond-badge is-usado">Usado: ${eU}</span>` : "",
-          eR > 0 ? `<span class="inv-cond-badge is-refurbished">Ref.: ${eR}</span>` : ""
-        ].filter(Boolean).join(" ") || `<span style="font-size:10px; color:var(--text-muted);">Sin anexos E clasif.</span>`;
+        const isRenovCat = cat === "RENOVACION";
+        const condChips = isRenovCat
+          ? `<span style="font-size:10px; color:var(--text-muted);">Omitida en consulta de equipos y radios</span>`
+          : ([
+              eN > 0 ? `<span class="inv-cond-badge is-nuevo">Nuevo: ${eN}</span>` : "",
+              eU > 0 ? `<span class="inv-cond-badge is-usado">Usado: ${eU}</span>` : "",
+              eR > 0 ? `<span class="inv-cond-badge is-refurbished">Ref.: ${eR}</span>` : ""
+            ].filter(Boolean).join(" ") || `<span style="font-size:10px; color:var(--text-muted);">Sin anexos E clasif.</span>`);
 
         const isSelected = currentFilter.catQuickFilter === cat;
 
@@ -3058,11 +3130,11 @@
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;">
               <div style="background: rgba(255,255,255,0.03); padding: 9px; border-radius: 8px;">
                 <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Total Radios</div>
-                <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);">${totalRadios}</div>
+                <div style="font-size: 20px; font-weight: 900; color: ${isRenovCat ? '#8b909e' : '#fff'}; font-family: var(--font-mono);">${isRenovCat ? '—' : totalRadios}</div>
               </div>
               <div style="background: rgba(47,143,118,0.08); border: 1px solid rgba(47,143,118,0.2); padding: 9px; border-radius: 8px;">
                 <div style="font-size: 9px; color: #3f9c85; text-transform: uppercase;">Entregados</div>
-                <div style="font-size: 20px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono);">${deliveredRadios}</div>
+                <div style="font-size: 20px; font-weight: 900; color: ${isRenovCat ? '#8b909e' : '#2f8f76'}; font-family: var(--font-mono);">${isRenovCat ? '—' : deliveredRadios}</div>
               </div>
               <div style="background: rgba(255,255,255,0.03); padding: 9px; border-radius: 8px;">
                 <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Radicaciones</div>
@@ -3076,7 +3148,7 @@
 
             <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; gap: 6px; flex-wrap: wrap;">
               <span>En proceso: <strong style="color: #7fb0f0;">${enProc}</strong> · Fin.: <strong style="color: #3f9c85;">${fin}</strong></span>
-              <span style="font-family: var(--font-mono); color: #cbd5e1;">${catE} Equipos · ${catS} SIM Cards</span>
+              <span style="font-family: var(--font-mono); color: ${isRenovCat ? '#8b909e' : '#cbd5e1'};">${isRenovCat ? 'Omitida en equipos' : `${catE} Equipos · ${catS} SIM Cards`}</span>
             </div>
           </div>
         `;
@@ -3265,11 +3337,12 @@
         }
       }
 
-      // Tabla de Detalle de Inventario, Anexos y Valores por Pre-Oferta
+      // Tabla de Detalle de Inventario, Anexos y Valores por Pre-Oferta (omitiendo renovaciones)
       if (detailTbody) {
+        const nonRenovData = filteredData.filter(item => !isRenovacionItem(item));
         const detailList = currentFilter.invCondFilter === "ALL"
-          ? filteredData
-          : filteredData.filter(item => {
+          ? nonRenovData
+          : nonRenovData.filter(item => {
               const inv = getItemInventoryData(item);
               const k = String(currentFilter.invCondFilter || "").toLowerCase();
               if (k === "nuevo" || k === "usado" || k === "refurbished") {
@@ -3567,7 +3640,7 @@
       setEl("detPais", item.pais === "SV" ? "🇸🇻 El Salvador (SV)" : "🇬🇹 Guatemala (GT)");
       setEl("detVendedor", item.vendedor || "-");
       setEl("detNegocio", item.negocio || "-");
-      setEl("detRadios", `${entR} entregados / ${totalR} totales`);
+      setEl("detRadios", isRenovacionItem(item) ? "Omitido (Renovación)" : `${entR} entregados / ${totalR} totales`);
 
       const detContratoEl = document.getElementById("detContrato");
       if (detContratoEl) {
@@ -3581,12 +3654,16 @@
       const detSummary = document.getElementById("detDetalleSummary");
       const detContainer = document.getElementById("detDetalleContainer");
       if (detSummary) {
-        detSummary.textContent = inv.detalleRows.length > 0
-          ? `${inv.detalleRows.length} línea(s) · ${inv.tecnologias.join(", ") || "Sin tec."}`
-          : "Sin líneas de detalle";
+        detSummary.textContent = isRenovacionItem(item)
+          ? "Omitido (Renovación)"
+          : (inv.detalleRows.length > 0
+            ? `${inv.detalleRows.length} línea(s) · ${inv.tecnologias.join(", ") || "Sin tec."}`
+            : "Sin líneas de detalle");
       }
       if (detContainer) {
-        if (inv.detalleRows.length === 0) {
+        if (isRenovacionItem(item)) {
+          detContainer.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); padding: 4px 0;">Las renovaciones se omiten en la consulta de equipos y radios.</div>`;
+        } else if (inv.detalleRows.length === 0) {
           detContainer.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); padding: 4px 0;">Esta pre-oferta no reporta desglose comercial en <code>detalle</code>.</div>`;
         } else {
           detContainer.innerHTML = `
@@ -3626,12 +3703,16 @@
       const anxSummary = document.getElementById("detAnexosSummary");
       const anxContainer = document.getElementById("detAnexosContainer");
       if (anxSummary) {
-        anxSummary.textContent = inv.annexCount > 0
-          ? `${inv.annexCount} anexo(s) · ${inv.equiposE} Equipos · ${inv.simsS} SIM Cards`
-          : "0 anexos temporales";
+        anxSummary.textContent = isRenovacionItem(item)
+          ? "Omitido (Renovación)"
+          : (inv.annexCount > 0
+            ? `${inv.annexCount} anexo(s) · ${inv.equiposE} Equipos · ${inv.simsS} SIM Cards`
+            : "0 anexos temporales");
       }
       if (anxContainer) {
-        if (inv.annexList.length === 0) {
+        if (isRenovacionItem(item)) {
+          anxContainer.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); padding: 4px 0;">Las renovaciones se omiten en la consulta de equipos y radios.</div>`;
+        } else if (inv.annexList.length === 0) {
           const emptyMsg = inv.detalleRows.length > 0
             ? `Esta pre-oferta ya cuenta con detalle técnico (${inv.detalleRows.length} línea(s)), pero SAN aún no devolvió anexos temporales en el API.`
             : (inv.hasAnexosField
@@ -4119,7 +4200,7 @@
       const items = list.filter(i => i.negocio === neg);
       const vals = [
         items.length,
-        items.reduce((s, i) => s + (Number(i.cantidad) || 0), 0),
+        items.reduce((s, i) => s + getTotalRadiosCount(i), 0),
         items.reduce((s, i) => s + getItemInventoryData(i).annexCount, 0),
         items.reduce((s, i) => s + getItemInventoryData(i).equiposE, 0),
         items.reduce((s, i) => s + getItemInventoryData(i).simsS, 0),
@@ -4268,7 +4349,7 @@
     const logoUrl = new URL('../../assets/img/logo-intelfon.png', baseHref).href;
 
     const total = list.length;
-    const totalRadios = list.reduce((s, r) => s + (Number(r.cantidad) || 0), 0);
+    const totalRadios = list.reduce((s, r) => s + getTotalRadiosCount(r), 0);
     const enProceso = list.filter(r => r.estado === 'en_proceso').length;
     const finalizadas = list.filter(r => r.estado === 'finalizada').length;
     const canceladas = list.filter(r => r.estado === 'cancelada').length;
@@ -4295,16 +4376,16 @@
     const negocioRows = negocios.map(n => {
       const items = list.filter(r => String(r.negocio || '').trim().toUpperCase() === n);
       if (n === 'BACKUP' && !items.length) return '';
-      const radios = items.reduce((s, r) => s + (Number(r.cantidad) || 0), 0);
-      return `<div><b>${n}:</b> ${items.length} radicaciones | <b>${radios}</b> radios</div>`;
+      const radios = items.reduce((s, r) => s + getTotalRadiosCount(r), 0);
+      return `<div><b>${n}:</b> ${items.length} radicaciones | <b>${n === 'RENOVACION' ? 'Omitido' : radios}</b>${n === 'RENOVACION' ? '' : ' radios'}</div>`;
     }).join('');
     const categoryRows = negocios.map(negocio => {
       const items = list.filter(item => String(item.negocio || '').trim().toUpperCase() === negocio);
       if (!items.length) return '';
-      const radios = items.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
+      const radios = items.reduce((sum, item) => sum + getTotalRadiosCount(item), 0);
       const gt = items.filter(item => item.pais === 'GT').length;
       const sv = items.filter(item => item.pais === 'SV').length;
-      return `<tr><td><b>${esc(negocio)}</b></td><td class="c">${items.length}</td><td class="c">${radios}</td><td class="c">${gt}</td><td class="c">${sv}</td></tr>`;
+      return `<tr><td><b>${esc(negocio)}</b></td><td class="c">${items.length}</td><td class="c">${negocio === 'RENOVACION' ? 'Omitido' : radios}</td><td class="c">${gt}</td><td class="c">${sv}</td></tr>`;
     }).join('');
     const circ = 2 * Math.PI * 38;
     let off = 0;

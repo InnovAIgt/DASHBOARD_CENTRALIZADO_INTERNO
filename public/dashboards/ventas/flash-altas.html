@@ -714,13 +714,22 @@ function montarBarra(meses) {
   document.querySelectorAll('#fxBar .op-btn').forEach(b => b.onclick = () => { if (FILTRO.op === b.dataset.op) return; FILTRO.op = b.dataset.op; marcarOp(); cambio(); });
 
   /* ---- Volver a filtros por defecto (lo mismo que hacía "Limpiar filtros") ---- */
-  /* ---- Período: fecha de alta DESDE / HASTA (al abrir = rango completo) ---- */
+  /* ---- Período: fecha de alta DESDE / HASTA (al abrir = 1.º del mes actual al día actual) ---- */
   const fechas = DATA.map(r => r.fecha).sort(), desde = $('periodoDesde'), hasta = $('periodoHasta');
   PERIODO.min = fechas[0] || ''; PERIODO.max = fechas[fechas.length - 1] || '';
-  const periodoCompleto = () => { PERIODO.desde = desde.value = PERIODO.min; PERIODO.hasta = hasta.value = PERIODO.max; };
+  const periodoMesActual = () => {
+    const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    return { desde: `${hoy.slice(0, 8)}01`, hasta: hoy };
+  };
+  const periodoCompleto = () => {
+    const def = periodoMesActual();
+    PERIODO.desde = desde.value = def.desde;
+    PERIODO.hasta = hasta.value = def.hasta;
+  };
   const leerPeriodo = () => {
-    if (!desde.value) desde.value = PERIODO.min;          // si borran una fecha, vuelve al extremo del rango
-    if (!hasta.value) hasta.value = PERIODO.max;
+    const def = periodoMesActual();
+    if (!desde.value) desde.value = def.desde;          // si borran una fecha, vuelve al inicio del mes actual
+    if (!hasta.value) hasta.value = def.hasta;
     if (desde.value > hasta.value) {                       // al revés: se intercambian y se avisa
       [desde.value, hasta.value] = [hasta.value, desde.value];
       const caja = $('periodo'); caja.classList.add('cambiado'); caja.title = 'La fecha DESDE era posterior a HASTA: se intercambiaron.';
