@@ -2,6 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/marketing/redes.js": {
+      "includeFiles": "server/marketingRedes/datos/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
