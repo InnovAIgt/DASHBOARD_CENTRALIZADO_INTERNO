@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
+import { obtenerRedes } from './server/marketingRedes.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -26,6 +27,16 @@ app.all('/api/marketing/reuniones', async (req, res) => {
     method: req.method,
     offset: typeof req.query.offset === 'string' ? req.query.offset : undefined,
   });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Marketing · Redes sociales: métricas del Excel de RRSS (docs/marketing-redes/README.md).
+// En Vercel esta misma ruta la atiende api/marketing/redes.js.
+app.all('/api/marketing/redes', async (req, res) => {
+  const resultado = await obtenerRedes({ method: req.method });
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', resultado.contentType);
