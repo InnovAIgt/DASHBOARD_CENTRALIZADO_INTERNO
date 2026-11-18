@@ -49,3 +49,9 @@
 
 ### Resultado
 - 36 pruebas pasan (nuevas: filtros por país, marca, red y fechas; el PDF usa las mismas cifras). Lint y build OK.
+
+## 17/11/2026 · Menú juntado con Marketing por canales (D22)
+- Se trajo `main` (con Redes sociales, PR #7) a la rama `feature/marketing-mailing` (PR #6).
+- Conflictos resueltos dejando las dos cosas: en `PortalLayout.tsx` quedan "Marketing por canales" y "Redes sociales"
+  (import, opción del menú y su `if`); en `server.ts` quedan las rutas `/api/marketing/mailing`, `/mailing-detalle` y `/redes`.
+- 54 pruebas de `server/` pasan (mailing + redes); lint y build OK.

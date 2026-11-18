@@ -12,3 +12,6 @@ coverage
 npm-debug.log*
 .DS_Store
 bun.lock
+# Datos reales (reportes de Brevo): nunca dentro de la imagen.
+*.csv
+*.CSV
