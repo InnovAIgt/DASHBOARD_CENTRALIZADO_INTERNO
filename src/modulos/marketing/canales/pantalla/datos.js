@@ -196,11 +196,19 @@ export function nivelMuestra(entregados) {
 
 /**
  * Filtros de la página. Formato estándar del portal (D35):
+ * - país: Todos, GT, SV o sin país (se aplica al instante);
  * - desde / hasta: Período (se aplica al instante);
  * - cargos: null = todos, o la lista de cargos marcados en el panel "Filtros" (se aplica con "Aplicar");
  * - quitadas: campañas desmarcadas en la columna "Campañas" del panel (se aplica con "Aplicar").
  */
-export const FILTROS_VACIOS = { desde: '', hasta: '', cargos: null, quitadas: [] }
+export const FILTROS_VACIOS = { pais: 'todos', desde: '', hasta: '', cargos: null, quitadas: [] }
+
+export const PAISES_FILTRO = [
+  { valor: 'todos', etiqueta: 'Todos' },
+  { valor: 'GT', etiqueta: 'GT' },
+  { valor: 'SV', etiqueta: 'SV' },
+  { valor: 'sin-pais', etiqueta: 'Sin país' },
+]
 
 /** "2026-11-11" → "11/11/2026". */
 export const fechaCorta = (iso) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '')
@@ -255,21 +263,23 @@ export function DEFINICIONES_EXTRA(reglas) {
 }
 
 /** ¿Hay algún filtro puesto? */
-export const hayFiltros = (f) => Boolean(f.desde || f.hasta || f.cargos || f.quitadas.length)
+export const hayFiltros = (f) => Boolean((f.pais && f.pais !== 'todos') || f.desde || f.hasta || f.cargos || f.quitadas.length)
 
 /** Cantidad de filtros activos DENTRO del panel "Filtros" (número del botón): cargo y campañas. */
 export const filtrosEnPanel = (f) => (f.cargos ? 1 : 0) + (f.quitadas.length ? 1 : 0)
 
 /**
  * Textos de los filtros activos, para la franja "Filtro activo", la línea de resumen y los chips del PDF.
- * @returns {{ cifras: string, periodo: string, cargo: string|null, campanas: string|null, campanasDetalle: string|null }}
+ * @returns {{ cifras: string, pais: string, periodo: string, cargo: string|null, campanas: string|null, campanasDetalle: string|null }}
  */
 export function textosFiltros({ vista, filtros, disponibles }) {
   const todas = (disponibles ?? []).filter((c) => !c.excluida)
   const elegidas = campanasElegidas(disponibles, filtros)
   const hayPeriodo = filtros.desde || filtros.hasta
+  const pais = PAISES_FILTRO.find((p) => p.valor === (filtros.pais ?? 'todos'))?.etiqueta ?? 'Todos'
   return {
     cifras: VISTAS[vista].label,
+    pais,
     periodo: hayPeriodo ? `${fechaCorta(filtros.desde) || 'inicio'} – ${fechaCorta(filtros.hasta) || 'hoy'}` : 'Todo el histórico',
     cargo: filtros.cargos ? (filtros.cargos.length ? filtros.cargos.join(', ') : 'Ninguno') : null,
     campanas: elegidas.length === todas.length ? null : `${elegidas.length} de ${todas.length}`,

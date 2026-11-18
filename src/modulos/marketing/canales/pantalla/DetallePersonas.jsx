@@ -1,13 +1,9 @@
-// Marketing por canales · "Quién abrió y quién hizo clic" dentro de la ventana de detalle (D34).
-// ⚠️ Muestra correos de clientes. Se pide aparte (/api/marketing/mailing-detalle), solo al abrir la
-// ventana, con clave. Sin descarga ni exportación. La clave vive solo en la memoria de la página:
-// al recargar, se vuelve a pedir.
+// Marketing por canales · "Quién abrió y quién hizo clic" dentro de la ventana de detalle (D34, D42).
+// Muestra correos de clientes. Se cargan solo al abrir la ventana. Sin descarga ni exportación.
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { pedirDetallePersonas } from '../servicios/api.js'
 import { formatoNumero } from './datos.js'
-
-let claveEnMemoria = null
 
 /** Color de cada resultado: verde clic · azul abrió · gris automático/no abrió/sin estado · amarillo temporal o baja · rojo permanente o queja. */
 export const ESTADO_RESULTADO = {
@@ -102,46 +98,26 @@ export function ListaPersonas({ detalle, tarjetaPantalla }) {
   </div>
 }
 
-/** Sección completa: pide la clave (si no está en memoria), carga la lista y la muestra. */
+/** Sección completa: carga la lista al abrir la campaña y la muestra. */
 export function DetallePersonas({ campana, vista, tarjetaPantalla }) {
-  const [estado, setEstado] = useState(() => (claveEnMemoria ? { fase: 'cargando' } : { fase: 'clave' }))
-  const [clave, setClave] = useState('')
-  const [intento, setIntento] = useState(0)
-  const idClave = useId()
+  const [estado, setEstado] = useState({ fase: 'cargando' })
+  const idDetalle = useId()
 
   useEffect(() => {
-    if (!claveEnMemoria) { setEstado((e) => (e.fase === 'clave' ? e : { fase: 'clave' })); return undefined }
     const control = new AbortController()
     setEstado({ fase: 'cargando' })
-    pedirDetallePersonas({ campana: campana.id, vista, clave: claveEnMemoria, signal: control.signal }).then((r) => {
+    pedirDetallePersonas({ campana: campana.id, vista, signal: control.signal }).then((r) => {
       if (control.signal.aborted) return
       if (r.ok) return setEstado({ fase: 'lista', detalle: r.datos })
-      if (r.status === 401) claveEnMemoria = null
-      if (r.status === 401 || r.status === 429) return setEstado({ fase: 'clave', error: r.mensaje })
       setEstado({ fase: 'error', error: r.mensaje, noDisponible: r.status === 503 })
-    }).catch(() => { /* cancelado */ })
+    }).catch((error) => {
+      if (!control.signal.aborted) setEstado({ fase: 'error', error: error.message })
+    })
     return () => control.abort()
-  }, [campana.id, vista, intento])
+  }, [campana.id, vista])
 
-  const enviar = (e) => {
-    e.preventDefault()
-    if (!clave) return
-    claveEnMemoria = clave
-    setClave('')
-    setIntento((n) => n + 1)
-  }
-
-  return <section className="mkt-personas-seccion" aria-labelledby={`${idClave}-titulo`}>
-    <h3 id={`${idClave}-titulo`}>Quién abrió y quién hizo clic</h3>
-    {estado.fase === 'clave' && <form className="mkt-clave" onSubmit={enviar}>
-      <p className="mkt-tenue">Esta lista muestra correos de clientes. Escribe la clave para verla (se recuerda solo mientras no recargues la página).</p>
-      <div className="mkt-clave-fila">
-        <label htmlFor={idClave} className="mkt-solo-lector">Clave</label>
-        <input id={idClave} type="password" value={clave} onChange={(e) => setClave(e.target.value)} autoComplete="off" placeholder="Clave" />
-        <button type="submit" className="mkt-boton-rojo" disabled={!clave}>Ver lista</button>
-      </div>
-      {estado.error && <p className="mkt-clave-error" role="alert">{estado.error}</p>}
-    </form>}
+  return <section className="mkt-personas-seccion" aria-labelledby={`${idDetalle}-titulo`}>
+    <h3 id={`${idDetalle}-titulo`}>Quién abrió y quién hizo clic</h3>
     {estado.fase === 'cargando' && <p className="mkt-tenue" role="status">Cargando la lista por persona…</p>}
     {estado.fase === 'error' && <div className="mkt-aviso is-atencion" role="alert"><strong>{estado.noDisponible ? 'No disponible' : 'No se pudo cargar la lista'}</strong><div>{estado.error}</div></div>}
     {estado.fase === 'lista' && <ListaPersonas detalle={estado.detalle} tarjetaPantalla={tarjetaPantalla} />}

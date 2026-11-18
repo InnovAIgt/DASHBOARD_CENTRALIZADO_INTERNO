@@ -28,6 +28,9 @@ Campaign ID, nunca por el nombre del archivo. Si dos archivos traen la misma cam
 de fecha de modificación más reciente; el otro aparece como ignorado y se explica por qué.
 **Por qué:** los nombres de archivo de Brevo cambian y no son confiables.
 
+**Actualización D37:** para que la regla sea determinista, prevalece el último evento; los empates se
+resuelven por más filas, fecha de Drive y nombre del archivo.
+
 ## D4 · 16/11/2026 · Reglas de cálculo
 
 **Decisión:** son las reglas de la tabla "Cómo se calcula" del [README](README.md). En resumen:
@@ -97,9 +100,9 @@ totales por campaña, mes y país. Como candado, si la respuesta contiene algo c
 se bloquea con un error.
 **Por qué:** los CSV de Brevo tienen datos personales de los destinatarios.
 
-**Actualizado por D34 (17/11/2026):** la ruta principal `/api/marketing/mailing` sigue igual (solo
-totales y con su candado). La única excepción es la **lista por persona** de una campaña, que va por
-una ruta aparte (`/api/marketing/mailing-detalle`), protegida con clave y sin IPs ni motivos de rebote.
+**Actualizado por D34, D39 y D42 (17/11/2026):** la ruta principal `/api/marketing/mailing` sigue
+igual (solo totales y con su candado). Las listas por persona, incluidos los motivos y recomendaciones
+de rebote, salen por separado en `/api/marketing/mailing-detalle`, sin clave adicional y sin IPs.
 
 ## D12 · 16/11/2026 · Sin fuente configurada: aviso claro, sin error
 
@@ -572,8 +575,9 @@ Si la tarjeta que se ve en la página no coincide con la de la lista, avisa "Los
   - método distinto de GET → 405.
 
   Siempre van con `Cache-Control: no-store`.
-- **Sin descarga ni exportación.** No se mandan IPs ni motivos de rebote. No se escriben correos ni la
-  clave en los registros ni en archivos.
+- **Sin descarga ni exportación en esta ventana.** No se mandan IPs. No se escriben correos ni la
+  clave en los registros ni en archivos. Los motivos de rebote se agregan en D39, solo en las listas
+  protegidas de tarjetas e informe.
 - **Pruebas:** solo con correos inventados. Con los CSV reales solo se imprimen conteos.
 
 **Limitación general (pendiente):** el portal no tiene inicio de sesión en el servidor. Esta clave protege
@@ -613,11 +617,11 @@ así que se puede marcar más de uno. Siguen eligiendo **qué campañas** entran
 - es la misma de Activaciones, Facturación por línea y Flujo de ventas v2;
 - los chips de la ventana muestran los filtros activos al exportar.
 
-Módulos:
+Módulos en D35 (actualizados por D36 y D40):
 1. **Resumen:** campañas del mes, métricas de interacción, salud del envío y destacados.
 2. **Gráficas:** aperturas por cargo, evolución por mes y embudo, como tablas con barras simples.
 3. **Ranking de campañas.**
-4. **¿Cómo se calcula?:** definiciones y **transparencia de datos** (archivos leídos, fuente y exclusiones).
+4. **Transparencia:** resumen de fuente, archivos y exclusiones; ya no hay sección "¿Cómo se calcula?".
 
 El reporte se arma **solo** con la respuesta de `/api/marketing/mailing`, es decir, solo totales.
 - **La lista por persona no es un módulo y nunca entra.**
@@ -650,8 +654,97 @@ El menú sigue diciendo "Marketing por canales" hasta que se retire el dashboard
 **PDF:**
 - "Transparencia de datos" es un resumen de 1 página:
   - fuente y última lectura;
-  - cantidad de archivos usados e ignorados (solo los ignorados con nombre y motivo);
+  - cantidad de archivos usados e ignorados, sin nombres ni datos de personas;
   - cantidad de avisos;
   - correos analizados, correos internos y campañas de prueba como totales.
 - La lista de cada archivo con sus campañas y avisos se queda en la pantalla.
 - El PDF sigue sin incluir personas ni correos.
+
+## D37 · 17/11/2026 · Campañas repetidas: gana el último evento
+
+**Decisión:** si varios CSV contienen una misma campaña, gana el que tenga el **último evento**. Si
+empatan, desempata en este orden: más filas, fecha de modificación de Drive y nombre del archivo.
+Se informa cuántas copias se ignoraron y el desglose de cada campaña en Transparencia, tanto en
+pantalla como en el resumen del PDF. El PDF conserva una sola página de Transparencia y solo cifras.
+
+**Pruebas A–E:** CSV sintéticos cubren último evento, filas, fecha de Drive, nombre y campaña sin copias.
+
+## D38 · 17/11/2026 · País en todos los agregados y orden de secciones
+
+**Decisión:** el filtro País ofrece Todos, GT, SV y Sin país; deriva el país del dominio (.gt / .sv,
+lo demás desconocido) y recalcula tarjetas, gráficas, ranking, listas, informe y PDF. La barra queda
+en el orden de Activaciones (País, período, filtros, PDF, actualizar) y Cifras pasa al panel.
+En pantalla y PDF, Salud del envío aparece antes de Métricas de interacción. Las explicaciones quedan
+en el ícono (i), no en una sección extensa.
+
+## D39 · 17/11/2026 · Listas por tarjeta y recomendaciones fijas
+
+**Decisión:** las tarjetas de entregados, rebotes, apertura automática, bajas y quejas, y los anillos
+de apertura/clic, abren listas filtradas por la selección activa. El correo y el motivo se recuperan
+solo por la ruta separada de detalle (sin clave adicional desde D42). Las recomendaciones son reglas fijas por palabras del motivo, nunca IA,
+no escriben en Brevo y solo aparecen para rebotes y quejas. La ventana ofrece buscador y resumen de
+acciones; no tiene descarga.
+
+## D40 · 17/11/2026 · Informe detallado y Excel detrás de la clave
+
+**Decisión:** después del ranking aparece "Auditoría y exportación / Informe detallado de correos",
+con los filtros activos, buscador, resultados y totales. Usa la misma ruta y clave del detalle por
+persona. Excel solo se ofrece después de escribir la clave, usa esos mismos filtros y columnas y no
+incluye IPs. El informe y las listas nunca forman parte del PDF.
+
+## D41 · 17/11/2026 · Cierre F y validaciones pendientes
+
+- Paso A queda registrado como **✅ `5e0e837`**.
+- B–E tienen implementación y pruebas sintéticas. Se guardan en 2 commits: B solo, y C–F juntos para que
+  ningún commit deje la pantalla a medias.
+- No había CSV en el repositorio; Keily indicó una carpeta local autorizada. Su lectura directa confirmó
+  3 archivos y los controles 853 / 854 (718 / 719 entregados; 53 rebotes permanentes y 82 temporales).
+- En un intento de validación, la configuración automática seleccionó Google Drive. Se detuvo el
+  servidor al detectarlo; la solicitud devolvió solo agregados. Las validaciones posteriores se
+  ejecutaron directamente desde la carpeta local y confirmaron `carpeta-local`. No se harán más
+  consultas a Drive.
+- No se modificaron `.env*`, `package.json`, `vercel.json`, Activaciones, `estandar.*`,
+  `dashboard-pdf.*` ni otros dashboards.
+- Capturas de escritorio/teléfono y PDF de ejemplo con totales siguen pendientes de generarse desde
+  el portal usando exclusivamente la carpeta local.
+- Pendientes de producto: leads, metas, programadas, territorio, Redes, Otros y seguridad (`.env.example`
+  y portal sin inicio de sesión).
+
+## D42 · 17/11/2026 · Detalle visible sin clave adicional
+
+**Decisión:** retirar el formulario que pedía una clave al abrir listas e informe. El usuario quiere
+ver esos datos directamente, sin proporcionar una clave ni una API key externa. La interfaz consulta
+la ruta interna `/api/marketing/mailing-detalle`; esa ruta devuelve correos, motivos y recomendaciones
+sin autenticación adicional, con `Cache-Control: no-store`. El PDF sigue usando solo agregados.
+
+**Alcance de privacidad:** cualquier persona que pueda alcanzar esa URL puede consultar los correos.
+El inicio de sesión actual solo controla la interfaz y no autentica la API. Se deja constancia de ese
+riesgo por la decisión expresa de eliminar el paso de clave; no se modificaron secretos ni Supabase.
+
+## D43 · 17/11/2026 · Reglas de recomendación ajustadas a los motivos reales
+
+**Decisión:** Keily revisó los motivos reales de rebote de los 3 CSV (solo en el chat, sin guardarlos)
+y ajustó las reglas. Solo cambia el **texto de la recomendación**; los números no cambian. Gana la
+primera regla que aplique, en este orden:
+
+| Si el motivo dice… | Recomendación |
+|---|---|
+| "out of storage space and inactive" u "OverQuotaPerm" | Buzón lleno e inactivo: quitar de la lista |
+| "out of storage space" (OverQuotaTemp) | Se reintenta solo; si rebota 3+ veces, tratar como permanente |
+| "vadesecure", o "Recipient rejected" con 403 | Bloqueado por el antispam del cliente: revisar contenido y reputación con TI |
+| "SMTP Authentication", "authentication required" o "not permitted to relay" | Problema del servidor del cliente: avisar al ejecutivo y reintentar |
+| "Unable to find MX" (dominio) | Revisar si el dominio está mal escrito (ej. gmail.com.sv); si no, quitar |
+| solo "hard bounce", "recipient address rejected", "mailbox unavailable", "no mailbox", "does not exist", "user unknown" o "5.4.1 Access denied" | Corregir con el ejecutivo o quitar de la lista en Brevo |
+| "connection timeout" | Esperar al siguiente envío |
+| "message too large", "size limit" o "552 5.3.4" | Reducir imágenes o adjuntos del correo |
+| "SPF", "DKIM", "DMARC" o "unauthenticated" | Avisar a TI: revisar SPF, DKIM y DMARC |
+| "Message delivery failed" y todo lo demás | Revisar manualmente |
+| (queja) | Quitar de la lista; no volver a enviar |
+
+Las reglas de tamaño y de SPF/DKIM/DMARC hoy no aparecen en los CSV; se mantienen para casos futuros.
+Pruebas con motivos inventados para cada regla en
+`server/marketingCanales/detallePersonas.test.js`.
+
+**Resultado con los CSV reales:** 53 rebotes permanentes → todos "corregir o quitar". 82 temporales →
+49 revisar dominio · 10 esperar · 9 revisar manualmente · 7 vigilar buzón · 3 avisar al ejecutivo ·
+2 buzón inactivo · 2 antispam.

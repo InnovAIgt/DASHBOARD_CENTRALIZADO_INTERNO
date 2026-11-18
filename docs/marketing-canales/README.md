@@ -1,8 +1,9 @@
 # Marketing · Marketing por canales
 
 > Responsable: Keily García · Inicio: 16 de noviembre de 2026
-> Rama: `feature/marketing-mailing` · Estado: **Fase 3 (pantalla de Mailing)**. Falta la prueba de
-> Drive con la llave real. Redes sociales y Otros: pendientes de fuente de datos (no se muestran).
+> Rama: `feature/marketing-mailing` · Pasos B–F terminados (capturas y PDF de ejemplo revisados,
+> reglas de recomendación ajustadas en D43). No se modificaron secretos. Redes y Otros siguen
+> pendientes de fuente de datos.
 
 ## La pantalla
 
@@ -10,28 +11,28 @@ Menú **MARKETING → Marketing por canales** (`src/modulos/marketing/canales/`,
 Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que sigue al dashboard original
 "Campañas de correo" (D31). En este orden:
 
-1. **Encabezado:** "Marketing · Mailing", título "Campañas de correo" y botón rojo **Actualizar** (`?actualizar=1`).
-2. **Barra de filtros:** selector **"Sin internos (oficial)" / "Total en Brevo"**, **Período** (fecha de envío),
-   **Filtros** (cargo: el único filtro de cargo, D32) y **Limpiar filtros**. Debajo, "Mostrando X correos
-   de N campañas · … · última lectura".
-3. **Transparencia de datos:** archivos leídos, correos analizados y exclusiones, con "Ver desglose de exclusiones".
-4. **Filtro de campañas:** chips, "Seleccionar todas" y "Limpiar selección".
-5. **Resumen del mes:** solo "Campañas del mes" (cuántas y cuáles, con su fecha de envío). Las tarjetas
+1. **Encabezado:** "Marketing · Mailing", título "Campañas de correo" y estado de consulta.
+2. **Barra de filtros:** **País** (Todos / GT / SV / Sin país), **Período**, **Filtros**, PDF y actualizar.
+    "Cifras" (Sin internos / Total en Brevo) está dentro del panel. La fecha, país y cifras se aplican
+    al instante; Cargo y Campañas usan "Aplicar".
+3. **Transparencia de datos:** archivos leídos, exclusiones y duplicados, con desglose en pantalla.
+4. **Resumen del mes:** solo "Campañas del mes" (cuántas y cuáles, con su fecha de envío). Las tarjetas
    sin datos (meta y leads) se quitaron (D33); ver "Pendiente por falta de datos" en REQUISITOS.
-6. **Métricas de interacción:** 4 anillos (Entrega, Apertura, CTR y CTOR) con Excelente / Promedio / Bajo
-   y sus rangos (D26).
-7. **Salud del envío:** 6 tarjetas (entregados, rebote permanente, rebote temporal, apertura automática,
+5. **Salud del envío:** 6 tarjetas (entregados, rebote permanente, rebote temporal, apertura automática,
    bajas y quejas). Solo entregados + rebotes suman el 100 %.
-8. **Mejor campaña, mejor cargo, peor entrega y mejor país** (D30).
-9. **Aperturas por cargo** y **Evolución por mes.**
-10. **Embudo de conversión.**
-11. **Ranking de campañas.** Ordenado por % de apertura, con la casilla "solo muestra suficiente". Al hacer
+6. **Métricas de interacción:** 4 anillos (Entrega, Apertura, CTR y CTOR) con Excelente / Promedio / Bajo
+    y sus rangos (D26).
+7. **Mejor campaña, mejor cargo, peor entrega y mejor país** (D30).
+8. **Aperturas por cargo** y **Evolución por mes.**
+9. **Embudo de conversión.**
+10. **Ranking de campañas.** Ordenado por % de apertura, con la casilla "solo muestra suficiente". Al hacer
     clic en una fila se abre la **ventana de detalle**.
+11. **Auditoría y exportación · Informe detallado de correos**, al final; los correos se muestran sin
+     pedir una clave adicional y el informe ofrece Excel. Nunca se incluye en el PDF.
 
-"¿Cómo se calcula cada número?" va plegado al final.
-
-- **Filtros (D29):** el período, el cargo y los chips eligen campañas, y el servidor recalcula
-  (`?campanas=`). La pantalla no recalcula métricas.
+- **Filtros:** el país recalcula totales, gráficas, ranking, listas, informe y PDF. Período, cargo y
+  campañas limitan qué campañas entran; el servidor recalcula (`?campanas=`). La pantalla no recalcula métricas.
+- Las explicaciones de cada cifra quedan en el ícono (i); se quitó la sección extensa "¿Cómo se calcula?".
 - **No incluye:** pestañas, Comparar campañas, Redes sociales, Otros, Lead Scoring, Embudo comercial,
   Pipeline ni nada por empresa (D24, D31).
 - **Colores** (D22, D26, D31):
@@ -45,13 +46,14 @@ Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que si
 
 | Archivo | Qué hace |
 |---|---|
-| `MarketingCanales.jsx` | Vista única: estado de los filtros y carga de datos (`?campanas=`). |
-| `servicios/api.js` | Llama a `/api/marketing/mailing`. |
+| `MarketingCanales.jsx` | Vista única: estado de los filtros y carga de datos (`?pais=` y `?campanas=`). |
+| `servicios/api.js` | Llama a las rutas de totales y detalle por persona. |
 | `pantalla/datos.js` | En un solo lugar: semáforo (`UMBRALES`), rangos de los anillos (`REFERENCIAS`), metas (`METAS`), muestra (`MUESTRA`), filtros, formatos y fechas. |
-| `pantalla/Mailing.jsx` | La vista en el orden del mockup: resumen, salud, destacados, ranking, ¿cómo se calcula? |
-| `pantalla/Filtros.jsx` | Marco estándar (D35): tarjeta "FILTROS" (Cifras, Período, panel tipo Excel con Cargo y Campañas, PDF y actualizar), franja "Filtro activo", línea de resumen y transparencia de datos. |
+| `pantalla/Mailing.jsx` | La vista en el orden aprobado, tarjetas y anillos con acceso a listas, ranking e informe. |
+| `pantalla/Filtros.jsx` | Barra alineada a Activaciones: País, Período, panel tipo Excel con Cifras/Cargo/Campañas, PDF y actualizar. |
 | `pantalla/pdf.js` | Reporte PDF de Mailing para la herramienta compartida `dashboard-pdf.js` (sin modificarla). Solo totales; nunca la lista por persona. "Transparencia de datos" va resumida en 1 página (D36). |
-| `pantalla/DetallePersonas.jsx` | Lista por persona de una campaña, con clave (D34). |
+| `pantalla/DetallePersonas.jsx` | Lista por persona de una campaña, sin pedir clave adicional (D42). |
+| `pantalla/InformeDetallado.jsx` | Listas de tarjetas e informe completo, sin pedir clave adicional; Excel solo para el informe. |
 | `pantalla/Interaccion.jsx` | Anillos (SVG dibujado a mano). |
 | `pantalla/Graficas.jsx` | Aperturas por cargo, evolución por mes y embudo (dibujados a mano). |
 | `pantalla/DetalleCampana.jsx` | Ventana con el detalle de una campaña. |
@@ -87,7 +89,7 @@ Cambiar la fuente **no** obliga a tocar los cálculos ni la pantalla.
 | `server/marketingCanales/googleAuth.js` | Fuente | Pide a Google el permiso de solo lectura con la cuenta de servicio. |
 | `server/marketingCanales/fuenteLocal.js` | Fuente | Lee la carpeta de `MARKETING_LOCAL_CSV_DIR`. |
 | `server/marketingCanales/errorFuente.js` | Fuente | Errores de fuente con mensajes claros (sin llaves ni rutas). |
-| `server/marketingCanales/combinarArchivos.js` | Fuente | Junta todos los CSV; si una campaña se repite, usa el archivo más reciente. |
+| `server/marketingCanales/combinarArchivos.js` | Fuente | Junta los CSV; si una campaña se repite, aplica el criterio de último evento y sus desempates (D37). |
 | `server/marketingCanales/brevoCsv.js` | Fuente | Convierte un CSV de Brevo a filas estándar. |
 | `server/marketingCanales/reglas.js` | Cálculos | **Lista editable**: campañas de prueba, dominios internos, país, mínimo de datos. |
 | `server/marketingCanales/calculos.js` | Cálculos | Métricas por campaña, por mes, totales y exclusiones. |
@@ -108,7 +110,8 @@ La carpeta es el **historial**: se leen todos los CSV y se acumulan. Hay dos fue
 Si están las dos, **gana Drive** (D15). Drive se guarda 15 minutos; `?actualizar=1` lo vuelve a leer (D17).
 
 - La campaña se reconoce por la columna **Campaign ID**, no por el nombre del archivo.
-- Si dos CSV traen la misma campaña, se usa el de **fecha de modificación más reciente**.
+- Si dos CSV traen la misma campaña, gana el de **último evento**; empate: más filas, fecha de Drive y
+  nombre. Las copias ignoradas y el criterio se muestran en Transparencia (D37).
 - No se leen subcarpetas ni archivos que no sean `.csv`. La respuesta dice cuáles se ignoraron y por qué.
 
 Los CSV tienen datos personales: **nunca se suben al repositorio** (`.gitignore`) ni entran en la
@@ -155,6 +158,7 @@ Con **menos de 5 entregados** los porcentajes no se calculan: "pocos datos".
 
 "Sin internos" (cifra oficial) solo cambia en la #76, que tiene 1 correo interno de RED con entrega,
 apertura y clic: quedan 313 enviados, 253 entregados, 56 aperturas reales y 5 personas con clic.
+El total general permanece **853 sin internos / 854 en Total en Brevo**.
 
 Cada campaña trae dos bloques:
 - **`totalBrevo`**: todas las filas, para comparar con Brevo.
@@ -169,7 +173,7 @@ Cada campaña trae dos bloques:
 
 ## La ruta `/api/marketing/mailing`
 
-`GET` (opcional `?actualizar=1`) devuelve JSON con:
+`GET` (opcional `?actualizar=1`, `?campanas=74,75` y `?pais=GT|SV|sin-pais`) devuelve JSON con:
 - `fuente`: cuál se usó (`tipo`, `descripcion`, `nota`), si está configurada y, en Drive, la caché
   (cuándo se leyó y cuándo vence).
 - `archivos`: cuántos se revisaron, cuáles se usaron (campañas y filas) y cuáles se ignoraron, con motivo.
@@ -185,17 +189,24 @@ correo, la ruta bloquea la respuesta (D11).
 Sin ninguna fuente configurada responde `200` con `fuente.configurada = false` y el mensaje
 "Fuente de datos no configurada" (D12).
 
-## La ruta `/api/marketing/mailing-detalle` (lista por persona, D34)
+## La ruta `/api/marketing/mailing-detalle` (detalle por persona, D34 y D39–D42)
 
-`GET ?campana=76&vista=metricas|totalBrevo`, con la clave en el encabezado `X-Marketing-Clave`. Devuelve
-la lista por persona de **una** campaña (correo, país, resultado, clics, enlaces y fecha del evento final),
-los conteos por resultado y el **cuadre** con la tarjeta.
+La ventana de campaña conserva `GET ?campana=76&vista=metricas|totalBrevo`. Para las tarjetas y el informe
+se consulta la misma ruta con los filtros de país, campaña, fecha y cargo, además de `tarjeta` cuando
+corresponde. La ruta devuelve correo, motivo de rebote, recomendación y datos por persona; la ruta
+agregada y el PDF no los reciben. No pide una clave adicional ni una API key externa.
 
 **Sí contiene correos de clientes.** Por eso:
 - va aparte de la ruta principal;
-- se pide solo al abrir la ventana de detalle;
-- exige `MARKETING_DETALLE_CLAVE` (mínimo 24 caracteres) y frena los intentos repetidos;
-- no tiene descarga.
+- se consulta solo al abrir una lista o cargar el informe;
+- responde con `Cache-Control: no-store` y no registra correos;
+- la ventana de tarjetas no tiene descarga;
+- el informe ofrece Excel con las mismas columnas y filtros; no contiene IPs.
+
+La ruta de detalle no tiene una clave adicional; cualquier persona que pueda alcanzar su URL puede
+consultar esos correos. Las recomendaciones de rebote son reglas fijas por texto del motivo (tabla en D43); solo
+orientan, nunca modifican Brevo.
+La exportación Excel no forma parte del PDF. El PDF se bloquea si aparece texto con forma de correo.
 
 En Vercel la atiende `api/marketing/mailing-detalle.js`, y en local, `server.ts`.
 
@@ -206,13 +217,23 @@ En Vercel la atiende `api/marketing/mailing-detalle.js`, y en local, `server.ts`
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | `.env.local`, Vercel y Coolify | Llave de la cuenta de servicio (JSON o base64). **Secreta.** |
 | `MARKETING_DRIVE_FOLDER_ID` | `.env.local`, Vercel y Coolify | Código de la carpeta de Drive. |
 | `MARKETING_LOCAL_CSV_DIR` | `.env.local` en tu computadora | Ruta de la carpeta local con los CSV de Brevo. |
-| `MARKETING_DETALLE_CLAVE` | `.env.local` y Vercel | Clave de la lista por persona (mínimo 24 caracteres, larga y difícil). **Secreta.** |
 
 ## Cómo probarlo en local
 
 1. En `.env.local`, define `MARKETING_LOCAL_CSV_DIR` con la carpeta de los CSV.
 2. Ejecuta `& "C:\Program Files\nodejs\npm.cmd" run dev`.
 3. Abre `http://localhost:3000/api/marketing/mailing` en el navegador.
+
+## Validación de los pasos B–F
+
+Las pruebas sintéticas A–E y las pruebas de detalle pasan (12/12); también pasan lint, build y
+`git diff --check`. La carpeta local autorizada se procesó directamente: 3 CSV, 853 enviados sin
+internos / 854 en Total en Brevo (718 / 719 entregados; 53 rebotes permanentes y 82 temporales).
+Una petición anterior seleccionó Drive por la configuración automática; se detuvo el servidor y las
+validaciones siguientes se forzaron a `carpeta-local`. Las capturas y el PDF de ejemplo siguen pendientes.
+
+Pendientes de producto: leads, metas, programadas, territorio, Redes, Otros y seguridad
+(`.env.example`, portal sin inicio de sesión).
 
 ## Más documentos
 

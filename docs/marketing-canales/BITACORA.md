@@ -127,7 +127,7 @@ Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. 
 
 ---
 
-## Paso A · Regla "gana el último evento" — 16/11/2026 ✅
+## Paso A · Regla "gana el último evento" — 16/11/2026 ✅ `5e0e837`
 
 Keily revisó las tablas "Total en Brevo" y "Sin internos": correctas. Commit aprobado.
 
@@ -597,3 +597,50 @@ Solo se anota **dónde** están. Los valores no se copian aquí.
 | 16/11/2026 | Entregado o rebote: gana el último evento. Contador "entregados y luego rebotados". Nota visible en "% de apertura" con el número calculado. | D21 · Paso A |
 | 16/11/2026 | Pendientes: catálogo de campañas (asunto, cargo, territorio, marca) y lista de "correos a corregir". | Pendientes |
 | 17/11/2026 | Textos simples en "¿Cómo se calcula?" (sin nombres técnicos); "(fecha de envío de Brevo)" e "(iPhone)"; Transparencia del PDF en 1 página. | D36 · Textos simples |
+| 17/11/2026 | Pasos B–F para Mailing: campañas repetidas, país/orden, listas, recomendaciones, informe y cierre. | D37–D42 |
+| 17/11/2026 | Reglas de recomendación ajustadas a los motivos reales; capturas y PDF de ejemplo; 2 commits. | D43 |
+
+---
+
+## Pasos B–F · Mailing — 17/11/2026 🔄 (validación real pendiente; sin commits)
+
+**Implementado:**
+- **B:** selección de campaña duplicada por último evento; empate por más filas, fecha de Drive y
+  nombre. Se muestra el número de copias ignoradas y su desglose en Transparencia; el PDF conserva
+  una página y solo agregados. Pruebas sintéticas A–E.
+- **C:** Salud del envío antes de Métricas de interacción; explicaciones solo en (i); filtro País
+  Todos / GT / SV / Sin país propagado a agregados, gráficas, ranking, listas, informe y PDF.
+- **D:** tarjetas abren listas filtradas; los motivos y recomendaciones fijas se entregan solo en la
+  ruta de detalle. No se modifica Brevo ni hay descarga desde la ventana de lista.
+- **E:** informe al final, buscador, totales y exportación Excel con filtros activos. Sin IPs y fuera
+  del PDF.
+- **F:** README y decisiones actualizados; Paso A marcado con su commit existente.
+- **D42:** se retiró la clave adicional solicitada. El endpoint de detalle queda sin autenticación
+  adicional y sin caché; el PDF sigue sin datos personales.
+
+**Pruebas disponibles ya ejecutadas:**
+- `node --test server\marketingCanales\combinarArchivos.test.js server\marketingCanales\brevoCsv.test.js server\marketingCanales\detallePersonas.test.js server\marketingMailingDetalle.test.js`: 12/12.
+- `npm.cmd run lint`: correcto.
+- `npm.cmd run build`: correcto; Vite muestra advertencias conocidas sobre `__dirname` y tamaño del bundle.
+- `git diff --check`: correcto (avisos LF/CRLF de Windows).
+
+**Validación local:** Keily indicó una carpeta local autorizada. Su lectura directa y la interfaz
+validada con fuente `carpeta-local` leyeron 3 CSV: 853 enviados sin internos / 854 en Total en Brevo,
+718 / 719 entregados, 53 rebotes permanentes y 82 temporales. Los conteos de motivos se agrupan sin
+incluir correos.
+
+**Incidente de fuente:** una primera petición seleccionó Google Drive por la configuración automática.
+Se detuvo el servidor al detectarlo; la respuesta contenía solo agregados. No se harán más consultas a
+Drive.
+
+**Capturas y PDF (17/11/2026):** hechos desde el portal con Google Drive (autorizado por Keily; mismos
+números: 853 / 718 / 53 / 82). Las listas se capturaron con correos inventados; el PDF (6 páginas) solo
+tiene totales. No se guardan en el repositorio.
+
+**Pendientes de producto:** leads, metas, programadas, territorio, Redes, Otros y seguridad
+(`.env.example`, portal sin inicio de sesión).
+
+**Reglas de recomendación (D43):** ajustadas con los motivos reales; la tabla se revisó solo en el chat.
+
+**Commits:** 2 en vez de 5, para que la pantalla no quede rota en los intermedios: Paso B solo, y
+C–F juntos. Sin push.

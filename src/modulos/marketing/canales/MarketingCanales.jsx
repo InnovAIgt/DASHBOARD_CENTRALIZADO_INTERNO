@@ -13,7 +13,7 @@ import { MODULOS_PDF, cargarHerramientaPdf, chipsFiltros, construirReporteMailin
 import './marketing-canales.css'
 
 /** Carga de mailing: estado de la consulta, datos, error y hora de la última lectura correcta. */
-function useMailing(campanas, activo) {
+function useMailing(campanas, pais, activo) {
   const [estado, setEstado] = useState({ cargando: true, datos: null, error: null, actualizadoEn: null })
   const pedido = useRef(null)
   const cargar = useCallback(async (actualizar = false) => {
@@ -22,7 +22,7 @@ function useMailing(campanas, activo) {
     pedido.current = control
     setEstado((e) => ({ ...e, cargando: true }))
     try {
-      const r = await pedirMailing({ actualizar, campanas, signal: control.signal })
+      const r = await pedirMailing({ actualizar, campanas, pais, signal: control.signal })
       if (control.signal.aborted) return
       setEstado((e) => (r.ok
         ? { cargando: false, datos: r.datos, error: null, actualizadoEn: new Date() }
@@ -30,7 +30,7 @@ function useMailing(campanas, activo) {
     } catch {
       /* pedido cancelado: lo reemplazó otro */
     }
-  }, [campanas])
+  }, [campanas, pais])
   useEffect(() => {
     if (activo) cargar()
     return () => pedido.current?.abort()
@@ -74,7 +74,7 @@ export function MarketingCanales() {
   const [disponibles, setDisponibles] = useState(null)
   const parametro = disponibles ? parametroCampanas(disponibles, filtros) : null
   const sinCampanas = parametro === ''
-  const { cargando, datos, error, actualizadoEn, cargar } = useMailing(sinCampanas ? null : parametro, !sinCampanas)
+  const { cargando, datos, error, actualizadoEn, cargar } = useMailing(sinCampanas ? null : parametro, filtros.pais, !sinCampanas)
   useEffect(() => { if (datos?.disponibles) setDisponibles(datos.disponibles) }, [datos])
   const actualizar = () => cargar(true)
   const listo = Boolean(datos && datos.fuente.configurada)

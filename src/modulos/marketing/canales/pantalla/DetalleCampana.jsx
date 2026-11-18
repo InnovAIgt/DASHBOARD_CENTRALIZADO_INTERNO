@@ -117,7 +117,7 @@ export function DetalleCampana({ campana, definiciones, pctDesconocido, alCerrar
         {campana.duplicadosDescartados > 0 && <p className="mkt-nota">Se descartaron {campana.duplicadosDescartados} correo(s) repetido(s) en esta campaña.</p>}
         {sin.pocosDatos && <p className="mkt-nota"><Tono tono="pocos" /> Menos de 5 entregados: no se calculan porcentajes ni semáforo.</p>}
 
-        {/* Lista por persona (D34): se pide aparte y con clave; respeta "Sin internos / Total en Brevo". */}
+        {/* Lista por persona (D34, D42): se pide aparte; respeta "Sin internos / Total en Brevo". */}
         <DetallePersonas campana={campana} vista={vista} tarjetaPantalla={bloque(campana, vista)} />
         <p className="mkt-nota">Vista de la lista: <b>{VISTAS[vista].label}</b> (la que está elegida en la página).</p>
       </div>

@@ -15,6 +15,13 @@ import { ErrorFuente } from './marketingCanales/errorFuente.js'
 import { MINUTOS_CACHE_DRIVE, TIPO_FUENTE_DRIVE, obtenerFilasDrive } from './marketingCanales/fuenteDrive.js'
 import { TIPO_FUENTE_LOCAL, obtenerFilasCarpetaLocal } from './marketingCanales/fuenteLocal.js'
 
+const FILTROS_PAIS = {
+  todos: null,
+  GT: 'Guatemala',
+  SV: 'El Salvador',
+  'sin-pais': 'Desconocido',
+}
+
 const DESCRIPCION = {
   [TIPO_FUENTE_DRIVE]: 'Carpeta de Google Drive',
   [TIPO_FUENTE_LOCAL]: 'Carpeta local (solo en la computadora de desarrollo)',
@@ -54,14 +61,25 @@ export function leerFiltroCampanas(texto) {
   return new Set(ids)
 }
 
+/** Convierte el filtro visible del país a la categoría calculada desde el dominio. */
+export function leerFiltroPais(texto) {
+  if (texto == null || String(texto).trim() === '') return null
+  const clave = String(texto).trim()
+  return Object.prototype.hasOwnProperty.call(FILTROS_PAIS, clave)
+    ? FILTROS_PAIS[clave]
+    : { error: 'El parámetro pais debe ser todos, GT, SV o sin-pais.' }
+}
+
 /**
- * @param {{ method: string, actualizar?: boolean, campanas?: string }} pedido
+ * @param {{ method: string, actualizar?: boolean, campanas?: string, pais?: string }} pedido
  * @param {{ env?: object, fuenteDrive?: Function }} [opciones]  solo para pruebas
  */
-export async function obtenerMailing({ method, actualizar = false, campanas }, { env = process.env, fuenteDrive = obtenerFilasDrive } = {}) {
+export async function obtenerMailing({ method, actualizar = false, campanas, pais }, { env = process.env, fuenteDrive = obtenerFilasDrive } = {}) {
   if (method !== 'GET') return json(405, { error: 'Método no permitido. Usa GET.' })
   const soloCampanas = leerFiltroCampanas(campanas)
   if (soloCampanas?.error) return json(400, { error: soloCampanas.error })
+  const paisElegido = leerFiltroPais(pais)
+  if (paisElegido?.error) return json(400, { error: paisElegido.error })
 
   const fuente = elegirFuente(env, fuenteDrive)
   if (!fuente) {
@@ -74,7 +92,7 @@ export async function obtenerMailing({ method, actualizar = false, campanas }, {
         mensaje: 'Fuente de datos no configurada. Configura Google Drive (GOOGLE_SERVICE_ACCOUNT_JSON y MARKETING_DRIVE_FOLDER_ID) o, en local, MARKETING_LOCAL_CSV_DIR.',
       },
       archivos: { revisados: 0, usados: [], ignorados: [] },
-      ...calcularMailing([]),
+      ...calcularMailing([], { pais: paisElegido }),
     })
   }
   if (fuente.error) return json(500, { error: fuente.error, fuente: { tipo: fuente.tipo, configurada: false } })
@@ -100,7 +118,7 @@ export async function obtenerMailing({ method, actualizar = false, campanas }, {
       cache: resultado.cache ? { ...resultado.cache, minutos: MINUTOS_CACHE_DRIVE } : null,
     },
     archivos: resultado.archivos,
-    ...calcularMailing(resultado.filas, { soloCampanas }),
+    ...calcularMailing(resultado.filas, { soloCampanas, pais: paisElegido }),
   }
 
   // Candado de privacidad: si por error algún texto trae un correo, no se envía nada.

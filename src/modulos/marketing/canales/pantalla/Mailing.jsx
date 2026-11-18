@@ -1,8 +1,7 @@
 // Marketing por canales · vista de Mailing (una sola vista, sin pestañas), con el formato del mockup
 // aprobado, que sigue al dashboard original "Campañas de correo" (solo referencia; no se modificó).
 // Orden (D31): encabezado · barra de filtros · transparencia de datos ·
-// resumen del mes · métricas de interacción · salud del envío · destacados · gráficas · embudo ·
-// ranking de campañas · ¿cómo se calcula?
+// resumen del mes · salud del envío · métricas de interacción · destacados · gráficas · embudo · ranking.
 // "Marco" estándar del portal (D35): encabezado con pastilla de estado, barra de filtros con panel
 // tipo Excel, botón PDF y actualizar redondo, franja "Filtro activo" y mensajes estándar.
 // Todas las cifras vienen calculadas de /api/marketing/mailing; aquí solo se muestran.
@@ -13,8 +12,9 @@ import { DetalleCampana } from './DetalleCampana.jsx'
 import { BarraFiltros, FranjaFiltroActivo, LineaResumen, Transparencia } from './Filtros.jsx'
 import { AperturasPorCargo, Embudo, EvolucionPorMes } from './Graficas.jsx'
 import { MetricasInteraccion } from './Interaccion.jsx'
+import { InformeDetallado, ListaTarjeta } from './InformeDetallado.jsx'
 import {
-  DEFINICIONES_EXTRA, ESTADO_NIVEL, ESTADO_RIESGO, ETIQUETAS, FILTROS_VACIOS, MUESTRA, NIVELES, UMBRALES, VISTAS, asuntoDe, bloque,
+  ESTADO_NIVEL, ESTADO_RIESGO, FILTROS_VACIOS, MUESTRA, NIVELES, UMBRALES, VISTAS, asuntoDe, bloque,
   campanasDelMes, campanasIncluidas, evaluar, formatoFechaEnvio, formatoMes, formatoNumero, formatoPct, nivelMuestra, ordenarRanking,
   sobreBase, sobreEnviados, tonoRiesgo, ultimoMes,
 } from './datos.js'
@@ -23,8 +23,13 @@ function Seccion({ titulo, pista }) {
   return <h2 className="mkt-sgl">{titulo}{pista && <i>{pista}</i>}</h2>
 }
 
-function Kpi({ estado = 'na', etiqueta, valor, valorClase = '', explicacion, children }) {
-  return <article className={`mkt-kpi mkt-st-${estado}`}>
+function Kpi({ estado = 'na', etiqueta, valor, valorClase = '', explicacion, onDetalle, children }) {
+  const activar = (e) => {
+    if (onDetalle && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onDetalle() }
+  }
+  return <article className={`mkt-kpi mkt-st-${estado}${onDetalle ? ' mkt-kpi-clicable' : ''}`}
+    role={onDetalle ? 'button' : undefined} tabIndex={onDetalle ? 0 : undefined}
+    onClick={onDetalle} onKeyDown={activar}>
     <div className="mkt-kpi-label">{etiqueta} <Explicacion texto={explicacion} /></div>
     <div className={`mkt-kpi-value ${valorClase}`}>{valor}</div>
     <div className="mkt-kpi-sub">{children}</div>
@@ -56,30 +61,33 @@ const TEXTO_RIESGO = {
   quejas: { rojo: `Crítico ≥ ${UMBRALES.quejas.rojo * 100} %`, amarillo: 'Atención', verde: 'Bien' },
 }
 
-function KpiRiesgo({ m, campo, etiqueta, base, explicacion }) {
+function KpiRiesgo({ m, campo, etiqueta, base, explicacion, onDetalle }) {
   const tono = tonoRiesgo(m, campo)
   const estado = ESTADO_RIESGO[tono]
-  return <Kpi estado={estado} etiqueta={etiqueta} valor={formatoNumero(m[campo])} valorClase={`mkt-is-${estado}`} explicacion={explicacion}>
+  return <Kpi estado={estado} etiqueta={etiqueta} valor={formatoNumero(m[campo])} valorClase={`mkt-is-${estado}`} explicacion={explicacion} onDetalle={onDetalle}>
     {formatoPct(sobreBase(m, campo))} {base} · {tono === 'pocos' ? 'Pocos datos' : TEXTO_RIESGO[campo][tono]}
   </Kpi>
 }
 
-function SaludEnvio({ m, def }) {
+function SaludEnvio({ m, def, alAbrir }) {
+  const detalle = (tipo, titulo) => alAbrir ? () => alAbrir(tipo, titulo) : undefined
   const nivelEntrega = evaluar('pctEntrega', m.pctEntrega)
   const eEntrega = ESTADO_NIVEL[nivelEntrega]
   return <>
     <div className="mkt-grid-salud">
-      <Kpi estado={eEntrega} etiqueta="Entregados" valor={formatoNumero(m.entregados)} valorClase={`mkt-is-${eEntrega}`} explicacion={`${def.estadoFinal} ${def.pctEntrega}`}>
+      <Kpi estado={eEntrega} etiqueta="Entregados" valor={formatoNumero(m.entregados)} valorClase={`mkt-is-${eEntrega}`} explicacion={`${def.estadoFinal} ${def.pctEntrega}`} onDetalle={detalle('entregados', 'Entregados')}>
         {formatoPct(m.pctEntrega)} del envío · {NIVELES[nivelEntrega].texto}{nivelEntrega === 'critico' ? ' < 90 %' : ''}
       </Kpi>
-      <KpiRiesgo m={m} campo="rebotesPermanentes" etiqueta="Rebote permanente" base="del envío" explicacion={def.rebotesPermanentes} />
+      <KpiRiesgo m={m} campo="rebotesPermanentes" etiqueta="Rebote permanente" base="del envío" explicacion={def.rebotesPermanentes} onDetalle={detalle('rebotesPermanentes', 'Rebote permanente')} />
       <KpiRiesgo m={m} campo="rebotesTemporales" etiqueta="Rebote temporal" base="del envío"
-        explicacion={`${def.rebotesTemporales}${m.entregadosLuegoRebotados ? ` ${formatoNumero(m.entregadosLuegoRebotados)} se habían entregado y luego rebotaron.` : ''}`} />
-      <Kpi estado="info" etiqueta="Apertura automática" valor={formatoNumero(m.soloAperturaAutomatica)} valorClase="mkt-is-info" explicacion={def.soloAperturaAutomatica}>
+        explicacion={`${def.rebotesTemporales}${m.entregadosLuegoRebotados ? ` ${formatoNumero(m.entregadosLuegoRebotados)} se habían entregado y luego rebotaron.` : ''}`}
+        onDetalle={detalle('rebotesTemporales', 'Rebote temporal')} />
+      <Kpi estado="info" etiqueta="Apertura automática" valor={formatoNumero(m.soloAperturaAutomatica)} valorClase="mkt-is-info" explicacion={def.soloAperturaAutomatica}
+        onDetalle={detalle('soloAperturaAutomatica', 'Apertura automática')}>
         iPhone · no cuenta como apertura
       </Kpi>
-      <KpiRiesgo m={m} campo="bajas" etiqueta="Bajas" base="de los entregados" explicacion={def.bajas} />
-      <KpiRiesgo m={m} campo="quejas" etiqueta="Quejas (spam)" base="de los entregados" explicacion={def.quejas} />
+      <KpiRiesgo m={m} campo="bajas" etiqueta="Bajas" base="de los entregados" explicacion={def.bajas} onDetalle={detalle('bajas', 'Bajas')} />
+      <KpiRiesgo m={m} campo="quejas" etiqueta="Quejas (spam)" base="de los entregados" explicacion={def.quejas} onDetalle={detalle('quejas', 'Quejas')} />
     </div>
     <p className="mkt-aclaracion">Solo <b>Entregados + Rebote permanente + Rebote temporal</b> suman el 100 % del envío
       ({formatoNumero(m.entregados)} + {formatoNumero(m.rebotesPermanentes)} + {formatoNumero(m.rebotesTemporales)}{m.sinEstado ? ` + ${formatoNumero(m.sinEstado)} sin estado` : ''} = {formatoNumero(m.enviados)}).
@@ -180,19 +188,6 @@ function Ranking({ campanas, vista, def, alElegir }) {
   </div>
 }
 
-// ------------------------------------------------------------------ ¿cómo se calcula?
-
-function ComoSeCalcula({ reglas }) {
-  const def = reglas.definiciones
-  return <details className="mkt-como">
-    <summary>¿Cómo se calcula cada número?</summary>
-    <dl>
-      {Object.entries(def).map(([clave, texto]) => <div key={clave}><dt>{ETIQUETAS[clave] ?? clave}</dt><dd>{texto}</dd></div>)}
-      {DEFINICIONES_EXTRA(reglas).map(([nombre, texto]) => <div key={nombre}><dt>{nombre}</dt><dd>{texto}</dd></div>)}
-    </dl>
-  </details>
-}
-
 // ------------------------------------------------------------------ vista
 
 const horaFormato = new Intl.DateTimeFormat('es-GT', { hour: '2-digit', minute: '2-digit' })
@@ -240,10 +235,12 @@ function SinDatos({ titulo, texto, accion, alAccion }) {
  */
 export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, filtros, alCambiarFiltros, cargando, error, actualizadoEn, sinCampanas, alActualizar }) {
   const [elegida, setElegida] = useState(null)
+  const [lista, setLista] = useState(null)
   const def = datos.reglas.definiciones
   const campanas = campanasIncluidas(datos)
   const total = bloque(datos.totales, vista)
   const pctDesconocido = datos.destacados?.metricas?.mejorPais?.pctDesconocido ?? null
+  const abrirLista = cargando ? undefined : (tipo, etiqueta) => setLista({ tipo, etiqueta })
 
   return <>
     <Encabezado cargando={cargando} error={error} actualizadoEn={actualizadoEn} subtitulo={`RED Intelfon · Campañas de Brevo · fuente: ${datos.fuente.descripcion ?? '—'}`} />
@@ -260,16 +257,16 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
       <Seccion titulo="Resumen del mes" pista="último mes con envíos" />
       <ResumenDelMes datos={datos} vista={vista} def={def} />
 
+      <Seccion titulo="Salud del envío" pista={`entregados + rebotes suman el 100 % del envío (${formatoNumero(total.enviados)})`} />
+      <SaludEnvio m={total} def={def} alAbrir={abrirLista} />
+
       <Seccion titulo="Métricas de interacción" pista={`porcentajes sobre el total entregado · ${VISTAS[vista].corto}`} />
       <div className="mkt-card">
-        <MetricasInteraccion m={total} definiciones={def} />
+        <MetricasInteraccion m={total} definiciones={def} alAbrir={abrirLista} />
         <div className="mkt-note">Rangos de referencia general B2B, <strong>no son la meta de RED</strong>.
           {total.notaPctApertura && <> La apertura: {total.notaPctApertura.charAt(0).toLowerCase() + total.notaPctApertura.slice(1)}.</>}
           {' '}Los clics pueden incluir clics automáticos de antivirus.</div>
       </div>
-
-      <Seccion titulo="Salud del envío" pista={`entregados + rebotes suman el 100 % del envío (${formatoNumero(total.enviados)})`} />
-      <SaludEnvio m={total} def={def} />
 
       <Destacados d={datos.destacados?.[vista]} def={def} />
 
@@ -283,9 +280,11 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
       <Ranking campanas={campanas} vista={vista} def={def} alElegir={setElegida} />
     </>}
 
-    <ComoSeCalcula reglas={datos.reglas} />
+    <InformeDetallado datos={datos} vista={vista} filtros={filtros} cargando={cargando} />
 
     {elegida && <DetalleCampana campana={elegida} definiciones={def} pctDesconocido={pctDesconocido} vista={vista} alCerrar={() => setElegida(null)} />}
+    {lista && <ListaTarjeta tipo={lista.tipo} etiqueta={lista.etiqueta} vista={vista} filtros={filtros}
+      campanas={campanas.map((c) => c.id)} onCerrar={() => setLista(null)} />}
   </>
 }
 

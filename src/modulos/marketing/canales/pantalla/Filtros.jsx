@@ -1,15 +1,15 @@
 // Marketing por canales · barra de filtros con el FORMATO ESTÁNDAR del portal (D35), copiado del
 // dashboard de Activaciones (activaciones.html / activaciones.css, que no se modificaron), igual que el
 // Flujo de ventas v2:
-//   tarjeta "FILTROS" · grupo "Cifras" · Período (con restablecer) · botón "Filtros" con contador →
+//   tarjeta "FILTROS" · País · Período (con restablecer) · botón "Filtros" con contador →
 //   panel tipo Excel (columnas Cargo y Campañas, con buscador, "todo", n/m, "Limpiar todo" y "Aplicar") ·
 //   botón PDF · botón actualizar redondo.
-// Cifras y Período se aplican al instante; Cargo y Campañas, con "Aplicar".
-// Los filtros solo deciden QUÉ campañas entran; el servidor recalcula los totales (?campanas=, D29).
+// País, Cifras y Período se aplican al instante; Cargo y Campañas, con "Aplicar".
+// El servidor recalcula los totales con todos los filtros (?pais= y ?campanas=).
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronDown, Filter, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import {
-  FILTROS_VACIOS, VISTAS, campanasCandidatas, cargosDisponibles, fechaCorta, filtrosEnPanel, formatoLectura,
+  FILTROS_VACIOS, PAISES_FILTRO, VISTAS, campanasCandidatas, cargosDisponibles, fechaCorta, filtrosEnPanel, formatoLectura,
   formatoNumero, hayFiltros, textosFiltros,
 } from './datos.js'
 
@@ -56,7 +56,7 @@ function ColumnaXf({ titulo, opciones, marcadas, alCambiar, vacio }) {
 }
 
 /** Panel "Filtros": borrador local; se aplica con "Aplicar". */
-function PanelFiltros({ filtros, disponibles, alAplicar, alCerrar }) {
+function PanelFiltros({ filtros, disponibles, vista, alCambiarVista, alAplicar, alCerrar }) {
   const cargos = cargosDisponibles(disponibles)
   const [marcadosCargo, setMarcadosCargo] = useState(() => new Set(filtros.cargos ?? cargos))
   const borradorCargos = marcadosCargo.size === cargos.length ? null : [...marcadosCargo]
@@ -75,6 +75,11 @@ function PanelFiltros({ filtros, disponibles, alAplicar, alCerrar }) {
     alCerrar()
   }
   return <div className="mkt-xf-panel" role="dialog" aria-label="Filtros">
+    <div className="mkt-grupo mkt-xf-cifras" role="group" aria-label="Cifras">
+      <span className="mkt-etiqueta-grupo">Cifras</span>
+      {Object.values(VISTAS).map((v) => <button key={v.key} type="button" className={`mkt-btn-grupo ${vista === v.key ? 'is-activo' : ''}`}
+        aria-pressed={vista === v.key} onClick={() => alCambiarVista(v.key)}>{v.label}</button>)}
+    </div>
     <div className="mkt-xf-grid">
       <ColumnaXf titulo="Cargo" opciones={cargos.map((c) => ({ valor: c, etiqueta: c }))} marcadas={marcadosCargo}
         alCambiar={setMarcadosCargo} vacio="Sin cargos." />
@@ -112,10 +117,10 @@ export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros,
   return <section className="mkt-filtros-caja" ref={caja} aria-label="Filtros">
     <span className="mkt-filtros-eyebrow">Filtros</span>
     <div className="mkt-filtros-barra">
-      <div className="mkt-grupo" role="group" aria-label="Cifras">
-        <span className="mkt-etiqueta-grupo">Cifras</span>
-        {Object.values(VISTAS).map((v) => <button key={v.key} type="button" className={`mkt-btn-grupo ${vista === v.key ? 'is-activo' : ''}`}
-          aria-pressed={vista === v.key} onClick={() => alCambiarVista(v.key)}>{v.label}</button>)}
+      <div className="mkt-grupo" role="group" aria-label="País">
+        <span className="mkt-etiqueta-grupo">País</span>
+        {PAISES_FILTRO.map((p) => <button key={p.valor} type="button" className={`mkt-btn-grupo ${filtros.pais === p.valor ? 'is-activo' : ''}`}
+          aria-pressed={filtros.pais === p.valor} onClick={() => alCambiarFiltros({ ...filtros, pais: p.valor })}>{p.etiqueta}</button>)}
       </div>
 
       <div className="mkt-periodo">
@@ -152,7 +157,8 @@ export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros,
         </button>
       </span>
     </div>
-    {abierto && <PanelFiltros filtros={filtros} disponibles={disponibles} alAplicar={alCambiarFiltros} alCerrar={() => setAbierto(false)} />}
+    {abierto && <PanelFiltros filtros={filtros} disponibles={disponibles} vista={vista} alCambiarVista={alCambiarVista}
+      alAplicar={alCambiarFiltros} alCerrar={() => setAbierto(false)} />}
   </section>
 }
 
@@ -162,6 +168,7 @@ export function FranjaFiltroActivo({ vista, filtros, disponibles, alCambiarFiltr
   if (!hayFiltros(filtros)) return null
   const partes = [
     (filtros.desde || filtros.hasta) && `Período ${t.periodo}`,
+    filtros.pais && filtros.pais !== 'todos' && `País: ${t.pais}`,
     t.cargo && `Cargo: ${t.cargo}`,
     t.campanas && `Campañas: ${t.campanas}`,
   ].filter(Boolean)
@@ -182,13 +189,15 @@ export function LineaResumen({ datos, vista, filtros, disponibles }) {
     : 'todo el histórico'
   return <div className="mkt-fx-resumen">
     Mostrando <strong>{formatoNumero(t.enviados)} correos</strong> de <strong>{formatoNumero(t.campanas)} campaña{t.campanas === 1 ? '' : 's'}</strong>
-    {' '}· {periodo}{textos.cargo ? ` · ${textos.cargo}` : ''} · última lectura {formatoLectura(leido)}
+    {' '}· {periodo}{textos.pais !== 'Todos' ? ` · ${textos.pais}` : ''}{textos.cargo ? ` · ${textos.cargo}` : ''} · última lectura {formatoLectura(leido)}
   </div>
 }
 
 export function Transparencia({ datos }) {
   const [abierto, setAbierto] = useState(false)
   const { archivos, exclusiones, fuente } = datos
+  const repetidos = archivos.repetidos ?? []
+  const copiasIgnoradas = repetidos.reduce((suma, grupo) => suma + grupo.ignorados.length, 0)
   const internos = exclusiones.destinatariosInternos
   const pruebas = exclusiones.campanasPrueba
   const avisos = archivos.usados.flatMap((u) => [...(u.avisos ?? []), ...(u.filasDescartadas ?? [])].map((a) => ({ archivo: u.archivo, ...a })))
@@ -199,6 +208,7 @@ export function Transparencia({ datos }) {
         <div>{formatoNumero(archivos.usados.length)} archivo{archivos.usados.length === 1 ? '' : 's'} leído{archivos.usados.length === 1 ? '' : 's'} ({fuente.descripcion})
           {' '}· {formatoNumero(datos.totales.enviados)} correos analizados · se excluy{internos.enviados === 1 ? 'ó' : 'eron'} {formatoNumero(internos.enviados)} correo{internos.enviados === 1 ? '' : 's'} interno{internos.enviados === 1 ? '' : 's'} de RED
           {' '}y {formatoNumero(pruebas.cantidad)} campaña{pruebas.cantidad === 1 ? '' : 's'} de prueba.
+          {' '}Campañas repetidas: {formatoNumero(copiasIgnoradas)} {copiasIgnoradas === 1 ? 'copia ignorada' : 'copias ignoradas'}.
           {archivos.ignorados.length > 0 && <> {formatoNumero(archivos.ignorados.length)} archivo(s) ignorado(s).</>}
           {avisos.length > 0 && <> {formatoNumero(avisos.length)} aviso(s).</>}</div>
       </div>
@@ -226,6 +236,13 @@ export function Transparencia({ datos }) {
         {fuente.cache && <p>Se guarda {fuente.cache.minutos} min{fuente.cache.usada ? ' (esta lectura viene de lo guardado)' : ''}.</p>}
         {exclusiones.duplicadosDescartados > 0 && <p>Correos repetidos descartados: {formatoNumero(exclusiones.duplicadosDescartados)}.</p>}
       </div>
+      {repetidos.length > 0 && <div>
+        <h4>Campañas repetidas: {formatoNumero(copiasIgnoradas)} {copiasIgnoradas === 1 ? 'copia ignorada' : 'copias ignoradas'}</h4>
+        <ul>{repetidos.map((grupo) => <li key={grupo.campana}>
+          Campaña #{grupo.campana}: se usó <b>{grupo.usado.archivo}</b> ({formatoNumero(grupo.usado.filas)} filas, último evento {grupo.usado.ultimoEvento ?? 'sin fecha'});
+          {' '}se ignoró {grupo.ignorados.map((copia) => `${copia.archivo} (${copia.criterio})`).join('; ')}.
+        </li>)}</ul>
+      </div>}
     </div>}
   </div>
 }

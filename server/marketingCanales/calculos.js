@@ -190,9 +190,10 @@ function calcularDestacados(incluidas, porCargo, totales, vista) {
 
 /**
  * @param {object[]} filas  filas estándar del canal mailing
- * @param {{ soloCampanas?: Set<string> | null }} [opciones]  filtro de la pantalla (D29)
+ * @param {{ soloCampanas?: Set<string> | null, pais?: string | null }} [opciones]
+ *        filtros de la pantalla: campañas (D29) y país (D38).
  */
-export function calcularMailing(filas, { soloCampanas = null } = {}) {
+export function calcularMailing(filas, { soloCampanas = null, pais = null } = {}) {
   // 1. Agrupar por campaña; una persona cuenta una sola vez por campaña (se queda la primera fila).
   const grupos = new Map()
   for (const f of filas) {
@@ -211,7 +212,9 @@ export function calcularMailing(filas, { soloCampanas = null } = {}) {
     const internos = metricasVacias()
     const porPais = porPaisVacio()
     let fechaEnvio = null
-    for (const f of g.filas) {
+    const filasPais = pais ? g.filas.filter((f) => paisDeCorreo(f.correo) === pais) : g.filas
+    if (filasPais.length === 0) return null
+    for (const f of filasPais) {
       if (!fechaEnvio || f.fechaEnvio < fechaEnvio) fechaEnvio = f.fechaEnvio
       sumarFila(total, f)
       if (esCorreoInterno(f.correo)) { sumarFila(internos, f); continue }
@@ -233,14 +236,25 @@ export function calcularMailing(filas, { soloCampanas = null } = {}) {
       metricas: conPorcentajes(sinInternos),
       porPais: cerrarPorPais(porPais),
     }
-  })
+  }).filter(Boolean)
   todas.sort((a, b) => b.fechaEnvio.localeCompare(a.fechaEnvio) || b.id.localeCompare(a.id, undefined, { numeric: true }))
 
   // 2b. Filtro de la pantalla (D29): solo las campañas pedidas. Los cálculos son los mismos;
   //     solo cambia QUÉ campañas entran en meses, cargos, totales y destacados.
-  //     "disponibles" lista SIEMPRE todas, para dibujar los filtros.
+  //     "disponibles" lista SIEMPRE todas, para dibujar los filtros, incluso con país elegido.
   const campanas = soloCampanas ? todas.filter((c) => soloCampanas.has(c.id)) : todas
-  const disponibles = todas.map((c) => ({ id: c.id, nombre: c.nombre, fechaEnvio: c.fechaEnvio, mes: c.mes, cargo: c.cargo, excluida: c.excluida }))
+  const disponibles = [...grupos.values()].map((g) => {
+    const fechaEnvio = g.filas.reduce((menor, f) => !menor || f.fechaEnvio < menor ? f.fechaEnvio : menor, null)
+    const patron = patronDePrueba(g.nombre)
+    return {
+      id: g.id,
+      nombre: g.nombre,
+      fechaEnvio,
+      mes: fechaEnvio.slice(0, 7),
+      cargo: cargoDeCampana(g.nombre),
+      excluida: patron !== null,
+    }
+  }).sort((a, b) => b.fechaEnvio.localeCompare(a.fechaEnvio) || b.id.localeCompare(a.id, undefined, { numeric: true }))
 
   // 3. Totales por mes y generales: solo campañas NO excluidas.
   //    Cifra oficial = sin internos; además se entrega "totalBrevo" (con internos) para el selector de la pantalla.
@@ -282,7 +296,7 @@ export function calcularMailing(filas, { soloCampanas = null } = {}) {
     disponibles,
     filtro: {
       campanas: soloCampanas ? disponibles.filter((c) => soloCampanas.has(c.id)).map((c) => c.id) : null,
-      noEncontradas: soloCampanas ? [...soloCampanas].filter((id) => !todas.some((c) => c.id === id)) : [],
+      noEncontradas: soloCampanas ? [...soloCampanas].filter((id) => !disponibles.some((c) => c.id === id)) : [],
     },
     meses: [...meses.values()].sort((a, b) => a.mes.localeCompare(b.mes)).map(cerrarGrupo),
     // Por cargo (D27): solo cargos con campañas que cuentan.

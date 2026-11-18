@@ -16,13 +16,17 @@ export const ANILLOS = [
   { campo: 'pctCtor', corto: 'CTOR', parte: 'personasConClic', total: 'aperturasReales', de: 'aperturas', linea: 'De quienes abrieron, cuántos dieron clic' },
 ]
 
-function Anillo({ m, anillo, definicion }) {
+function Anillo({ m, anillo, definicion, onDetalle }) {
   const p = m[anillo.campo]
   const nivel = evaluar(anillo.campo, p)
   const estado = ESTADO_NIVEL[nivel]
   const avance = p == null ? 0 : Math.max(0, Math.min(1, p))
   const textoPct = p == null ? '—' : formatoPct(p)
-  return <div className={`mkt-ring is-${estado}`}>
+  const activar = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDetalle?.() }
+  }
+  return <div className={`mkt-ring is-${estado}${onDetalle ? ' mkt-ring-clicable' : ''}`}
+    role={onDetalle ? 'button' : undefined} tabIndex={onDetalle ? 0 : undefined} onClick={onDetalle} onKeyDown={activar}>
     <svg width="130" height="130" viewBox="0 0 140 140" role="img"
       aria-label={`${anillo.corto}: ${p == null ? 'pocos datos' : textoPct}, ${NIVELES[nivel].texto}`}>
       <circle className="mkt-ring-fondo" cx="70" cy="70" r={R} />
@@ -39,8 +43,12 @@ function Anillo({ m, anillo, definicion }) {
   </div>
 }
 
-export function MetricasInteraccion({ m, definiciones }) {
+export function MetricasInteraccion({ m, definiciones, alAbrir }) {
+  const detalle = (tipo, titulo) => alAbrir ? () => alAbrir(tipo, titulo) : undefined
   return <div className="mkt-rings">
-    {ANILLOS.map((a) => <Anillo key={a.campo} m={m} anillo={a} definicion={definiciones[a.campo]} />)}
+    {ANILLOS.map((a) => <Anillo key={a.campo} m={m} anillo={a} definicion={definiciones[a.campo]}
+      onDetalle={a.campo === 'pctEntrega' ? detalle('entregados', 'Entregados')
+        : a.campo === 'pctApertura' ? detalle('aperturas', 'Aperturas')
+          : a.campo === 'pctClic' || a.campo === 'pctCtor' ? detalle('clics', 'Clics') : undefined} />)}
   </div>
 }

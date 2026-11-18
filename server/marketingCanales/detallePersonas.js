@@ -1,8 +1,8 @@
 /**
  * Marketing por canales — DETALLE POR PERSONA de una campaña (D34).
  *
- * ⚠️ Esta lista SÍ contiene correos de clientes. Solo se entrega por la ruta protegida
- * /api/marketing/mailing-detalle (server/marketingMailingDetalle.js), nunca por la ruta principal.
+ * ⚠️ Esta lista SÍ contiene correos de clientes. Se entrega por la ruta separada
+ * /api/marketing/mailing-detalle, nunca por la ruta principal.
  *
  * Usa EXACTAMENTE las mismas reglas que los cálculos:
  * - una persona cuenta una vez por campaña (se queda la primera fila del correo);
@@ -13,7 +13,7 @@
  */
 import { calcularMailing, estadoFinal } from './calculos.js'
 import { FECHA_ILEGIBLE } from './filaEstandar.js'
-import { PAIS_DESCONOCIDO, esCorreoInterno, paisDeCorreo } from './reglas.js'
+import { PAIS_DESCONOCIDO, cargoDeCampana, esCorreoInterno, paisDeCorreo } from './reglas.js'
 
 /**
  * Resultado de cada persona: uno solo, el primero que aplique en este orden.
@@ -33,6 +33,63 @@ export const RESULTADOS = [
 
 /** Campos del cuadre: deben ser iguales en la lista y en la tarjeta de la campaña. */
 export const CAMPOS_CUADRE = ['enviados', 'entregados', 'aperturasReales', 'personasConClic', 'rebotesPermanentes', 'rebotesTemporales', 'sinEstado', 'bajas', 'quejas']
+
+export const RECOMENDACIONES = {
+  correo: 'Corregir con el ejecutivo o quitar de la lista en Brevo',
+  buzonInactivo: 'Buzón lleno e inactivo: quitar de la lista',
+  buzon: 'Se reintenta solo; si rebota 3+ veces, tratar como permanente',
+  dominio: 'Revisar si el dominio está mal escrito (ej. gmail.com.sv); si no, quitar',
+  antispam: 'Bloqueado por el antispam del cliente: revisar contenido y reputación con TI',
+  servidorCliente: 'Problema del servidor del cliente: avisar al ejecutivo y reintentar',
+  temporal: 'Esperar al siguiente envío',
+  grande: 'Reducir imágenes o adjuntos del correo',
+  ti: 'Avisar a TI: revisar SPF, DKIM y DMARC',
+  queja: 'Quitar de la lista; no volver a enviar',
+  manual: 'Revisar manualmente',
+}
+
+const normalizarMotivo = (texto) => String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+/**
+ * Recomendación fija por texto del rebote; nunca modifica Brevo. El orden importa: la primera regla
+ * que aplica gana (p. ej. "lleno e inactivo" antes que "lleno"; dominio antes que "does not exist").
+ */
+export function recomendacionRebote(motivo, { queja = false } = {}) {
+  if (queja) return RECOMENDACIONES.queja
+  const texto = normalizarMotivo(motivo).replace(/\s+/g, ' ').trim()
+  // Buzón lleno: el inactivo (OverQuotaPerm) es definitivo; el temporal (OverQuotaTemp) se reintenta.
+  if (/out of storage space and inactive|overquotaperm/.test(texto)) return RECOMENDACIONES.buzonInactivo
+  if (/out of storage space|overquotatemp|over.?quota|quota exceeded|(mailbox|inbox|buzon) (is )?full/.test(texto)) return RECOMENDACIONES.buzon
+  // Antispam del cliente (Vade Secure o "Recipient rejected" con 403).
+  if (/vadesecure/.test(texto) || (/recipient rejected/.test(texto) && /\b403\b|_403\b/.test(texto))) return RECOMENDACIONES.antispam
+  // El servidor del cliente pide autenticación o no deja pasar el correo.
+  if (/smtp authentication|authentication required|not permitted to relay/.test(texto)) return RECOMENDACIONES.servidorCliente
+  // Dominio inexistente o mal escrito (va antes que "does not exist" del correo).
+  if (/unable to find mx|\b(no such domain|unknown domain|domain not found)\b|\bno mx (record )?(for|of)\b|\b(domain|dominio).{0,60}(unknown|not found|does not exist|no existe|inexistente|invalid|no encontrado)\b/.test(texto)) return RECOMENDACIONES.dominio
+  // Correo que no existe o rechazado por el destinatario.
+  if (texto === 'hard bounce'
+    || /recipient address rejected|mailbox unavailable|no mailbox|does not exist|doesn't exist|user unknown|unknown user|no such user|no such mailbox|usuario no existe|correo no existe/.test(texto)
+    || /5\.4\.1.{0,60}access denied|access denied.{0,60}5\.4\.1/.test(texto)) return RECOMENDACIONES.correo
+  if (/connection tim(eout|ed out)/.test(texto)) return RECOMENDACIONES.temporal
+  // Para casos futuros (hoy no aparecen en los CSV).
+  if (/message too large|size limit|552[ -]5\.3\.4/.test(texto)) return RECOMENDACIONES.grande
+  if (/\b(spf|dkim|dmarc|unauthenticated)\b/.test(texto)) return RECOMENDACIONES.ti
+  return RECOMENDACIONES.manual
+}
+
+const ETIQUETA_ACCION = {
+  [RECOMENDACIONES.correo]: 'quitar o corregir',
+  [RECOMENDACIONES.buzonInactivo]: 'quitar buzón inactivo',
+  [RECOMENDACIONES.buzon]: 'vigilar buzón',
+  [RECOMENDACIONES.dominio]: 'revisar dominio',
+  [RECOMENDACIONES.antispam]: 'revisar antispam con TI',
+  [RECOMENDACIONES.servidorCliente]: 'avisar al ejecutivo',
+  [RECOMENDACIONES.temporal]: 'esperar siguiente envío',
+  [RECOMENDACIONES.grande]: 'reducir tamaño',
+  [RECOMENDACIONES.ti]: 'revisar con TI',
+  [RECOMENDACIONES.queja]: 'quitar por queja',
+  [RECOMENDACIONES.manual]: 'revisar manualmente',
+}
 
 function resultadoDe(f, estado) {
   if (f.queja) return 'queja'
@@ -98,6 +155,7 @@ export function armarDetallePersonas(filas, campanaId, vista) {
     vistos.add(f.correo)
     propias.push(f)
   }
+
   if (propias.length === 0) return null
 
   // La tarjeta de esta campaña, con el cálculo de siempre.
@@ -147,5 +205,117 @@ export function armarDetallePersonas(filas, campanaId, vista) {
     conteos,
     resultados: RESULTADOS,
     cuadre: { campos: CAMPOS_CUADRE, lista, tarjeta, cuadra: CAMPOS_CUADRE.every((k) => lista[k] === tarjeta[k]) },
+  }
+}
+
+const CAMPO_TARJETA = {
+  entregados: 'entregados',
+  rebotesPermanentes: 'rebotesPermanentes',
+  rebotesTemporales: 'rebotesTemporales',
+  soloAperturaAutomatica: 'soloAperturaAutomatica',
+  bajas: 'bajas',
+  quejas: 'quejas',
+  aperturas: 'aperturasReales',
+  clics: 'personasConClic',
+}
+
+const RESULTADO_ETIQUETA = Object.fromEntries(RESULTADOS.map((r) => [r.clave, r.texto]))
+
+function filaDeInforme(f, tarjeta = null) {
+  const estado = estadoFinal(f)
+  const resultado = resultadoDe(f, estado)
+  const motivoRebote = estado === 'permanente' ? f.motivoReboteDuro : estado === 'temporal' ? f.motivoReboteSuave : ''
+  const motivo = tarjeta === 'quejas' ? 'Queja' : motivoRebote
+  const seria = resultado === 'queja' || resultado === 'permanente' || resultado === 'temporal'
+  const recomendacion = tarjeta === 'quejas'
+    ? recomendacionRebote('', { queja: true })
+    : tarjeta === 'rebotesPermanentes' || tarjeta === 'rebotesTemporales'
+      ? recomendacionRebote(motivoRebote)
+      : seria ? recomendacionRebote(motivoRebote, { queja: resultado === 'queja' }) : ''
+  const pais = paisDeCorreo(f.correo)
+  return {
+    correo: f.correo,
+    pais: pais === PAIS_DESCONOCIDO ? 'Sin país' : pais,
+    campana: f.campanaNombre,
+    campanaId: f.campanaId,
+    cargo: cargoDeCampana(f.campanaNombre),
+    fechaEnvio: f.fechaEnvio,
+    fecha: fechaFinal(f, resultado) ?? f.fechaEnvio,
+    resultado: RESULTADO_ETIQUETA[resultado],
+    claveResultado: resultado,
+    clics: f.clicsTotales,
+    motivo,
+    recomendacion,
+    accion: recomendacion ? ETIQUETA_ACCION[recomendacion] : '',
+  }
+}
+
+/**
+ * Detalle agregado de personas para las tarjetas y el informe; lo sirve la ruta de detalle.
+ * @param {object[]} filas filas estándar de mailing
+ * @param {{ vista?: 'metricas'|'totalBrevo', pais?: string|null, campanas?: Set<string>|null, desde?: string|null, hasta?: string|null, cargos?: Set<string>|null, tarjeta?: string|null }} opciones
+ */
+export function armarInformeMailing(filas, { vista = 'metricas', pais = null, campanas = null, desde = null, hasta = null, cargos = null, tarjeta = null } = {}) {
+  const campanasBase = calcularMailing(filas).disponibles
+  const idsPermitidos = new Set(campanasBase.filter((c) => {
+    if (c.excluida) return false
+    const dia = c.fechaEnvio.slice(0, 10)
+    if (desde && dia < desde) return false
+    if (hasta && dia > hasta) return false
+    if (cargos && !cargos.has(c.cargo)) return false
+    if (campanas && !campanas.has(c.id)) return false
+    return true
+  }).map((c) => c.id))
+
+  const base = filas.filter((f) => f.canal === 'mailing' && idsPermitidos.has(f.campanaId)
+    && (!pais || paisDeCorreo(f.correo) === pais))
+  const calculo = calcularMailing(base, { pais })
+  const bloque = vista === 'totalBrevo' ? calculo.totales.totalBrevo : calculo.totales
+  const listaBase = []
+  const vistos = new Set()
+  for (const f of base) {
+    const clave = `${f.campanaId}\u0000${f.correo}`
+    if (vistos.has(clave)) continue
+    vistos.add(clave)
+    if (vista !== 'totalBrevo' && esCorreoInterno(f.correo)) continue
+    listaBase.push(f)
+  }
+
+  const personas = listaBase
+    .map((f) => ({ f, persona: filaDeInforme(f, tarjeta) }))
+    .filter(({ f }) => {
+      if (!tarjeta) return true
+      const estado = estadoFinal(f)
+      switch (tarjeta) {
+        case 'entregados': return estado === 'entregado'
+        case 'rebotesPermanentes': return estado === 'permanente'
+        case 'rebotesTemporales': return estado === 'temporal'
+        case 'soloAperturaAutomatica': return !f.aperturaReal && f.aperturasApple > 0
+        case 'bajas': return f.baja
+        case 'quejas': return f.queja
+        case 'aperturas': return f.aperturaReal
+        case 'clics': return f.clicsTotales > 0
+        default: return false
+      }
+    })
+    .map(({ persona }) => tarjeta && !['rebotesPermanentes', 'rebotesTemporales', 'quejas'].includes(tarjeta)
+      ? { ...persona, motivo: '', recomendacion: '', accion: '' } : persona)
+    .sort((a, b) => a.campana.localeCompare(b.campana) || a.correo.localeCompare(b.correo))
+
+  const campos = ['personas', 'entregados', 'aperturasReales', 'personasConClic', 'rebotesPermanentes', 'rebotesTemporales', 'bajas', 'quejas']
+  const totales = Object.fromEntries(campos.map((k) => [k, k === 'personas' ? bloque.enviados : bloque[k]]))
+  const acciones = Object.entries(personas.reduce((suma, p) => {
+    if (p.accion) suma[p.accion] = (suma[p.accion] ?? 0) + 1
+    return suma
+  }, {})).map(([nombre, cantidad]) => ({ nombre, cantidad })).sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre))
+
+  const campoEsperado = tarjeta ? CAMPO_TARJETA[tarjeta] : null
+  return {
+    personas,
+    totales,
+    acciones,
+    totalTarjeta: campoEsperado ? bloque[campoEsperado] : null,
+    tarjetaValida: !tarjeta || Object.prototype.hasOwnProperty.call(CAMPO_TARJETA, tarjeta),
+    cuadra: campoEsperado ? personas.length === bloque[campoEsperado] : true,
   }
 }
