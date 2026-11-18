@@ -1,0 +1,647 @@
+# Bitácora · Marketing por canales
+
+Rama de trabajo: `feature/marketing-mailing`
+
+---
+
+## Fase 0 · Revisión del repositorio — 16/11/2026 ✅
+
+**Qué se hizo:** solo lectura; no se cambió ningún archivo.
+- Patrón a seguir: `/api/marketing/reuniones`, es decir `server/` + `api/` + `server.ts`.
+- La ruta nueva se registra antes de la regla `/api/*` → "Endpoint no encontrado".
+- El menú se arma en `PortalLayout.tsx`, área MARKETING.
+- La API de Prospekt IA tiene 40 campos y **ninguno es el correo del lead**.
+- Los 3 CSV locales tienen el formato esperado y sus filas coinciden con los enviados de control.
+
+**Decisiones de Keily:**
+- dejar "Campañas de correo" sin tocar;
+- dos cifras por campaña (Total en Brevo / sin internos);
+- "TEST" como palabra completa;
+- mes = primera fecha de envío;
+- Fase 4 pendiente del correo en Prospekt IA;
+- "fuente no configurada" en Vercel/Docker hasta la Fase 2.
+
+---
+
+## Fase 1 · Fuente local + cálculos + ruta — 16/11/2026 ✅
+
+Keily probó `/api/marketing/mailing`: se ven las 3 campañas y ningún correo. Commit aprobado.
+
+**Qué se hizo:**
+- `server/marketingCanales/reglas.js` (nuevo): lista editable de pruebas, internos, país y mínimo de datos.
+- `server/marketingCanales/brevoCsv.js` (nuevo): lee un CSV de Brevo y entrega filas estándar.
+- `server/marketingCanales/combinarArchivos.js` (nuevo): junta todos los CSV; si una campaña se repite, gana el más reciente.
+- `server/marketingCanales/fuenteLocal.js` (nuevo): fuente "carpeta local".
+- `server/marketingCanales/calculos.js` (nuevo): métricas por campaña, mes, país, totales y exclusiones.
+- `server/marketingMailing.js` (nuevo): une las piezas y arma la respuesta con candado de privacidad.
+- `api/marketing/mailing.js` (nuevo): la ruta en Vercel.
+- `server.ts`: la ruta en local y Docker, antes de la regla `/api/*`.
+- `.env.example`: `MARKETING_LOCAL_CSV_DIR=` vacía.
+- `.gitignore` y `.dockerignore`: `*.csv` y `*.CSV`.
+- `docs/marketing-canales/`: README, REQUISITOS, DECISIONES (D1–D14) y esta bitácora.
+
+**Pruebas:**
+- Números de control con los 3 CSV reales: todos cuadran (ver tabla abajo).
+- 37 casos con datos inventados, 0 fallas:
+  - campañas de prueba;
+  - internos y país;
+  - fechas;
+  - campaña repetida en dos archivos;
+  - archivos ignorados;
+  - filas malas;
+  - comillas;
+  - archivo Latin-1;
+  - correos repetidos;
+  - "pocos datos";
+  - sin fuente;
+  - carpeta inexistente;
+  - POST.
+- `npm run lint` (verificación de tipos): sin errores.
+- Ruta real con `npm run dev`: HTTP 200, `no-store`, ningún "@" en la respuesta; POST → 405.
+
+| Campaña | Enviados | Aperturas reales | Personas con clic (Brevo → sin internos) |
+|---|---|---|---|
+| #74 Gerente General | 169 ✅ | 28 ✅ | 1 → 1 ✅ |
+| #75 Gerente Financiero | 371 ✅ | 62 ✅ | 5 → 5 ✅ |
+| #76 Gerente Operativo | 314 ✅ | 57 ✅ | 6 → 5 ✅ (1 interno) |
+
+**Qué no se tocó:**
+- Flujo de ventas;
+- "Campañas de correo";
+- otros dashboards;
+- `package.json` y `vercel.json`;
+- Supabase.
+
+---
+
+## Fase 2 · Google Drive — 16/11/2026 ✅ commit `927f665` (falta la prueba con la llave real, irá en otro commit)
+
+**Decisiones de Keily:**
+- sin librerías nuevas;
+- si están las dos fuentes, gana Drive;
+- las hojas de Google se ignoran;
+- la llave se acepta en JSON o base64;
+- `?actualizar=1` para refrescar sin esperar;
+- la cuenta de servicio la crea Keily con la cuenta de Google de MARKETING de RED.
+
+**Qué se hizo:**
+- `server/marketingCanales/googleAuth.js` (nuevo): permiso de solo lectura con la cuenta de servicio, sin librerías.
+- `server/marketingCanales/fuenteDrive.js` (nuevo): lee la carpeta de Drive, con caché de 15 min y
+  descarga solo de lo que cambió.
+- `server/marketingCanales/errorFuente.js` (nuevo): el tipo de error compartido; antes estaba en `fuenteLocal.js`.
+- `server/marketingMailing.js`: elige la fuente (gana Drive), informa cuál se usó y acepta `actualizar`.
+- `api/marketing/mailing.js` y `server.ts`: pasan `?actualizar=1`.
+- `.env.example`: `GOOGLE_SERVICE_ACCOUNT_JSON=` y `MARKETING_DRIVE_FOLDER_ID=` vacías.
+- Docs:
+  - `CONFIGURAR_DRIVE.md` (nuevo), con las reglas de cuenta de empresa, Editor/Lector y no borrar CSV;
+  - DECISIONES D15–D20;
+  - README y REQUISITOS actualizados.
+- **No cambiaron:** cálculos, lector de CSV, regla de archivos repetidos, `package.json`, `vercel.json`.
+
+**Pruebas:**
+- **Drive simulado** con los 3 CSV reales y archivos inventados (llave inventada, sin internet): 33 casos y 7 revisiones de privacidad, 0 fallas.
+  - Las cifras de Drive son **idénticas** a las de la carpeta local, y los números de control cuadran.
+  - Lista de varias páginas.
+  - Archivos ignorados con motivo: hoja de Google, documento, subcarpeta, .txt y copia vieja de una campaña.
+  - Caché:
+    - a los 10 min no vuelve a Drive;
+    - a los 16 min vuelve y descarga solo lo que cambió;
+    - `?actualizar=1` la ignora;
+    - el permiso de Google se renueva cada hora.
+  - Si falla una descarga, se muestra lo demás y no se guarda en caché.
+  - La llave funciona en base64 y con `\n` escritos.
+  - Errores con mensaje claro:
+    - falta una variable;
+    - llave mal copiada o dañada;
+    - Google rechaza la cuenta;
+    - carpeta no compartida;
+    - API desactivada;
+    - código de carpeta raro;
+    - sin internet.
+  - Ninguna respuesta lleva "@", ni la llave, ni el correo de la cuenta de servicio.
+- Pruebas de la Fase 1, repetidas: 0 fallas.
+- `npm run lint`: sin errores.
+- Ruta real con `npm run dev` (carpeta local): HTTP 200 y las mismas cifras.
+
+**Falta:** la prueba con el Drive real, cuando Keily tenga la llave (ver CONFIGURAR_DRIVE.md, Paso 5).
+
+---
+
+## Paso A · Regla "gana el último evento" — 16/11/2026 ✅ `5e0e837`
+
+Keily revisó las tablas "Total en Brevo" y "Sin internos": correctas. Commit aprobado.
+
+**Por qué:** para que los números cuadren con la pantalla de Brevo y con el otro dashboard de
+mailing de la empresa. Si alguien tenía entrega y **después** un rebote, antes contaba como entregado.
+Ahora cuenta como rebote (D21).
+
+**Qué se hizo:**
+- `server/marketingCanales/filaEstandar.js` (nuevo): la marca de "fecha ilegible", compartida por fuentes y cálculos.
+- `brevoCsv.js`: la fila estándar guarda las fechas de entrega y de rebote. Las fechas ilegibles
+  quedan como aviso en el resumen de archivos (`avisos`).
+- `combinarArchivos.js`: pasa esos avisos al resumen.
+- `calculos.js`:
+  - estado final por persona (`estadoFinal`);
+  - nombres `rebotesTemporales` y `rebotesPermanentes`;
+  - contadores nuevos: `entregadosLuegoRebotados`, `sinEstado` y `aperturasDeRebotados`;
+  - nota visible `notaPctApertura`;
+  - textos de explicación actualizados.
+- Docs: D21; D4 actualizada; README con la tabla de cálculo y los números de control; REQUISITOS R9a.
+- **No cambiaron:** Drive, carpeta local, ruta, `package.json`.
+
+**Pruebas:**
+- Control con los 3 CSV reales: todo ✅ (16 revisiones).
+- 50 casos inventados: incluyen entrega y luego rebote, rebote y luego entrega, empates, fecha
+  ilegible, sin eventos y la nota de apertura.
+- Drive simulado: 40 revisiones, sigue igual a la carpeta local.
+- 0 fallas en total. `npm run lint` sin errores.
+
+| "Total en Brevo" | #74 | #75 | #76 | Total |
+|---|---|---|---|---|
+| Enviados | 169 | 371 | 314 | **854** ✅ |
+| Entregados | 157 | 308 | 254 | **719** ✅ |
+| Rebotes temporales | 12 | 37 | 33 | **82** ✅ |
+| Rebotes permanentes | 0 | 26 | 27 | **53** ✅ |
+| Entregados y luego rebotados | 1 | 6 | 3 | **10** ✅ |
+| Aperturas reales (de ellas, luego rebotaron) | 28 (0) | 62 (3) | 57 (1) | **147 (4)** ✅ |
+| Personas con clic | 1 | 5 | 6 | **12** ✅ |
+
+"Sin internos": 853 enviados, 718 entregados, 146 aperturas reales y 11 personas con clic. Solo cambia la #76.
+
+---
+
+## Fase 3 · Pantalla de Mailing — 16 y 17/11/2026 ✅
+
+Keily aprobó las diferencias con el mockup (17/11/2026):
+- "Mejor campaña" y "Mejor cargo" se quedan en **azul** (color de su evaluación);
+- porcentajes con espacio;
+- barras de evolución en azul y gris;
+- nombre completo y cargo corto en el ranking;
+- un solo filtro de cargo;
+- sin pestañas.
+
+**Qué se hizo:**
+- `src/modulos/marketing/canales/` (nuevo): la pantalla, con pestañas Mailing, Redes sociales y Otros.
+  Ver la tabla de archivos en el README.
+- `PortalLayout.tsx`: el item "Marketing por canales" en el menú MARKETING, después de
+  "Flujo de ventas", y la línea que muestra la pantalla.
+- `server/marketingCanales/calculos.js`:
+  - los meses y los totales también traen `totalBrevo`;
+  - las explicaciones de aperturas totales y clics en enlaces distintos dicen que la pantalla de
+    Brevo usa otra fórmula;
+  - personas con clic agrega la nota de antivirus.
+
+  **Ningún número cambió.**
+- Docs: D22 (semáforo), D23 (pantalla), README, REQUISITOS.
+- **No se tocó:**
+  - Flujo de ventas;
+  - "Campañas de correo";
+  - otros dashboards;
+  - estilos globales;
+  - `package.json` y `vercel.json`.
+
+**Error encontrado por las pruebas y corregido:** en la vista "Sin internos", la tabla de campañas
+leía la campaña completa en vez de su bloque `metricas`. Se corrigió en `bloque()` de `datos.js`
+antes de mostrar la pantalla.
+
+**Ajuste visto en la foto:** la #75 mostraba "10.0 %" de rebote temporal en verde (el valor real es
+9.97 %). Ahora el color se decide con el mismo porcentaje redondeado que se ve, así que sale amarillo (D22).
+
+**Fotos de la pantalla** (Edge sin ventana, con los datos reales): pestaña Mailing a 1400 px,
+ventana de detalle de la #75 y vista de teléfono a 390 px. Todo cabe en el ancho; solo la tabla se
+desplaza hacia los lados dentro de su recuadro.
+
+**Cambio de diseño pedido antes del commit (16/11/2026):** usar el estilo visual del dashboard viejo
+"Campañas de correo", sin copiarlo completo y sin modificarlo.
+- **Pantalla:**
+  - la pestaña Mailing se reordenó en 10 secciones (D25);
+  - 4 anillos con rangos de referencia B2B (D26);
+  - la tabla de campañas pasó a ser el "Ranking de campañas";
+  - nuevas: "Aperturas por cargo" y "Comparar campañas";
+  - leads y territorio quedan como pendientes;
+  - en "Salud del envío", Bajas · Quejas va aparte ("De los entregados · no se suman"), con % sobre entregados.
+- **Servidor:**
+  - `pctEntrega` y `pctCtor` (D28);
+  - `cargo` y `porCargo` (D27);
+  - explicaciones de entrega, CTOR y cargo.
+- **No va:** Lead Scoring, Embudo comercial, Pipeline ni nada por empresa (D24).
+- `public/dashboards/marketing/mailing-campanas.html` **no se modificó**, y "Campañas de correo" sigue en el menú.
+- **Ajustes vistos en las fotos:** los números de las tablas ya no se parten en dos líneas, y el
+  nombre de la campaña en el ranking tiene un ancho mínimo en teléfono.
+
+**Cambio solo visual, siguiendo el mockup aprobado (17/11/2026):**
+- **Pantalla:**
+  - una sola vista, sin pestañas, con el formato del dashboard original "Campañas de correo" (D31);
+  - nuevos: barra de filtros estándar, transparencia de datos, filtro de campañas, salud con 6 tarjetas,
+    mejor campaña / cargo / país y peor entrega, gráficas del mockup, embudo y ranking con muestra;
+  - se quitó "Comparar campañas";
+  - un solo filtro de cargo (D32).
+- **Servidor (aprobado antes de programar):**
+  - filtro `?campanas=` (D29), en `calculos.js`, `marketingMailing.js`, `api/marketing/mailing.js` y `server.ts`;
+  - `destacados` (D30);
+  - **ningún número existente cambió**.
+- **Archivos:**
+  - nuevos: `Filtros.jsx` y `Graficas.jsx`;
+  - se borró `EvolucionMensual.jsx`;
+  - `PortalLayout.tsx` no se tocó: el menú sigue diciendo "Marketing por canales".
+- **Ajustes vistos al comparar con el mockup:**
+  - aperturas por cargo, de mayor a menor;
+  - eje de evolución con números redondos (0 · 300 · 600 · 900);
+  - el ranking muestra las 14 columnas en pantalla ancha (nombre en dos líneas, cargo corto).
+- **Pruebas:** 60 revisiones de pantalla y servidor con los datos reales. Incluyen:
+  - números aprobados idénticos;
+  - el filtro: suma de campañas, "las 3 = sin filtro", id inexistente, filtro mal escrito → 400;
+  - los destacados, con casos inventados (pocos entregados, país conocido);
+  - muestra;
+  - período, cargo y chips;
+  - el orden de la vista igual al mockup;
+  - que no haya pestañas, Comparar, Redes, Otros, Lead Scoring ni Embudo comercial;
+  - un solo filtro de cargo;
+  - anillos, salud, destacados, gráficas, embudo y ranking;
+  - Total en Brevo;
+  - la vista filtrada;
+  - sin campañas;
+  - la ventana de detalle.
+
+  Las pruebas anteriores del servidor también siguen en 0 fallas.
+
+**Pruebas anteriores (0 fallas):**
+- **Pantalla, con los datos reales: 71 revisiones**, después del cambio de diseño. Además de lo de
+  abajo, revisan:
+  - el orden de las 10 secciones;
+  - que no haya Lead Scoring, Embudo comercial, Pipeline ni empresa;
+  - los anillos: valores, "X de Y", colores (entrega roja, apertura azul, CTR y CTOR amarillos) y rangos visibles;
+  - los límites exactos sin huecos de los 4 rangos;
+  - el CTOR del servidor (3.6 / 8.1 / 8.9 / 7.5 %) y "pocos datos" con menos de 5 aperturas;
+  - la entrega: 84.2 %;
+  - el cargo (incluido "FINACIERO"; "SUBGERENTE GENERAL" → Sin cargo);
+  - salud del envío: 718 + 53 + 82 = 853, con bajas y quejas aparte sobre entregados;
+  - el orden del ranking (mejores, peores, por rebote; pocos datos al final);
+  - comparar (3 al abrir, con 4 métricas cada una);
+  - las barras por cargo.
+- Primera versión de la pantalla: 39 revisiones.
+  - **Fecha** = Send_Date leída directo de los CSV. La #75 dice 11/11/2026 aunque su nombre diga
+    "NOVIEMBRE 9", y no hay corrimiento por zona horaria.
+  - **Cifras** iguales a las tablas aprobadas del Paso A:
+    - Total en Brevo: 854/719/82/53/147/12/10;
+    - Sin internos: 853/718/146/11.
+  - **Semáforo:**
+    - rebote permanente: #75 y #76 en rojo, #74 en verde, total 6.2 % en rojo;
+    - rebote temporal: #76 (10.5 %) y #75 ("10.0 %") en amarillo, total 9.6 % en verde;
+    - los límites exactos de cada umbral;
+    - "pocos datos" sin color.
+  - **Textos de la pantalla:**
+    - sin "@" y sin "como Brevo";
+    - asunto pendiente en las 3 campañas;
+    - metas pendientes;
+    - nota "Incluye 4 personas…";
+    - nota de antivirus;
+    - aviso "El 82 % … Desconocido";
+    - exclusiones;
+    - aviso de un solo mes.
+  - **Ventana de detalle:**
+    - fecha y hora (11/11/2026 15:37);
+    - las dos columnas;
+    - la nota de apertura de la #75 (3);
+    - el correo interno de la #76.
+  - **Casos especiales:** sin fuente (aviso y "Reintentar") y "pocos datos".
+- `npm run lint` y `npm run build`: sin errores.
+- Pruebas del servidor (Paso A, casos inventados, Drive simulado), repetidas: 0 fallas.
+
+---
+
+## Redes sociales · revisión (solo lectura) — 16/11/2026 ⏸️ se deja fuera por ahora
+
+Decisión de Keily: Redes sociales **no** se construye todavía. La pestaña queda como "Pendiente de
+fuente de datos", igual que "Otros". No se creó `/api/marketing/redes`.
+
+**Lo que se encontró (para retomarlo):**
+- **Fuente:** el Excel de Gaby en SharePoint, servido por el servicio de Render
+  `https://dashboard-marketing-ks6o.onrender.com/api/rrss/excel`. Es un servicio aparte en
+  Python (repo InnovAIgt/dashboard-marketing), en el plan gratis de Render.
+  - Si no se usa, se apaga: la primera llamada tardó **32.5 s** y las siguientes, ~1 s.
+- **Devuelve el Excel completo** (`.xlsx`), no una lista de datos. Hay que leerlo en nuestro servidor.
+- **No pide llave:** es público, sin token ni contraseña.
+- **Hoy no funciona:** responde **HTTP 502** con *"SharePoint respondió con estado 404. Es posible
+  que el enlace público haya cambiado o haya expirado."* Se probó dos veces, con el servicio despierto.
+  El servicio está bien; el **enlace público al Excel está roto**.
+- **Librería:** `xlsx` **0.18.5** ya está en `dependencies` del proyecto (no hay que instalar nada).
+- **Lógica existente para reutilizar** (sin modificar el archivo): `public/dashboards/marketing/flujo-ventas.html`,
+  funciones `RRSS_GABY_HEADERS`, `rrssContextoHoja`, `rrssNormalizarFilaGaby`, `rrssConvertirLibroGaby`
+  y `rrssNumero`.
+  - Descarta las filas sin fecha ni red social.
+  - Para Datared, el país es siempre El Salvador.
+- **Hojas esperadas:**
+  - "DATA RED": Datared, El Salvador;
+  - "…GT": RED Intelfon, Guatemala;
+  - "…SV": RED Intelfon, El Salvador.
+- **21 columnas esperadas:**
+  - U1 (fecha), id, Red social, Campaña, Link publicación, Presupuesto pauta;
+  - Alcance, visualizaciones, Clics, Costo x clic, Interacciones, Comentarios, Compartidos;
+  - Mensajes/Leads, Lead calificado, Costo x Lead;
+  - Cierres exitoso (No. clientes), Costo x Cliente, No. de unidades, Costo X Unidad, post_id_meta.
+- **Vercel:** para esperar a que Render despierte (60 s o más), la función necesita
+  `maxDuration: 60` dentro de `api/marketing/redes.js`, sin tocar `vercel.json`. En el plan gratis
+  de Vercel, 60 s es el máximo; en local y Docker no hay límite.
+- **Diseño propuesto** (cuando se retome):
+  - las mismas 3 piezas: fuente Render → lector del libro de Gaby → cálculos;
+  - caché de 15 min y `?actualizar=1`;
+  - espera de 75 s, con el mensaje "Despertando el servidor de redes sociales, puede tardar hasta
+    un minuto" en vez de error;
+  - un mensaje distinto si el enlace de SharePoint está roto;
+  - variable `MARKETING_RRSS_URL`, solo servidor.
+
+**Pendientes de Redes:**
+- Conseguir una copia del Excel de Gaby y un **enlace nuevo** de SharePoint.
+- Confirmar con Gaby:
+  - la moneda del presupuesto por país;
+  - qué cuenta como publicación "programada";
+  - la columna de motivo;
+  - si la meta de 14 publicaciones al mes es total o por marca.
+- El servicio de Render es **público y sin llave**: avisar a Eduardo.
+- Evaluar pasar el servicio de Render al centralizado.
+
+---
+
+## Textos simples y PDF más corto — 17/11/2026 🔄 (esperando aprobación para commit)
+
+**Qué cambió (solo textos; los números, cálculos y nombres de columnas no cambian):**
+- "¿Cómo se calcula?" ya no muestra nombres técnicos de columnas de Brevo. Ejemplo: "Personas con fecha de
+  apertura (Open_Date)" ahora dice "Personas que abrieron el correo (Brevo registró cuándo lo abrieron)".
+- "(Send_Date)" ahora dice "(fecha de envío de Brevo)" y "(Apple MPP)" ahora dice "(iPhone)". Cambia en la pantalla,
+  en la ventana de detalle, en la lista por persona y en el PDF.
+- Los avisos de filas descartadas o de fechas ilegibles también usan palabras simples ("Fila sin número de
+  campaña", "Fecha ilegible en la fecha de rebote temporal"…).
+- **PDF:** "Transparencia de datos" queda en **1 página** (D36):
+  - fuente y última lectura;
+  - cantidad de archivos usados e ignorados;
+  - solo los ignorados con su nombre y motivo;
+  - correos analizados, correos internos y campañas de prueba como totales.
+  - El detalle completo sigue en la pantalla. El PDF pasó de 9 a 8 páginas.
+
+**Pruebas:**
+- Pantalla y PDF: 95 OK.
+- Detalle por persona: cuadra en las 3 campañas.
+- Fase 1 y control: OK.
+- Ningún nombre técnico visible en la pantalla, el detalle, el panel, el PDF ni las definiciones.
+- Los números siguen en 853 (sin internos) y 854 (Total en Brevo).
+
+**Única excepción:** si un archivo **no** es un reporte de Brevo, el motivo de "ignorado" nombra las columnas que
+le faltan. Así Marketing sabe qué corregir.
+
+---
+
+## Marco estándar del portal (modelo: Activaciones) — 17/11/2026 ✅ commit `77cbf59`
+
+**Revisión previa (solo lectura):**
+- Activaciones está en `public/dashboards/activaciones/activaciones.html` y `public/assets/css/activaciones.css`.
+- Los elementos compartidos son:
+  - `estandar.css` / `estandar.js` (pastilla, carga y animaciones; 14 dashboards HTML);
+  - `dashboard-pdf.*` (ventana de PDF; Activaciones, Facturación por línea y Flujo de ventas v2).
+- Encabezado, barra, panel de filtros y franja están **copiados** en cada dashboard.
+
+**Decisiones de Keily:**
+- Cifras y Período al instante; Cargo y Campañas en el panel, con "Aplicar".
+- Las campañas pasan al panel y se quita la tarjeta de chips.
+- Botón actualizar redondo dentro de la barra.
+- PDF con 4 módulos; las gráficas como tablas con barras. "¿Cómo se calcula?" incluye la transparencia de datos.
+- Los chips del PDF muestran los filtros activos.
+- Una sola vista.
+
+**Qué se hizo (D35):**
+- **Pantalla:**
+  - `Filtros.jsx`: barra estándar, panel tipo Excel y franja "Filtro activo";
+  - `Mailing.jsx`: encabezado con pastilla, mensajes estándar y "¿Cómo se calcula?" con textos compartidos;
+  - `MarketingCanales.jsx`: hora de la última lectura, círculo de carga y conexión del PDF;
+  - nuevo `pdf.js`: el reporte;
+  - `datos.js`: filtros con lista de cargos, textos de filtros y explicaciones compartidas;
+  - estilos `.mkt-` copiados del estándar.
+- **No cambiaron:** datos, cálculos, números, gráficas, servidor, el detalle por persona, `activaciones.*`,
+  `estandar.*` ni `dashboard-pdf.*`.
+
+**Pruebas (0 fallas):**
+- **Pantalla y PDF con los datos reales: 92 revisiones.** Las pruebas leen solo la carpeta local, sin cargar
+  `.env.local`. Cubren:
+  - números idénticos: 853 / 854, 718 / 719, 146 / 147 y 11 / 12;
+  - el marco: tarjeta FILTROS, Cifras, Período con restablecer, botón Filtros con contador, PDF, botón
+    actualizar redondo, pastilla "Actualizado", sin botón rojo y sin tarjeta de chips;
+  - el panel tipo Excel (Cargo 2/3 · Campañas 1/2, buscador, "todo", Limpiar todo y Aplicar);
+  - la franja "Filtro activo" (período, cargo, campañas);
+  - el mensaje "sin campañas";
+  - el PDF:
+    - sus 4 módulos, ninguno es la lista por persona;
+    - la estructura que espera la herramienta;
+    - los mismos números que la pantalla;
+    - la transparencia de datos;
+    - los chips con los filtros activos;
+    - sin correos ni "@";
+    - el candado si algo trae forma de correo;
+    - no exporta mientras se actualiza ni sin campañas.
+- Pruebas anteriores (Paso A, Drive simulado, casos inventados, detalle por persona): 0 fallas.
+- `npm run lint` y `npm run build`: sin errores.
+- **PDF de ejemplo generado con la herramienta compartida real** (Edge sin ventana): 9 páginas, solo totales.
+  No se guardó en el repositorio.
+- Capturas lado a lado con Activaciones (ancha y teléfono) y del panel abierto.
+
+---
+
+## Detalle por persona ("Quién abrió y quién hizo clic") — 17/11/2026 ✅ commit `75b543b`
+
+**Decisiones de Keily:**
+- protección con clave en el servidor (`MARKETING_DETALLE_CLAVE`, mínimo 24 caracteres);
+- el orden del resultado, con la marca "había hecho clic / había abierto";
+- "Sin estado" en gris;
+- enlaces solo como texto;
+- "Interno" solo en Total en Brevo;
+- el portal se publica solo en Vercel.
+
+**Qué se hizo (D34):**
+- `server/marketingCanales/brevoCsv.js`: la fila estándar suma las fechas de apertura, baja y queja, y
+  los enlaces con su fecha. Los cálculos no los usan.
+- `server/marketingCanales/detallePersonas.js` (nuevo): la lista por persona, con la misma regla de
+  estado final, y el cuadre contra `calcularMailing`.
+- `server/marketingMailingDetalle.js` (nuevo): la clave, el freno de intentos y las respuestas.
+- `api/marketing/mailing-detalle.js` (nuevo, Vercel) y la ruta en `server.ts`.
+- `server/marketingMailing.js`: exporta `elegirFuente` para reutilizarla. No cambia cómo funciona.
+- `.env.example`: `MARKETING_DETALLE_CLAVE=`, vacía.
+- Pantalla:
+  - `pantalla/DetallePersonas.jsx` (nuevo);
+  - `DetalleCampana.jsx` (agrega la sección y recibe la vista);
+  - `Mailing.jsx` (le pasa la vista);
+  - `servicios/api.js` (`pedirDetallePersonas`);
+  - estilos `.mkt-`.
+- **No cambió** ningún número ni cálculo existente; la ruta principal sigue sin correos.
+
+**Cambio de rama a mitad del paso:** Keily trabajó en la rama `leads`. Lo pendiente quedó en el stash
+"cambios antes de leads". Para volver:
+1. El `package-lock.json` suelto de `leads` se guardó en el stash **"pendiente leads"**, que se conserva
+   para cuando Keily vuelva a esa rama.
+2. Se recuperaron solo los 12 archivos del paso 3, sin tocar `.claude/` ni `.vscode/`.
+3. Se verificó que el contenido era idéntico.
+4. Las pruebas dieron 853 / 854.
+5. Se borró el stash "cambios antes de leads".
+
+**Pruebas (0 fallas):**
+- **Fuente:** las pruebas ya no cargan `.env.local` (ahora tiene las variables de Drive). Solo reciben la
+  ruta de la carpeta local de CSV. Ninguna prueba usó el Drive real.
+- **Script del paso 3: 52 revisiones en total.** Incluyen los casos y la protección, con correos y clave
+  inventados, las 6 del cuadre real y las 4 de la ventana.
+  - Resultado y marca de cada persona, país, enlaces cortos y fecha del evento final.
+  - Cuadre en las dos vistas, "Interno" y campaña de prueba.
+  - Protección:
+    - sin clave → 503;
+    - clave corta → 503, sin mostrarla;
+    - clave incorrecta → 401 con espera de 1 s;
+    - el 6.º intento → 429;
+    - otra conexión no se bloquea;
+    - a los 15 minutos vuelve a funcionar;
+    - 404, 409, 400 y 405;
+    - la clave nunca aparece en una respuesta.
+  - La función de Vercel responde igual (200, `no-store`, 401).
+  - La ruta principal sigue sin correos.
+  - La ventana pide la clave al abrir, no tiene descarga y los enlaces son solo texto.
+- **Cuadre con los CSV reales (carpeta local, solo conteos):** cuadra en #74, #75 y #76, en las dos vistas.
+  Suma 853 sin internos y 854 en Total en Brevo.
+- Las pruebas anteriores (pantalla, Paso A, Drive simulado, casos inventados) también dan 0 fallas.
+- `npm run lint` y `npm run build`: sin errores.
+- Captura con datos inventados. El ajuste visto en ella: la columna Correo tiene ahora un ancho mínimo.
+
+**Pendientes nuevos:**
+- **El portal no tiene inicio de sesión en el servidor.** La clave protege solo la lista por persona.
+- **El freno de intentos en Vercel no es exacto**, porque cada copia de la función lleva su propia
+  cuenta. Por eso la clave debe tener al menos 24 caracteres. Un freno exacto necesitaría una base
+  compartida (por ejemplo Vercel KV).
+- Configurar `MARKETING_DETALLE_CLAVE` en `.env.local` y en Vercel. Lo hace Keily.
+
+---
+
+## Solo datos reales · quitar tarjetas sin datos — 17/11/2026 ✅ commit `9ff0157`
+
+**Antes:**
+- La Fase 3 se guardó en el commit `df1a20c`, con la lista de archivos que aprobó Keily.
+- Se verificó que no entraran `.env`, `.claude/`, `.vscode/`, `.kiro/`, CSV, llaves ni correos.
+
+**Qué se hizo (D33):**
+- `pantalla/Mailing.jsx`: el Resumen queda solo con "Campañas del mes" (cuántas y cuáles, con fecha de
+  envío). Se quitaron "Campañas del mes vs meta", "Leads generados" y "Leads calificados", y en la nota
+  de los anillos se quitó "(meta pendiente)".
+- `pantalla/datos.js`, `pantalla/comunes.jsx` y `marketing-canales.css`: se quitaron las partes que ya
+  no se usaban (`METAS`, la etiqueta "Meta pendiente" y su estilo).
+- REQUISITOS: sección nueva "Pendiente por falta de datos" (P1 a P5).
+- **No cambió:** el servidor ni ningún número.
+
+**Pruebas:** 63 revisiones de pantalla y servidor con los datos reales, 0 fallas.
+- Todos los números aprobados siguen idénticos.
+- El Resumen muestra solo "Campañas del mes": 3 (y 2 con filtro).
+- Ya no aparecen "meta pendiente", "Leads generados/calificados" ni "/ —".
+- Pruebas del servidor anteriores: 0 fallas.
+- `npm run lint` y `npm run build`: sin errores.
+
+---
+
+## Pendientes de seguridad (fuera de este módulo; NO se cambiaron)
+
+Solo se anota **dónde** están. Los valores no se copian aquí.
+- `server.ts`: las rutas `/api/make/upload` y `/api/history` tienen **direcciones de webhooks de
+  Make.com escritas en el código**, como respaldo si falta la variable de entorno.
+- `.env.example`: tiene **valores reales** en varias variables:
+  - llaves `VITE_…` (que además quedan visibles en el navegador);
+  - SAP (`SAP_API_KEY`, `VITE_SAP_API_KEY`);
+  - Workflow (`WORKFLOW_API_KEY`, `VITE_WORKFLOW_API_KEY`).
+
+  Ese archivo sí se sube al repositorio. Debería tener solo los nombres, vacíos.
+- Sugerencia para quien administre esos módulos:
+  - mover los valores a `.env.local`, Vercel y Coolify;
+  - cambiar (rotar) las llaves que ya estuvieron en el repositorio.
+
+---
+
+## Pendientes
+
+- **Pedir a Prospekt IA que guarde el correo del lead para el cruce de la Fase 4.**
+- Crear la cuenta de servicio y la carpeta de Drive (Keily, con la cuenta de MARKETING de RED) y hacer la prueba real de la Fase 2.
+- **Catálogo de campañas.** El CSV de Brevo no trae el ASUNTO del correo. Propuesta: un CSV
+  "catálogo" en la misma carpeta de Drive, que llene Marketing, con las columnas
+  Campaign ID, asunto, cargo, territorio/vendedor y marca. Asuntos conocidos:
+  - #75: "Reduce tu tiempo muerto";
+  - #76: "Producción a ciegas todavía".
+- **Pestaña "Resumen"** (todos los canales juntos): no se hace hasta tener Redes sociales, porque sin
+  Redes no hay datos de leads.
+- **Redes sociales:** ver la sección "Redes sociales · revisión" arriba.
+- **Lista de "correos a corregir"** para Marketing (rebotes permanentes y dominios inválidos).
+  Evaluar cómo entregarla. **No mostrar correos de personas en el navegador sin la aprobación de Keily.**
+- Retirar "Campañas de correo" (`mailing-campanas.html`) en otro PR (D13).
+
+### Para la Fase 3 (pantalla) — anotado el 16/11/2026, no cambiar antes
+
+- `totalAperturasBrevo` y `totalClicsBrevo` **no coinciden** con la pantalla de Brevo. Ejemplo:
+  en la #75, Brevo muestra 94 aperturas y 17 clics, pero el CSV da 109 y 6. En la pantalla:
+  - **no** decir "como Brevo";
+  - usar "Aperturas totales (incluye repetidas y automáticas)" y "Clics en enlaces distintos";
+  - agregar una nota de que la pantalla de Brevo usa otra fórmula.
+- El **82 % de los envíos tiene país "Desconocido"**. Mostrar ese aviso y **no** destacar
+  comparaciones por país.
+
+---
+
+## Cambios solicitados
+
+| Fecha | Pedido | Dónde quedó |
+|---|---|---|
+| 16/11/2026 | "Campañas de correo" no usa la API de Brevo: se alimenta con archivos y localStorage. No usar `VITE_BREVO_API_KEY`. | D13 |
+| 16/11/2026 | Verificar los patrones de prueba con nombres reales. | D6 |
+| 16/11/2026 | Anotar como pendiente pedir el correo del lead a Prospekt IA. | Pendientes |
+| 16/11/2026 | `infored.com.sv` es externo: se deja así. | D7 |
+| 16/11/2026 | En pantalla no decir "como Brevo" (las cifras no coinciden con la pantalla de Brevo); avisar del 82 % de país "Desconocido". | Para la Fase 3 |
+| 16/11/2026 | Reglas de Drive: cuenta de empresa, Marketing Editor / cuenta de servicio Lector, nunca borrar CSV viejos. | D20 · CONFIGURAR_DRIVE.md |
+| 16/11/2026 | Entregado o rebote: gana el último evento. Contador "entregados y luego rebotados". Nota visible en "% de apertura" con el número calculado. | D21 · Paso A |
+| 16/11/2026 | Pendientes: catálogo de campañas (asunto, cargo, territorio, marca) y lista de "correos a corregir". | Pendientes |
+| 17/11/2026 | Textos simples en "¿Cómo se calcula?" (sin nombres técnicos); "(fecha de envío de Brevo)" e "(iPhone)"; Transparencia del PDF en 1 página. | D36 · Textos simples |
+| 17/11/2026 | Pasos B–F para Mailing: campañas repetidas, país/orden, listas, recomendaciones, informe y cierre. | D37–D42 |
+| 17/11/2026 | Reglas de recomendación ajustadas a los motivos reales; capturas y PDF de ejemplo; 2 commits. | D43 |
+| 17/11/2026 | Mailing con el formato del Flujo de ventas: barra en una fila, actualizar en el encabezado, módulos Resumen e Informe detallado. | D44 |
+
+---
+
+## Pasos B–F · Mailing — 17/11/2026 🔄 (validación real pendiente; sin commits)
+
+**Implementado:**
+- **B:** selección de campaña duplicada por último evento; empate por más filas, fecha de Drive y
+  nombre. Se muestra el número de copias ignoradas y su desglose en Transparencia; el PDF conserva
+  una página y solo agregados. Pruebas sintéticas A–E.
+- **C:** Salud del envío antes de Métricas de interacción; explicaciones solo en (i); filtro País
+  Todos / GT / SV / Sin país propagado a agregados, gráficas, ranking, listas, informe y PDF.
+- **D:** tarjetas abren listas filtradas; los motivos y recomendaciones fijas se entregan solo en la
+  ruta de detalle. No se modifica Brevo ni hay descarga desde la ventana de lista.
+- **E:** informe al final, buscador, totales y exportación Excel con filtros activos. Sin IPs y fuera
+  del PDF.
+- **F:** README y decisiones actualizados; Paso A marcado con su commit existente.
+- **D42:** se retiró la clave adicional solicitada. El endpoint de detalle queda sin autenticación
+  adicional y sin caché; el PDF sigue sin datos personales.
+
+**Pruebas disponibles ya ejecutadas:**
+- `node --test server\marketingCanales\combinarArchivos.test.js server\marketingCanales\brevoCsv.test.js server\marketingCanales\detallePersonas.test.js server\marketingMailingDetalle.test.js`: 12/12.
+- `npm.cmd run lint`: correcto.
+- `npm.cmd run build`: correcto; Vite muestra advertencias conocidas sobre `__dirname` y tamaño del bundle.
+- `git diff --check`: correcto (avisos LF/CRLF de Windows).
+
+**Validación local:** Keily indicó una carpeta local autorizada. Su lectura directa y la interfaz
+validada con fuente `carpeta-local` leyeron 3 CSV: 853 enviados sin internos / 854 en Total en Brevo,
+718 / 719 entregados, 53 rebotes permanentes y 82 temporales. Los conteos de motivos se agrupan sin
+incluir correos.
+
+**Incidente de fuente:** una primera petición seleccionó Google Drive por la configuración automática.
+Se detuvo el servidor al detectarlo; la respuesta contenía solo agregados. No se harán más consultas a
+Drive.
+
+**Capturas y PDF (17/11/2026):** hechos desde el portal con Google Drive (autorizado por Keily; mismos
+números: 853 / 718 / 53 / 82). Las listas se capturaron con correos inventados; el PDF (6 páginas) solo
+tiene totales. No se guardan en el repositorio.
+
+**Pendientes de producto:** leads, metas, programadas, territorio, Redes, Otros y seguridad
+(`.env.example`, portal sin inicio de sesión).
+
+**Reglas de recomendación (D43):** ajustadas con los motivos reales; la tabla se revisó solo en el chat.
+
+**Commits:** 2 en vez de 5, para que la pantalla no quede rota en los intermedios: Paso B solo, y
+C–F juntos. Sin push.

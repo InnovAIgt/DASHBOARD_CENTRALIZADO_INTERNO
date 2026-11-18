@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import { CalendarClock, CheckCircle2, Eye, MessageSquareText, Search, TrendingUp, UserRound, X } from 'lucide-react'
 import { formatNumber, formatPercent, isOpen, isWon, leadComments, leadUnits, monthLabel, PIPELINE_STAGES } from '../utils/analytics.js'
 import { formatDate, toDate } from '../utils/dates.js'
-import { leadDisplayId } from '../utils/leads.js'
+import { leadDisplayId, lossReasonLabel } from '../utils/leads.js'
 import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, MiniEtapas, PaisChip } from './comunes.jsx'
 import {
   datosAsesor, datosLead, datosMes, descripcionFiltro, ejecutivosEnEtapa, embudoEtapas, esVencido, estaHoy, ETAPAS, fechaReferencia,
@@ -380,7 +380,7 @@ export function DetalleLead({ lead, onClose }) {
         {comments.length
           ? comments.map((comment, index) => <div className="fv2-comentario-caja" key={`${index}-${comment}`}><strong>{index === 0 && lead.comentarioGestion === comment ? 'Última gestión' : 'Comentario'}</strong><p>{comment}</p></div>)
           : !lead.comentarioReunion && <p className="fv2-nota">No hay comentarios para este lead.</p>}
-        {lead.motivo && <div className="fv2-comentario-caja is-perdida"><strong>Motivo de pérdida</strong><p>{lead.motivo}</p></div>}
+        {lead.motivo && <div className="fv2-comentario-caja is-perdida"><strong>Motivo de pérdida</strong><p>{lossReasonLabel(lead.motivo)}</p></div>}
       </section>
     </div>
   </Ventana>

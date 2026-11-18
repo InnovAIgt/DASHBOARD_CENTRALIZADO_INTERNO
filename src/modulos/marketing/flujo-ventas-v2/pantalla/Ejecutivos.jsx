@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react'
 import { formatNumber } from '../utils/analytics.js'
 import { Bandera, Vacio } from './comunes.jsx'
 import { fichaCoaching, pctEntero } from './datos.js'
-import { DetalleAsesor } from './Ventanas.jsx'
+import { DetalleAsesor, DetalleLead } from './Ventanas.jsx'
+import { HORIZONTES_FORECAST, PerdidasEquipo, SeguimientoEjecutivo } from './SeguimientoEjecutivo.jsx'
 import { CalendarClock, Check, Eye, Phone, TrendingUp, TriangleAlert } from 'lucide-react'
 
 const TONOS = {
@@ -96,7 +97,7 @@ function Accion({ accion, onFiltro }) {
     : <div className={`fv2-coach-accion is-${accion.tono}`}>{contenido}</div>
 }
 
-function Ficha({ ficha, onDetalle, onFiltro }) {
+function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead }) {
   const estado = TONOS[ficha.estado]
   return <article className={`fv2-coach-card ${estado.clase}`}>
     <header className="fv2-coach-cabeza">
@@ -145,6 +146,8 @@ function Ficha({ ficha, onDetalle, onFiltro }) {
       </section>
     </div>
 
+    <SeguimientoEjecutivo leads={ficha.leads} horizonte={horizonte} onLead={onLead} />
+
     <footer className="fv2-coach-pie">
       <span>{formatNumber(ficha.ventas)} ganados calificados · {formatNumber(ficha.unidades)} unidades</span>
       <button type="button" className="fv2-coach-detalle" onClick={onDetalle}><Eye size={15} aria-hidden="true" /> Ver ficha completa</button>
@@ -154,22 +157,36 @@ function Ficha({ ficha, onDetalle, onFiltro }) {
 
 export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos }) {
   const [asesorSel, setAsesorSel] = useState(null)
+  const [leadSel, setLeadSel] = useState(null)
+  const [horizonte, setHorizonte] = useState(30)
   const { fichas, sinLeads, equipo } = useMemo(
     () => fichaCoaching(leads, leadsEquipo, baseEjecutivos),
     [leads, leadsEquipo, baseEjecutivos],
   )
 
-  return <section className="fv2-panel">
+  return <div className="fv2-vista"><section className="fv2-panel">
     <header className="fv2-panel-cabeza">
       <div>
         <div className="fv2-panel-titulo">Coaching por ejecutivo</div>
-        <div className="fv2-panel-sub">Qué resultados obtiene cada vendedor y dónde enfocar el seguimiento</div>
+        <div className="fv2-panel-sub">Qué resultados obtiene cada vendedor, por qué pierde sus leads y dónde enfocar el seguimiento</div>
+      </div>
+      <div className="fv2-seg-horizonte">
+        <span>Horizonte del forecast</span>
+        <div className="fv2-res-segmento" role="group" aria-label="Horizonte del forecast">
+          {HORIZONTES_FORECAST.map((d) => <button key={d} type="button" aria-pressed={horizonte === d}
+            className={horizonte === d ? 'is-activo' : ''} onClick={() => setHorizonte(d)}>{d} días</button>)}
+        </div>
       </div>
     </header>
 
+    <p className="fv2-seg-criterio">
+      <b>Forecast</b> = leads abiertos en etapa <b>Seguimiento</b>, con fecha de seguimiento dentro del horizonte y un comentario
+      con señal de cierre (papelería, intención de cierre, firma/contrato o aprobación). Misma regla que el dashboard de leads.
+    </p>
+
     {fichas.length
       ? <div className="fv2-coach-lista">
-        {fichas.map((ficha) => <Ficha key={ficha.name} ficha={ficha}
+        {fichas.map((ficha) => <Ficha key={ficha.name} ficha={ficha} horizonte={horizonte} onLead={setLeadSel}
           onDetalle={() => setAsesorSel({
             name: ficha.name, country: ficha.country,
             ranking: ficha.ranking,
@@ -190,4 +207,10 @@ export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos }) {
       equipo={{ ratio: equipo.conversion.ratio, embudo: equipo.embudo }}
       onClose={() => setAsesorSel(null)} />}
   </section>
+
+    {/* Igual que "¿Por qué se pierden los leads?" de la Vista 2 del dashboard de leads, para todo el equipo. */}
+    <PerdidasEquipo leads={leads} onLead={setLeadSel} />
+
+    {leadSel && <DetalleLead lead={leadSel} onClose={() => setLeadSel(null)} />}
+  </div>
 }
