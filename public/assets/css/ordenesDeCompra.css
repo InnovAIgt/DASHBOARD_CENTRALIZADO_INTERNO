@@ -1220,3 +1220,19 @@ html body .bodega-api-updated-row.oc-api-updated-row {
 .oc-grid > .card { margin-bottom: 0; }
 .oc-grid > .oc-provider-chart { grid-column: 1 / -1; }
 .oc-report-head { margin-bottom: 16px; }
+
+/* Controles de compras con un único período visible. */
+.oc-redesign-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.oc-redesign-filters > label { min-width: 0; }
+.oc-redesign-filters input:not([type=checkbox]), .oc-redesign-filters select { width: 100%; min-width: 0; box-sizing: border-box; }
+.oc-redesign-filters .oc-pending-toggle { text-transform: none; font-size: 12px; line-height: 1.4; }
+.oc-redesign-reset { width: 100%; align-self: center; }
+.oc-priority-summary { padding: 14px 16px; margin: 16px 0; border: 1px solid var(--std-border); border-radius: 10px; background: var(--std-card); font-size: 12px; line-height: 1.6; color: var(--std-text-2); font-style: normal; text-align: left; }
+.oc-filters.oc-filters-v2 { display: flex; flex-wrap: wrap; gap: 12px; }
+.oc-filters-v2 > .period-control { flex: 1 1 440px; min-width: 0; }
+.oc-filters-v2 .period-input { min-width: 0; flex: 1; }
+.oc-filters-v2 > .oc-search { flex: 1 1 180px; }
+.oc-filters-v2 > .xf-chips:empty { display: none; }
+.oc-redesign-head .oc-redesign-actions { display: none; }
+@media(max-width:900px) { .oc-redesign-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .oc-redesign-filters { grid-template-columns: minmax(0,1fr); } .oc-filters-v2 > .period-control { flex-basis: 100%; flex-wrap: wrap; } }
