@@ -18,8 +18,8 @@
     <!-- Google Fonts: Inter (UI) + Manrope (títulos) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="gps-dashboard.css?v=20261021tokens">
     <link rel="stylesheet" href="../../assets/css/filtros-guia.css?v=20261021tokens">
+    <script src="../../assets/js/dashboard-pdf-logo.js"></script>
     <style>
         /* ============================================================
            SISTEMA DE DISEÑO — DASHBOARD GPS INTELFON
@@ -2393,6 +2393,279 @@
                 transition: none !important;
             }
         }
+
+        /* ============== Tabs de vistas y Modal de selección PDF ============== */
+        .gps-view-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 18px;
+        }
+        .gps-pdf-overlay[hidden],
+        .gps-pdf-validation[hidden] {
+            display: none !important;
+        }
+        body.gps-pdf-modal-open {
+            overflow: hidden;
+        }
+        .gps-pdf-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 17, 23, 0.82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.18s ease;
+        }
+        .gps-pdf-overlay.is-open {
+            opacity: 1;
+        }
+        .gps-pdf-overlay.is-closing {
+            opacity: 0;
+        }
+        .gps-pdf-modal {
+            width: min(640px, 96vw);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #151821;
+            color: var(--text-main, #e8eaf0);
+            border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.24));
+            border-radius: 16px;
+            box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
+            transform: translateY(8px) scale(0.985);
+            transition: transform 0.18s ease;
+        }
+        .gps-pdf-overlay.is-open .gps-pdf-modal {
+            transform: translateY(0) scale(1);
+        }
+        .gps-pdf-modal-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+            background: rgba(21, 24, 33, 0.96);
+        }
+        .gps-pdf-heading-icon {
+            flex: 0 0 auto;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(196, 60, 80, 0.16);
+            border: 1px solid rgba(196, 60, 80, 0.38);
+            color: #d95f6e;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+        }
+        .gps-pdf-heading-copy {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .gps-pdf-eyebrow {
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #d95f6e;
+            margin-bottom: 4px;
+        }
+        .gps-pdf-modal-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main, #e8eaf0);
+            margin: 0 0 4px;
+        }
+        .gps-pdf-modal-header p {
+            font-size: 13px;
+            color: var(--text-secondary, #8b909e);
+            margin: 0;
+        }
+        .gps-pdf-close {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.18));
+            background: rgba(26, 29, 39, 0.9);
+            color: var(--text-main, #e8eaf0);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+        }
+        .gps-pdf-close:hover {
+            border-color: #d95f6e;
+            color: #d95f6e;
+        }
+        .gps-pdf-modal-body {
+            padding: 18px 22px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .gps-pdf-selection-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .gps-pdf-selection-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gps-pdf-utility-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.18));
+            background: rgba(26, 29, 39, 0.85);
+            color: var(--text-main, #e8eaf0);
+            font: 600 12px/1.2 inherit;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .gps-pdf-utility-btn:hover {
+            border-color: #d95f6e;
+            background: rgba(36, 40, 55, 0.95);
+        }
+        .gps-pdf-selection-count {
+            font-size: 12px;
+            color: var(--text-secondary, #8b909e);
+            font-weight: 600;
+        }
+        .gps-pdf-section-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        @media (max-width: 600px) {
+            .gps-pdf-section-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .gps-pdf-section-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.18));
+            background: rgba(26, 29, 39, 0.78);
+            cursor: pointer;
+            transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+        }
+        .gps-pdf-section-card:hover {
+            border-color: rgba(217, 95, 110, 0.55);
+            transform: translateY(-1px);
+        }
+        .gps-pdf-section-card.is-selected {
+            border-color: #c43c50;
+            background: rgba(196, 60, 80, 0.12);
+            box-shadow: 0 0 0 1px rgba(196, 60, 80, 0.35);
+        }
+        .gps-pdf-section-checkbox {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 18px;
+            height: 18px;
+            accent-color: #c43c50;
+            cursor: pointer;
+        }
+        .gps-pdf-section-number {
+            font-size: 11px;
+            font-weight: 800;
+            color: #d95f6e;
+            letter-spacing: 0.08em;
+        }
+        .gps-pdf-section-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-right: 22px;
+        }
+        .gps-pdf-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main, #e8eaf0);
+        }
+        .gps-pdf-section-description {
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--text-secondary, #8b909e);
+        }
+        .gps-pdf-validation {
+            margin: 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(196, 60, 80, 0.14);
+            border: 1px solid rgba(196, 60, 80, 0.35);
+            color: #f48b97;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+        .gps-pdf-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 14px 22px;
+            border-top: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+            background: rgba(21, 24, 33, 0.96);
+            font-size: 12px;
+            color: var(--text-secondary, #8b909e);
+        }
+        .gps-pdf-footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+        .gps-pdf-cancel,
+        .gps-pdf-submit {
+            padding: 9px 16px;
+            border-radius: 10px;
+            font: 600 13px/1.2 inherit;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+        .gps-pdf-cancel {
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
+            background: rgba(26, 29, 39, 0.9);
+            color: var(--text-main, #e8eaf0);
+        }
+        .gps-pdf-cancel:hover {
+            border-color: var(--border-hover, rgba(255, 255, 255, 0.38));
+        }
+        .gps-pdf-submit {
+            border: 1px solid #c43c50;
+            background: #c43c50;
+            color: #ffffff;
+            box-shadow: 0 6px 18px rgba(196, 60, 80, 0.28);
+        }
+        .gps-pdf-submit:hover {
+            background: #d95f6e;
+            border-color: #d95f6e;
+            transform: translateY(-1px);
+        }
     </style>
 <link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
 <script src="../../assets/js/estandar.js?v=20261021barras"></script>
@@ -3455,8 +3728,9 @@ function toNumber(v) {
 
 function showStatus(msg, type = '') {
     const el = document.getElementById('statusMsg');
+    if (!el) return;
     el.textContent = msg;
-    el.className = 'status-msg' + (type ? ' ' + type : '');
+    el.className = 'gps-status-message status-msg' + (type ? ' ' + type : '');
 }
 
 function normalizarEncabezadoSheets(value) {
@@ -4711,10 +4985,9 @@ function syncGPSOperationsButtons() {
 function getDefaultGPSDateRange(dates = processedData?.dates || [], now = new Date()) {
     const monthStart = toISODate(new Date(now.getFullYear(), now.getMonth(), 1));
     const today = toISODate(now);
-    const monthDates = dates.filter(date => date >= monthStart && date <= today);
     return {
         start: monthStart,
-        end: monthDates.length ? monthDates[monthDates.length - 1] : today
+        end: today
     };
 }
 
@@ -5432,12 +5705,36 @@ async function saveDashboardAsPdf(selectedSections, selectedTeam) {
         day: 'numeric', month: 'long', year: 'numeric'
     });
     let reportLogo;
-    const loadReportLogo = () => new Promise((resolve, reject) => {
+    const loadReportLogo = () => new Promise((resolve) => {
         const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error('No fue posible cargar el logo de dashboards/GPS/logo.jpg.'));
-        image.src = new URL('logo.jpg', document.baseURI).href;
-        if (image.complete && image.naturalWidth) resolve(image);
+        let finished = false;
+        const finish = (value) => {
+            if (finished) return;
+            finished = true;
+            resolve(value);
+        };
+        const fallbackToEmbedded = () => {
+            if (typeof window.DASHBOARD_PDF_LOGO_DATA_URL === 'string' && window.DASHBOARD_PDF_LOGO_DATA_URL) {
+                finish(window.DASHBOARD_PDF_LOGO_DATA_URL);
+            } else {
+                finish(null);
+            }
+        };
+        image.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.naturalWidth || image.width || 128;
+                canvas.height = image.naturalHeight || image.height || 128;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+                finish(canvas.toDataURL('image/png'));
+            } catch (e) {
+                fallbackToEmbedded();
+            }
+        };
+        image.onerror = fallbackToEmbedded;
+        image.src = new URL('../../assets/img/logo-intelfon.png', document.baseURI).href;
+        if (image.complete && image.naturalWidth) image.onload();
     });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -5491,24 +5788,30 @@ async function saveDashboardAsPdf(selectedSections, selectedTeam) {
         doc.roundedRect(margin, top, contentWidth, height, 2.5, 2.5, 'F');
         doc.setFillColor(255, 26, 67);
         doc.roundedRect(margin + 3, top + 3, 2.2, height - 6, 1.1, 1.1, 'F');
-        const logoProperties = doc.getImageProperties(reportLogo);
-        const logoSize = compact ? 14 : 19;
-        const logoScale = Math.min(logoSize / logoProperties.width, logoSize / logoProperties.height);
-        const logoWidth = logoProperties.width * logoScale;
-        const logoHeight = logoProperties.height * logoScale;
-        const logoX = margin + (compact ? 7 : 8);
-        const logoY = top + (compact ? 3 : 4);
-        doc.addImage(
-            reportLogo,
-            'JPEG',
-            logoX,
-            logoY,
-            logoWidth,
-            logoHeight,
-            undefined,
-            'FAST'
-        );
-        const textX = margin + (compact ? 25 : 32);
+        let hasLogo = false;
+        if (reportLogo) {
+            try {
+                const logoProperties = doc.getImageProperties(reportLogo);
+                const logoSize = compact ? 14 : 19;
+                const logoScale = Math.min(logoSize / logoProperties.width, logoSize / logoProperties.height);
+                const logoWidth = logoProperties.width * logoScale;
+                const logoHeight = logoProperties.height * logoScale;
+                const logoX = margin + (compact ? 7 : 8);
+                const logoY = top + (compact ? 3 : 4);
+                doc.addImage(
+                    reportLogo,
+                    'PNG',
+                    logoX,
+                    logoY,
+                    logoWidth,
+                    logoHeight,
+                    undefined,
+                    'FAST'
+                );
+                hasLogo = true;
+            } catch (e) {}
+        }
+        const textX = margin + (hasLogo ? (compact ? 25 : 32) : 9);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(compact ? 6.5 : 7.5);
         doc.setTextColor(255, 255, 255);
@@ -5546,13 +5849,13 @@ async function saveDashboardAsPdf(selectedSections, selectedTeam) {
     );
     let currentBossUser = null;
     const drawBossHeader = user => {
-        const logoProperties = reportLogo && doc.getImageProperties(reportLogo);
+        const logoProperties = reportLogo ? doc.getImageProperties(reportLogo) : null;
         if (logoProperties) {
             const logoSize = 11;
             const logoScale = Math.min(logoSize / logoProperties.width, logoSize / logoProperties.height);
             doc.addImage(
                 reportLogo,
-                'JPEG',
+                'PNG',
                 margin,
                 margin - 1,
                 logoProperties.width * logoScale,

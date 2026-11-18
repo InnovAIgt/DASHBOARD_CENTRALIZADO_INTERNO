@@ -5,6 +5,9 @@
   "functions": {
     "api/marketing/redes.js": {
       "includeFiles": "server/marketingRedes/datos/**"
+    },
+    "api/sac/*.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

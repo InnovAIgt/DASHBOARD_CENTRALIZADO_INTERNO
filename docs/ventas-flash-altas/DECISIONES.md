@@ -76,7 +76,8 @@ con equipos, valor mensual y promedio (verde = arriba del promedio general, amar
 clic afuera. Los colores del semáforo de Ejecutivo × mes se reforzaron (el estándar dejaba el número en blanco).
 
 ## D10 · 18/11/2026 · Período por defecto: mes actual
-El filtro **Período** abre siempre del **día 1 del mes actual a hoy** (fecha de la computadora), no desde la primera
+El filtro **Período** abre siempre del **día 1 del mes actual a hoy** en **hora de Guatemala** (no depende de la zona ni la hora de la
+computadora; así lo traía también `main`, commit 1cd71e9), no desde la primera
 alta. El botón ↺ del período y «Volver a filtros por defecto» regresan a ese rango; si se borra una fecha, vuelve a la
 de por defecto. Para ver meses anteriores se cambian las fechas a mano. Lo hace `periodoMesActual()` (con prueba).
 El día 1 temprano, antes de que el robot traiga datos del mes, la pantalla puede salir vacía.

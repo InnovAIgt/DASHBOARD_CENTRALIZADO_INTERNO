@@ -652,7 +652,8 @@ const AREA_GT_POR_USUARIO = {
   'aayala': 'Recursos Humanos', 'acano': 'Recursos Humanos', 'jmagana': 'Recursos Humanos',
   'lngonzalez': 'Finanzas', 'afhernandez': 'Marketing', 'memartinez': 'Bodega',
   'dcmonge': 'Auxiliar de Operaciones',
-  'ecandray': 'Comercial', 'rramirez': 'SAC'
+  'ecandray': 'Comercial', 'rramirez': 'SAC',
+  'gherrera': 'Comercial', 'oahernandez': 'Activaciones'
 };
 // Áreas que se unen: Contabilidad y Finanzas -> Finanzas; Ventas -> Comercial
 function areaFinal(a) {
@@ -719,6 +720,11 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const PAIS_OVERRIDES = { '4457': 'El Salvador', '4463': 'El Salvador' };
 var KNOWN_ESTADOS = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH'];
 function normalizeEstado(raw, aprobador) {
+  var est = normalizeEstadoBase(raw, aprobador);
+  // «Ingresada» ya no existe como estado: se cuenta como «Pendiente 1.er aprobador»
+  return est === 'Ingresada' ? 'Aval Jefe' : est;
+}
+function normalizeEstadoBase(raw, aprobador) {
   if (!raw) return 'Sin estado';
   if (KNOWN_ESTADOS.indexOf(raw) !== -1) return raw;
   var match = KNOWN_ESTADOS.find(function(e) { return raw.indexOf(e) === 0; });
@@ -856,12 +862,7 @@ async function loadFromSupabase() {
     }
   }
   try {
-var hoyGT = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/Guatemala',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date());
+var hoyGT = todayIso();
 
 ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
   return r.fechaSolicitud &&
@@ -872,10 +873,7 @@ ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
 
 applyActiveScope();
 
-PERIODO = {
-  desde: '2026-09-01',
-  hasta: hoyGT
-};
+PERIODO = defaultPeriodo();
 
 syncPeriodInputs();
     setLoadStatus(aviso, aviso ? 'error' : 'hidden');
@@ -976,7 +974,14 @@ function opDe(pais) {
 }
 function pad2(n) { return String(n).padStart(2, '0'); }
 function isoFromDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-function todayIso() { return isoFromDate(new Date()); }
+function todayIso() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guatemala',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+}
 function isoToDmy(iso) {
   if (!iso) return '';
   var p = iso.split('-');
@@ -991,8 +996,8 @@ function parseDmy(txt) {
   return isoFromDate(dt);
 }
 function defaultPeriodo() {
-  var fechas = ALL_RECORDS.map(function(r) { return r.fechaSolicitud; }).filter(Boolean).sort();
-  return { desde: fechas[0] || '2026-09-01', hasta: fechas[fechas.length - 1] || todayIso() };
+  var hoy = todayIso();
+  return { desde: hoy.slice(0, 8) + '01', hasta: hoy };
 }
 function xfLabel(key, value) {
   if (key === 'estado') return value;
@@ -1001,7 +1006,6 @@ function xfLabel(key, value) {
 }
 
 var APS_ESTADOS_FILTRO = [
-  'Ingresadas',
   'Pendientes 1.er aprobador',
   'Aprobadas 1.er aprobador',
   'Rechazadas 1.er aprobador',
@@ -1011,7 +1015,6 @@ var APS_ESTADOS_FILTRO = [
 ];
 function estadosIndicadoresAPS(r) {
   var e = r.estado, lista = [];
-  if (e === 'Ingresada') lista.push('Ingresadas');
   if (e === 'Ingresada' || e === 'Aval Jefe') lista.push('Pendientes 1.er aprobador');
   // Aprobadas 1.er aprobador = las que pasaron al segundo nivel (Aprobacion RRHH, Pendiente Segundo, Rechazo RRHH)
   if (e === 'Aprobacion RRHH' || e === 'Pendiente Segundo' || e === 'Rechazo RRHH') lista.push('Aprobadas 1.er aprobador');
@@ -1328,6 +1331,11 @@ function abrirDetalleKpi(clave) {
   if (!def) return;
   var colAprob = /^[ps]-/.test(clave) ? (clave.charAt(0) === 'p' ? 'Primer aprobador' : 'Segundo aprobador') : null;
   var rows = (def.rows || KPI_ROWS).filter(function(r) { return !def.estados || def.estados.indexOf(r.estado) >= 0; });
+  var esPrimer = def.cejilla === 'Primer aprobador';
+  function mf(r) {
+    if (esPrimer) { var g = PRIMER_GRP[grupoPrimer(r.estado)]; return { lab: g.label, col: g.color }; }
+    return { lab: etiquetaEstadoAPS(r), col: ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color };
+  }
   function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
   rows.sort(function(a, b) { return String(nom(a)).localeCompare(String(nom(b)), 'es') || String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')); });
   var empleados = {};
@@ -1339,17 +1347,17 @@ function abrirDetalleKpi(clave) {
   document.getElementById('kpixSub').textContent = rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · ' + nEmp + (nEmp === 1 ? ' empleado' : ' empleados');
   var vistos = {}, leyenda = '';
   rows.forEach(function(r) {
-    var lab = etiquetaEstadoAPS(r);
+    var m = mf(r), lab = m.lab;
     if (vistos[lab]) return;
     vistos[lab] = 1;
-    leyenda += '<span><i class="expx-dot" style="background:' + (ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color) + '"></i>' + escapeHtml(lab) + '</span>';
+    leyenda += '<span><i class="expx-dot" style="background:' + m.col + '"></i>' + escapeHtml(lab) + '</span>';
   });
   var filas = rows.map(function(r) {
-    var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
+    var u = shortUser(r.solicitante), col = mf(r).col;
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
     return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
       (colAprob ? '<td>' + escapeHtml(clave.charAt(0) === 'p' ? (r.jefeInmediato || '—') : shortUser(r.aprobador)) + '</td>' : '') +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(mf(r).lab) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
   }).join('');
   document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
     (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th>' + (colAprob ? '<th>' + colAprob + '</th>' : '') + '<th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en esta categoría.</div>') + '</div>';
@@ -1581,6 +1589,12 @@ function renderDonut(filtered) {
   if (sumIngAval > 0) {
     data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#2f8f76', estados: ['Ingresada', 'Aval Jefe'] });
   }
+  // Aprobadas por el 1.er aprobador = las que avanzaron al segundo nivel (se solapa con las filas del 2.º aprobador)
+  var estadosAprobada1 = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
+  var sumAprobada1 = estadosAprobada1.reduce(function(s, e) { return s + (counts[e] || 0); }, 0);
+  if (sumAprobada1 > 0) {
+    data.push({ name: 'Aprobada 1.er aprobador', value: sumAprobada1, color: '#4ade80', estados: estadosAprobada1, extra: true });
+  }
   var otherStatuses = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
   otherStatuses.forEach(function(s) {
     if (counts[s]) {
@@ -1598,7 +1612,7 @@ function renderDonut(filtered) {
       '<div class="apx-rank-track" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)"><div class="apx-rank-fill gx-bar-h" style="width:' + (d.value / max * 100).toFixed(1) + '%;background:linear-gradient(90deg,' + d.color + ',' + d.color + '8c);--gx-i:' + i + '" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)"></div></div>' +
       '<span class="apx-legend-count">' + d.value + '</span></div>';
   }).join('');
-  var top = data.slice().sort(function(a,b){return b.value-a.value;})[0];
+  var top = data.filter(function(d){ return !d.extra; }).sort(function(a,b){return b.value-a.value;})[0];
   document.getElementById('insightEstado').textContent = top ? top.name + ': ' + top.value : '—';
   el.innerHTML = '<div class="apx-estado"><div class="apx-estado-total"><span class="apx-donut-center-num">' + total + '</span><span class="apx-donut-center-lbl">total de solicitudes</span></div>' +
     rows + '</div>';
@@ -1626,6 +1640,31 @@ function leyendaEstadosHtml(estTot) {
   }).join('');
   return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
 }
+// Primer aprobador: solo se muestran estados del primer nivel (Pendiente / Aprobada / Rechazada 1.er aprobador)
+var PRIMER_GRP = {
+  'P1': { label: 'Pendiente 1.er aprobador', color: '#2f8f76' },
+  'A1': { label: 'Aprobada 1.er aprobador', color: '#4ade80' },
+  'R1': { label: 'Rechazada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'] },
+  'SE': { label: 'Sin estado', color: ESTADO_COLOR_GRAFICA['Sin estado'] }
+};
+function grupoPrimer(estado) {
+  if (estado === 'Ingresada' || estado === 'Aval Jefe') return 'P1';
+  if (estado === 'Pendiente Segundo' || estado === 'Aprobacion RRHH' || estado === 'Rechazo RRHH') return 'A1';
+  if (estado === 'Rechazo Jefe') return 'R1';
+  return 'SE';
+}
+function conteoPrimer(items) {
+  var o = {};
+  (items || []).forEach(function(r) { var g = grupoPrimer(r.estado); o[g] = (o[g] || 0) + 1; });
+  return o;
+}
+var PRIMER_ORDEN = ['P1', 'A1', 'R1', 'SE'];
+function leyendaPrimerHtml(tot) {
+  var guia = PRIMER_ORDEN.filter(function(g) { return tot[g]; }).map(function(g) {
+    return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + PRIMER_GRP[g].color + '"></span>' + PRIMER_GRP[g].label + '</span>';
+  }).join('');
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
+}
 function renderRanking(containerId, data, limit) {
   var el = document.getElementById(containerId);
   var rows = data.slice(0, limit || 8);
@@ -1633,23 +1672,27 @@ function renderRanking(containerId, data, limit) {
   if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
   var conEstados = rows.some(function(d){ return d.items; });
+  var primer = containerId === 'chartJefe';
   var estTot = {};
   if (conEstados) rows.forEach(function(d){
-    var c = conteoEstados(d.items || []);
+    var c = primer ? conteoPrimer(d.items) : conteoEstados(d.items || []);
     Object.keys(c).forEach(function(k){ estTot[k] = (estTot[k] || 0) + c[k]; });
   });
-  el.innerHTML = (conEstados ? leyendaEstadosHtml(estTot) : '') + '<div class="apx-ranking">' + rows.map(function(d, i){
+  el.innerHTML = (conEstados ? (primer ? leyendaPrimerHtml(estTot) : leyendaEstadosHtml(estTot)) : '') + '<div class="apx-ranking">' + rows.map(function(d, i){
     var pct = (d.count / max * 100).toFixed(1);
     var fill, nums = '';
     if (d.items) {
-      var estCount = unirPendientes1(conteoEstados(d.items));
+      var estCount = primer ? conteoPrimer(d.items) : unirPendientes1(conteoEstados(d.items));
+      var ordenE = primer ? PRIMER_ORDEN : ESTADOS_ORDEN_GRAFICA;
+      var colE = function(e) { return primer ? PRIMER_GRP[e].color : ESTADO_COLOR_GRAFICA[e]; };
+      var labE = function(e) { return primer ? PRIMER_GRP[e].label : statusMeta(e).label; };
       var accN = 0;
-      nums = '<div class="apx-rank-nums" style="position:relative;width:' + pct + '%">' + ESTADOS_ORDEN_GRAFICA.filter(function(e){ return estCount[e]; }).map(function(e) {
+      nums = '<div class="apx-rank-nums" style="position:relative;width:' + pct + '%">' + ordenE.filter(function(e){ return estCount[e]; }).map(function(e) {
         var wN = estCount[e] / d.count * 100, cN = accN + wN / 2; accN += wN;
-        return '<span style="position:absolute;left:' + cN.toFixed(2) + '%;transform:translateX(-50%);color:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)">' + estCount[e] + '</span>';
+        return '<span style="position:absolute;left:' + cN.toFixed(2) + '%;transform:translateX(-50%);color:' + colE(e) + '" title="' + escapeHtml(labE(e)) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)">' + estCount[e] + '</span>';
       }).join('') + '</div>';
-      var segs = ESTADOS_ORDEN_GRAFICA.filter(function(e){ return estCount[e]; }).map(function(e) {
-        return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
+      var segs = ordenE.filter(function(e){ return estCount[e]; }).map(function(e) {
+        return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + colE(e) + '" title="' + escapeHtml(labE(e)) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
       }).join('');
       fill = '<div class="apx-rank-fill gx-bar-h" style="display:flex;background:none;width:' + pct + '%;--gx-i:' + i + '">' + segs + '</div>';
     } else {
@@ -1679,7 +1722,7 @@ function renderTreemap(containerId, data) {
   var slices = rows.map(function(d, i) {
     var color = AREA_PALETTE_PIE[i % AREA_PALETTE_PIE.length];
     var pct = (d.count / total * 100).toFixed(1);
-    var tip = '<title>' + escapeHtml(d.name) + ': ' + d.count + ' (' + pct + '%)</title>';
+    var tip = '<title>' + escapeHtml(d.name) + ': ' + d.count + ' (' + pct + '%)' + (d.nota ? ' — ' + escapeHtml(d.nota) : '') + '</title>';
     if (d.count >= total) {
       return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '" style="stroke:var(--card-bg);stroke-width:2">' + tip + '</circle>';
     }
@@ -1694,7 +1737,7 @@ function renderTreemap(containerId, data) {
   var legend = rows.map(function(d, i) {
     var pct = (d.count / total * 100).toFixed(1);
     var color = AREA_PALETTE_PIE[i % AREA_PALETTE_PIE.length];
-    return '<div class="apx-pie-row" title="' + escapeHtml(d.name) + ': ' + d.count + '">' +
+    return '<div class="apx-pie-row" title="' + escapeHtml(d.name) + ': ' + d.count + (d.nota ? ' — ' + escapeHtml(d.nota) : '') + '">' +
       '<span class="apx-estado-name"><span class="apx-dot" style="background:' + color + '"></span>' + escapeHtml(d.name) + ' · ' + pct + '%</span>' +
       '<span class="apx-legend-count">' + d.count + '</span></div>';
   }).join('');
@@ -1754,6 +1797,8 @@ var NOMBRES_EMPLEADOS = {
   'ingonzalez': 'Lourdes Gonzales',
   'ecandry': 'Erick Candray',
   'ecandray': 'Erick Candray',
+  'gherrera': 'Gabriela Herrera',
+  'oahernandez': 'Obed Alberto Hernández',
   'dmorataya': 'David Morataya',
   'jcifuentes': 'Joel Cifuentes',
   'edlopez': 'Daniel Lopez',
@@ -2831,8 +2876,11 @@ function render() {
   // Jefe inmediato que ya existe como aprobador con otro nombre: se cuenta en esa misma fila
   var APROBADOR_DE_JEFE = { 'Eduardo Méndez': 'emendez' };
   var cuentaDeAprobador = {};
-  filtered.forEach(function(r) { if (!segundoSinAsignar(r)) cuentaDeAprobador[shortUser(r.aprobador).toLowerCase()] = r.aprobador; });
-  filtered.forEach(function(r) {
+  // Solo cuentan solicitudes que ya están en el segundo nivel: pendiente, aprobada o rechazada por el 2.º aprobador
+  var ESTADOS_SEGUNDO = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
+  var filtradoSegundo = filtered.filter(function(r) { return ESTADOS_SEGUNDO.indexOf(r.estado) !== -1; });
+  filtradoSegundo.forEach(function(r) { if (!segundoSinAsignar(r)) cuentaDeAprobador[shortUser(r.aprobador).toLowerCase()] = r.aprobador; });
+  filtradoSegundo.forEach(function(r) {
     var k = r.aprobador;
     if (segundoSinAsignar(r) && r.jefeInmediato) {
       var usuarioJefe = APROBADOR_DE_JEFE[r.jefeInmediato];
@@ -2847,8 +2895,14 @@ function render() {
   if (aprobadores.length) document.getElementById('insightAprobador').textContent = aprobadores[0].name + ' · ' + aprobadores[0].count;
 
   var areasData = uniqueCounts(filtered.filter(function(r){ return !esSinArea(r.area); }), 'area').map(function(d){return {name:d.value,count:d.count};});
-  renderTreemap('chartArea', areasData);
   if (areasData.length) document.getElementById('insightArea').textContent = areasData[0].name + ' · ' + areasData[0].count;
+  // Registros que no tienen área (jefe sin área en el mapa o «Gerencia de País»): se muestran aparte para que el total cuadre
+  var sinAreaRows = filtered.filter(function(r){ return esSinArea(r.area); });
+  if (sinAreaRows.length) {
+    areasData.push({ name: 'Sin área asignada', count: sinAreaRows.length,
+      nota: sinAreaRows.slice(0, 12).map(function(r){ return 'ID ' + r.id + ' (jefe: ' + (r.jefeInmediato || '—') + ', solicitante: ' + shortUser(r.solicitante) + ')'; }).join('; ') });
+  }
+  renderTreemap('chartArea', areasData);
 
   var jefesData = uniqueCounts(filtered.filter(function(r){return r.jefeInmediato;}), 'jefeInmediato').map(function(d){return {name:d.value,count:d.count,items:filtered.filter(function(r){ return r.jefeInmediato === d.value; })};});
   renderRanking('chartJefe', jefesData, 10);

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { pedirMailing } from './servicios/api.js'
 import { Encabezado, MODULOS, MailingSinDatos, PantallaMailing } from './pantalla/Mailing.jsx'
 import { ID_BOTON_PDF } from './pantalla/Filtros.jsx'
-import { FILTROS_VACIOS, parametroCampanas } from './pantalla/datos.js'
+import { filtrosIniciales, parametroCampanas } from './pantalla/datos.js'
 import { MODULOS_PDF, cargarHerramientaPdf, chipsFiltros, construirReporteMailing, nombreArchivoPdf } from './pantalla/pdf.js'
 import './marketing-canales.css'
 
@@ -81,7 +81,7 @@ export function MarketingCanales() {
     try { sessionStorage.setItem(CLAVE_MODULO, m) } catch { /* solo en memoria */ }
   }
   const [vista, setVista] = useState('metricas')
-  const [filtros, setFiltros] = useState(FILTROS_VACIOS)
+  const [filtros, setFiltros] = useState(filtrosIniciales)
   // La lista de campañas disponibles llega con la primera respuesta y se conserva para los filtros.
   const [disponibles, setDisponibles] = useState(null)
   const parametro = disponibles ? parametroCampanas(disponibles, filtros) : null

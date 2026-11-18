@@ -1260,8 +1260,14 @@ const FLAG_SV = '<span class="op-flag op-flag-sv" aria-hidden="true"></span>';
 const OPERACIONES = ['Guatemala', 'El Salvador'];
 
 // op: '' = Todos (incluye los correos sin país detectado). desde/hasta: aaaa-mm-dd,
-// las dos vacías = todo el histórico. aplicado[key]: null = todas, o un Set con lo elegido.
-const MF = {op:'', desde:'', hasta:'', aplicado:{cargo:null, estado:null, empresa:null}};
+// por defecto del día 1 del mes actual al día actual. aplicado[key]: null = todas, o un Set con lo elegido.
+const MF_PERIODO_DEF = (() => {
+  const hoy = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+  return { desde: hoy.slice(0, 8) + '01', hasta: hoy };
+})();
+const MF = {op:'', desde:MF_PERIODO_DEF.desde, hasta:MF_PERIODO_DEF.hasta, aplicado:{cargo:null, estado:null, empresa:null}};
 
 // Estado: cada opción es uno de los «Solo …» de antes. Si se eligen varias, pasa
 // el correo que cumpla al menos una (un correo con clic también es entregado y abierto,
@@ -1318,10 +1324,12 @@ function mfOpciones(c){
 }
 
 function hayFiltrosActivos(){
-  return !!(MF.op || MF.desde || MF.hasta || MF_COLUMNAS.some(c => MF.aplicado[c.key]));
+  const def = mfPeriodoDefecto();
+  return !!(MF.op || MF.desde !== def.desde || MF.hasta !== def.hasta || MF_COLUMNAS.some(c => MF.aplicado[c.key]));
 }
 function mfResetEstado(){
-  MF.op = ''; MF.desde = ''; MF.hasta = '';
+  const def = mfPeriodoDefecto();
+  MF.op = ''; MF.desde = def.desde; MF.hasta = def.hasta;
   MF_COLUMNAS.forEach(c => { MF.aplicado[c.key] = null; });
   mfCerrarPanel();
   mfPintarOp();
@@ -1341,7 +1349,15 @@ document.querySelectorAll('#fx-main .op-btn').forEach(b => b.addEventListener('c
 
 // ---- Período: se escribe en dd/mm/aaaa; el <input type="date"> oculto solo abre el calendario ----
 function mfPad2(n){ return String(n).padStart(2, '0'); }
-function mfHoyIso(){ const d = new Date(); return d.getFullYear() + '-' + mfPad2(d.getMonth() + 1) + '-' + mfPad2(d.getDate()); }
+function mfHoyIso(){
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+}
+function mfPeriodoDefecto(){
+  const hoy = mfHoyIso();
+  return { desde: hoy.slice(0, 8) + '01', hasta: hoy };
+}
 function mfIsoADmy(iso){ if (!iso) return ''; const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
 function mfDmyAIso(txt){
   const m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(String(txt).trim());
@@ -1358,17 +1374,14 @@ function mfPeriodoTexto(){
 }
 const mfPeriodoTxt = w => document.getElementById(w === 'desde' ? 'fDesde' : 'fHasta');
 const mfPeriodoNat = w => document.getElementById(w === 'desde' ? 'fDesdeNative' : 'fHastaNative');
-// Sin período elegido los campos muestran el rango de fechas de los envíos cargados,
-// como los demás dashboards. Solo visual: MF.desde / MF.hasta siguen vacíos (= todo el histórico).
 function mfRangoDatos(){
   const v = (CURRENT_DATA || []).map(d => String(d.fecha_envio || '').slice(0, 10)).filter(Boolean).sort();
   return v.length ? { desde: v[0], hasta: v[v.length - 1] } : { desde: '', hasta: '' };
 }
 function mfSyncPeriodo(){
-  const r = mfRangoDatos();
   ['desde', 'hasta'].forEach(w => {
     const el = mfPeriodoTxt(w);
-    if (el && el !== document.activeElement) el.value = mfIsoADmy(MF[w] || r[w]);
+    if (el && el !== document.activeElement) el.value = mfIsoADmy(MF[w] || '');
   });
 }
 let mfPeriodoMsgTimer = null;
@@ -1417,7 +1430,8 @@ document.querySelectorAll('#fx-main .period-cal').forEach(btn => btn.addEventLis
   try { nat.showPicker(); } catch (e) { mfPeriodoTxt(w).focus(); }
 }));
 document.getElementById('periodReset').addEventListener('click', () => {
-  MF.desde = ''; MF.hasta = '';
+  const def = mfPeriodoDefecto();
+  MF.desde = def.desde; MF.hasta = def.hasta;
   mfSyncPeriodo();
   render();
 });

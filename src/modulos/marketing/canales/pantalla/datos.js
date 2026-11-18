@@ -203,6 +203,25 @@ export function nivelMuestra(entregados) {
  */
 export const FILTROS_VACIOS = { pais: 'todos', desde: '', hasta: '', cargos: null, quitadas: [] }
 
+export function periodoMesActualGT() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guatemala',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const get = (t) => parts.find((p) => p.type === t)?.value || ''
+  const y = get('year')
+  const m = get('month')
+  const d = get('day')
+  if (!y || !m || !d) return { desde: '', hasta: '' }
+  return { desde: `${y}-${m}-01`, hasta: `${y}-${m}-${d}` }
+}
+
+export function filtrosIniciales() {
+  return { ...FILTROS_VACIOS, ...periodoMesActualGT() }
+}
+
 export const PAISES_FILTRO = [
   { valor: 'todos', etiqueta: 'Todos' },
   { valor: 'GT', etiqueta: 'GT' },

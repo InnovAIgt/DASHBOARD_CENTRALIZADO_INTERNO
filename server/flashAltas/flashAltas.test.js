@@ -118,13 +118,17 @@ test('ingreso promedio por unidad (valor mensual ÷ equipos, en dólares con TC 
   assert.equal(altas.filter(r => !(r.cantEquipo > 0)).length, 255)   // líneas sin equipo: no entran
 })
 
-test('período por defecto: del día 1 del mes actual a hoy (fecha local)', () => {
-  const ctx = vm.createContext({})
+test('período por defecto: del día 1 del mes actual a hoy, en hora de Guatemala (UTC−6)', () => {
+  const ctx = vm.createContext({ Intl })
   vm.runInContext(`${extraer('periodoMesActual')}
 this.f = periodoMesActual;`, ctx)
-  assert.deepEqual({ ...ctx.f(new Date(2026, 10, 18, 23, 59)) }, { desde: '2026-11-01', hasta: '2026-11-18' })
-  assert.deepEqual({ ...ctx.f(new Date(2026, 0, 1, 0, 5)) }, { desde: '2026-01-01', hasta: '2026-01-01' })
-  assert.deepEqual({ ...ctx.f(new Date(2026, 1, 28)) }, { desde: '2026-02-01', hasta: '2026-02-28' })
+  const gt = (iso) => ({ ...ctx.f(new Date(iso)) })
+  assert.deepEqual(gt('2026-11-18T18:00:00Z'), { desde: '2026-11-01', hasta: '2026-11-18' })
+  // 19/11 a las 03:00 UTC todavía es 18/11 (9 p. m.) en Guatemala
+  assert.deepEqual(gt('2026-11-19T03:00:00Z'), { desde: '2026-11-01', hasta: '2026-11-18' })
+  // 1/12 a las 05:00 UTC todavía es 30/11 en Guatemala; a las 06:00 UTC ya es 1/12
+  assert.deepEqual(gt('2026-12-01T05:00:00Z'), { desde: '2026-11-01', hasta: '2026-11-30' })
+  assert.deepEqual(gt('2026-12-01T06:00:00Z'), { desde: '2026-12-01', hasta: '2026-12-01' })
 })
 
 test('En proceso: sin renovaciones (valor completo) y contando anexos (columna cantidad)', () => {

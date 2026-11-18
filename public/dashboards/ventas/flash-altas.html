@@ -770,11 +770,12 @@ function montarTema() {
 let MESES_SEL = new Set();
 const FILTRO = { op: '', sel: { vendedor: null, tipoAlta: null, tecnologia: null } };
 const PERIODO = { desde: '', hasta: '', min: '', max: '' };
-/* Período por defecto: del día 1 del mes actual a hoy (fecha local, AAAA-MM-DD) */
-function periodoMesActual(hoy = new Date()) {
-  const d2 = n => String(n).padStart(2, '0'), am = `${hoy.getFullYear()}-${d2(hoy.getMonth() + 1)}`;
-  return { desde: `${am}-01`, hasta: `${am}-${d2(hoy.getDate())}` };
-}   // fechas AAAA-MM-DD; min/max = rango completo de los datos
+/* Período por defecto: del día 1 del mes actual a hoy, en hora de Guatemala (AAAA-MM-DD), aunque la
+   computadora tenga otra zona u hora. min/max de PERIODO = rango completo de los datos. */
+function periodoMesActual(ahora = new Date()) {
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(ahora);
+  return { desde: `${hoy.slice(0, 8)}01`, hasta: hoy };
+}
 const ICONOS_FX = {
   calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>',
   filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M7 12h10M10 19h4"/></svg>',
@@ -857,7 +858,7 @@ function montarBarra(meses) {
 
   /* ---- Volver a filtros por defecto (lo mismo que hacía "Limpiar filtros") ---- */
   /* ---- Período: fecha de alta DESDE / HASTA. Al abrir (y al restablecer) = del día 1 del mes actual a HOY,
-     con la fecha de la computadora (decisión de Keily, 18/11/2026). min/max siguen siendo el rango de los datos. ---- */
+     con la fecha de Guatemala (decisión de Keily, 18/11/2026). min/max siguen siendo el rango de los datos. ---- */
   const fechas = DATA.map(r => r.fecha).sort(), desde = $('periodoDesde'), hasta = $('periodoHasta');
   PERIODO.min = fechas[0] || ''; PERIODO.max = fechas[fechas.length - 1] || '';
   const periodoCompleto = () => { const p = periodoMesActual(); PERIODO.desde = desde.value = p.desde; PERIODO.hasta = hasta.value = p.hasta; };
