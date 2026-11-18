@@ -4,6 +4,7 @@
 import { useId, useState } from 'react'
 import { Info } from 'lucide-react'
 import { ESTADOS } from '../logica/calculos.js'
+import { entero } from '../logica/formato.js'
 
 /** Ícono ⓘ con la explicación del cálculo (al pasar el mouse, con teclado o al tocar). */
 export function Explicacion({ texto, etiqueta = 'Cómo se calcula' }) {
@@ -23,6 +24,16 @@ export function Explicacion({ texto, etiqueta = 'Cómo se calcula' }) {
 export function Estado({ estado }) {
   const e = ESTADOS[estado]
   return <span className={`rds-estado is-${e?.tono ?? 'neutro'}`}>{e?.etiqueta ?? estado}</span>
+}
+
+/**
+ * No calificados de una fila: "–" si la fila no tiene leads o calificados cargados; con ⚠ amarillo si es
+ * negativo (calificados > leads, dato a revisar). Se usa igual en ventanas, ficha e Informe.
+ */
+export function NoCalificados({ valor }) {
+  if (valor === null || valor === undefined) return <span title="La fila no tiene leads o calificados cargados">–</span>
+  if (valor < 0) return <span className="is-amarillo" title="Calificados mayor que leads: dato a revisar">⚠ {entero(valor)}</span>
+  return <>{entero(valor)}</>
 }
 
 /** Etiqueta gris "pocos datos" (menos de 5 datos). */

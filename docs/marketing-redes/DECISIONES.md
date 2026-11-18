@@ -113,3 +113,38 @@ Mismo método que el Flujo de ventas (ExcelJS 4.4.0 desde el CDN al pulsar, CSV 
 "Marketing por canales" vive en la rama `feature/marketing-mailing`, que todavía no está en `main` y también agrega
 su opción en ese mismo archivo. **Al fusionar las dos ramas habrá que juntar a mano los dos cambios de `PortalLayout.tsx`**
 (dejar las dos opciones del menú y los dos `if`).
+
+## D23 · 17/11/2026 · Filtros, pestañas y PDF estandarizados con los demás dashboards
+A pedido de Keily, el encabezado, la barra de filtros, el botón PDF y las pestañas quedan en la **misma posición y con
+el mismo diseño** que el Flujo de ventas v2 y Activaciones (estilos y componentes COPIADOS con prefijo `rds-`; no se
+modificó ningún otro módulo):
+- Encabezado: "Marketing · Redes sociales", título, subtítulo y la pastilla verde **"Actualizado"**, sin fecha (a pedido de Keily: "Datos al 17/11/2026" daba a entender que había datos de noviembre; la fecha de la copia y la de la última publicación quedan como ayuda al pasar el mouse).
+- Caja **FILTROS**: País (Todos / GT / SV) · **Período** con fechas desde–hasta (por la fecha de la publicación; sin
+  período = todo) · botón **"Filtros ▾"** con un panel de dos columnas, **Marca** y **Red**, cada una con buscador,
+  "Seleccionar todo", conteo por opción y Aplicar (permiten elegir varias) · botón **PDF** a la derecha.
+- Pestañas **Resumen** e **Informe detallado** como botones debajo de los filtros (activa en rojo, como en el portal).
+  Filtros y pestañas quedan fijos arriba al desplazarse.
+- **PDF**: herramienta compartida del portal (`/assets/js/dashboard-pdf.js`, sin modificarla) con la ventana
+  "¿Qué módulos deseas incluir?": módulos *Resumen* e *Informe detallado* (respeta filtros, vista y búsqueda; tope
+  300 filas). Plantilla copiada del Flujo de ventas. Cifras de `logica/calculos.js`.
+- **Excel** dentro del Informe detallado: botón estándar "Descargar Excel" (exporta lo que se ve).
+- En las pantallas, el rojo de la interfaz (botones activos, PDF, Excel) es el del portal; en los DATOS se mantiene la
+  regla de D20 (rojo solo para lo crítico).
+
+## D24 · 17/11/2026 · Se quita el recuadro "Datos a revisar en el Excel"
+A pedido de Keily se quitó del Informe detallado la lista general (filas de total que no cuadran, hojas desconocidas,
+columnas faltantes). Se siguen detectando (la ruta las entrega en `advertencias.generales` y están en la BITACORA para
+Marketing), pero no se muestran. Las advertencias de cada fila siguen igual: ⚠ en la tabla, vista "⚠ A revisar" y ficha.
+
+## D25 · 17/11/2026 · Período por defecto (el filtro no arranca vacío)
+Al abrir el dashboard, el Período se llena solo (calculado en `periodoPorDefecto()`, `logica/calculos.js`):
+1. Si el **mes actual** tiene publicaciones en el Excel: **desde el día 1 del mes actual hasta hoy**.
+2. Si **no** tiene (hoy, noviembre): **desde la primera hasta la última publicación del Excel** (hoy: 30/04/2026 – 18/09/2026)
+   La función también arma la nota "Noviembre aún no tiene datos · mostrando hasta la última actualización (18/09/2026)"
+   (nombre del mes actual y fecha real de la última publicación), pero **no se muestra en la barra**: Keily pidió
+   quitarla porque descuadraba los filtros (17/11/2026). Queda solo como ayuda al pasar el mouse sobre el Período.
+- Las fechas se ven escritas en los dos campos. Si el usuario las cambia, se respeta lo que eligió; el botón
+  **"Restablecer"** (aparece solo cuando el rango es distinto al de por defecto) vuelve al rango por defecto.
+- "Hoy" se calcula **en el navegador al abrir el dashboard** (no al leer el Excel, que el servidor guarda en caché).
+- Todos los números, el texto de publicaciones, el PDF y el Excel corresponden al rango elegido. Con el rango por
+  defecto de hoy salen los totales completos: 85 publicaciones, 548 leads, 169 calificados.

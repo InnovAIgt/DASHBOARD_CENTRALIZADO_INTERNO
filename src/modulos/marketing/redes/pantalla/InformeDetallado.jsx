@@ -2,20 +2,29 @@
 // Una fila por publicación y red. Buscador, botones de vista, paginación, Excel, ⚠ y ficha al hacer clic.
 // Las advertencias de datos SOLO se muestran aquí (D-H).
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, ChevronLeft, ChevronRight, Download, ExternalLink, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ExternalLink, Search } from 'lucide-react'
 import { conteoEstados, ESTADOS, filasInforme, totales } from '../logica/calculos.js'
 import { dinero, dineroCorto, entero, fechaCorta } from '../logica/formato.js'
-import { Estado, Panel, Red } from './comunes.jsx'
+import { Estado, NoCalificados, Panel, Red } from './comunes.jsx'
 import { descargarInforme } from './excel.js'
 
 const POR_PAGINA = 15
 const recortar = (texto, n = 24) => (texto && texto.length > n ? `${texto.slice(0, n - 1)}…` : texto || '(sin nombre)')
 
-export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFila, advertenciasGenerales }) {
-  const [vista, setVista] = useState('leads')
-  const [busqueda, setBusqueda] = useState('')
+/** Vistas del Informe (nombres sin conteo: los usa también el PDF). */
+export const VISTAS_INFORME = [
+  { clave: 'leads', etiqueta: 'Más leads' },
+  { clave: 'recientes', etiqueta: 'Más recientes' },
+  { clave: 'sin_metricas', etiqueta: 'Sin métricas' },
+  { clave: 'incompleta', etiqueta: 'Incompletas' },
+  { clave: 'revisar', etiqueta: '⚠ A revisar' },
+]
+
+// La vista y la búsqueda vienen de MarketingRedes: se recuerdan al cambiar de pestaña y las usa el PDF.
+export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFila, vista, setVista, busqueda, setBusqueda }) {
   const [pagina, setPagina] = useState(1)
   const [errorExcel, setErrorExcel] = useState(null)
+  const [descargando, setDescargando] = useState(false)
   const conteo = useMemo(() => conteoEstados(filas, datos.publicaciones), [filas, datos.publicaciones])
   const lista = useMemo(() => filasInforme(filas, { vista, busqueda }), [filas, vista, busqueda])
   useEffect(() => { setPagina(1) }, [vista, busqueda, filas])
@@ -35,10 +44,13 @@ export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFi
   const exportar = async () => {
     try {
       setErrorExcel(null)
-      await descargarInforme({ filas: lista, totales: totales(lista, datos.publicaciones), textoFiltros, vista: VISTAS.find((v) => v.clave === vista).etiqueta, busqueda, actualizado })
+      setDescargando(true)
+      await descargarInforme({ filas: lista, totales: totales(lista, datos.publicaciones), textoFiltros, vista: VISTAS_INFORME.find((v) => v.clave === vista).etiqueta, busqueda, actualizado })
     } catch (error) {
       console.error('[Redes sociales] No se pudo generar el Excel:', error)
       setErrorExcel('No se pudo generar el archivo Excel. Intenta de nuevo o avisa al equipo técnico.')
+    } finally {
+      setDescargando(false)
     }
   }
 
@@ -55,7 +67,9 @@ export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFi
           {VISTAS.map((v) => <button key={v.clave} type="button" aria-pressed={vista === v.clave}
             className={`${vista === v.clave ? 'is-activo' : ''} ${v.tono ? `is-${v.tono}` : ''}`} onClick={() => setVista(v.clave)}>{v.etiqueta}</button>)}
         </div>
-        <button type="button" className="rds-boton" onClick={exportar} title="Descargar en Excel lo que se ve (con los filtros y la vista elegida)"><Download size={15} aria-hidden="true" /> Excel</button>
+        <button type="button" className="rds-btn-excel" onClick={exportar} disabled={descargando || !lista.length} title="Descarga lo que se ve: filtros, vista elegida y búsqueda">
+          {descargando ? 'Preparando…' : 'Descargar Excel'}
+        </button>
       </div>}>
       {errorExcel && <p className="rds-error" role="alert">{errorExcel}</p>}
       <div className="rds-tabla-caja">
@@ -85,7 +99,7 @@ export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFi
                 <td className="num">{entero(f.interacciones)}</td>
                 <td className="num rds-fuerte">{entero(f.leads)}</td>
                 <td className="num is-azul">{entero(f.calificados)}</td>
-                <td className="num rds-tenue">{f.noCalificados !== null && f.noCalificados < 0 ? <span className="is-amarillo" title="Calificados mayor que leads: dato a revisar">⚠ {entero(f.noCalificados)}</span> : entero(f.noCalificados)}</td>
+                <td className="num rds-tenue"><NoCalificados valor={f.noCalificados} /></td>
                 <td className="num">{dinero(f.costoLead)}</td>
                 <td className="num is-verde">{entero(f.cierres)}</td>
                 <td className="num">{entero(f.unidades)}</td>
@@ -107,8 +121,7 @@ export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFi
       </footer>
     </Panel>
 
-    <div className="rds-dos">
-      <section className="rds-panel">
+    <section className="rds-panel">
         <div className="rds-eyebrow-gris">Qué significa cada estado</div>
         <ul className="rds-estados">
           {Object.entries(ESTADOS).map(([clave, e]) => <li key={clave}>
@@ -120,13 +133,5 @@ export function InformeDetallado({ datos, filas, textoFiltros, actualizado, onFi
           puede decir "Incompletas · pub. publicada". Los conteos de publicaciones y la meta usan el estado de la publicación.
           Todas cuentan para la meta de 14; los resultados vacíos cuentan como 0.</p>
       </section>
-      <section className="rds-panel">
-        <div className="rds-eyebrow-gris">Datos a revisar en el Excel</div>
-        <p className="rds-nota">Se detectan con reglas automáticas. Las de una fila tienen ⚠ en la tabla (botón "⚠ A revisar"); estas son del archivo completo:</p>
-        {advertenciasGenerales.length
-          ? <ul className="rds-generales">{advertenciasGenerales.map((a, i) => <li key={i}><AlertTriangle size={14} aria-hidden="true" /> {a.mensaje}</li>)}</ul>
-          : <p className="rds-nota">Sin advertencias del archivo completo.</p>}
-      </section>
-    </div>
   </div>
 }

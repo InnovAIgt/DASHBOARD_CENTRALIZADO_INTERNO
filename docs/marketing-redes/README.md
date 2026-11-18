@@ -11,8 +11,10 @@ Referencia visual aprobada: [`mockup/Mockup-Dashboard-Redes-sociales.pdf`](mocku
 
 ## Qué muestra
 
-**Barra superior:** pestañas *Resumen* e *Informe detallado* y, a la derecha, "Datos al dd/mm/aaaa".
-**Filtros** (afectan a las dos pestañas): Marca, País, Red (Facebook / Instagram / Sin red) y Período (desde–hasta).
+**Encabezado y filtros** (mismo diseño y posición que los demás dashboards, DECISIONES D23): pastilla "Actualizado" (al pasar el mouse: fecha de la copia y de la última publicación);
+caja FILTROS con País (Todos / GT / SV), Período (fechas desde–hasta), "Filtros ▾" (Marca y Red, varias a la vez) y botón **PDF**
+(ventana "¿Qué módulos deseas incluir?": Resumen e Informe detallado). Debajo, las pestañas *Resumen* e *Informe detallado*.
+Los filtros afectan a las dos pestañas, al PDF y al Excel.
 
 **Resumen** (sin avisos amarillos; esos viven en el Informe):
 1. 6 indicadores: Publicaciones (hechas · programadas), Leads, Calificados, Cierres (+ unidades),
@@ -26,9 +28,8 @@ Referencia visual aprobada: [`mockup/Mockup-Dashboard-Redes-sociales.pdf`](mocku
 6. Facebook vs. Instagram: alcance y leads por red y una nota calculada con los datos.
 
 **Informe detallado:** una fila por publicación y red, buscador, vistas (Más leads · Más recientes ·
-Sin métricas · Incompletas · ⚠ A revisar), paginación, botón **Excel** (exporta lo filtrado),
-ficha de la publicación al hacer clic (todos sus datos, advertencias y link real), explicación de los estados
-y la lista de "Datos a revisar en el Excel".
+Sin métricas · Incompletas · ⚠ A revisar), paginación, botón **Descargar Excel** (exporta lo filtrado),
+ficha de la publicación al hacer clic (todos sus datos, advertencias y link real) y la explicación de los estados.
 
 Todo número se puede cliquear y abre la lista de filas que lo forman. Cada cálculo se explica con ⓘ o con un subtexto.
 
@@ -61,7 +62,7 @@ en `GET /api/marketing/redes`. El resultado queda en memoria 10 minutos (caché)
    las cifras de noviembre de 2026; con un Excel nuevo esas cifras cambian y hay que actualizarlas en la prueba.
 5. Haz un PR con los dos archivos. Al publicarse, el dashboard muestra los datos nuevos.
 
-## Advertencias que detecta (solo en el Informe detallado)
+## Advertencias que detecta (solo en el Informe detallado: ⚠ por fila; las del archivo completo no se muestran, D24)
 
 | Regla | Ejemplo real |
 |---|---|
@@ -132,7 +133,7 @@ src/modulos/marketing/redes/             pantalla (MarketingRedes.jsx, pantalla/
 ## Pruebas
 
 ```
-node --test "server/marketingRedes/**/*.test.js"   # 34 pruebas: limpieza, links, ejemplo, Excel real, fuente
+node --test "server/marketingRedes/**/*.test.js"   # 36 pruebas: limpieza, links, ejemplo, Excel real, fuente
 npm run lint                                        # tsc --noEmit
 npm run build
 ```

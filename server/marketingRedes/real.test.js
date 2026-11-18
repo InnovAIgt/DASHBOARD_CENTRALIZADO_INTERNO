@@ -118,3 +118,62 @@ test('la misma cifra en Resumen, Informe detallado y Excel exportado', () => {
   assert.equal(suma(col), 548)
   assert.equal(suma(colCal), 169)
 })
+
+test('filtros estandarizados: país, marca y red (varias) y período por fecha', async () => {
+  const { filtrarFilas, FILTROS_VACIOS } = await import('../../src/modulos/marketing/redes/logica/calculos.js')
+  assert.equal(filtrarFilas(filas, FILTROS_VACIOS).length, 169)
+  assert.equal(totales(filtrarFilas(filas, { ...FILTROS_VACIOS, pais: 'SV' }), publicaciones).leads, 380)
+  assert.equal(totales(filtrarFilas(filas, { ...FILTROS_VACIOS, marca: ['gt', 'datared'] }), publicaciones).publicaciones, 48)
+  assert.equal(filtrarFilas(filas, { ...FILTROS_VACIOS, red: ['Facebook', 'Instagram'] }).length, 149)
+  const julio = filtrarFilas(filas, { ...FILTROS_VACIOS, desde: '2026-07-01', hasta: '2026-07-31' })
+  assert.equal(totales(julio, publicaciones).leads, 195)
+  // "omitir" sirve para contar las opciones del panel sin el filtro de esa misma columna
+  assert.equal(filtrarFilas(filas, { ...FILTROS_VACIOS, red: ['Instagram'] }, 'red').length, 169)
+})
+
+test('el PDF usa las mismas cifras que la pantalla', async () => {
+  const { seccionesReporte } = await import('../../src/modulos/marketing/redes/pantalla/pdf.js')
+  const { FILTROS_VACIOS } = await import('../../src/modulos/marketing/redes/logica/calculos.js')
+  const s = seccionesReporte({ datos, filas, filtros: FILTROS_VACIOS, informe: { vista: 'leads', busqueda: '', etiquetaVista: 'Más leads' } })
+  assert.equal(s.totales.leads, 548)
+  for (const texto of ['$442.50', '$2.62', '548', '(169 filas)', 'inicio · 9', '✓ cumplió', 'casi ningún lead']) assert.ok((s.resumen + s.informe).includes(texto), texto)
+})
+
+test('ventana de detalle "RED Guatemala · julio 2026": leads, calificados y NO calificados', () => {
+  const celda = metaPorMarcaMes(filas, datos).find((m) => m.clave === 'gt').celdas.find((c) => c.mes === '2026-07')
+  const t = totales(celda.filas, publicaciones) // lo mismo que muestran las tarjetas de la ventana (DetalleFilas)
+  assert.deepEqual([t.leads, t.calificados, t.noCalificados, t.cierres, t.unidades, t.pauta], [105, 21, 84, 6, 38, 50])
+})
+
+test('no calificados por fila: "–" sin calificados cargados, negativo con ⚠ (no se corrige)', () => {
+  const sinCalif = filas.filter((f) => f.leads !== null && f.calificados === null)
+  assert.ok(sinCalif.length > 0)
+  assert.ok(sinCalif.every((f) => f.noCalificados === null))
+  assert.equal(filas.find((f) => f.marcaClave === 'sv' && f.fecha === '2026-07-09' && f.red === 'Facebook').noCalificados, -6)
+})
+
+test('la columna No calificados está en el Informe (Excel/CSV) y en el PDF', async () => {
+  const { seccionesReporte } = await import('../../src/modulos/marketing/redes/pantalla/pdf.js')
+  const { FILTROS_VACIOS } = await import('../../src/modulos/marketing/redes/logica/calculos.js')
+  const encabezado = textoCsv({ filas: [] }).replace('\ufeff', '').split(';').map((c) => c.replace(/^"|"$/g, '').trim())
+  assert.ok(encabezado.indexOf('No calificados') === encabezado.indexOf('Calificados') + 1)
+  const s = seccionesReporte({ datos, filas, filtros: FILTROS_VACIOS, informe: { vista: 'leads', busqueda: '', etiquetaVista: 'Más leads' } })
+  assert.ok(s.informe.includes('<th class="c">No calif.</th>'))
+  assert.ok(s.informe.includes('⚠ -6') || s.informe.includes('⚠ −6'))
+})
+
+test('período por defecto (a): hoy 17/11/2026, noviembre sin datos → 30/04/2026–18/09/2026 con nota', async () => {
+  const { periodoPorDefecto, filtrarFilas, FILTROS_VACIOS } = await import('../../src/modulos/marketing/redes/logica/calculos.js')
+  const p = periodoPorDefecto(filas, '2026-11-17')
+  assert.deepEqual([p.desde, p.hasta], ['2026-04-30', '2026-09-18'])
+  assert.equal(p.nota, 'Noviembre aún no tiene datos · mostrando hasta la última actualización (18/09/2026)')
+  // Con el rango por defecto salen los totales completos
+  const t = totales(filtrarFilas(filas, { ...FILTROS_VACIOS, desde: p.desde, hasta: p.hasta }), publicaciones)
+  assert.deepEqual([t.publicaciones, t.leads, t.calificados], [85, 548, 169])
+})
+
+test('período por defecto (b): hoy 20/07/2026, julio con datos → 01/07/2026–20/07/2026 sin nota', async () => {
+  const { periodoPorDefecto } = await import('../../src/modulos/marketing/redes/logica/calculos.js')
+  const deJulio = prepararDatos(avisos.filas, '2026-07-20') // "hoy" simulado al abrir el dashboard
+  assert.deepEqual(periodoPorDefecto(deJulio.filas, '2026-07-20'), { desde: '2026-07-01', hasta: '2026-07-20', nota: null })
+})

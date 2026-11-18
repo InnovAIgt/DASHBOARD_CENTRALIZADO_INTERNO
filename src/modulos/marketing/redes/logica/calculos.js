@@ -116,7 +116,9 @@ export function prepararDatos(filasServidor, hoy = hoyISO()) {
   }
 
   const filas = conEstado.map((f) => {
-    const noCalificados = f.leads === null && f.calificados === null ? null : (f.leads ?? 0) - (f.calificados ?? 0)
+    // Por fila: solo se calcula si la fila tiene leads Y calificados cargados; si falta uno → null ("–").
+    // Si sale negativo (calificados > leads) se muestra con ⚠ y no se corrige.
+    const noCalificados = f.leads === null || f.calificados === null ? null : f.leads - f.calificados
     return {
       ...f,
       estado: publicaciones.get(f.publicacionId).estado,
@@ -140,18 +142,47 @@ export function prepararDatos(filasServidor, hoy = hoyISO()) {
 
 // ---------- Filtros (Marca, País, Red, Período) ----------
 
-export const FILTROS_VACIOS = { marca: null, pais: null, red: null, desde: null, hasta: null }
+/**
+ * Filtros estandarizados con los demás dashboards del portal:
+ *   pais  → null (Todos) | 'GT' | 'SV'                      (botones País)
+ *   desde / hasta → 'AAAA-MM-DD' | ''                       (Período, por fecha de la publicación)
+ *   marca → null (todas) | ['gt', 'sv', 'datared'…]          (panel "Filtros")
+ *   red   → null (todas) | ['Facebook', 'Instagram', 'Sin red'…] (panel "Filtros")
+ */
+export const FILTROS_VACIOS = { marca: null, pais: null, red: null, desde: '', hasta: '' }
 
-export function filtrarFilas(filas, filtros = FILTROS_VACIOS) {
-  return filas.filter((f) => (!filtros.marca || f.marcaClave === filtros.marca)
-    && (!filtros.pais || f.pais === filtros.pais)
-    && (!filtros.red || f.red === filtros.red)
-    && (!filtros.desde || (f.mes && f.mes >= filtros.desde))
-    && (!filtros.hasta || (f.mes && f.mes <= filtros.hasta)))
+const NOMBRES_MES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+const aDMA = (iso) => iso.split('-').reverse().join('/')
+
+/**
+ * Período por defecto (DECISIONES D25). "hoy" es la fecha de quien abre el dashboard.
+ *  1. Si el mes actual tiene publicaciones: del día 1 del mes actual hasta hoy.
+ *  2. Si no: de la primera a la última publicación del Excel, con una nota que lo explica
+ *     ("Noviembre aún no tiene datos · mostrando hasta la última actualización (18/09/2026)").
+ * @returns {{ desde: string, hasta: string, nota: string|null }}
+ */
+export function periodoPorDefecto(filas, hoy = hoyISO()) {
+  const mesActual = mesDe(hoy)
+  if (filas.some((f) => f.fecha && mesDe(f.fecha) === mesActual)) return { desde: `${mesActual}-01`, hasta: hoy, nota: null }
+  const fechas = filas.map((f) => f.fecha).filter(Boolean).sort()
+  if (!fechas.length) return { desde: '', hasta: '', nota: null }
+  const ultima = fechas[fechas.length - 1]
+  const nombreMes = NOMBRES_MES[Number(mesActual.slice(5, 7)) - 1]
+  return { desde: fechas[0], hasta: ultima, nota: `${nombreMes} aún no tiene datos · mostrando hasta la última actualización (${aDMA(ultima)})` }
+}
+
+/** @param {string} [omitir] clave del filtro que no se aplica (para contar las opciones del panel) */
+export function filtrarFilas(filas, filtros = FILTROS_VACIOS, omitir = null) {
+  const usa = (clave) => clave !== omitir && filtros[clave] !== null && filtros[clave] !== undefined && filtros[clave] !== ''
+  return filas.filter((f) => (!usa('marca') || filtros.marca.includes(f.marcaClave))
+    && (!usa('pais') || f.pais === filtros.pais)
+    && (!usa('red') || filtros.red.includes(f.red))
+    && (!usa('desde') || (f.fecha && f.fecha >= filtros.desde))
+    && (!usa('hasta') || (f.fecha && f.fecha <= filtros.hasta)))
 }
 
 /** Meses visibles: los del Excel, recortados por el período elegido. */
-export const mesesVisibles = (meses, filtros) => meses.filter((m) => (!filtros.desde || m >= filtros.desde) && (!filtros.hasta || m <= filtros.hasta))
+export const mesesVisibles = (meses, filtros) => meses.filter((m) => (!filtros.desde || m >= mesDe(filtros.desde)) && (!filtros.hasta || m <= mesDe(filtros.hasta)))
 
 // ---------- Totales de cualquier grupo de filas ----------
 

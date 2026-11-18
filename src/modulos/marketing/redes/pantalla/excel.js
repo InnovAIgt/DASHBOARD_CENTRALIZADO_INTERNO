@@ -149,7 +149,7 @@ export function armarLibro(ExcelJS, { filas, totales: t, textoFiltros, vista, bu
   ws3.columns = [{ width: 28 }, { width: 90 }]
   encabezadoHoja(ws3, 2, 'FILTROS APLICADOS', subtitulo, generado)
   filaTitulos(ws3, ['Filtro', 'Valor'])
-  filasSimples(ws3, [['Filtros', textoFiltros], ['Vista', vista], ['Búsqueda', busqueda || '(ninguna)'], ['Datos al', actualizado ?? 'sin fecha']])
+  filasSimples(ws3, [['Filtros', textoFiltros], ['Vista', vista], ['Búsqueda', busqueda || '(ninguna)'], ['Actualizado', actualizado ?? 'sin fecha']])
   return wb
 }
 

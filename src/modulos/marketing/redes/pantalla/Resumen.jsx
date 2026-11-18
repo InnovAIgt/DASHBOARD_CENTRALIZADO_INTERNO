@@ -174,11 +174,11 @@ function ResultadosMarca({ filas, publicaciones, filtros, setFiltros, abrirLista
   return <Panel titulo="Resultados por marca" subtitulo="Clic en una marca para filtrar todo el dashboard · clic en un número: su detalle">
     <div className="rds-marcas">
       {marcas.map((m) => {
-        const elegida = filtros.marca === m.clave
+        const elegida = filtros.marca?.length === 1 && filtros.marca[0] === m.clave
         return <article key={m.clave} className={`rds-marca ${elegida ? 'is-elegida' : ''}`}
-          onClick={() => setFiltros((f) => ({ ...f, marca: elegida ? null : m.clave, pais: null }))}
+          onClick={() => setFiltros((f) => ({ ...f, marca: elegida ? null : [m.clave], pais: null }))}
           role="button" tabIndex={0} title={elegida ? 'Quitar el filtro de marca' : `Filtrar todo el dashboard por ${m.nombre}`}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFiltros((f) => ({ ...f, marca: elegida ? null : m.clave, pais: null })) } }}>
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFiltros((f) => ({ ...f, marca: elegida ? null : [m.clave], pais: null })) } }}>
           <header><b>{m.nombre}</b><span><Bandera pais={m.pais} /> {m.pais}</span></header>
           <div className="rds-marca-leads"><Cifra onClick={() => abrirLista(`Leads · ${m.nombre}`, m.nombre, m.filasLista.filter((f) => (f.leads ?? 0) > 0))}>{entero(m.leads)}</Cifra> <span>{m.leads === 1 ? 'lead' : 'leads'}</span></div>
           <BarraCalificados calificados={m.calificados} leads={m.leads} />
@@ -223,7 +223,7 @@ export function Resumen({ datos, filas, filtros, setFiltros, abrirLista }) {
   const { publicaciones } = datos
   const t = useMemo(() => totales(filas, publicaciones), [filas, publicaciones])
   const meses = useMemo(() => mesesVisibles(datos.meses, filtros), [datos.meses, filtros])
-  const marcas = useMemo(() => MARCAS.filter((m) => (!filtros.marca || m.clave === filtros.marca) && (!filtros.pais || m.pais === filtros.pais)), [filtros])
+  const marcas = useMemo(() => MARCAS.filter((m) => (!filtros.marca || filtros.marca.includes(m.clave)) && (!filtros.pais || m.pais === filtros.pais)), [filtros])
 
   if (!filas.length) return <div className="rds-panel"><Vacio titulo="Sin publicaciones con los filtros actuales" texto="Cambia o limpia los filtros." /></div>
   return <div className="rds-vista">

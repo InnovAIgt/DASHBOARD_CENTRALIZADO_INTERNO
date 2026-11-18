@@ -39,3 +39,13 @@
 - Al fusionar con `feature/marketing-mailing`, juntar los cambios de `PortalLayout.tsx` (D22).
 - Evaluar pasar el repositorio a privado (D4).
 - Conectar el servicio de Microsoft 365 cuando TI dé los permisos (README).
+
+## 17/11/2026 · Filtros estandarizados, PDF y Excel
+
+### Cambios solicitados
+- Quitar el recuadro "Datos a revisar en el Excel" del Informe detallado (D24).
+- Botón PDF con la ventana de módulos del portal y "Descargar Excel" en el Informe, como en Activaciones (D23).
+- Filtros estandarizados con los demás dashboards (País, Período, "Filtros ▾" con Marca y Red) y pestañas como botones en la misma posición (D23).
+
+### Resultado
+- 36 pruebas pasan (nuevas: filtros por país, marca, red y fechas; el PDF usa las mismas cifras). Lint y build OK.

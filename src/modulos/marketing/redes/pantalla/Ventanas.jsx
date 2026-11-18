@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import { AlertTriangle, ExternalLink, X } from 'lucide-react'
 import { ESTADOS, totales } from '../logica/calculos.js'
 import { dinero, dineroCorto, entero, fechaCorta } from '../logica/formato.js'
-import { Estado, Red } from './comunes.jsx'
+import { Estado, NoCalificados, Red } from './comunes.jsx'
 import { redDelLinkTexto } from './links.js'
 
 /** Escape cierra solo la ventana de arriba; mientras hay una ventana, la página no se desplaza. */
@@ -52,16 +52,17 @@ export function DetalleFilas({ titulo, subtitulo, filas, publicaciones, onFila, 
   return <Ventana etiqueta={titulo} ancho="ancho" onCerrar={onCerrar}>
     <Cabeza eyebrow="Detalle" titulo={titulo} subtitulo={subtitulo} onCerrar={onCerrar} />
     <div className="rds-ventana-cuerpo">
-      <div className="rds-datos is-5">
+      <div className="rds-datos is-6">
         <Dato etiqueta="Publicaciones" valor={`${entero(t.publicaciones)} · ${entero(t.filas)} filas`} />
         <Dato etiqueta="Leads" valor={entero(t.leads)} />
         <Dato etiqueta="Calificados" valor={entero(t.calificados)} tono="azul" />
+        <Dato etiqueta="No calificados" valor={`${t.noCalificados < 0 ? '⚠ ' : ''}${entero(t.noCalificados)}`} tono={t.noCalificados < 0 ? 'amarillo' : undefined} />
         <Dato etiqueta="Cierres · unid." valor={`${entero(t.cierres)} · ${entero(t.unidades)}`} tono="verde" />
         <Dato etiqueta="Pauta" valor={dinero(t.pauta)} tono="amarillo" />
       </div>
       <div className="rds-tabla-caja is-ventana">
         <table className="rds-tabla">
-          <thead><tr><th>Fecha</th><th>Marca</th><th>Red</th><th>Publicación</th><th className="num">Pauta</th><th className="num">Leads</th><th className="num">Calif.</th><th className="num">Cierres</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Fecha</th><th>Marca</th><th>Red</th><th>Publicación</th><th className="num">Pauta</th><th className="num">Leads</th><th className="num">Calif.</th><th className="num">No calif.</th><th className="num">Cierres</th><th>Estado</th></tr></thead>
           <tbody>
             {ordenadas.map((f) => <tr key={f.id} className="is-clic" onClick={() => onFila(f)}>
               <td>{fechaCorta(f.fecha)}</td>
@@ -71,10 +72,11 @@ export function DetalleFilas({ titulo, subtitulo, filas, publicaciones, onFila, 
               <td className="num">{dineroCorto(f.pauta)}</td>
               <td className="num">{entero(f.leads)}</td>
               <td className="num is-azul">{entero(f.calificados)}</td>
+              <td className="num rds-tenue"><NoCalificados valor={f.noCalificados} /></td>
               <td className="num is-verde">{entero(f.cierres)}</td>
               <td><Estado estado={f.estadoFila} /></td>
             </tr>)}
-            {!ordenadas.length && <tr><td colSpan={9} className="rds-tabla-vacia">Sin filas para mostrar.</td></tr>}
+            {!ordenadas.length && <tr><td colSpan={10} className="rds-tabla-vacia">Sin filas para mostrar.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -87,7 +89,6 @@ export function DetalleFilas({ titulo, subtitulo, filas, publicaciones, onFila, 
 export function FichaPublicacion({ fila, filas, onFila, onCerrar }) {
   const otras = filas.filter((f) => f.publicacionId === fila.publicacionId && f.id !== fila.id)
   const redLink = redDelLinkTexto(fila.link)
-  const noCalNegativo = fila.noCalificados !== null && fila.noCalificados < 0
   return <Ventana capa={2} etiqueta={`Ficha de ${fila.campana}`} onCerrar={onCerrar}>
     <Cabeza eyebrow="Ficha de la publicación" titulo={fila.campana || '(sin nombre)'}
       subtitulo={<span className="rds-en-linea">{fila.marca} · <Red red={fila.red} /> · {fechaCorta(fila.fecha)} · <Estado estado={fila.estadoFila} />
@@ -110,7 +111,7 @@ export function FichaPublicacion({ fila, filas, onFila, onCerrar }) {
           <Dato etiqueta="Clics" valor={entero(fila.clics)} />
           <Dato etiqueta="Interacciones" valor={entero(fila.interacciones)} />
           <Dato etiqueta="Comentarios · compartidos" valor={`${entero(fila.comentarios)} · ${entero(fila.compartidos)}`} />
-          <Dato etiqueta="No calificados (leads − calificados)" valor={<span className={noCalNegativo ? 'is-amarillo' : ''}>{noCalNegativo ? '⚠ ' : ''}{entero(fila.noCalificados)}</span>} />
+          <Dato etiqueta="No calificados (leads − calificados)" valor={<NoCalificados valor={fila.noCalificados} />} />
         </section>
         <section className="rds-bloque">
           <h3>Costos (calculados con la pauta)</h3>
