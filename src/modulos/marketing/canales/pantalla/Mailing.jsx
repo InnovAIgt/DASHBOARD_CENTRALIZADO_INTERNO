@@ -141,7 +141,7 @@ function Ranking({ campanas, vista, def, alElegir }) {
   return <div className="mkt-card">
     <div className="mkt-ranking-cabeza">
       <h3 className="mkt-card-title">Ranking de campañas</h3>
-      <label className="mkt-casilla"><input type="checkbox" checked={soloSuficiente} onChange={(e) => setSoloSuficiente(e.target.checked)} />
+      <label className="mkt-casilla-etiqueta"><input type="checkbox" className="mkt-casilla" checked={soloSuficiente} onChange={(e) => setSoloSuficiente(e.target.checked)} />
         Solo muestra suficiente (≥{MUESTRA.media} entregados)</label>
     </div>
     <div className="mkt-tabla-envoltura">

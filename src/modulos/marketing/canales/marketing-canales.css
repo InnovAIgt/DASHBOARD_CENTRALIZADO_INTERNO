@@ -354,8 +354,9 @@
   /* ---------- Ranking (table.rank) ---------- */
   .mkt-ranking-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .mkt-ranking-cabeza .mkt-card-title { margin: 0; }
-  .mkt-casilla { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mkt-tenue); cursor: pointer; }
-  .mkt-casilla input { accent-color: var(--mkt-accion); }
+  /* Etiqueta de la casilla "Solo muestra suficiente": clase propia (antes usaba .mkt-casilla, que es el
+     cuadrito de 16 × 16 px, y el texto quedaba apretado en una columna angosta). */
+  .mkt-casilla-etiqueta { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--mkt-tenue); white-space: nowrap; cursor: pointer; }
   .mkt-tabla-envoltura { overflow-x: auto; min-width: 0; }
   .mkt-rank { width: 100%; min-width: 980px; border-collapse: collapse; }
   .mkt-rank th { padding: 10px 12px; background: var(--mkt-elevado); color: #fff; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; white-space: nowrap; }
