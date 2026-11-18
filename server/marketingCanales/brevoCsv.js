@@ -48,6 +48,11 @@ const COLUMNAS = {
   fechaQueja: 'Complaint_date',
 }
 
+const COLUMNAS_MOTIVO_REBOTE = {
+  motivoReboteDuro: 'Hard_Bounce_Reason',
+  motivoReboteSuave: 'Soft_Bounce_Reason',
+}
+
 const claveColumna = (t) => String(t ?? '').trim().replace(/^"|"$/g, '').toLowerCase().replace(/[\s_]+/g, '')
 
 /**
@@ -68,6 +73,9 @@ export function leerCsvBrevo(contenido) {
     const i = encabezados.indexOf(claveColumna(nombre))
     if (i === -1) faltan.push(nombre)
     indice[campo] = i
+  }
+  for (const [campo, nombre] of Object.entries(COLUMNAS_MOTIVO_REBOTE)) {
+    indice[campo] = encabezados.indexOf(claveColumna(nombre))
   }
   if (faltan.length) {
     return { ok: false, motivo: `No parece un reporte de campaña de Brevo: faltan las columnas ${faltan.join(', ')}.` }
@@ -110,6 +118,8 @@ export function leerCsvBrevo(contenido) {
       correo,
       fechaEnvio,
       ...eventos,
+      motivoReboteDuro: indice.motivoReboteDuro === -1 ? '' : (r[indice.motivoReboteDuro] ?? '').trim(),
+      motivoReboteSuave: indice.motivoReboteSuave === -1 ? '' : (r[indice.motivoReboteSuave] ?? '').trim(),
       aperturaReal: celda('fechaApertura') !== '',
       aperturasTotales: entero(celda('aperturasTotales')),
       aperturasApple: entero(celda('aperturasApple')),
