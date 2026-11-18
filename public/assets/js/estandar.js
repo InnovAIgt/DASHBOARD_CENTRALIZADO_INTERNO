@@ -50,10 +50,20 @@
    Los indicadores propios de cada dashboard se ocultan en estandar.css.
    ══════════════════════════════════════════════════════════════════ */
 (function () {
+  if (document.documentElement.dataset.apiStatus === 'manual') return;
   const ESTATICO = /\.(css|js|mjs|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|map)(\?|#|$)/i;
   const LIBRERIA = /fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com/i;
   const PANELES = '.card, .chart-panel, .chart-card, .oc-card, .bill-card, .bill-panel, .apx-card, .pc-chart-card, .rrss-card, .content-panel, .kpi, .kpi-card, .kpi-card-exact, .oc-kpi, .bill-kpi, .stat-box, .apx-kpi, .table-wrap';
-  let activas = 0, huboError = false, lentoTimer = null, pill = null, primeraCarga = true, huboConsulta = false;
+  let activas = 0, huboError = false, mensajeError = '', lentoTimer = null, pill = null, primeraCarga = true, huboConsulta = false;
+  // En Ingresos solo se monitorea el snapshot bancario de Excel Parser.
+  // Firebase y otros servicios del portal no determinan la disponibilidad de estos datos.
+  const ES_INGRESOS = /\/dashboards\/ingresos\/ingresos\.html$/i.test(location.pathname);
+  const esSnapshotIngresos = url => {
+    try {
+      const u = new URL(String(url), location.href);
+      return u.hostname === 'excel-parser-ljgb.onrender.com' && u.pathname === '/snapshot.json';
+    } catch (e) { return false; }
+  };
   // Última acción del usuario (clic, cambio de filtro, tecla): solo las consultas que él
   // dispara resaltan las secciones, como "Actualizar datos" en SIMs. Las consultas
   // automáticas o en segundo plano (p. ej. la API en vivo de Ingresos tras el snapshot)
@@ -66,6 +76,7 @@
   document.documentElement.classList.add('std-precarga');
 
   const esDato = url => {
+    if (ES_INGRESOS) return esSnapshotIngresos(url);
     try {
       const u = new URL(String(url), location.href);
       return /^https?:$/.test(u.protocol) && !ESTATICO.test(u.pathname) && !LIBRERIA.test(u.host);
@@ -149,6 +160,7 @@
     activas++;
     if (activas !== 1) return;
     huboError = false;
+    mensajeError = '';
     document.documentElement.classList.add('std-consultando');
     if (primeraCarga) {
       arrancarCarga();
@@ -163,13 +175,24 @@
 
   // El portal (dashboard_centralizado.html) muestra arriba a la derecha cuándo se
   // actualizaron los datos del dashboard abierto: se le avisa al terminar cada consulta.
-  function avisarPortal(fecha) {
-    if (window.parent === window) return;
-    try { window.parent.postMessage({ tipo: 'intelfon-datos-actualizados', fecha: fecha ? fecha.toISOString() : null }, '*'); } catch (e) { /* sin portal */ }
+  function fechaUltimoLoteIngresos() {
+    try {
+      return typeof window.ultimaGeneracionData === 'function'
+        ? window.ultimaGeneracionData()
+        : null;
+    } catch (e) { return null; }
   }
 
-  function fin(error) {
-    if (error) huboError = true;
+  function avisarPortal(fecha) {
+    if (window.parent === window) return;
+    try { window.parent.postMessage({ tipo: 'intelfon-datos-actualizados', fecha: fecha instanceof Date && !isNaN(fecha) ? fecha.toISOString() : null }, '*'); } catch (e) { /* sin portal */ }
+  }
+
+  function fin(error, detalleError) {
+    if (error) {
+      huboError = true;
+      if (detalleError) mensajeError = detalleError;
+    }
     activas = Math.max(0, activas - 1);
     if (activas) return;
     clearTimeout(lentoTimer);
@@ -181,9 +204,14 @@
       marcarPaneles(false);
       const ahora = new Date();
       const hora = ahora.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
-      if (huboError) pintar('error', 'Sin conexión con el servidor de datos');
-      else pintar('ok', 'Actualizado ' + hora);
-      avisarPortal(huboError ? null : ahora);
+      if (huboError) {
+        pintar('error', ES_INGRESOS
+          ? (mensajeError || 'Excel Parser no disponible · se conserva el último lote')
+          : 'Sin conexión con el servidor de datos');
+      } else {
+        pintar('ok', ES_INGRESOS ? 'Excel Parser disponible · lote bancario válido' : 'Actualizado ' + hora);
+      }
+      avisarPortal(ES_INGRESOS ? fechaUltimoLoteIngresos() : (huboError ? null : ahora));
     }, 150);
   }
 
@@ -195,8 +223,36 @@
       if (!esDato(url)) return fetchOriginal(recurso, opciones);
       inicio();
       return fetchOriginal(recurso, opciones).then(
-        r => { fin(false); return r; },
-        e => { fin(true); throw e; }
+        async r => {
+          if (!ES_INGRESOS) {
+            fin(false);
+            return r;
+          }
+
+          if (!r.ok) {
+            fin(true, 'Excel Parser respondió HTTP ' + r.status + ' · se conserva el último lote');
+            return r;
+          }
+
+          try {
+            const data = await r.clone().json();
+            const valido = typeof window.hasUsableBankData === 'function'
+              ? window.hasUsableBankData(data)
+              : Boolean(data && data.regional && Object.values(data.regional).some(region =>
+                  ['banks', 'accounts', 'transactions'].some(key =>
+                    Array.isArray(region && region[key]) && region[key].length > 0
+                  )
+                ));
+            fin(!valido, valido ? '' : 'Excel Parser respondió sin datos bancarios válidos · se conserva el último lote');
+          } catch (error) {
+            fin(true, 'Excel Parser devolvió una respuesta inválida · se conserva el último lote');
+          }
+          return r;
+        },
+        e => {
+          fin(true, ES_INGRESOS ? 'No se pudo consultar Excel Parser · se conserva el último lote' : '');
+          throw e;
+        }
       );
     };
   }
@@ -207,7 +263,12 @@
   XMLHttpRequest.prototype.send = function () {
     if (this._stdDato) {
       inicio();
-      this.addEventListener('loadend', () => fin(this.status === 0), { once: true });
+      this.addEventListener('loadend', () => {
+        const fallo = this.status === 0 || (ES_INGRESOS && this.status >= 400);
+        fin(fallo, ES_INGRESOS && fallo
+          ? 'Excel Parser no respondió correctamente · se conserva el último lote'
+          : '');
+      }, { once: true });
     }
     return enviar.apply(this, arguments);
   };

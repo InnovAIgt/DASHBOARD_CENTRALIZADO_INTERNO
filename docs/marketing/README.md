@@ -1,7 +1,9 @@
 # Marketing · Flujo de ventas (versión 2)
 
 > Responsable: Keily García · Inicio: 11 de noviembre de 2026
-> Estado: **en construcción**. El Flujo de ventas actual sigue funcionando mientras tanto.
+> Estado: **integrado en `main`**. Está preparado el cambio para que el menú abra la v2; al
+> integrarlo, el archivo anterior se conservará fuera del menú como respaldo. La carga de datos en
+> Vercel requiere `RED_API_KEY` en el entorno correspondiente.
 
 ## ¿Qué es?
 
@@ -41,7 +43,7 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 |---|---|
 | `api/marketing/reuniones.js` | Función de Vercel: el "mesero" que llama a Prospekt IA con la llave escondida |
 | `server/marketingReuniones.js` | La misma lógica, compartida para que también funcione en local (`npm run dev`); quita el teléfono del cliente antes de responder |
-| `src/components/layout/PortalLayout.tsx` | Entrada "Flujo de ventas v2 (prueba)" del menú (MARKETING) y menú lateral escondido solo en la v2 (se asoma al acercar el mouse al borde izquierdo) |
+| `src/components/layout/PortalLayout.tsx` | Entrada "Flujo de ventas" del menú (MARKETING), conectada a la v2; el menú lateral se esconde solo en la v2 (se asoma al acercar el mouse al borde izquierdo) |
 | `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` | Pantalla principal: encabezado, filtros fijos y pestañas **Resumen** / **Ejecutivos** / **Informe detallado** |
 | `src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css` | Estilos propios (tema oscuro basado en Activaciones), encerrados en `.fv2` |
 | `src/modulos/marketing/flujo-ventas-v2/utils/`, `types/`, `hooks/`, `context/`, `services/` | **Lógica copiada** de InnovAIgt/DashboardLeads, sin cambios (carga de datos, filtros y cálculos) |

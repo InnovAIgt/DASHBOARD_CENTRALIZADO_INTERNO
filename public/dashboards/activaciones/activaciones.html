@@ -164,146 +164,94 @@
       <div id="activeFilterAlertBanner" style="display: none; background: rgba(79,143,216, 0.12); border: 1px solid rgba(79,143,216, 0.3); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7fb0f0;">
           <span style="font-size: 15px;">🔍</span>
-          <span>Filtro activo: <strong id="activeFilterAlertText" style="color: #fff;">Línea de Negocio: ADICIÓN</strong> (<span id="activeFilterAlertCount">19 de 44</span> radicaciones)</span>
+          <span>Filtro activo: <strong id="activeFilterAlertText" style="color: #fff;">Filtros aplicados</strong> (<span id="activeFilterAlertCount">0</span>)</span>
         </div>
-        <button type="button" onclick="resetAllFilters()" style="background: rgba(196,60,80, 0.15); border: 1px solid rgba(196,60,80, 0.3); color: #d95f6e; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Restablecer todos los filtros y ver las 44 radicaciones">
+        <button type="button" onclick="resetAllFilters()" style="background: rgba(196,60,80, 0.15); border: 1px solid rgba(196,60,80, 0.3); color: #d95f6e; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;" title="Restablecer todos los filtros">
           ✕ Mostrar todas las radicaciones
         </button>
       </div>
 
-      <!-- TWO COUNTRY SLA COMPLIANCE KPIS (SV & GT) - RIGHT ABOVE THE 4 KPIS -->
-      <section class="country-kpis-wrapper" style="margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-          <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
-            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
-            CUMPLIMIENTO DE SLA GLOBAL POR PAÍS (L-V 8AM-6PM &lt; 104H)
-          </div>
-          <span style="font-size: 11px; color: #7fb0f0; font-weight: 600;">Haz clic en un país para ver su auditoría por 5 etapas ↗</span>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
-          <!-- SV CARD -->
-          <div class="country-sla-card is-clickable" onclick="openCountrySlaModal('SV')" id="kpiCardSV" title="Clic para ver desglose por las 5 etapas de El Salvador" style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 22px;">🇸🇻</span>
-                  <span style="font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 0.02em;">EL SALVADOR (SV)</span>
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">SLA Global de Activación (&lt; 104h)</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 28px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono); line-height: 1;" id="svGlobalSlaPct">96%</div>
-                <span id="svGlobalBadge" style="font-size: 10px; font-weight: 800; color: #2f8f76; background: rgba(47, 143, 118, 0.15); border: 1px solid rgba(47, 143, 118, 0.3); padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">CUMPLIDO</span>
-              </div>
-            </div>
-            <!-- Progress bar -->
-            <div style="background: rgba(255,255,255,0.06); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
-              <div id="svGlobalProgressBar" style="width: 96%; height: 100%; background: linear-gradient(90deg, #2f8f76, #2f8f76); border-radius: 3px; transition: width 0.3s ease;"></div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-              <span><strong id="svGlobalOkCount" style="color: #fff;">—</strong> radicaciones en SLA</span>
-              <span style="color: #7fb0f0; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">Ver 5 etapas ↗</span>
-            </div>
-          </div>
+      <!-- KPI SLA GLOBAL (GT + SV) Y ETAPAS POR PAÍS -->
+      <section class="sla-countries-stage" id="countrySlaDashboardsContainer" aria-label="KPI SLA Global y por etapa"></section>
 
-          <!-- GT CARD -->
-          <div class="country-sla-card is-clickable" onclick="openCountrySlaModal('GT')" id="kpiCardGT" title="Clic para ver desglose por las 5 etapas de Guatemala" style="background: rgba(26, 29, 39, 0.85); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 22px;">🇬🇹</span>
-                  <span style="font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 0.02em;">GUATEMALA (GT)</span>
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">SLA Global de Activación (&lt; 104h)</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 28px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono); line-height: 1;" id="gtGlobalSlaPct">100%</div>
-                <span id="gtGlobalBadge" style="font-size: 10px; font-weight: 800; color: #2f8f76; background: rgba(47, 143, 118, 0.15); border: 1px solid rgba(47, 143, 118, 0.3); padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">ÓPTIMO 100%</span>
-              </div>
-            </div>
-            <!-- Progress bar -->
-            <div style="background: rgba(255,255,255,0.06); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
-              <div id="gtGlobalProgressBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #2f8f76, #2f8f76); border-radius: 3px; transition: width 0.3s ease;"></div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-              <span><strong id="gtGlobalOkCount" style="color: #fff;">—</strong> radicaciones en SLA</span>
-              <span style="color: #7fb0f0; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">Ver 5 etapas ↗</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- EXACT 4 KPI ROW (CLICKABLE -> GO TO ETAPAS TABLE) -->
-      <section class="kpi-row-exact">
+      <!-- 4 CUADRITOS UNIFICADOS: RADICACIONES + RADIOS -->
+      <section class="kpi-row-exact" aria-label="Resumen de radicaciones y radios">
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'todos', sla: 'todos' })" title="Clic para ver todas las radicaciones en la tabla">
-          <div>
+          <div class="kpi-main-block">
             <div class="kpi-label">Total de radicaciones</div>
             <div class="kpi-number" id="kpiTotalExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiTotalFootnote">Cargando datos en vivo de API...</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios totales</span>
+            <span class="kpi-paired-val" id="kpiTotalRadios">—</span>
+          </div>
         </div>
 
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'en_proceso', sla: 'todos' })" title="Clic para ver las radicaciones en proceso">
-          <div>
-            <div class="kpi-label">En proceso</div>
+          <div class="kpi-main-block">
+            <div class="kpi-label" style="color: #7fb0f0;">En proceso</div>
             <div class="kpi-number" style="color: #4f8fd8;" id="kpiActiveExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiActiveFootnote">Requieren seguimiento · Clic para ver ↗</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios en proceso</span>
+            <span class="kpi-paired-val" style="color: #7fb0f0;" id="kpiRadiosEnProceso">—</span>
+          </div>
         </div>
 
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'finalizada', sla: 'todos' })" title="Clic para ver las radicaciones finalizadas">
-          <div>
-            <div class="kpi-label">Finalizadas</div>
+          <div class="kpi-main-block">
+            <div class="kpi-label" style="color: #3fb898;">Finalizadas</div>
             <div class="kpi-number" style="color: #2f8f76;" id="kpiDoneExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiDoneFootnote">Procesos completados · Clic para ver ↗</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios entregados</span>
+            <span class="kpi-paired-val" style="color: #3fb898;" id="kpiRadiosEntregados">—</span>
+          </div>
         </div>
 
         <div class="kpi-card-exact is-clickable" onclick="navigateToEtapasFilter({ estado: 'cancelada', sla: 'todos' })" title="Clic para ver las radicaciones canceladas">
-          <div>
-            <div class="kpi-label">Canceladas</div>
+          <div class="kpi-main-block">
+            <div class="kpi-label" style="color: #d95f6e;">Canceladas</div>
             <div class="kpi-number" style="color: #c43c50;" id="kpiCancelledExact">—</div>
           </div>
-          <div class="kpi-footnote" id="kpiCancelledFootnote">Procesos cancelados · Clic para ver ↗</div>
+          <div class="kpi-paired-radios">
+            <span class="kpi-paired-label">Radios cancelados</span>
+            <span class="kpi-paired-val" style="color: #d95f6e;" id="kpiRadiosCancelados">—</span>
+          </div>
         </div>
       </section>
 
-      <!-- SLA ROW (CLICKABLE -> GO TO ETAPAS TABLE FILTERED) -->
-      <section class="sla-summary-row">
-        <!-- 1: En Tiempo -->
-        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'en_tiempo' })" title="Clic para ver radicaciones En Tiempo en la tabla">
-          <div>
-            <span style="font-size: 11px; color: #2f8f76; font-weight: 800; text-transform: uppercase;">En Tiempo</span>
-            <div style="font-size: 10px; color: var(--text-muted);">&lt; 104h y etapas en regla · Clic para ver ↗</div>
-          </div>
-          <div style="font-size: 24px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono);" id="slaEnTiempoCount">—</div>
+      <!-- EQUIPOS Y SIM CARDS -->
+      <section class="anexos-kpi-row" aria-label="Equipos y SIM Cards">
+        <div id="anexosRowEyebrow" style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
+          <span>EQUIPOS Y SIM CARDS</span>
         </div>
-
-        <!-- 2: Por Vencer -->
-        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'por_vencer' })" title="Clic para ver radicaciones Por Vencer en la tabla">
-          <div>
-            <span style="font-size: 11px; color: #c59600; font-weight: 800; text-transform: uppercase;">Por Vencer / En Riesgo</span>
-            <div style="font-size: 10px; color: var(--text-muted);">75% a 100% de SLA · Clic para ver ↗</div>
+        <div class="anexos-kpi-grid">
+          <div class="anexos-kpi-card tone-blue is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de Equipos en Categorías">
+            <div class="anexos-kpi-label" style="color: #7fb0f0;">Equipos</div>
+            <div class="anexos-kpi-val" style="color: #7fb0f0;" id="kpiTotalEquipos">—</div>
           </div>
-          <div style="font-size: 24px; font-weight: 900; color: #c59600; font-family: var(--font-mono);" id="slaPorVencerCount">—</div>
-        </div>
 
-        <!-- 3: Vencidas por Etapa -->
-        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" title="Clic para ver radicaciones Vencidas por Etapa en la tabla">
-          <div>
-            <span style="font-size: 11px; color: #c59600; font-weight: 800; text-transform: uppercase;">Vencidas por Etapa</span>
-            <div style="font-size: 10px; color: var(--text-muted);">Al menos una etapa vencida · Clic para ver ↗</div>
+          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de SIM Cards en Categorías">
+            <div class="anexos-kpi-label">SIM Cards</div>
+            <div class="anexos-kpi-val" id="kpiTotalSims">—</div>
           </div>
-          <div style="font-size: 24px; font-weight: 900; color: #c59600; font-family: var(--font-mono);" id="slaVencidasEtapaCount">—</div>
-        </div>
 
-        <!-- 4: Vencidas SLA Global (>104h) -->
-        <div class="sla-kpi-pill is-clickable" onclick="navigateToEtapasFilter({ sla: 'vencidas_global' })" title="Clic para ver radicaciones con SLA Global Vencido (>104h)">
-          <div>
-            <span style="font-size: 11px; color: #d95f6e; font-weight: 800; text-transform: uppercase;">Vencidas SLA Global</span>
-            <div style="font-size: 10px; color: var(--text-muted);">&gt; 104h laborables (L-V 8am-6pm) · Clic para ver ↗</div>
+          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="Ver inventario Nuevo en Categorías">
+            <div class="anexos-kpi-label" style="color: #3fb898;">Nuevo</div>
+            <div class="anexos-kpi-val" style="color: #3fb898;" id="kpiInvNuevoCount">—</div>
           </div>
-          <div style="font-size: 24px; font-weight: 900; color: #d95f6e; font-family: var(--font-mono);" id="slaVencidasGlobalCount">—</div>
+
+          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="Ver inventario Usado en Categorías">
+            <div class="anexos-kpi-label" style="color: #e2b422;">Usado</div>
+            <div class="anexos-kpi-val" style="color: #e2b422;" id="kpiInvUsadoCount">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="Ver inventario Refurbished en Categorías">
+            <div class="anexos-kpi-label" style="color: #a78bfa;">Refurbished</div>
+            <div class="anexos-kpi-val" style="color: #a78bfa;" id="kpiInvRefurbCount">—</div>
+          </div>
         </div>
       </section>
 
@@ -343,7 +291,7 @@
           <div class="panel-header">
             <div>
               <div class="panel-title">Situación Actual de las Radicaciones</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Distribución operativa por condición de SLA</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Distribución por condición SLA sobre el total mostrado (prioridad: Global &gt; Por vencer &gt; Etapa)</div>
             </div>
           </div>
 
@@ -374,10 +322,10 @@
               <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutPorVencerCount">7</span>
             </div>
 
-            <div onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" style="cursor: pointer; background: rgba(197, 150, 0, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(197, 150, 0, 0.25); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas por Etapa">
+            <div onclick="navigateToEtapasFilter({ sla: 'vencidas_etapa' })" style="cursor: pointer; background: rgba(139, 92, 246, 0.12); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.28); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" title="Clic para filtrar radicaciones Vencidas por Etapa">
               <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: #c59600; display: inline-block;"></span>
-                <span style="font-size: 11px; color: #e0b52e; font-weight: 700;">Venc. Etapa</span>
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; display: inline-block;"></span>
+                <span style="font-size: 11px; color: #a78bfa; font-weight: 700;">Venc. Etapa</span>
               </div>
               <span style="font-size: 14px; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="donutVencidasEtapaCount">18</span>
             </div>
@@ -474,15 +422,16 @@
           <table class="custom-table" id="radicacionesTable">
             <thead style="position: sticky; top: 0; background: #151821; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
               <tr>
-                <th style="width: 11%;">Pre-Oferta</th>
-                <th style="width: 25%;">Cliente / Razón Social</th>
-                <th style="width: 6%; text-align: center;">País</th>
-                <th style="width: 11%; text-align: center;">Negocio</th>
-                <th style="width: 6%; text-align: center;">Radios</th>
-                <th style="width: 16%;">Etapa Actual</th>
+                <th style="width: 10%;">Pre-Oferta</th>
+                <th style="width: 22%;">Cliente / Razón Social</th>
+                <th style="width: 5%; text-align: center;">País</th>
+                <th style="width: 9%; text-align: center;">Negocio</th>
+                <th style="width: 16%; text-align: center;">Inventario / Anexos</th>
+                <th style="width: 10%; text-align: center;">Radios Entregados</th>
+                <th style="width: 13%;">Etapa Actual</th>
                 <th style="width: 8%; text-align: center;">Estado</th>
                 <th style="width: 8%; text-align: center;">Condición SLA</th>
-                <th style="width: 9%; text-align: right;">Acción</th>
+                <th style="width: 7%; text-align: right;">Acción</th>
               </tr>
             </thead>
             <tbody id="radicacionesTbody">
@@ -499,7 +448,7 @@
         <div class="panel-header">
           <div>
             <div class="hero-eyebrow">ANÁLISIS POR LÍNEA DE NEGOCIO</div>
-            <div class="panel-title">Venta Nueva, Renovación y Adición</div>
+            <div class="panel-title" id="categoriasTitleText">Venta Nueva, Renovación, Adición y Backup</div>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
               Volumen de equipos (radios), comparativa por país y ranking de clientes con mayor demanda.
             </div>
@@ -509,20 +458,69 @@
             <button class="pill-btn" data-cat="ADICION">Adición</button>
             <button class="pill-btn" data-cat="VENTA NUEVA">Venta Nueva</button>
             <button class="pill-btn" data-cat="RENOVACION">Renovación</button>
+            <button class="pill-btn" data-cat="BACKUP">Backup</button>
           </div>
         </div>
 
-        <!-- 3 Category Cards -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" id="categoryCardsGrid">
+        <!-- Category Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;" id="categoryCardsGrid">
           <!-- Rendered by JS -->
         </div>
 
-        <!-- TOP 10 CLIENTES CON MÁS RADIOS Y VENDEDOR ENCARGADO -->
+        <!-- DISTRIBUCIÓN POR CONDICIÓN DE INVENTARIO (NUEVO / USADO / REFURBISHED) -->
+        <div style="margin-top: 24px;">
+          <div class="panel-header" style="margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div class="hero-eyebrow" style="color: #4f8fd8;">INVENTARIO REAL EN ANEXOS TEMPORALES</div>
+              <div class="panel-title">Condición de Inventario (Nuevo · Usado · Refurbished)</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Clasificación calculada por código de estado en anexos temporales (1 Nuevo · 2 Usado · 3 Refurbished) y separación de Equipos y SIM Cards.
+              </div>
+            </div>
+            <div class="pill-group" id="invCondQuickFilter">
+              <button type="button" class="pill-btn is-active" data-invcond="ALL">Todos</button>
+              <button type="button" class="pill-btn" data-invcond="NUEVO">Nuevo</button>
+              <button type="button" class="pill-btn" data-invcond="USADO">Usado</button>
+              <button type="button" class="pill-btn" data-invcond="REFURBISHED">Refurbished</button>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;" id="inventoryTypeCardsGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- DESGLOSE DE EQUIPOS Y SIM CARDS POR MODELO -->
+        <div class="inv-breakdown-split">
+          <div class="inv-panel-box">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+              <div>
+                <div class="hero-eyebrow" style="color: #3fb898; margin-bottom: 2px;">MODELOS EN ANEXOS Y DETALLE</div>
+                <div class="panel-title">Equipos y SIM Cards por Modelo</div>
+              </div>
+              <span id="equipModelsSummaryBadge" style="font-size: 11px; font-family: var(--font-mono); color: #9ba3b4;">—</span>
+            </div>
+            <div class="table-scroll-container" style="max-height: 310px;">
+              <table class="custom-table" id="equipModelsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 98px; text-align: center;">Tipo</th>
+                    <th>Equipo / Modelo</th>
+                    <th style="width: 130px; text-align: center;">Unidades</th>
+                    <th style="width: 130px; text-align: center;">Ofertas</th>
+                  </tr>
+                </thead>
+                <tbody id="equipModelsTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOP 10 CLIENTES CON INVENTARIO Y EQUIPOS (E / S) -->
         <div style="margin-top: 24px;">
           <div class="panel-header" style="margin-bottom: 12px;">
             <div>
               <div class="hero-eyebrow" style="color: #c59600;">RANKING COMERCIAL</div>
-              <div class="panel-title">Top 10 Clientes con Mayor Compra / Contratación de Radios</div>
+              <div class="panel-title">Top 10 Clientes con Mayor Demanda e Inventario Asignado</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
                 Filtrado dinámicamente según el rango de fechas y filtros seleccionados
               </div>
@@ -533,16 +531,52 @@
             <table class="custom-table" id="topClientsTable">
               <thead>
                 <tr>
-                  <th style="text-align: center; width: 70px;"># Rank</th>
+                  <th style="text-align: center; width: 60px;"># Rank</th>
                   <th>Cliente / Razón Social</th>
                   <th>Vendedor Encargado</th>
-                  <th style="text-align: center;">País</th>
-                  <th style="text-align: center;">Línea Negocio</th>
-                  <th style="text-align: center;">Radios</th>
-                  <th style="text-align: center;">Radicaciones</th>
+                  <th style="text-align: center; width: 60px;">País</th>
+                  <th style="text-align: center; width: 110px;">Línea Negocio</th>
+                  <th style="text-align: center; width: 235px;">Inventario (Equipos · SIM Cards)</th>
+                  <th style="text-align: center; width: 130px;">Radios Entregados</th>
+                  <th style="text-align: center; width: 90px;">Radicaciones</th>
                 </tr>
               </thead>
               <tbody id="topClientsTbody">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- AUDITORÍA DE INVENTARIO, ANEXOS Y DETALLE COMERCIAL POR RADICACIÓN -->
+        <div style="margin-top: 24px;">
+          <div class="panel-header" style="margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <div class="hero-eyebrow" style="color: #2f8f76;">AUDITORÍA DE ANEXOS Y EQUIPOS</div>
+              <div class="panel-title">Detalle de Inventario, Anexos (Equipos / SIM Cards) y Precios por Pre-Oferta</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Relación individual de anexos temporales, condición de inventario (Nuevo/Usado/Refurbished), tecnología, proveedor y valores unitarios
+              </div>
+            </div>
+            <span id="inventoryDetailCountBadge" style="font-size: 11px; font-family: var(--font-mono); color: #7fb0f0;">—</span>
+          </div>
+
+          <div class="table-scroll-container" style="max-height: 420px;">
+            <table class="custom-table" id="inventoryDetailTable">
+              <thead>
+                <tr>
+                  <th style="width: 9%;">Pre-Oferta</th>
+                  <th style="width: 19%;">Cliente / Razón Social</th>
+                  <th style="width: 5%; text-align: center;">País</th>
+                  <th style="width: 9%; text-align: center;">Negocio</th>
+                  <th style="width: 11%; text-align: center;">Inventario</th>
+                  <th style="width: 15%; text-align: center;">Anexos (Equipos / SIM Cards)</th>
+                  <th style="width: 14%;">Equipo · Tec. / Prov.</th>
+                  <th style="width: 8%; text-align: right;">Valor Ref.</th>
+                  <th style="width: 10%; text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryDetailTbody">
                 <!-- Dynamically rendered -->
               </tbody>
             </table>
@@ -605,15 +639,16 @@
           <table class="custom-table" id="tableActInforme" style="width: 100%; table-layout: fixed; border-collapse: collapse;">
             <thead style="position: sticky; top: 0; background: #151821; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
               <tr>
-                <th style="width: 11%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Pre-Oferta</th>
-                <th style="width: 25%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Cliente / Razón Social</th>
-                <th style="width: 6%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">País</th>
-                <th style="width: 11%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Negocio</th>
-                <th style="width: 6%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Radios</th>
-                <th style="width: 16%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Etapa Actual</th>
+                <th style="width: 10%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Pre-Oferta</th>
+                <th style="width: 22%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Cliente / Razón Social</th>
+                <th style="width: 5%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">País</th>
+                <th style="width: 9%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Negocio</th>
+                <th style="width: 16%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Inventario / Anexos</th>
+                <th style="width: 10%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Radios Entregados</th>
+                <th style="width: 13%; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #8b909e;">Etapa Actual</th>
                 <th style="width: 8%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Estado</th>
                 <th style="width: 8%; padding: 10px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: #8b909e;">Condición SLA</th>
-                <th style="width: 9%; padding: 10px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: #8b909e;">Acción</th>
+                <th style="width: 7%; padding: 10px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: #8b909e;">Acción</th>
               </tr>
             </thead>
             <tbody id="rowsActInforme">
@@ -623,14 +658,30 @@
         </div>
 
         <!-- Totales del Informe Detallado -->
-        <div class="informe-totals-bar" style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px;">
+        <div class="informe-totals-bar" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
           <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
             <span style="color: #8b909e;">Total Radicaciones:</span>
             <strong id="actInformeTotalRadicaciones" style="color: #7fb0f0; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
           </div>
           <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
             <span style="color: #8b909e;">Total Radios:</span>
-            <strong id="actInformeTotalRadios" style="color: #3f9c85; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+            <strong id="actInformeTotalRadios" style="color: #fff; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(47,143,118,0.12); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(47,143,118,0.3); font-size: 12px;">
+            <span style="color: #3f9c85;">Radios Entregados:</span>
+            <strong id="actInformeRadiosEntregados" style="color: #2f8f76; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(79,143,216,0.12); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(79,143,216,0.3); font-size: 12px;">
+            <span style="color: #7fb0f0;">Radios en Proceso:</span>
+            <strong id="actInformeRadiosEnProceso" style="color: #4f8fd8; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
+            <span style="color: #8b909e;">Anexos (Equipos · SIM Cards):</span>
+            <strong id="actInformeAnexosSummary" style="color: #e8eaf0; margin-left: 6px; font-family: var(--font-mono, monospace);">0</strong>
+          </div>
+          <div class="informe-total-pill" style="background: rgba(47,143,118,0.08); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(47,143,118,0.25); font-size: 12px;">
+            <span style="color: #3fb898;">Nuevo / Usado / Ref.:</span>
+            <strong id="actInformeConditionSummary" style="color: #fff; margin-left: 6px; font-family: var(--font-mono, monospace);">0 / 0 / 0</strong>
           </div>
           <div class="informe-total-pill" style="background: rgba(255,255,255,0.04); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 12px;">
             <span style="color: #8b909e;">En Tiempo SLA:</span>
@@ -713,36 +764,54 @@
           <div style="font-size: 18px; font-weight: 900; color: #fff;" id="detClientName">Cliente</div>
           <div style="font-size: 12px; color: var(--text-muted);" id="detSubheader">Pre-Oferta #0000</div>
         </div>
-        <button class="close-btn" id="btnCloseDetailModal">✕</button>
+        <button type="button" class="close-btn" id="btnCloseDetailModal" onclick="closeDetailModal()" title="Cerrar ficha técnica">✕</button>
       </div>
 
       <div style="padding: 24px;">
         <!-- Specs Grid -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; background: rgba(255, 255, 255,0.7); padding: 14px; border-radius: 14px; border: 1px solid var(--border-color);">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.04); padding: 14px; border-radius: 14px; border: 1px solid var(--border-color);">
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">País:</span>
-            <strong style="display: block; font-size: 13px;" id="detPais">-</strong>
+            <strong style="display: block; font-size: 13px; color: #fff;" id="detPais">-</strong>
           </div>
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Línea de Negocio:</span>
             <strong style="display: block; font-size: 13px; color: #7fb0f0;" id="detNegocio">-</strong>
           </div>
           <div>
-            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Cantidad de Radios:</span>
-            <strong style="display: block; font-size: 13px; color: #fff;" id="detRadios">-</strong>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Radios Entregados / Totales:</span>
+            <strong style="display: block; font-size: 13px; color: #2f8f76;" id="detRadios">-</strong>
           </div>
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Vendedor Encargado:</span>
-            <strong style="display: block; font-size: 12px;" id="detVendedor">-</strong>
+            <strong style="display: block; font-size: 12px; color: #fff;" id="detVendedor">-</strong>
           </div>
           <div>
-            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Contratación / Plazo:</span>
-            <strong style="display: block; font-size: 12px;" id="detContrato">-</strong>
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Inventario / Contratación:</span>
+            <strong style="display: block; font-size: 12px; color: #fff;" id="detContrato">-</strong>
           </div>
           <div>
             <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Horas Laborales Globales (8am-6pm):</span>
-            <strong style="display: block; font-size: 13px;" id="detHoursText">-</strong>
+            <strong style="display: block; font-size: 13px; color: #fff;" id="detHoursText">-</strong>
           </div>
+        </div>
+
+        <!-- Detalle Comercial y Técnico (detalle[]) -->
+        <div class="det-section-card" id="detDetalleSection">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+            <div style="font-size: 13px; font-weight: 800; color: #fff;">Detalle Técnico y Tarifario</div>
+            <span id="detDetalleSummary" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">—</span>
+          </div>
+          <div id="detDetalleContainer"></div>
+        </div>
+
+        <!-- Anexos Temporales y Equipos (E / S) -->
+        <div class="det-section-card" id="detAnexosSection">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+            <div style="font-size: 13px; font-weight: 800; color: #fff;">Anexos Temporales y Desglose de Equipos y SIM Cards</div>
+            <span id="detAnexosSummary" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">—</span>
+          </div>
+          <div id="detAnexosContainer"></div>
         </div>
 
         <!-- 5 Stages Timeline With Exact Timestamp & Hours -->
@@ -785,7 +854,8 @@
   const NEGOCIO_OPTIONS = [
     { label: 'Adición', value: 'ADICION' },
     { label: 'Venta nueva', value: 'VENTA NUEVA' },
-    { label: 'Renovación', value: 'RENOVACION' }
+    { label: 'Renovación', value: 'RENOVACION' },
+    { label: 'Backup', value: 'BACKUP' }
   ];
 
   const ETAPA_OPTIONS = [
@@ -798,8 +868,7 @@
 
   const SLA_OPTIONS = [
     { label: 'En tiempo', value: 'en_tiempo' },
-    { label: 'Por vencer en etapa', value: 'por_vencer' },
-    { label: 'Por vencer en SLA global', value: 'por_vencer_global' },
+    { label: 'Por vencer (SLA global)', value: 'por_vencer' },
     { label: 'Vencida en etapa', value: 'vencidas_etapa' },
     { label: 'Vencida en SLA global', value: 'vencidas_global' }
   ];
@@ -819,8 +888,13 @@
 
   function hasCustomDateFilter() {
     const period = getCurrentMonthPeriod();
-    return (currentFilter.dateFrom || currentFilter.dateTo) &&
-      (currentFilter.dateFrom !== period.from || currentFilter.dateTo !== period.to);
+    return currentFilter.dateFrom !== period.from || currentFilter.dateTo !== period.to;
+  }
+
+  function getActiveCountryLabel() {
+    if (currentFilter.pais === "GT") return "Guatemala (GT)";
+    if (currentFilter.pais === "SV") return "El Salvador (SV)";
+    return "Todos (GT + SV)";
   }
 
   // Estado Global de Datos y Filtros
@@ -833,14 +907,16 @@
   let currentFilter = {
     pais: "todos",
     estados: ['en_proceso', 'finalizada', 'cancelada'],
-    negocios: ['ADICION', 'VENTA NUEVA', 'RENOVACION'],
+    negocios: ['ADICION', 'VENTA NUEVA', 'RENOVACION', 'BACKUP'],
     etapas: ['1', '2', '3', '4', '5'],
-    slas: ['en_tiempo', 'por_vencer', 'por_vencer_global', 'vencidas_etapa', 'vencidas_global'],
+    slas: ['en_tiempo', 'por_vencer', 'vencidas_etapa', 'vencidas_global'],
     dateFrom: initialPeriod.from,
     dateTo: initialPeriod.to,
     search: "",
     stageQuickFilter: "todos",
-    catQuickFilter: "ALL"
+    catQuickFilter: "ALL",
+    invCondFilter: "ALL",
+    openSlaFocus: null
   };
 
   let searchEstadoText = "";
@@ -851,33 +927,40 @@
   let currentStageModalNum = 1;
   let currentStageModalFilter = "all";
 
+  const SV_TZ_OFFSET_MS = 6 * 60 * 60 * 1000; // Guatemala / El Salvador UTC-6 (sin DST)
+
   function calculateBusinessHours(startIso, endIso) {
       if (!startIso) return 0;
       const start = new Date(startIso);
-      const end = endIso ? new Date(endIso) : new Date("2026-09-24T00:00:00Z");
+      const end = endIso ? new Date(endIso) : new Date();
       if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 0;
 
-      let current = new Date(start.getTime());
+      let curMs = start.getTime() - SV_TZ_OFFSET_MS;
+      const endMs = end.getTime() - SV_TZ_OFFSET_MS;
       let totalMs = 0;
 
-      while (current < end) {
-        const day = current.getUTCDay();
-        if (day !== 0 && day !== 6) { // Lunes a Viernes
-          const curH = current.getUTCHours() + current.getUTCMinutes() / 60;
-          if (curH >= 8 && curH < 18) {
-            const nextHour = new Date(current.getTime());
-            nextHour.setUTCMinutes(0, 0, 0);
-            nextHour.setUTCHours(current.getUTCHours() + 1);
-
-            const sliceEnd = (nextHour < end) ? nextHour : end;
-            totalMs += (sliceEnd.getTime() - current.getTime());
-            current = sliceEnd;
+      while (curMs < endMs) {
+        const d = new Date(curMs);
+        const day = d.getUTCDay();
+        if (day !== 0 && day !== 6) {
+          const h = d.getUTCHours();
+          if (h >= 8 && h < 18) {
+            const nextHourMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), h + 1, 0, 0, 0);
+            const sliceEnd = Math.min(nextHourMs, endMs);
+            totalMs += (sliceEnd - curMs);
+            curMs = sliceEnd;
+            continue;
+          }
+          if (h < 8) {
+            const morningMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 8, 0, 0, 0);
+            curMs = Math.min(morningMs, endMs);
             continue;
           }
         }
-        current.setUTCMinutes(current.getUTCMinutes() + 30);
+        const nextDay8 = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 8, 0, 0, 0);
+        curMs = Math.min(nextDay8, endMs);
       }
-      return Math.max(0, +(totalMs / (1000 * 60 * 60)).toFixed(1));
+      return Math.max(0, +(totalMs / 3600000).toFixed(1));
     }
 
     function formatHours(h) {
@@ -898,24 +981,42 @@
       }
     }
 
+    function getStageEffectiveEndIso(parentItem, etapa) {
+      if (etapa && etapa.fechaFin) return etapa.fechaFin;
+      if (parentItem && (parentItem.estado === "cancelada" || parentItem.estado === "finalizada")) {
+        if (parentItem.proceso && parentItem.proceso.fechaFin) return parentItem.proceso.fechaFin;
+        return etapa ? etapa.fechaInicio : null;
+      }
+      return null;
+    }
+
     function getProcessTotalHours(item) {
+      if (item.proceso && item.proceso.fechaInicio) {
+        if (item.estado === "en_proceso") {
+          return calculateBusinessHours(item.proceso.fechaInicio, null);
+        }
+        if (item.proceso.fechaFin) {
+          return calculateBusinessHours(item.proceso.fechaInicio, item.proceso.fechaFin);
+        }
+      }
       if (!item.proceso || !item.proceso.etapas) return 0;
       let sum = 0;
       item.proceso.etapas.forEach(et => {
         if (et.fechaInicio) {
-          sum += calculateBusinessHours(et.fechaInicio, et.fechaFin);
+          sum += calculateBusinessHours(et.fechaInicio, getStageEffectiveEndIso(item, et));
         }
       });
       return +sum.toFixed(1);
     }
 
-    function getStageStatus(etapa, slaHours) {
+    function getStageStatus(etapa, slaHours, parentItem = null) {
       if (!etapa || !etapa.fechaInicio) return { status: "pending", hours: 0, pct: 0, text: "Pendiente" };
-      const hours = calculateBusinessHours(etapa.fechaInicio, etapa.fechaFin);
+      const endIso = getStageEffectiveEndIso(parentItem, etapa);
+      const hours = calculateBusinessHours(etapa.fechaInicio, endIso);
       const limit = etapa.slaHoras || slaHours || 24;
       const pct = Math.round((hours / limit) * 100);
 
-      if (etapa.estado === "completada") {
+      if (etapa.estado === "completada" || (parentItem && (parentItem.estado === "cancelada" || parentItem.estado === "finalizada"))) {
         if (hours > limit) return { status: "vencida", hours, pct, text: `Vencida (${formatHours(hours)} / SLA ${limit}h)` };
         return { status: "ok", hours, pct, text: `En tiempo (${formatHours(hours)})` };
       }
@@ -927,20 +1028,50 @@
       return { status: "pending", hours: 0, pct: 0, text: "Pendiente" };
     }
 
+    function getOpenProcessMetrics(item) {
+      const elapsedH = getProcessTotalHours(item);
+      const isVencidoGlobal = elapsedH > 104;
+      const isPorVencerGlobal = elapsedH > 83.2 && elapsedH <= 104;
+      const isEnTiempoGlobal = elapsedH <= 83.2;
+      const isDentroSlaGlobal = elapsedH <= 104;
+
+      let hasStageVencida = false;
+      const etapas = (item.proceso && item.proceso.etapas) ? item.proceso.etapas : [];
+      for (const st of etapas) {
+        if (!st || !st.fechaInicio) continue;
+        const limit = st.slaHoras || STAGE_SLAS[st.numero] || 24;
+        const h = calculateBusinessHours(st.fechaInicio, getStageEffectiveEndIso(item, st));
+        if (h > limit) {
+          hasStageVencida = true;
+          break;
+        }
+      }
+
+      return {
+        elapsedH,
+        isVencidoGlobal,
+        isPorVencerGlobal,
+        isEnTiempoGlobal,
+        isDentroSlaGlobal,
+        hasStageVencida
+      };
+    }
+
     function getItemSlaCondition(item) {
       const totalH = getProcessTotalHours(item);
       if (totalH > 104) return "vencidas_global";
+      if (item.estado === "en_proceso" && totalH > 83.2) return "por_vencer";
 
       if (item.proceso && item.proceso.etapas) {
         let hasVencida = false;
-        let hasNear = false;
         for (const st of item.proceso.etapas) {
-          const evalSt = getStageStatus(st, STAGE_SLAS[st.numero]);
-          if (evalSt.status === "vencida") hasVencida = true;
-          else if (evalSt.status === "near") hasNear = true;
+          const evalSt = getStageStatus(st, STAGE_SLAS[st.numero], item);
+          if (evalSt.status === "vencida") {
+            hasVencida = true;
+            break;
+          }
         }
         if (hasVencida) return "vencidas_etapa";
-        if (hasNear) return "por_vencer";
       }
       return "en_tiempo";
     }
@@ -959,10 +1090,24 @@
 
   const WORKFLOW_API_KEY = "b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b";
   const CLIENT_NAMES_API_URL = "https://innovaigt.github.io/Dashboard---flash-altas/datos.json";
+  const STORE_CLIENTES_API_URL = "https://grultaxaxbcruzoeljld.supabase.co/rest/v1/rpc/tablero_cumplimiento_safe";
+  const STORE_CLIENTES_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdydWx0YXhheGJjcnV6b2VsamxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTQ3NzUsImV4cCI6MjEwNzMzMDc3NX0.ztwf9manF8h5JtVxqLnEc48tZ3r95iUjz2SwUw0HW6M";
   const CLIENT_NAME_OVERRIDES = {
-    CL000584: "ALVARO DE JESUS PORTILLO"
+    CL000584: "ALVARO DE JESUS PORTILLO",
+    LD13740: "AMADEO AJTUN"
   };
   const estimatedApiUpdatedAt = new Date(Date.now() - 5 * 60 * 1000);
+  let apiMetaGeneratedAt = null;
+  let itemInventoryCache = new WeakMap();
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
   function getNameValue(value) {
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -973,7 +1118,7 @@
     return typeof nestedName === "string" ? nestedName.trim() : "";
   }
 
-  function getCompanyName(item) {
+  function getRawCompanyName(item) {
     if (!item || typeof item !== "object") return "";
     const candidates = [
       item.empresa, item.empresaRad, item.nombreEmpresa, item.nombre_empresa,
@@ -990,6 +1135,24 @@
     return "";
   }
 
+  function getFallbackCompanyName(item) {
+    if (!item || typeof item !== "object") return "Cliente sin nombre";
+    const code = getClientCode(item);
+    if (code) {
+      return code.startsWith("LD") ? `Prospecto ${code}` : `Cliente ${code}`;
+    }
+    if (item.preOferta) return `Pre-oferta #${item.preOferta}`;
+    return "Cliente sin nombre";
+  }
+
+  function getCompanyName(item) {
+    const raw = getRawCompanyName(item);
+    if (raw) return raw;
+    const code = getClientCode(item);
+    if (code && CLIENT_NAME_OVERRIDES[code]) return CLIENT_NAME_OVERRIDES[code];
+    return getFallbackCompanyName(item);
+  }
+
   function getClientCode(item) {
     if (!item || typeof item !== "object") return "";
     return String(item.codigo || item.codCliente || item.cod_cliente || item.clicod || "")
@@ -997,51 +1160,413 @@
       .toUpperCase();
   }
 
-  async function completeMissingCompanyNames(items) {
+  function getContractType(item) {
+    if (!item || typeof item !== "object") return "SIN ESPECIFICAR";
+    const raw = String(item.tipoContratacion || "").trim().toUpperCase();
+    return raw || "SIN ESPECIFICAR";
+  }
+
+  function getConditionFromEquipment(eq) {
+    if (!eq || typeof eq !== "object") return "sin_estado";
+    const code = eq.estado_codigo != null ? String(eq.estado_codigo).trim() : "";
+    if (code === "1") return "nuevo";
+    if (code === "2") return "usado";
+    if (code === "3") return "refurbished";
+
+    const txt = String(eq.estado_equipo || "").trim().toLowerCase();
+    if (txt === "nuevo") return "nuevo";
+    if (txt === "usado") return "usado";
+    if (txt === "refurbished") return "refurbished";
+    return "sin_estado";
+  }
+
+  function getConditionLabel(condKey) {
+    if (condKey === "nuevo") return "Nuevo";
+    if (condKey === "usado") return "Usado";
+    if (condKey === "refurbished") return "Refurbished";
+    return "Sin estado";
+  }
+
+  function getItemInventoryData(item) {
+    if (!item || typeof item !== "object") {
+      return {
+        hasAnexosField: false,
+        annexCount: 0,
+        annexValidated: 0,
+        annexPending: 0,
+        equiposE: 0,
+        simsS: 0,
+        totalDevices: 0,
+        eCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        sCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        allCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        condition: "SIN ANEXOS",
+        eModels: [],
+        sModels: [],
+        annexList: [],
+        detalleRows: [],
+        detalleModels: [],
+        tecnologias: [],
+        proveedores: [],
+        planesSim: [],
+        licencias: [],
+        unitEquipoAvg: null,
+        unitPlanAvg: null,
+        currencySymbol: "$"
+      };
+    }
+
+    const cached = itemInventoryCache.get(item);
+    if (cached) return cached;
+
+    const hasAnexosField = Array.isArray(item.anexosTemporales);
+    const rawAnexos = hasAnexosField ? item.anexosTemporales : [];
+    const rawDetalle = Array.isArray(item.detalle) ? item.detalle : [];
+    const currencySymbol = String(item.pais || "GT").trim().toUpperCase() === "SV" ? "$" : "Q";
+
+    const eCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
+    const sCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
+    const allCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
+    const eModelMap = new Map();
+    const sModelMap = new Map();
+
+    let annexValidated = 0;
+    let annexPending = 0;
+    let equiposE = 0;
+    let simsS = 0;
+
+    const annexList = rawAnexos.map(anx => {
+      const validado = Boolean(anx && anx.validado);
+      if (validado) annexValidated++;
+      else annexPending++;
+
+      const folcod = anx && anx.folcod != null ? String(anx.folcod).trim() : "";
+      const folncc = anx && anx.folncc != null ? String(anx.folncc).trim() : "";
+      const rawEquipos = Array.isArray(anx && anx.equipos) ? anx.equipos : [];
+
+      let aE = 0;
+      let aS = 0;
+      const aECond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
+      const aSCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
+
+      const equipos = rawEquipos.map(eq => {
+        const tipo = String((eq && eq.tipo_equipo) || "").trim().toUpperCase() === "S" ? "S" : "E";
+        const condKey = getConditionFromEquipment(eq);
+        const eqpcod = eq && eq.eqpcod != null ? String(eq.eqpcod).trim() : "";
+        const eqpnm = eq && eq.eqpnm != null ? String(eq.eqpnm).trim() : "";
+        const imei = eq && eq.imei != null ? String(eq.imei).trim() : "";
+        const estadoCodigo = eq && eq.estado_codigo != null ? String(eq.estado_codigo).trim() : "";
+        const estadoEquipo = eq && eq.estado_equipo != null ? String(eq.estado_equipo).trim() : "";
+
+        allCond[condKey] = (allCond[condKey] || 0) + 1;
+        if (tipo === "S") {
+          simsS++;
+          aS++;
+          sCond[condKey] = (sCond[condKey] || 0) + 1;
+          aSCond[condKey] = (aSCond[condKey] || 0) + 1;
+          if (eqpnm) sModelMap.set(eqpnm, (sModelMap.get(eqpnm) || 0) + 1);
+        } else {
+          equiposE++;
+          aE++;
+          eCond[condKey] = (eCond[condKey] || 0) + 1;
+          aECond[condKey] = (aECond[condKey] || 0) + 1;
+          if (eqpnm) eModelMap.set(eqpnm, (eModelMap.get(eqpnm) || 0) + 1);
+        }
+
+        return { tipo, condKey, eqpcod, eqpnm, imei, estadoCodigo, estadoEquipo };
+      });
+
+      return { folcod, folncc, validado, eCount: aE, sCount: aS, eCond: aECond, sCond: aSCond, equipos };
+    });
+
+    const tecSet = new Set();
+    const provSet = new Set();
+    const planSet = new Set();
+    const licSet = new Set();
+    const detModelSet = new Set();
+    const detCondSet = new Set();
+    let eqPriceSum = 0;
+    let eqPriceCount = 0;
+    let planPriceSum = 0;
+    let planPriceCount = 0;
+
+    const detalleRows = rawDetalle.map(d => {
+      const equipo = d && d.equipo != null ? String(d.equipo).trim() : "";
+      const tecnologia = d && d.tecnologia != null ? String(d.tecnologia).trim() : "";
+      const proveedor = d && d.proveedor != null ? String(d.proveedor).trim() : "";
+      const planSim = d && d.plan_sim != null ? String(d.plan_sim).trim() : "";
+      const licencia = d && d.licencia != null ? String(d.licencia).trim() : "";
+      const valorEquipoNum = d && d.valor_equipo != null && d.valor_equipo !== "" ? parseFloat(d.valor_equipo) : NaN;
+      const valorPlanNum = d && d.valor_plan != null && d.valor_plan !== "" ? parseFloat(d.valor_plan) : NaN;
+
+      if (equipo) {
+        detModelSet.add(equipo);
+        const eqUpper = equipo.toUpperCase();
+        if (eqUpper.includes("REFURBISHED")) detCondSet.add("REFURBISHED");
+        else if (eqUpper.includes("USADO")) detCondSet.add("USADO");
+        else if (eqUpper.includes("NUEVO")) detCondSet.add("NUEVO");
+      }
+      if (tecnologia) tecSet.add(tecnologia);
+      if (proveedor) provSet.add(proveedor);
+      if (planSim) planSet.add(planSim);
+      if (licencia) licSet.add(licencia);
+
+      if (!isNaN(valorEquipoNum)) { eqPriceSum += valorEquipoNum; eqPriceCount++; }
+      if (!isNaN(valorPlanNum)) { planPriceSum += valorPlanNum; planPriceCount++; }
+
+      return {
+        equipo,
+        tecnologia,
+        proveedor,
+        planSim,
+        licencia,
+        valorEquipo: !isNaN(valorEquipoNum) ? valorEquipoNum : null,
+        valorPlan: !isNaN(valorPlanNum) ? valorPlanNum : null
+      };
+    });
+
+    const eKnown = [];
+    if (eCond.nuevo > 0) eKnown.push("NUEVO");
+    if (eCond.usado > 0) eKnown.push("USADO");
+    if (eCond.refurbished > 0) eKnown.push("REFURBISHED");
+
+    const sKnown = [];
+    if (sCond.nuevo > 0) sKnown.push("NUEVO");
+    if (sCond.usado > 0) sKnown.push("USADO");
+    if (sCond.refurbished > 0) sKnown.push("REFURBISHED");
+
+    let condition = "SIN ANEXOS";
+    if (equiposE === 0 && simsS === 0) {
+      if (item.estado === "cancelada") {
+        condition = "SIN ANEXOS";
+      } else if (detCondSet.size === 1) {
+        condition = Array.from(detCondSet)[0];
+      } else if (detCondSet.size > 1) {
+        condition = "MIXTO";
+      } else if (rawAnexos.length > 0 || detalleRows.length > 0) {
+        condition = "PEND. ANEXO";
+      } else {
+        condition = "SIN ANEXOS";
+      }
+    } else if (eKnown.length === 1) {
+      condition = eKnown[0];
+    } else if (eKnown.length > 1) {
+      condition = "MIXTO";
+    } else if (sKnown.length === 1) {
+      condition = sKnown[0];
+    } else if (sKnown.length > 1) {
+      condition = "MIXTO";
+    } else {
+      condition = "SIN ESTADO";
+    }
+
+    const result = {
+      hasAnexosField,
+      annexCount: rawAnexos.length,
+      annexValidated,
+      annexPending,
+      equiposE,
+      simsS,
+      totalDevices: equiposE + simsS,
+      eCond,
+      sCond,
+      allCond,
+      condition,
+      eModels: Array.from(eModelMap.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+      sModels: Array.from(sModelMap.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+      annexList,
+      detalleRows,
+      detalleModels: Array.from(detModelSet),
+      tecnologias: Array.from(tecSet),
+      proveedores: Array.from(provSet),
+      planesSim: Array.from(planSet),
+      licencias: Array.from(licSet),
+      unitEquipoAvg: eqPriceCount > 0 ? +(eqPriceSum / eqPriceCount).toFixed(2) : null,
+      unitPlanAvg: planPriceCount > 0 ? +(planPriceSum / planPriceCount).toFixed(2) : null,
+      currencySymbol
+    };
+
+    itemInventoryCache.set(item, result);
+    return result;
+  }
+
+  function formatMoney(val, pais) {
+    if (val == null || isNaN(Number(val))) return "-";
+    const sym = String(pais || "GT").trim().toUpperCase() === "SV" ? "$" : "Q";
+    return `${sym}${Number(val).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function getInventoryType(item) {
+    return getItemInventoryData(item).condition;
+  }
+
+  function getRadioModel(item) {
+    if (!item || typeof item !== "object") return "Sin modelo";
+    const inv = getItemInventoryData(item);
+    if (inv.eModels.length > 0) {
+      return inv.eModels.length > 1
+        ? `${inv.eModels[0].name} (+${inv.eModels.length - 1})`
+        : inv.eModels[0].name;
+    }
+    if (inv.detalleModels.length > 0) {
+      return inv.detalleModels.length > 1
+        ? `${inv.detalleModels[0]} (+${inv.detalleModels.length - 1})`
+        : inv.detalleModels[0];
+    }
+    if (item._altModelo) return item._altModelo;
+    if (item.b800 === true) return "Radio B800";
+    return "Sin detalle de equipo";
+  }
+
+  function getTotalRadiosCount(item) {
+    return Number(item && item.cantidad) || 0;
+  }
+
+  function getRadiosEntregadosCount(item) {
+    if (!item) return 0;
+    return item.estado === "finalizada" ? (Number(item.cantidad) || 0) : 0;
+  }
+
+  function getRadiosEnProcesoCount(item) {
+    if (!item) return 0;
+    return item.estado === "en_proceso" ? (Number(item.cantidad) || 0) : 0;
+  }
+
+  function formatRadiosEntregaCell(item) {
+    const total = getTotalRadiosCount(item);
+    const entregados = getRadiosEntregadosCount(item);
+    if (item.estado === "finalizada") {
+      return `
+        <strong style="font-family: var(--font-mono); font-size: 13px; color: #2f8f76;">${entregados} / ${total}</strong>
+        <div style="font-size: 9px; color: #3f9c85; font-weight: 700;">✓ Entregados</div>
+      `;
+    }
+    if (item.estado === "cancelada") {
+      return `
+        <strong style="font-family: var(--font-mono); font-size: 13px; color: #d95f6e;">0 / ${total}</strong>
+        <div style="font-size: 9px; color: #d95f6e; font-weight: 700;">Cancelada</div>
+      `;
+    }
+    return `
+      <strong style="font-family: var(--font-mono); font-size: 13px; color: #7fb0f0;">0 / ${total}</strong>
+      <div style="font-size: 9px; color: #8b909e; font-weight: 600;">${total} en proceso</div>
+    `;
+  }
+
+  function getInventoryBadgeHtml(condition) {
+    const t = String(condition || "SIN ANEXOS").toUpperCase();
+    let cls = "is-sin-anexos";
+    if (t === "NUEVO") cls = "is-nuevo";
+    else if (t === "USADO") cls = "is-usado";
+    else if (t === "REFURBISHED") cls = "is-refurbished";
+    else if (t === "MIXTO") cls = "is-mixto";
+    else if (t === "SIN ESTADO") cls = "is-sin-estado";
+    else if (t === "PEND. ANEXO") cls = "is-pend-anexo";
+    return `<span class="inv-cond-badge ${cls}">${escapeHtml(t)}</span>`;
+  }
+
+  function formatInventoryCell(item) {
+    const inv = getItemInventoryData(item);
+    const model = escapeHtml(getRadioModel(item));
+    const techProv = [inv.tecnologias[0], inv.proveedores[0]].filter(Boolean).join(" · ");
+    let countsLine = "Sin anexos temporales";
+    if (inv.annexCount > 0) {
+      countsLine = (inv.equiposE > 0 || inv.simsS > 0)
+        ? `${inv.annexCount} anx · ${inv.equiposE} Equipos · ${inv.simsS} SIM Cards`
+        : `${inv.annexCount} anx · Sin desglose de dispositivos en SAN`;
+    } else if (item.estado === "cancelada") {
+      countsLine = "Cancelada · sin anexos";
+    } else if (inv.detalleRows.length > 0) {
+      countsLine = "Pendiente anexo SAN";
+    }
+    const detailSub = techProv ? `${model} · ${escapeHtml(techProv)}` : model;
+    return `
+      ${getInventoryBadgeHtml(inv.condition)}
+      <div class="inv-submeta" title="${detailSub}">${detailSub}</div>
+      <div class="inv-submeta" style="color: #9ba3b4;">${countsLine}</div>
+    `;
+  }
+
+  async function completeMissingCompanyNames(items, rawAllItems = []) {
+    const selfCompanyByCode = new Map();
+    [...rawAllItems, ...items].forEach(item => {
+      if (!item || typeof item !== "object") return;
+      const existingName = getRawCompanyName(item);
+      const code = getClientCode(item);
+      if (existingName && code && !selfCompanyByCode.has(code)) {
+        selfCompanyByCode.set(code, existingName);
+      }
+    });
+
     items.forEach(item => {
-      const existingName = getCompanyName(item);
+      const existingName = getRawCompanyName(item) || selfCompanyByCode.get(getClientCode(item)) || "";
       if (existingName) item.empresa = existingName;
     });
-    const missingNames = items.filter(item => !getCompanyName(item));
-    if (!missingNames.length) return;
 
-    try {
-      const response = await fetch(CLIENT_NAMES_API_URL, { cache: "no-store" });
-      if (!response.ok) throw new Error("la fuente de altas respondió " + response.status);
+    const [altasResult, storeResult] = await Promise.allSettled([
+      fetch(CLIENT_NAMES_API_URL, { cache: "no-store" }),
+      fetch(STORE_CLIENTES_API_URL, {
+        method: "POST",
+        headers: {
+          apikey: STORE_CLIENTES_API_KEY,
+          Authorization: `Bearer ${STORE_CLIENTES_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: "{}",
+        cache: "no-store"
+      })
+    ]);
 
-      const json = await response.json();
-      const rows = Array.isArray(json) ? json : (json.data || json.items || json.results);
-      if (!Array.isArray(rows)) throw new Error("la fuente de altas no devolvió una lista");
+    const companyByCode = new Map();
 
-      const companyByCode = new Map();
-      rows.forEach(row => {
-        if (!row || typeof row !== "object") return;
-        const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
-        const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
-        if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
-      });
+    if (altasResult.status === "fulfilled" && altasResult.value.ok) {
+      try {
+        const json = await altasResult.value.json();
+        const rows = Array.isArray(json) ? json : (json.data || json.items || json.results);
+        if (Array.isArray(rows)) {
+          rows.forEach(row => {
+            if (!row || typeof row !== "object") return;
+            const code = getClientCode(row) || String(row["CODIGO CLIENTE"] || "").trim().toUpperCase();
+            const name = String(row.clinam || row["NOMBRE CLIENTE"] || row.cliente || row.empresa || "").trim();
+            if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
+          });
+        }
+      } catch (error) {
+        console.warn("No se pudieron procesar nombres desde la fuente de altas:", error.message);
+      }
+    } else if (altasResult.status === "rejected") {
+      console.warn("No se pudieron completar nombres adicionales desde la fuente de altas:", altasResult.reason?.message || "error");
+    }
 
-      items.forEach(item => {
-        const existingName = getCompanyName(item);
-        const company = existingName || companyByCode.get(getClientCode(item)) || "";
-        if (company) item.empresa = company;
-      });
-    } catch (error) {
-      console.warn("No se pudieron completar los nombres de empresa desde la fuente de altas:", error.message);
+    if (storeResult.status === "fulfilled" && storeResult.value.ok) {
+      try {
+        const storeJson = await storeResult.value.json();
+        const storeClientes = Array.isArray(storeJson?.clientes) ? storeJson.clientes : [];
+        storeClientes.forEach(row => {
+          if (!row || typeof row !== "object") return;
+          const code = getClientCode(row);
+          const name = getNameValue(row.nombre || row.cliente || row.razon_social);
+          if (code && name && !companyByCode.has(code)) companyByCode.set(code, name);
+        });
+      } catch (error) {
+        console.warn("No se pudieron procesar nombres desde Store clientes:", error.message);
+      }
     }
 
     items.forEach(item => {
-      if (!getCompanyName(item)) {
-        const override = CLIENT_NAME_OVERRIDES[getClientCode(item)];
-        if (override) item.empresa = override;
-      }
+      const code = getClientCode(item);
+      const existingName = getRawCompanyName(item);
+      const company = existingName || companyByCode.get(code) || CLIENT_NAME_OVERRIDES[code] || "";
+      if (company) item.empresa = company;
     });
   }
 
-  function renderApiUpdateTimestamp() {
+  function renderApiUpdateTimestamp(isoString = null) {
     const updatedAtEl = document.getElementById("apiUpdatedAt");
     if (!updatedAtEl) return;
 
+    const targetDate = isoString ? new Date(isoString) : (apiMetaGeneratedAt ? new Date(apiMetaGeneratedAt) : estimatedApiUpdatedAt);
+    const safeDate = isNaN(targetDate.getTime()) ? estimatedApiUpdatedAt : targetDate;
     const formattedDate = new Intl.DateTimeFormat("es-GT", {
       day: "numeric",
       month: "long",
@@ -1049,12 +1574,11 @@
       hour: "numeric",
       minute: "2-digit",
       timeZone: "America/Guatemala"
-    }).format(estimatedApiUpdatedAt);
+    }).format(safeDate);
     updatedAtEl.textContent = formattedDate;
   }
 
   async function loadDataFromApi(silent = false) {
-    const badge = document.getElementById("apiStatusBadge");
     const textEl = document.getElementById("apiStatusText");
     const dotEl = document.getElementById("apiStatusDot");
     const errBanner = document.getElementById("apiErrorBanner");
@@ -1071,7 +1595,6 @@
     ];
 
     let fetchedData = null;
-    let usedEndpoint = "";
 
     for (const ep of endpoints) {
       try {
@@ -1088,9 +1611,11 @@
         if (res.ok) {
           const json = await res.json();
           const items = Array.isArray(json) ? json : (json.data || []);
+          if (json && !Array.isArray(json) && json.meta && json.meta.generadoEn) {
+            apiMetaGeneratedAt = json.meta.generadoEn;
+          }
           if (items && items.length > 0) {
             fetchedData = items;
-            usedEndpoint = ep;
             break;
           }
         }
@@ -1099,11 +1624,14 @@
       }
     }
 
+    itemInventoryCache = new WeakMap();
+
     if (fetchedData && fetchedData.length > 0) {
       // Filtrar preofertas: las no iniciadas no interesan según indicación expresa
       allData = fetchedData.filter(item => item && item.iniciada !== false && item.estado !== "no_iniciada");
-      await completeMissingCompanyNames(allData);
+      await completeMissingCompanyNames(allData, fetchedData);
       filteredData = [...allData];
+      renderApiUpdateTimestamp(apiMetaGeneratedAt);
       if (textEl) textEl.innerText = "Conectado a API Workflow (" + allData.length + " activas)";
       if (dotEl) dotEl.style.background = "#2f8f76";
     } else {
@@ -1159,7 +1687,14 @@
     renderApp();
   }
 
+  function openCountryStageAudit(countryCode, stageNum) {
+    stageModalCountryScope = countryCode || null;
+    openStageModal(stageNum, countryCode);
+  }
+
   function navigateToEtapasFilter(filterOverrides = {}) {
+    currentFilter.openSlaFocus = filterOverrides.openSlaFocus || null;
+
     if (filterOverrides.estado) {
       if (filterOverrides.estado === "todos") {
         currentFilter.estados = ESTADO_OPTIONS.map(o => o.value);
@@ -1196,7 +1731,7 @@
     renderChecklistCols();
     switchTab("etapas");
     renderApp();
-    const tableEl = document.getElementById("radicacionesTableWrap");
+    const tableEl = document.getElementById("generalTableSection") || document.getElementById("radicacionesTableWrap");
     if (tableEl) {
       setTimeout(() => {
         tableEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1210,13 +1745,15 @@
       // 0. Excluir no iniciadas (todo menos las no iniciadas)
       if (item.iniciada === false || item.estado === "no_iniciada" || item.estado === "no iniciada") return false;
       // 1. País
-      if (currentFilter.pais !== "todos" && item.pais !== currentFilter.pais) return false;
+      const itemPais = String(item.pais || "GT").trim().toUpperCase();
+      if (currentFilter.pais !== "todos" && itemPais !== currentFilter.pais) return false;
 
       // 2. Estado
       if (!currentFilter.estados.includes(item.estado)) return false;
 
       // 3. Negocio
-      if (!currentFilter.negocios.includes(item.negocio)) return false;
+      const itemNegocio = String(item.negocio || "").trim().toUpperCase();
+      if (currentFilter.negocios.length < NEGOCIO_OPTIONS.length && !currentFilter.negocios.includes(itemNegocio)) return false;
 
       // 4. Etapas
       const activeStageNum = item.proceso && item.proceso.etapaActual 
@@ -1225,14 +1762,23 @@
       if (!currentFilter.etapas.includes(activeStageNum)) return false;
       if (currentFilter.stageQuickFilter !== "todos" && activeStageNum !== currentFilter.stageQuickFilter) return false;
 
-      // 5. SLA
-      const itemCond = getItemSlaCondition(item);
-      if (!currentFilter.slas.includes(itemCond)) return false;
+      // 5. Enfoque SLA de procesos en curso o filtro general
+      if (currentFilter.openSlaFocus) {
+        if (item.estado !== "en_proceso") return false;
+        const m = getOpenProcessMetrics(item);
+        if (currentFilter.openSlaFocus === "open_en_tiempo" && !m.isEnTiempoGlobal) return false;
+        if (currentFilter.openSlaFocus === "open_por_vencer" && !m.isPorVencerGlobal) return false;
+        if (currentFilter.openSlaFocus === "open_vencido_global" && !m.isVencidoGlobal) return false;
+        if (currentFilter.openSlaFocus === "open_vencidas_etapa" && !m.hasStageVencida) return false;
+      } else {
+        const itemCond = getItemSlaCondition(item);
+        if (!currentFilter.slas.includes(itemCond)) return false;
+      }
 
       // 6. Categoría Quick Filter
-      if (currentFilter.catQuickFilter !== "ALL" && item.negocio !== currentFilter.catQuickFilter) return false;
+      if (currentFilter.catQuickFilter !== "ALL" && itemNegocio !== currentFilter.catQuickFilter) return false;
 
-      // 7. Rango de fechas
+      // 7. Rango de fechas estricto para todos los estados (incluyendo en_proceso)
       const itemDate = getItemFilterDate(item);
       if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
       if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
@@ -1268,6 +1814,7 @@
   function updateFilterBanner() {
     const banner = document.getElementById("activeFilterAlertBanner");
     const textEl = document.getElementById("activeFilterAlertText");
+    const countEl = document.getElementById("activeFilterAlertCount");
     const countBtn = document.getElementById("btnResetActiveFilterCount");
     if (!banner || !textEl) return;
 
@@ -1280,12 +1827,40 @@
       currentFilter.slas.length < SLA_OPTIONS.length ||
       currentFilter.stageQuickFilter !== "todos" ||
       currentFilter.catQuickFilter !== "ALL" ||
+      !!currentFilter.openSlaFocus ||
       customDateFilter ||
       currentFilter.search !== "";
 
+    const focusLabels = {
+      open_all: "Procesos en curso",
+      open_en_tiempo: "En tiempo (> 20% restante SLA global)",
+      open_por_vencer: "Por vencer (último 20% SLA global)",
+      open_vencido_global: "SLA vencido (> 104h)",
+      open_vencidas_etapa: "Con etapas vencidas"
+    };
+
     if (hasFilter) {
       banner.style.display = "flex";
-      textEl.innerHTML = `Filtros Personalizados (${filteredData.length} radicaciones)`;
+      const parts = [];
+      if (currentFilter.pais !== "todos") parts.push(`País: ${getActiveCountryLabel()}`);
+      if (currentFilter.openSlaFocus) parts.push(focusLabels[currentFilter.openSlaFocus] || "Procesos en curso");
+      if (currentFilter.catQuickFilter !== "ALL") parts.push(`Categoría: ${currentFilter.catQuickFilter}`);
+      if (currentFilter.stageQuickFilter !== "todos") parts.push(`Etapa: Fase ${currentFilter.stageQuickFilter}`);
+      if (customDateFilter) parts.push(`Período: ${currentFilter.dateFrom || "inicio"} a ${currentFilter.dateTo || "hoy"}`);
+      if (currentFilter.search) parts.push(`Búsqueda: "${currentFilter.search}"`);
+      if (
+        parts.length === 0 ||
+        currentFilter.estados.length < ESTADO_OPTIONS.length ||
+        currentFilter.negocios.length < NEGOCIO_OPTIONS.length ||
+        currentFilter.etapas.length < ETAPA_OPTIONS.length ||
+        currentFilter.slas.length < SLA_OPTIONS.length
+      ) {
+        if (parts.length === 0) parts.push("Filtros Personalizados");
+      }
+      textEl.textContent = parts.join(" · ");
+      if (countEl) {
+        countEl.textContent = `${filteredData.length} radicaciones mostradas de ${allData.length} históricas`;
+      }
       if (countBtn) countBtn.innerText = "✕ Mostrar todas las radicaciones";
     } else {
       banner.style.display = "none";
@@ -1300,6 +1875,7 @@
         (currentFilter.slas.length < SLA_OPTIONS.length ? 1 : 0) +
         (currentFilter.stageQuickFilter !== "todos" ? 1 : 0) +
         (currentFilter.catQuickFilter !== "ALL" ? 1 : 0) +
+        (currentFilter.openSlaFocus ? 1 : 0) +
         (customDateFilter ? 1 : 0) +
         (currentFilter.search ? 1 : 0);
       if (count > 0) {
@@ -1313,6 +1889,7 @@
 
   function resetAllFilters() {
     currentFilter.pais = "todos";
+    currentFilter.openSlaFocus = null;
     currentFilter.estados = ESTADO_OPTIONS.map(o => o.value);
     currentFilter.negocios = NEGOCIO_OPTIONS.map(o => o.value);
     currentFilter.etapas = ETAPA_OPTIONS.map(o => o.value);
@@ -1323,6 +1900,7 @@
     currentFilter.search = "";
     currentFilter.stageQuickFilter = "todos";
     currentFilter.catQuickFilter = "ALL";
+    currentFilter.invCondFilter = "ALL";
 
     const dFrom = document.getElementById("dateFrom");
     const dTo = document.getElementById("dateTo");
@@ -1332,6 +1910,9 @@
     document.querySelectorAll(".op-btn").forEach(btn => {
       btn.classList.toggle("active", btn.getAttribute("data-op") === "todos");
     });
+    updatePillActive("#catQuickFilter", "ALL", "data-cat");
+    updatePillActive("#invCondQuickFilter", "ALL", "data-invcond");
+    updatePillActive("#etapasTabFilterButtons", "todos", "data-etapa");
 
     renderChecklistCols();
     renderApp();
@@ -1605,41 +2186,241 @@
     });
   }
 
-  function renderResumenKPIs() {
-      // SV & GT SLAs calculados dinámicamente sobre el período activo
-      const periodList = allData.filter(i => {
-        const itemDate = getItemFilterDate(i);
-        if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
-        if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
-        if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
-        return true;
+  const COUNTRY_META = {
+    GT: {
+      code: "GT",
+      tagText: "GT · OPERACIÓN",
+      name: "Guatemala",
+      upper: "GUATEMALA",
+      cls: "is-gt",
+      flagSvg: `<svg class="sla-country-flag" viewBox="0 0 24 18" aria-hidden="true"><rect width="8" height="18" fill="#4997D0"/><rect x="8" width="8" height="18" fill="#FFFFFF"/><rect x="16" width="8" height="18" fill="#4997D0"/><circle cx="12" cy="9" r="2.2" fill="#88B04B"/></svg>`
+    },
+    SV: {
+      code: "SV",
+      tagText: "SV · OPERACIÓN",
+      name: "El Salvador",
+      upper: "EL SALVADOR",
+      cls: "is-sv",
+      flagSvg: `<svg class="sla-country-flag" viewBox="0 0 24 18" aria-hidden="true"><rect width="24" height="6" fill="#003893"/><rect y="6" width="24" height="6" fill="#FFFFFF"/><rect y="12" width="24" height="6" fill="#003893"/><circle cx="12" cy="9" r="2" fill="#EAAA00"/></svg>`
+    }
+  };
+
+  function getCountryOpenSlaItems(countryCode) {
+    return allData.filter(item => {
+      if (!item || item.iniciada === false || item.estado !== "en_proceso") return false;
+      const itemPais = String(item.pais || "GT").trim().toUpperCase();
+      if (itemPais !== countryCode) return false;
+      if (!currentFilter.estados.includes("en_proceso") && !currentFilter.openSlaFocus) return false;
+      const itemNegocio = String(item.negocio || "").trim().toUpperCase();
+      if (currentFilter.negocios.length < NEGOCIO_OPTIONS.length && !currentFilter.negocios.includes(itemNegocio)) return false;
+
+      const activeStageNum = item.proceso && item.proceso.etapaActual
+        ? String(item.proceso.etapaActual.numero)
+        : "1";
+      if (!currentFilter.etapas.includes(activeStageNum)) return false;
+      if (currentFilter.stageQuickFilter !== "todos" && activeStageNum !== currentFilter.stageQuickFilter) return false;
+      if (currentFilter.catQuickFilter !== "ALL" && itemNegocio !== currentFilter.catQuickFilter) return false;
+
+      if (!currentFilter.openSlaFocus && currentFilter.slas.length < SLA_OPTIONS.length) {
+        if (!currentFilter.slas.includes(getItemSlaCondition(item))) return false;
+      }
+
+      const itemDate = getItemFilterDate(item);
+      if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+      if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+      if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+
+      if (currentFilter.search) {
+        const q = currentFilter.search.toLowerCase().trim();
+        const matchClient = getCompanyName(item).toLowerCase().includes(q);
+        const matchPre = String(item.preOferta || "").toLowerCase().includes(q);
+        const matchCode = String(item.codigo || "").toLowerCase().includes(q);
+        const matchVend = String(item.vendedor || "").toLowerCase().includes(q);
+        if (!matchClient && !matchPre && !matchCode && !matchVend) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderCountrySlaPanelHtml(countryCode, isSingle) {
+    const meta = COUNTRY_META[countryCode];
+    const openItems = getCountryOpenSlaItems(countryCode);
+    const totalEnCurso = openItems.length;
+    const navPais = countryCode;
+
+    let enTiempo = 0;
+    let porVencer = 0;
+    let vencidoGlobal = 0;
+    let vencidasEtapa = 0;
+    let dentroSla = 0;
+
+    openItems.forEach(item => {
+      const m = getOpenProcessMetrics(item);
+      if (m.isVencidoGlobal) vencidoGlobal++;
+      else if (m.isPorVencerGlobal) porVencer++;
+      else enTiempo++;
+      if (m.isDentroSlaGlobal) dentroSla++;
+      if (m.hasStageVencida) vencidasEtapa++;
+    });
+
+    const slaGlobalPct = totalEnCurso > 0 ? Math.round((dentroSla / totalEnCurso) * 100) : 100;
+    const barColor = slaGlobalPct >= 80 ? "#2f8f76" : slaGlobalPct >= 50 ? "#4f8fd8" : "#c43c50";
+
+    const shortStageTitles = [
+      "Gestión Inicial y Validación",
+      "Petición de Recursos",
+      "Registro en el Sistema Central",
+      "Preparación Técnica",
+      "Despliegue y Entrega"
+    ];
+
+    const stageTilesHtml = [1, 2, 3, 4, 5].map(num => {
+      const limit = STAGE_SLAS[num] || 24;
+      let iniciadas = 0;
+      let cumplidas = 0;
+
+      openItems.forEach(item => {
+        const etapas = (item.proceso && item.proceso.etapas) ? item.proceso.etapas : [];
+        const st = etapas.find(e => e.numero === num);
+        if (!st || !st.fechaInicio) return;
+        iniciadas++;
+        const h = calculateBusinessHours(st.fechaInicio, getStageEffectiveEndIso(item, st));
+        if (h <= limit) cumplidas++;
       });
 
-      const svItems = periodList.filter(i => i.pais === "SV");
-      const gtItems = periodList.filter(i => i.pais === "GT");
+      const pct = iniciadas > 0 ? Math.round((cumplidas / iniciadas) * 100) : null;
+      const pctCls = pct == null ? "is-none" : pct >= 80 ? "is-good" : pct >= 50 ? "is-warn" : "is-bad";
+      const pctStr = pct == null ? "—" : `${pct}%`;
 
-      // Procesos sin etapas vencidas (cumplen SLA de proceso según workflow.red.com.gt)
-      const svOk = svItems.filter(i => getItemSlaCondition(i) === "en_tiempo").length;
-      const gtOk = gtItems.filter(i => getItemSlaCondition(i) === "en_tiempo").length;
+      return `
+        <button type="button" class="sla-stage-tile" onclick="openCountryStageAudit('${countryCode}', ${num})" title="Clic para auditar E${num} en ${meta.name}">
+          <div>
+            <div class="sla-stage-code">E${num} · ${limit}h</div>
+            <div class="sla-stage-name">${shortStageTitles[num - 1]}</div>
+          </div>
+          <div>
+            <div class="sla-stage-pct ${pctCls}">${pctStr}</div>
+            <div class="sla-stage-meta">${cumplidas}/${iniciadas} cumplidas</div>
+          </div>
+        </button>
+      `;
+    }).join("");
 
-      const svPct = svItems.length ? Math.round((svOk / svItems.length) * 100) : 100;
-      const gtPct = gtItems.length ? Math.round((gtOk / gtItems.length) * 100) : 100;
+    const fmtPeriodDate = (iso) => iso ? iso.split("-").reverse().join("/") : "";
+    const periodRangeLabel = (currentFilter.dateFrom || currentFilter.dateTo)
+      ? `${fmtPeriodDate(currentFilter.dateFrom) || "inicio"} – ${fmtPeriodDate(currentFilter.dateTo) || "hoy"}`
+      : "Histórico completo";
+    const scopeLabel = `Procesos en curso (${periodRangeLabel}) · L–V 8:00 a 18:00`;
 
-      const svPctEl = document.getElementById("svGlobalSlaPct");
-      if (svPctEl) svPctEl.innerText = `${svPct}%`;
-      const svBarEl = document.getElementById("svGlobalProgressBar");
-      if (svBarEl) svBarEl.style.width = `${svPct}%`;
-      const svCountEl = document.getElementById("svGlobalOkCount");
-      if (svCountEl) svCountEl.innerText = `${svOk} de ${svItems.length}`;
+    return `
+      <article class="sla-country-panel ${meta.cls} ${isSingle ? 'is-single' : ''}">
+        <header class="sla-country-head">
+          <div class="sla-country-id">
+            ${meta.flagSvg}
+            <div>
+              <div class="sla-country-name">Activaciones · ${meta.name}</div>
+              <div class="sla-country-scope-note">${scopeLabel}</div>
+            </div>
+          </div>
+          <span class="sla-country-code-tag">${meta.tagText}</span>
+        </header>
 
-      const gtPctEl = document.getElementById("gtGlobalSlaPct");
-      if (gtPctEl) gtPctEl.innerText = `${gtPct}%`;
-      const gtBarEl = document.getElementById("gtGlobalProgressBar");
-      if (gtBarEl) gtBarEl.style.width = `${gtPct}%`;
-      const gtCountEl = document.getElementById("gtGlobalOkCount");
-      if (gtCountEl) gtCountEl.innerText = `${gtOk} de ${gtItems.length}`;
+        <!-- 1. KPI SLA GLOBAL -->
+        <div class="sla-global-hero">
+          <div class="sla-global-hero-top">
+            <div>
+              <div class="sla-global-eyebrow">KPI SLA GLOBAL · ${meta.upper}</div>
+              <div class="sla-global-formula">${dentroSla} / ${totalEnCurso} &times; 100 procesos abiertos dentro del SLA</div>
+              <div class="sla-global-ref">Referencia: procesos dentro de SLA / procesos abiertos &times; 100 &middot; SLA total 104 h</div>
+              <div class="sla-global-out">${vencidoGlobal} fuera de tiempo (&gt; 104 h)${porVencer > 0 ? ` &middot; ${porVencer} por vencer` : ""}</div>
+            </div>
+            <div class="sla-global-pct-wrap">
+              <div class="sla-global-pct">${slaGlobalPct}%</div>
+            </div>
+          </div>
+          <div class="sla-global-bar-track">
+            <div class="sla-global-bar-fill" style="width: ${slaGlobalPct}%; background: ${barColor};"></div>
+          </div>
+        </div>
 
-      // 4 KPIs Principales
+        <div class="sla-legend-callout">
+          <strong>Cómo leer el SLA global:</strong> verde indica que queda más del 20% del tiempo total (&le; 83.2 h); amarillo indica que entró en el último 20% de su SLA global (83.2 h – 104 h); rojo indica que superó la suma de los SLA de sus 5 etapas (&gt; 104 h); neutro indica el total de radicaciones en curso; morado indica al menos una etapa vencida.
+        </div>
+
+        <!-- 2. LOS 5 CUADRITOS EN EL ORDEN EXACTO -->
+        <div class="sla-status-grid-5">
+          <button type="button" class="sla-status-tile tone-neutral" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_all' })" title="Ver todos los procesos en curso de ${meta.name}">
+            <span class="sla-tile-label">Procesos en curso</span>
+            <span class="sla-tile-val">${totalEnCurso}</span>
+            <span class="sla-tile-action">Ver todos &nearr;</span>
+          </button>
+
+          <button type="button" class="sla-status-tile tone-green" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_en_tiempo' })" title="Ver procesos en tiempo (&le; 83.2h) de ${meta.name}">
+            <span class="sla-tile-label">En tiempo</span>
+            <span class="sla-tile-val">${enTiempo}</span>
+            <span class="sla-tile-action">Ver procesos &nearr;</span>
+          </button>
+
+          <button type="button" class="sla-status-tile tone-yellow" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_por_vencer' })" title="Ver procesos por vencer (último 20% SLA global) de ${meta.name}">
+            <span class="sla-tile-label">Por vencer</span>
+            <span class="sla-tile-val">${porVencer}</span>
+            <span class="sla-tile-action">Ver procesos &nearr;</span>
+          </button>
+
+          <button type="button" class="sla-status-tile tone-red" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_vencido_global' })" title="Ver procesos con SLA global vencido (&gt; 104h) de ${meta.name}">
+            <span class="sla-tile-label">SLA vencido</span>
+            <span class="sla-tile-val">${vencidoGlobal}</span>
+            <span class="sla-tile-action">Ver procesos &nearr;</span>
+          </button>
+
+          <button type="button" class="sla-status-tile tone-purple" onclick="navigateToEtapasFilter({ pais: '${navPais}', estado: 'en_proceso', sla: 'todos', openSlaFocus: 'open_vencidas_etapa' })" title="Ver procesos con al menos una etapa vencida en ${meta.name}">
+            <span class="sla-tile-label">Vencidas en etapa</span>
+            <span class="sla-tile-val">${vencidasEtapa}</span>
+            <span class="sla-tile-action">Ver etapas &nearr;</span>
+          </button>
+        </div>
+
+        <!-- 3. KPI SLA POR ETAPA -->
+        <div class="sla-stages-block">
+          <div>
+            <div class="sla-stages-title">KPI SLA por etapa</div>
+            <div class="sla-stages-sub">Cumplimiento de etapas iniciadas o completadas en procesos en curso. Cada radicación se cuenta una vez; las etapas no iniciadas quedan fuera del conteo.</div>
+          </div>
+          <div class="sla-stage-grid-5">
+            ${stageTilesHtml}
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderCountrySlaBlocks() {
+    const container = document.getElementById("countrySlaDashboardsContainer");
+    if (!container) return;
+
+    if (currentFilter.pais === "GT") {
+      container.className = "sla-countries-stage";
+      container.innerHTML = renderCountrySlaPanelHtml("GT", true);
+    } else if (currentFilter.pais === "SV") {
+      container.className = "sla-countries-stage";
+      container.innerHTML = renderCountrySlaPanelHtml("SV", true);
+    } else {
+      container.className = "sla-countries-stage is-split";
+      container.innerHTML = renderCountrySlaPanelHtml("GT", false) + renderCountrySlaPanelHtml("SV", false);
+    }
+  }
+
+  function renderResumenKPIs() {
+      renderCountrySlaBlocks();
+
+      // KPIs unificados de Radicaciones + Radios sobre el mismo conjunto filteredData
+      const totalRadios = filteredData.reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
+      const radiosEnProceso = filteredData.reduce((sum, i) => sum + getRadiosEnProcesoCount(i), 0);
+      const radiosEntregados = filteredData.reduce((sum, i) => sum + getRadiosEntregadosCount(i), 0);
+      const radiosCancelados = filteredData
+        .filter(i => i.estado === "cancelada")
+        .reduce((sum, i) => sum + getTotalRadiosCount(i), 0);
+
       const total = filteredData.length;
       const enProceso = filteredData.filter(i => i.estado === "en_proceso").length;
       const finalizadas = filteredData.filter(i => i.estado === "finalizada").length;
@@ -1650,13 +2431,36 @@
         if (el) el.innerText = val;
       };
 
-      setElText("kpiTotalExact", total);
-      setElText("kpiTotalFootnote", `${total} radicaciones encontradas · Clic para ver ↗`);
-      setElText("kpiActiveExact", enProceso);
-      setElText("kpiDoneExact", finalizadas);
-      setElText("kpiCancelledExact", canceladas);
+      setElText("kpiTotalExact", total.toLocaleString("es-GT"));
+      setElText("kpiTotalRadios", totalRadios.toLocaleString("es-GT"));
+      setElText("kpiActiveExact", enProceso.toLocaleString("es-GT"));
+      setElText("kpiRadiosEnProceso", radiosEnProceso.toLocaleString("es-GT"));
+      setElText("kpiDoneExact", finalizadas.toLocaleString("es-GT"));
+      setElText("kpiRadiosEntregados", radiosEntregados.toLocaleString("es-GT"));
+      setElText("kpiCancelledExact", canceladas.toLocaleString("es-GT"));
+      setElText("kpiRadiosCancelados", radiosCancelados.toLocaleString("es-GT"));
 
-      // 4 SLAs
+      // KPIs de Equipos, SIM Cards y Condición de Inventario (Nuevo / Usado / Refurbished)
+      let totalE = 0;
+      let totalS = 0;
+      let eNuevo = 0, eUsado = 0, eRefurb = 0;
+
+      filteredData.forEach(item => {
+        const inv = getItemInventoryData(item);
+        totalE += inv.equiposE;
+        totalS += inv.simsS;
+        eNuevo += inv.eCond.nuevo;
+        eUsado += inv.eCond.usado;
+        eRefurb += inv.eCond.refurbished;
+      });
+
+      setElText("kpiTotalEquipos", totalE.toLocaleString("es-GT"));
+      setElText("kpiTotalSims", totalS.toLocaleString("es-GT"));
+      setElText("kpiInvNuevoCount", eNuevo.toLocaleString("es-GT"));
+      setElText("kpiInvUsadoCount", eUsado.toLocaleString("es-GT"));
+      setElText("kpiInvRefurbCount", eRefurb.toLocaleString("es-GT"));
+
+      // SLAs para Donut Chart (mismos colores semánticos que las tarjetas de arriba)
       let enTiempo = 0;
       let porVencer = 0;
       let vencEtapa = 0;
@@ -1666,14 +2470,9 @@
         const cond = getItemSlaCondition(item);
         if (cond === "vencidas_global") vencGlobal++;
         else if (cond === "vencidas_etapa") vencEtapa++;
-        else if (cond === "por_vencer") porVencer++;
+        else if (cond === "por_vencer" || cond === "por_vencer_global") porVencer++;
         else enTiempo++;
       });
-
-      setElText("slaEnTiempoCount", enTiempo);
-      setElText("slaPorVencerCount", porVencer);
-      setElText("slaVencidasEtapaCount", vencEtapa);
-      setElText("slaVencidasGlobalCount", vencGlobal);
 
       setElText("donutTotalCount", total);
       setElText("donutEnTiempoCount", enTiempo);
@@ -1691,21 +2490,18 @@
     function renderDonutSvg(ok, near, vencE, vencG, total) {
       const svg = document.getElementById("donutSvg");
       if (!svg) return;
-      // Pista sobria de la guía (rgba(255,255,255,.07)); la rotación -90° va dentro del SVG
-      // porque la animación general .gx-donut usa transform sobre el <svg>.
       const track = `<circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="13" />`;
       if (total === 0) {
         svg.innerHTML = track;
         return;
       }
 
-      const circumference = 2 * Math.PI * 38; // ~238.76
-      // Colores con significado (SLA) en tonos de la guía: verde ok, amarillo advertencia,
-      // naranja vencida por etapa, rojo vencida global
+      const circumference = 2 * Math.PI * 38;
+      // Colores exactos emparejados con los 5 cuadritos SLA: verde, amarillo, morado (etapa), rojo (global)
       const segments = [
         { count: ok, color: "#2f8f76" },
         { count: near, color: "#c59600" },
-        { count: vencE, color: "#c59600" },
+        { count: vencE, color: "#8b5cf6" },
         { count: vencG, color: "#c43c50" }
       ];
 
@@ -1795,7 +2591,14 @@
       const tooltip = document.getElementById("weeklyHoverTooltip");
       if (!svg || !wrapper) return;
 
-      const weeks = computeWeeklySeries(filteredData);
+      const weeklyPeriodData = filteredData.filter(item => {
+        const itemDate = getItemFilterDate(item);
+        if ((currentFilter.dateFrom || currentFilter.dateTo) && !itemDate) return false;
+        if (currentFilter.dateFrom && itemDate < currentFilter.dateFrom) return false;
+        if (currentFilter.dateTo && itemDate > currentFilter.dateTo) return false;
+        return true;
+      });
+      const weeks = computeWeeklySeries(weeklyPeriodData);
       if (!weeks || weeks.length === 0) {
         svg.innerHTML = `
           <text x="300" y="120" fill="#8b909e" font-size="12" text-anchor="middle" font-weight="700">
@@ -2003,8 +2806,8 @@
           const st = item.proceso.etapas.find(e => e.numero === stageNum);
           if (!st || !st.fechaInicio) return;
 
-          const evalSt = getStageStatus(st, slaLimit);
-          if (st.estado === "activa") activeNow++;
+          const evalSt = getStageStatus(st, slaLimit, item);
+          if (item.estado === "en_proceso" && st.estado === "activa") activeNow++;
 
           if (evalSt.status === "vencida") vencidas++;
           else if (evalSt.status === "near") porVencer++;
@@ -2065,6 +2868,12 @@
         const pais = String(item.pais || "").toLowerCase();
         const stName = (item.proceso && item.proceso.etapaActual && item.proceso.etapaActual.nombre)
           ? item.proceso.etapaActual.nombre.toLowerCase() : "";
+        const inv = getItemInventoryData(item);
+        const invMatch = inv.condition.toLowerCase().includes(q)
+          || inv.eModels.some(m => m.name.toLowerCase().includes(q))
+          || inv.tecnologias.some(t => t.toLowerCase().includes(q))
+          || inv.proveedores.some(p => p.toLowerCase().includes(q))
+          || inv.annexList.some(a => a.folcod.toLowerCase().includes(q) || a.equipos.some(e => e.imei.toLowerCase().includes(q)));
         return pre.includes(q) ||
                ("#" + pre).includes(q) ||
                emp.includes(q) ||
@@ -2072,16 +2881,20 @@
                vend.includes(q) ||
                neg.includes(q) ||
                pais === q ||
-               stName.includes(q);
+               stName.includes(q) ||
+               invMatch;
       });
     }
 
+    const titleEl = document.getElementById("generalTableTitleText");
+    if (titleEl) {
+      titleEl.innerText = currentFilter.pais === "todos"
+        ? "Listado General de Detalle de Radicaciones"
+        : `Listado General de Detalle de Radicaciones · ${getActiveCountryLabel()}`;
+    }
+
     if (countBadge) {
-      if (tableSearchText) {
-        countBadge.innerText = `Mostrando ${displayList.length} radicaciones`;
-      } else {
-        countBadge.innerText = `Mostrando ${displayList.length} radicaciones`;
-      }
+      countBadge.innerText = `Mostrando ${displayList.length} radicaciones · ${getActiveCountryLabel()}`;
     }
 
     if (btnResetTable) {
@@ -2091,7 +2904,7 @@
     if (displayList.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
             <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
             <div style="font-size: 14px; font-weight: 700; color: #fff;">No se encontraron radicaciones</div>
             <div style="font-size: 11px; margin-top: 4px;">Intenta ajustar la búsqueda o los filtros aplicados.</div>
@@ -2120,18 +2933,18 @@
       if (item.proceso && item.proceso.etapaActual) {
         const num = item.proceso.etapaActual.numero;
         const nom = item.proceso.etapaActual.nombre;
-        stageDesc = `<span style="font-weight: 800; color: #7fb0f0;">Fase ${num}:</span> ${nom}`;
+        stageDesc = `<span style="font-weight: 800; color: #7fb0f0;">Fase ${num}:</span> ${escapeHtml(nom)}`;
       } else if (item.estado === "finalizada") {
         stageDesc = `<span style="color: #3f9c85; font-weight: 800;">✓ Finalizada (5/5)</span>`;
       } else if (item.estado === "cancelada") {
         stageDesc = `<span style="color: #d95f6e; font-weight: 800;">✕ Cancelada</span>`;
       }
 
-      const clientName = getCompanyName(item);
-      const preOfertaStr = item.preOferta || "S/N";
-      const radiosCount = item.cantidad || 0;
-      const vendedor = item.vendedor || "-";
-      const codigo = item.codigo || "-";
+      const clientName = escapeHtml(getCompanyName(item));
+      const preOfertaStr = escapeHtml(item.preOferta || "S/N");
+      const vendedor = escapeHtml(item.vendedor || "-");
+      const codigo = escapeHtml(item.codigo || "-");
+      const contract = getContractType(item);
 
       rows += `
         <tr>
@@ -2146,15 +2959,19 @@
             <div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${codigo} · Vend: ${vendedor}</div>
           </td>
           <td style="text-align: center;">
-            <span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span>
+            <span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${escapeHtml(item.pais || 'GT')}</span>
           </td>
           <td style="text-align: center;">
             <span style="font-size: 10px; font-weight: 800; color: #e8eaf0; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; display: inline-block;">
-              ${item.negocio || '-'}
+              ${escapeHtml(item.negocio || '-')}
             </span>
+            <div class="inv-submeta">${escapeHtml(contract)}</div>
           </td>
           <td style="text-align: center;">
-            <strong style="font-family: var(--font-mono); font-size: 13px; color: #fff;">${radiosCount}</strong>
+            ${formatInventoryCell(item)}
+          </td>
+          <td style="text-align: center;">
+            ${formatRadiosEntregaCell(item)}
           </td>
           <td>
             <div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stageDesc}</div>
@@ -2168,7 +2985,7 @@
             ${slaBadgeHtml}
           </td>
           <td style="text-align: right;">
-            <button type="button" class="action-btn" onclick="openDetailModal('\')" title="Ver ficha técnica y auditoría" style="padding: 4px 8px; font-size: 11px;">
+            <button type="button" class="action-btn" onclick="openDetailModal('${preOfertaStr}')" title="Ver ficha técnica, anexos y auditoría" style="padding: 4px 8px; font-size: 11px;">
               Ver Auditoría ↗
             </button>
           </td>
@@ -2180,18 +2997,49 @@
 
   function renderCategoriasTab() {
       const grid = document.getElementById("categoryCardsGrid");
+      const invGrid = document.getElementById("inventoryTypeCardsGrid");
+      const equipTbody = document.getElementById("equipModelsTbody");
       const tbody = document.getElementById("topClientsTbody");
+      const detailTbody = document.getElementById("inventoryDetailTbody");
       if (!grid) return;
 
-      const categories = ["ADICION", "VENTA NUEVA", "RENOVACION"];
+      const catTitleEl = document.getElementById("categoriasTitleText");
+      if (catTitleEl) {
+        catTitleEl.innerText = currentFilter.pais === "todos"
+          ? "Venta Nueva, Renovación, Adición y Backup"
+          : `Venta Nueva, Renovación, Adición y Backup · ${getActiveCountryLabel()}`;
+      }
+
+      const categories = ["ADICION", "VENTA NUEVA", "RENOVACION", "BACKUP"];
+      filteredData.forEach(i => {
+        const neg = String(i.negocio || "").trim().toUpperCase();
+        if (neg && !categories.includes(neg)) categories.push(neg);
+      });
       let cardsHtml = "";
 
       categories.forEach(cat => {
-        const catItems = filteredData.filter(i => i.negocio === cat);
+        const catItems = filteredData.filter(i => String(i.negocio || "").trim().toUpperCase() === cat);
         const totalRadicaciones = catItems.length;
-        const totalRadios = catItems.reduce((acc, i) => acc + (i.cantidad || 0), 0);
+        const totalRadios = catItems.reduce((acc, i) => acc + getTotalRadiosCount(i), 0);
+        const deliveredRadios = catItems.reduce((acc, i) => acc + getRadiosEntregadosCount(i), 0);
         const enProc = catItems.filter(i => i.estado === "en_proceso").length;
         const fin = catItems.filter(i => i.estado === "finalizada").length;
+
+        let eN = 0, eU = 0, eR = 0, catE = 0, catS = 0;
+        catItems.forEach(i => {
+          const inv = getItemInventoryData(i);
+          eN += inv.eCond.nuevo;
+          eU += inv.eCond.usado;
+          eR += inv.eCond.refurbished;
+          catE += inv.equiposE;
+          catS += inv.simsS;
+        });
+
+        const condChips = [
+          eN > 0 ? `<span class="inv-cond-badge is-nuevo">Nuevo: ${eN}</span>` : "",
+          eU > 0 ? `<span class="inv-cond-badge is-usado">Usado: ${eU}</span>` : "",
+          eR > 0 ? `<span class="inv-cond-badge is-refurbished">Ref.: ${eR}</span>` : ""
+        ].filter(Boolean).join(" ") || `<span style="font-size:10px; color:var(--text-muted);">Sin anexos E clasif.</span>`;
 
         const isSelected = currentFilter.catQuickFilter === cat;
 
@@ -2207,20 +3055,28 @@
             </div>
             <div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 8px;">${cat}</div>
 
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px;">
-              <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
-                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Total Radios</div>
-                <div style="font-size: 22px; font-weight: 900; color: #fff; font-family: var(--font-mono);">${totalRadios}</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;">
+              <div style="background: rgba(255,255,255,0.03); padding: 9px; border-radius: 8px;">
+                <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Total Radios</div>
+                <div style="font-size: 20px; font-weight: 900; color: #fff; font-family: var(--font-mono);">${totalRadios}</div>
               </div>
-              <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
-                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Radicaciones</div>
-                <div style="font-size: 22px; font-weight: 900; color: #7fb0f0; font-family: var(--font-mono);">${totalRadicaciones}</div>
+              <div style="background: rgba(47,143,118,0.08); border: 1px solid rgba(47,143,118,0.2); padding: 9px; border-radius: 8px;">
+                <div style="font-size: 9px; color: #3f9c85; text-transform: uppercase;">Entregados</div>
+                <div style="font-size: 20px; font-weight: 900; color: #2f8f76; font-family: var(--font-mono);">${deliveredRadios}</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.03); padding: 9px; border-radius: 8px;">
+                <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Radicaciones</div>
+                <div style="font-size: 20px; font-weight: 900; color: #7fb0f0; font-family: var(--font-mono);">${totalRadicaciones}</div>
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
-              <span>En proceso: <strong style="color: #7fb0f0;">${enProc}</strong></span>
-              <span>Finalizadas: <strong style="color: #3f9c85;">${fin}</strong></span>
+            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+              ${condChips}
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; gap: 6px; flex-wrap: wrap;">
+              <span>En proceso: <strong style="color: #7fb0f0;">${enProc}</strong> · Fin.: <strong style="color: #3f9c85;">${fin}</strong></span>
+              <span style="font-family: var(--font-mono); color: #cbd5e1;">${catE} Equipos · ${catS} SIM Cards</span>
             </div>
           </div>
         `;
@@ -2228,22 +3084,142 @@
 
       grid.innerHTML = cardsHtml;
 
-      // Top 10 Clientes usando filteredData
+      // Render Distribución por Condición de Inventario (solo Nuevo, Usado, Refurbished)
+      const condOrder = [
+        { condition: "NUEVO", key: "nuevo" },
+        { condition: "USADO", key: "usado" },
+        { condition: "REFURBISHED", key: "refurbished" }
+      ];
+      if (invGrid) {
+        const invMap = {};
+        condOrder.forEach(({ condition }) => {
+          invMap[condition] = { condition, radicaciones: 0, anexos: 0, validados: 0, eCount: 0, sCount: 0, radios: 0 };
+        });
+
+        filteredData.forEach(item => {
+          const inv = getItemInventoryData(item);
+          condOrder.forEach(({ condition, key }) => {
+            const eQty = inv.eCond[key] || 0;
+            const sQty = inv.sCond[key] || 0;
+            if (eQty > 0 || (inv.equiposE === 0 && sQty > 0)) {
+              const bucket = invMap[condition];
+              bucket.radicaciones += 1;
+              bucket.anexos += inv.annexCount;
+              bucket.validados += inv.annexValidated;
+              bucket.eCount += eQty;
+              bucket.sCount += sQty;
+              bucket.radios += getTotalRadiosCount(item);
+            }
+          });
+        });
+
+        const activeBuckets = condOrder.map(c => invMap[c.condition]);
+
+        if (filteredData.length === 0) {
+          invGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">Sin inventario registrado en el período seleccionado.</div>`;
+        } else {
+          invGrid.innerHTML = activeBuckets.map(b => {
+            const isSel = currentFilter.invCondFilter === b.condition;
+            return `
+              <div class="inv-cond-card ${isSel ? 'is-active' : ''}" onclick="selectInvCondFilter('${b.condition}')" title="Clic para filtrar la auditoría inferior por ${b.condition}">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  ${getInventoryBadgeHtml(b.condition)}
+                  <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${b.radicaciones} rad.</span>
+                </div>
+                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px; gap: 10px;">
+                  <div>
+                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Equipos / SIM Cards</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #fff; font-family: var(--font-mono); line-height: 1.25;">${b.eCount} Equipos <span style="font-size: 12px; color: #3fb898; font-weight: 700;">· ${b.sCount} SIM Cards</span></div>
+                  </div>
+                  <div style="text-align: right; flex-shrink: 0;">
+                    <div style="font-size: 10px; color: var(--text-muted);">Anexos</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #7fb0f0; font-family: var(--font-mono);">${b.anexos}</div>
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px; display: flex; justify-content: space-between;">
+                  <span>Radios en radicaciones</span>
+                  <strong style="color: #fff; font-family: var(--font-mono);">${b.radios}</strong>
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      // Render Tabla de Modelos (Equipos y SIM Cards)
+      const modelStats = new Map();
+      let sumE = 0, sumS = 0;
+
+      filteredData.forEach(item => {
+        const inv = getItemInventoryData(item);
+        sumE += inv.equiposE;
+        sumS += inv.simsS;
+
+        const seenModelInOffer = new Set();
+        inv.annexList.forEach(anx => {
+          anx.equipos.forEach(eq => {
+            const label = eq.eqpnm || (eq.tipo === "S" ? "SIM CARD SIN NOMBRE" : "EQUIPO SIN NOMBRE");
+            const key = `${eq.tipo}|${label}`;
+            if (!modelStats.has(key)) {
+              modelStats.set(key, { tipo: eq.tipo, name: label, count: 0, offers: 0 });
+            }
+            const entry = modelStats.get(key);
+            entry.count += 1;
+            if (!seenModelInOffer.has(key)) {
+              seenModelInOffer.add(key);
+              entry.offers += 1;
+            }
+          });
+        });
+      });
+
+      const equipBadge = document.getElementById("equipModelsSummaryBadge");
+      if (equipBadge) equipBadge.textContent = `${sumE} Equipos · ${sumS} SIM Cards`;
+
+      if (equipTbody) {
+        const rowsList = Array.from(modelStats.values()).sort((a, b) => b.count - a.count);
+        if (rowsList.length === 0) {
+          equipTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:22px; color:var(--text-muted);">Sin equipos ni SIM Cards en anexos temporales para el período seleccionado.</td></tr>`;
+        } else {
+          equipTbody.innerHTML = rowsList.map(m => `
+            <tr>
+              <td style="text-align: center;"><span class="tipo-eq-pill ${m.tipo === 'S' ? 'is-s' : 'is-e'}">${m.tipo === 'S' ? 'SIM Card' : 'Equipo'}</span></td>
+              <td><strong style="color: #fff; font-size: 11.5px;">${escapeHtml(m.name)}</strong></td>
+              <td style="text-align: center; font-family: var(--font-mono); font-weight: 800; color: #fff;">${m.count}</td>
+              <td style="text-align: center; font-family: var(--font-mono); color: #9ba3b4;">${m.offers}</td>
+            </tr>
+          `).join("");
+        }
+      }
+
+      // Top 10 Clientes usando filteredData (con Condición de Inventario y E / S)
       if (tbody) {
         const clientMap = {};
         filteredData.forEach(item => {
-          const client = getCompanyName(item);
+          const client = getCompanyName(item) || "SIN NOMBRE";
+          const inv = getItemInventoryData(item);
           if (!clientMap[client]) {
             clientMap[client] = {
               cliente: client,
               vendedor: item.vendedor || "-",
               pais: item.pais || "GT",
-              negocio: item.negocio || "-",
+              negocios: new Set(),
+              conditions: new Set(),
+              eCount: 0,
+              sCount: 0,
+              anexos: 0,
               radios: 0,
+              entregados: 0,
               radicaciones: 0
             };
           }
-          clientMap[client].radios += (item.cantidad || 0);
+          if (item.negocio) clientMap[client].negocios.add(item.negocio);
+          clientMap[client].conditions.add(inv.condition);
+          clientMap[client].eCount += inv.equiposE;
+          clientMap[client].sCount += inv.simsS;
+          clientMap[client].anexos += inv.annexCount;
+          clientMap[client].radios += getTotalRadiosCount(item);
+          clientMap[client].entregados += getRadiosEntregadosCount(item);
           clientMap[client].radicaciones += 1;
         });
 
@@ -2254,7 +3230,7 @@
         if (top10.length === 0) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
                 No se registraron radicaciones en el período o filtros seleccionados.
               </td>
             </tr>
@@ -2264,19 +3240,101 @@
           top10.forEach((c, idx) => {
             const rank = idx + 1;
             const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+            const invBadges = Array.from(c.conditions).map(t => getInventoryBadgeHtml(t)).join(" ");
+            const negLabel = Array.from(c.negocios).join(" / ") || "-";
             topRows += `
               <tr>
                 <td style="text-align: center; font-weight: 800; font-size: 13px;">${medal}</td>
-                <td><strong style="color: #fff;">${c.cliente}</strong></td>
-                <td><span style="color: #8b909e; font-size: 11px;">${c.vendedor}</span></td>
-                <td style="text-align: center;"><span class="badge badge-${c.pais.toLowerCase()}">${c.pais}</span></td>
-                <td style="text-align: center;"><span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${c.negocio}</span></td>
-                <td style="text-align: center;"><strong style="color: #c59600; font-family: var(--font-mono); font-size: 14px;">${c.radios}</strong></td>
+                <td><strong style="color: #fff;">${escapeHtml(c.cliente)}</strong></td>
+                <td><span style="color: #8b909e; font-size: 11px;">${escapeHtml(c.vendedor)}</span></td>
+                <td style="text-align: center;"><span class="badge badge-${c.pais.toLowerCase()}">${escapeHtml(c.pais)}</span></td>
+                <td style="text-align: center;"><span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${escapeHtml(negLabel)}</span></td>
+                <td style="text-align: center;">
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">${invBadges}</div>
+                  <div class="inv-submeta">${c.anexos} anx · ${c.eCount} Equipos · ${c.sCount} SIM Cards</div>
+                </td>
+                <td style="text-align: center;">
+                  <strong style="color: #2f8f76; font-family: var(--font-mono); font-size: 14px;">${c.entregados}</strong>
+                  <span style="color: #8b909e; font-family: var(--font-mono); font-size: 11px;"> / ${c.radios}</span>
+                </td>
                 <td style="text-align: center;"><span style="font-family: var(--font-mono);">${c.radicaciones}</span></td>
               </tr>
             `;
           });
           tbody.innerHTML = topRows;
+        }
+      }
+
+      // Tabla de Detalle de Inventario, Anexos y Valores por Pre-Oferta
+      if (detailTbody) {
+        const detailList = currentFilter.invCondFilter === "ALL"
+          ? filteredData
+          : filteredData.filter(item => {
+              const inv = getItemInventoryData(item);
+              const k = String(currentFilter.invCondFilter || "").toLowerCase();
+              if (k === "nuevo" || k === "usado" || k === "refurbished") {
+                return (inv.eCond[k] || 0) > 0 || (inv.equiposE === 0 && (inv.sCond[k] || 0) > 0);
+              }
+              return inv.condition === currentFilter.invCondFilter;
+            });
+
+        const detailCountBadge = document.getElementById("inventoryDetailCountBadge");
+        if (detailCountBadge) {
+          detailCountBadge.textContent = currentFilter.invCondFilter === "ALL"
+            ? `${detailList.length} radicaciones`
+            : `${detailList.length} con condición ${currentFilter.invCondFilter}`;
+        }
+
+        if (detailList.length === 0) {
+          detailTbody.innerHTML = `
+            <tr>
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                No se encontraron radicaciones para el filtro de condición seleccionado.
+              </td>
+            </tr>
+          `;
+        } else {
+          detailTbody.innerHTML = detailList.map(item => {
+            const clientName = escapeHtml(getCompanyName(item) || "SIN NOMBRE");
+            const inv = getItemInventoryData(item);
+            const modelo = escapeHtml(getRadioModel(item));
+            const pre = escapeHtml(item.preOferta || "S/N");
+            const tecProv = [inv.tecnologias.join("/"), inv.proveedores.join("/")].filter(Boolean).join(" · ") || "Sin detalle";
+            const anexSummary = inv.annexCount > 0
+              ? `<strong style="color:#fff; font-family:var(--font-mono);">${inv.annexCount} anx</strong><div class="inv-submeta">${inv.equiposE} Equipos · ${inv.simsS} SIM Cards</div>`
+              : `<span style="color:var(--text-muted); font-size:11px;">${inv.detalleRows.length > 0 ? "Pendiente anexo SAN" : "Sin anexos"}</span>`;
+            const valRefHtml = (inv.unitEquipoAvg != null || inv.unitPlanAvg != null)
+              ? `<div style="font-family:var(--font-mono); font-size:11px; color:#fff;">${inv.unitEquipoAvg != null ? formatMoney(inv.unitEquipoAvg, item.pais) : "—"}</div><div class="inv-submeta">${inv.unitPlanAvg != null ? "Plan " + formatMoney(inv.unitPlanAvg, item.pais) : "Sin plan"}</div>`
+              : `<span style="color:var(--text-muted); font-size:11px;">—</span>`;
+
+            return `
+              <tr>
+                <td>
+                  <strong style="color: #fff; font-family: var(--font-mono); font-size: 12px;">#${pre}</strong>
+                  <div style="font-size: 10px; color: var(--text-muted);">${formatDateDisplay(item.fecha)}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #fff; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientName}">${clientName}</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(item.codigo || '-')} · ${escapeHtml(item.vendedor || '-')}</div>
+                </td>
+                <td style="text-align: center;"><span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${escapeHtml(item.pais || 'GT')}</span></td>
+                <td style="text-align: center;">
+                  <span style="font-size: 10px; font-weight: 800; color: #e8eaf0;">${escapeHtml(item.negocio || '-')}</span>
+                  <div class="inv-submeta">${escapeHtml(getContractType(item))}</div>
+                </td>
+                <td style="text-align: center;">${getInventoryBadgeHtml(inv.condition)}</td>
+                <td style="text-align: center;">${anexSummary}</td>
+                <td>
+                  <div style="font-size: 11px; font-weight: 600; color: #e8eaf0;">${modelo}</div>
+                  <div class="inv-submeta">${escapeHtml(tecProv)}</div>
+                </td>
+                <td style="text-align: right;">${valRefHtml}</td>
+                <td style="text-align: center;">
+                  <button type="button" class="action-btn" onclick="openDetailModal('${pre}')" style="padding: 4px 8px; font-size: 11px;">Ver Anexos ↗</button>
+                </td>
+              </tr>
+            `;
+          }).join("");
         }
       }
     }
@@ -2297,12 +3355,37 @@
       renderApp();
     }
 
+    function selectInvCondFilter(cond) {
+      if (currentFilter.invCondFilter === cond) {
+        currentFilter.invCondFilter = "ALL";
+      } else {
+        currentFilter.invCondFilter = cond;
+      }
+      updatePillActive("#invCondQuickFilter", currentFilter.invCondFilter, "data-invcond");
+      renderCategoriasTab();
+    }
+
+    function navigateToCategoriasCond(cond) {
+      currentFilter.invCondFilter = cond || "ALL";
+      updatePillActive("#invCondQuickFilter", currentFilter.invCondFilter, "data-invcond");
+      switchTab("categorias");
+      const invSection = document.getElementById("inventoryTypeCardsGrid");
+      if (invSection) {
+        setTimeout(() => {
+          invSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      }
+    }
+
     // -------------------------------------------------------------
     
 
-  function openStageModal(stageNum) {
+  let stageModalCountryScope = null;
+
+  function openStageModal(stageNum, countryScope = null) {
       currentStageModalNum = stageNum;
       currentStageModalFilter = "all";
+      stageModalCountryScope = countryScope;
 
       const modal = document.getElementById("stageModalBackdrop");
       if (!modal) return;
@@ -2312,15 +3395,21 @@
       const slaText = document.getElementById("stageModalSlaText");
 
       const slaLimit = STAGE_SLAS[stageNum];
-      if (badge) badge.innerText = `FASE ${stageNum}`;
+      const scopeText = stageModalCountryScope;
+      if (badge) badge.innerText = scopeText ? `FASE ${stageNum} · ${scopeText}` : `FASE ${stageNum}`;
       if (title) title.innerText = `${stageNum}. ${STAGE_NAMES[stageNum - 1]}`;
-      if (slaText) slaText.innerText = `SLA Límite Oficial: ${slaLimit}h laborables`;
+      if (slaText) {
+        slaText.innerText = scopeText
+          ? `SLA Límite Oficial: ${slaLimit}h laborables · Procesos en curso (${scopeText})`
+          : `SLA Límite Oficial: ${slaLimit}h laborables`;
+      }
 
       renderStageModalTables();
       modal.classList.add("is-open");
     }
 
     function closeStageModal() {
+      stageModalCountryScope = null;
       const modal = document.getElementById("stageModalBackdrop");
       if (modal) modal.classList.remove("is-open");
     }
@@ -2342,12 +3431,16 @@
       const nearList = [];
       const okList = [];
 
-      filteredData.forEach(item => {
+      const sourceList = stageModalCountryScope
+        ? getCountryOpenSlaItems(stageModalCountryScope)
+        : filteredData;
+
+      sourceList.forEach(item => {
         if (!item.proceso || !item.proceso.etapas) return;
         const st = item.proceso.etapas.find(e => e.numero === stageNum);
         if (!st || !st.fechaInicio) return;
 
-        const evalSt = getStageStatus(st, slaLimit);
+        const evalSt = getStageStatus(st, slaLimit, item);
         const rowData = { item, stage: st, eval: evalSt };
 
         if (evalSt.status === "vencida") vencidasList.push(rowData);
@@ -2385,19 +3478,20 @@
 
           tableRows += `
             <tr>
-              <td><strong style="color: #fff; font-family: var(--font-mono);">#${pre}</strong></td>
+              <td><strong style="color: #fff; font-family: var(--font-mono);">#${escapeHtml(pre)}</strong></td>
               <td>
-                <div style="font-weight: 700; color: #fff;">${clientName}</div>
-                <div style="font-size: 10px; color: var(--text-muted);">${item.vendedor || '-'}</div>
+                <div style="font-weight: 700; color: #fff;">${escapeHtml(clientName)}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(item.vendedor || '-')}</div>
               </td>
-              <td style="text-align: center;"><span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span></td>
-              <td style="text-align: center;">${item.cantidad || 0}</td>
+              <td style="text-align: center;"><span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${escapeHtml(item.pais || 'GT')}</span></td>
+              <td style="text-align: center;">${formatInventoryCell(item)}</td>
+              <td style="text-align: center;">${formatRadiosEntregaCell(item)}</td>
               <td style="font-size: 10px;">${startStr}</td>
               <td style="font-size: 10px;">${endStr}</td>
               <td style="text-align: center;"><strong style="color: ${colorHex}; font-family: var(--font-mono);">${hStr}</strong></td>
-              <td style="text-align: center;"><span class="badge-status status-${item.estado || 'en_proceso'}">${stage.estado}</span></td>
+              <td style="text-align: center;"><span class="badge-status status-${item.estado || 'en_proceso'}">${escapeHtml(stage.estado)}</span></td>
               <td style="text-align: right;">
-                <button type="button" class="action-btn" onclick="openDetailModal('${pre}')">Ver Ficha</button>
+                <button type="button" class="action-btn" onclick="openDetailModal('${escapeHtml(pre)}')">Ver Ficha</button>
               </td>
             </tr>
           `;
@@ -2416,7 +3510,8 @@
                     <th>Pre-Oferta</th>
                     <th>Cliente / Vendedor</th>
                     <th style="text-align: center;">País</th>
-                    <th style="text-align: center;">Radios</th>
+                    <th style="text-align: center;">Inventario / Anexos</th>
+                    <th style="text-align: center;">Radios Entregados</th>
                     <th>Fecha Inicio</th>
                     <th>Fecha Fin</th>
                     <th style="text-align: center;">Horas Laborales</th>
@@ -2462,23 +3557,139 @@
         if (el) el.innerText = val;
       };
 
-      setEl("detModalTitle", `Radicación Pre-Oferta #${item.preOferta}`);
-      setEl("detClientName", getCompanyName(item));
-      setEl("detVendedor", item.vendedor || "-");
-      setEl("detCodigo", item.codigo || "-");
-      setEl("detNegocio", item.negocio || "-");
-      setEl("detCantidad", item.cantidad || 0);
-      setEl("detPlazo", item.plazo ? `${item.plazo} meses` : "-");
-      setEl("detTipoContrato", item.tipoContratacion || "-");
+      const totalR = getTotalRadiosCount(item);
+      const entR = getRadiosEntregadosCount(item);
+      const inv = getItemInventoryData(item);
+      const contract = getContractType(item);
 
-      const badgeCountry = document.getElementById("detBadgeCountry");
-      if (badgeCountry) {
-        badgeCountry.className = `badge badge-${(item.pais || 'GT').toLowerCase()}`;
-        badgeCountry.innerText = item.pais || 'GT';
+      setEl("detClientName", getCompanyName(item) || "SIN NOMBRE");
+      setEl("detSubheader", `Pre-Oferta #${item.preOferta || "S/N"} · Código ${item.codigo || "-"} · ${formatDateDisplay(item.fecha)}`);
+      setEl("detPais", item.pais === "SV" ? "🇸🇻 El Salvador (SV)" : "🇬🇹 Guatemala (GT)");
+      setEl("detVendedor", item.vendedor || "-");
+      setEl("detNegocio", item.negocio || "-");
+      setEl("detRadios", `${entR} entregados / ${totalR} totales`);
+
+      const detContratoEl = document.getElementById("detContrato");
+      if (detContratoEl) {
+        detContratoEl.innerHTML = `${getInventoryBadgeHtml(inv.condition)} <span style="margin-left:6px; color:#cbd5e1;">${escapeHtml(contract)}${item.plazo ? ` · ${item.plazo} meses` : ""}</span>`;
       }
 
       const totalH = getProcessTotalHours(item);
       setEl("detHoursText", `${formatHours(totalH)} computadas (Lunes a Viernes 8am-6pm)`);
+
+      // Detalle técnico y tarifario (item.detalle[])
+      const detSummary = document.getElementById("detDetalleSummary");
+      const detContainer = document.getElementById("detDetalleContainer");
+      if (detSummary) {
+        detSummary.textContent = inv.detalleRows.length > 0
+          ? `${inv.detalleRows.length} línea(s) · ${inv.tecnologias.join(", ") || "Sin tec."}`
+          : "Sin líneas de detalle";
+      }
+      if (detContainer) {
+        if (inv.detalleRows.length === 0) {
+          detContainer.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); padding: 4px 0;">Esta pre-oferta no reporta desglose comercial en <code>detalle</code>.</div>`;
+        } else {
+          detContainer.innerHTML = `
+            <div style="overflow-x: auto;">
+              <table class="det-mini-table">
+                <thead>
+                  <tr>
+                    <th>Equipo</th>
+                    <th>Tecnología</th>
+                    <th>Proveedor</th>
+                    <th>Plan SIM</th>
+                    <th>Licencia</th>
+                    <th style="text-align:right;">Valor Equipo</th>
+                    <th style="text-align:right;">Valor Plan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${inv.detalleRows.map(d => `
+                    <tr>
+                      <td><strong>${escapeHtml(d.equipo || "—")}</strong></td>
+                      <td>${escapeHtml(d.tecnologia || "—")}</td>
+                      <td>${escapeHtml(d.proveedor || "—")}</td>
+                      <td>${escapeHtml(d.planSim || "—")}</td>
+                      <td>${escapeHtml(d.licencia || "—")}</td>
+                      <td style="text-align:right; font-family:var(--font-mono);">${formatMoney(d.valorEquipo, item.pais)}</td>
+                      <td style="text-align:right; font-family:var(--font-mono); color:#3fb898;">${formatMoney(d.valorPlan, item.pais)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      }
+
+      // Anexos temporales y desglose por dispositivo (Equipos / SIM Cards)
+      const anxSummary = document.getElementById("detAnexosSummary");
+      const anxContainer = document.getElementById("detAnexosContainer");
+      if (anxSummary) {
+        anxSummary.textContent = inv.annexCount > 0
+          ? `${inv.annexCount} anexo(s) · ${inv.equiposE} Equipos · ${inv.simsS} SIM Cards`
+          : "0 anexos temporales";
+      }
+      if (anxContainer) {
+        if (inv.annexList.length === 0) {
+          const emptyMsg = inv.detalleRows.length > 0
+            ? `Esta pre-oferta ya cuenta con detalle técnico (${inv.detalleRows.length} línea(s)), pero SAN aún no devolvió anexos temporales en el API.`
+            : (inv.hasAnexosField
+              ? "SAN no devolvió anexos temporales para esta pre-oferta."
+              : "Esta pre-oferta no incluye anexos temporales asignados.");
+          anxContainer.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); padding: 4px 0;">${emptyMsg}</div>`;
+        } else {
+          anxContainer.innerHTML = inv.annexList.map(anx => {
+            const eqRowsHtml = anx.equipos.length === 0
+              ? `<div style="padding: 10px 14px; font-size: 11px; color: var(--text-muted);">Anexo sin dispositivos devueltos por SAN.</div>`
+              : `
+                <div style="overflow-x: auto;">
+                  <table class="det-mini-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 96px;">Tipo</th>
+                        <th>Código</th>
+                        <th>Equipo / SIM Card</th>
+                        <th>IMEI / Serie</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${anx.equipos.map(eq => {
+                        const condBadgeKey = eq.condKey === "sin_estado" ? "SIN ESTADO" : eq.condKey.toUpperCase();
+                        const codeTag = eq.estadoCodigo ? `Cód. ${escapeHtml(eq.estadoCodigo)}` : "Sin cód.";
+                        return `
+                          <tr>
+                            <td><span class="tipo-eq-pill ${eq.tipo === 'S' ? 'is-s' : 'is-e'}">${eq.tipo === 'S' ? 'SIM Card' : 'Equipo'}</span></td>
+                            <td style="font-family:var(--font-mono); color:#9ba3b4;">${escapeHtml(eq.eqpcod || "—")}</td>
+                            <td><strong>${escapeHtml(eq.eqpnm || "—")}</strong></td>
+                            <td style="font-family:var(--font-mono); font-size:10.5px;">${escapeHtml(eq.imei || "—")}</td>
+                            <td>${getInventoryBadgeHtml(condBadgeKey)} <span style="font-size:10px; color:var(--text-muted); margin-left:4px;">${codeTag}</span></td>
+                          </tr>
+                        `;
+                      }).join("")}
+                    </tbody>
+                  </table>
+                </div>
+              `;
+
+            return `
+              <div class="det-annex-card">
+                <div class="det-annex-head">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <strong style="font-family:var(--font-mono); font-size:12px; color:#fff;">FolCod ${escapeHtml(anx.folcod || "—")}</strong>
+                    ${anx.folncc ? `<span style="font-size:11px; color:#9ba3b4;">${escapeHtml(anx.folncc)}</span>` : ""}
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-family:var(--font-mono); font-size:11px; color:#cbd5e1;">${anx.eCount} Equipos · ${anx.sCount} SIM Cards</span>
+                  </div>
+                </div>
+                ${eqRowsHtml}
+              </div>
+            `;
+          }).join("");
+        }
+      }
 
       // 5 Stages Chronological Timeline
       const timeline = document.getElementById("detStagesTimeline");
@@ -2490,7 +3701,7 @@
           const num = idx + 1;
           const st = etapas.find(e => e.numero === num);
           const limit = STAGE_SLAS[num];
-          const evalSt = getStageStatus(st, limit);
+          const evalSt = getStageStatus(st, limit, item);
 
           let color = "#8b909e";
           let badgeText = "Pendiente";
@@ -2508,7 +3719,13 @@
           }
 
           const start = st && st.fechaInicio ? formatDateDisplay(st.fechaInicio) : "Sin iniciar";
-          const fin = st && st.fechaFin ? formatDateDisplay(st.fechaFin) : (st && st.estado === "activa" ? "Activa actualmente..." : "Pendiente");
+          const fin = st && st.fechaFin
+            ? formatDateDisplay(st.fechaFin)
+            : (st && st.estado === "activa"
+              ? (item.estado === "en_proceso"
+                ? "Activa actualmente..."
+                : (item.proceso && item.proceso.fechaFin ? `${formatDateDisplay(item.proceso.fechaFin)} (Cierre)` : "Cerrada"))
+              : "Pendiente");
 
           stagesHtml += `
             <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
@@ -2564,7 +3781,13 @@
       const cod = String(item.codigo || "").toLowerCase();
       const ven = String(item.vendedor || "").toLowerCase();
       const neg = String(item.negocio || "").toLowerCase();
-      return pre.includes(q) || cli.includes(q) || cod.includes(q) || ven.includes(q) || neg.includes(q);
+      const inv = getItemInventoryData(item);
+      const invMatch = inv.condition.toLowerCase().includes(q)
+        || inv.eModels.some(m => m.name.toLowerCase().includes(q))
+        || inv.tecnologias.some(t => t.toLowerCase().includes(q))
+        || inv.proveedores.some(p => p.toLowerCase().includes(q))
+        || inv.annexList.some(a => a.folcod.toLowerCase().includes(q) || a.equipos.some(e => e.imei.toLowerCase().includes(q)));
+      return pre.includes(q) || cli.includes(q) || cod.includes(q) || ven.includes(q) || neg.includes(q) || invMatch;
     });
   }
 
@@ -2574,16 +3797,33 @@
     const badge = document.getElementById("actInformeSummaryBadge");
 
     if (badge) {
-      badge.textContent = `Mostrando ${list.length} radicaciones`;
+      badge.textContent = `Mostrando ${list.length} radicaciones · ${getActiveCountryLabel()}`;
     }
 
-    const totalRadios = list.reduce((sum, r) => sum + (Number(r.cantidad) || 0), 0);
+    const totalRadios = list.reduce((sum, r) => sum + getTotalRadiosCount(r), 0);
+    const radiosEntregados = list.reduce((sum, r) => sum + getRadiosEntregadosCount(r), 0);
+    const radiosEnProceso = list.reduce((sum, r) => sum + getRadiosEnProcesoCount(r), 0);
     const totalEnTiempo = list.filter(r => getItemSlaCondition(r) === 'en_tiempo').length;
     const totalVencidas = list.filter(r => ['vencidas_etapa', 'vencidas_global'].includes(getItemSlaCondition(r))).length;
+
+    let infAnexos = 0, infE = 0, infS = 0, infN = 0, infU = 0, infR = 0;
+    list.forEach(r => {
+      const inv = getItemInventoryData(r);
+      infAnexos += inv.annexCount;
+      infE += inv.equiposE;
+      infS += inv.simsS;
+      infN += inv.eCond.nuevo;
+      infU += inv.eCond.usado;
+      infR += inv.eCond.refurbished;
+    });
 
     const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setT("actInformeTotalRadicaciones", list.length);
     setT("actInformeTotalRadios", totalRadios);
+    setT("actInformeRadiosEntregados", radiosEntregados);
+    setT("actInformeRadiosEnProceso", radiosEnProceso);
+    setT("actInformeAnexosSummary", `${infAnexos} (${infE} Equipos · ${infS} SIM Cards)`);
+    setT("actInformeConditionSummary", `${infN} / ${infU} / ${infR}`);
     setT("actInformeTotalEnTiempo", totalEnTiempo);
     setT("actInformeTotalVencidas", totalVencidas);
 
@@ -2592,7 +3832,7 @@
     if (list.length === 0) {
       rowsEl.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
             <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
             <div style="font-weight: 700; color: #fff;">No se encontraron radicaciones con los filtros seleccionados</div>
             <div style="font-size: 11px; margin-top: 4px;">Intenta ajustar la búsqueda o los criterios de filtrado.</div>
@@ -2620,18 +3860,17 @@
       if (item.proceso && item.proceso.etapaActual) {
         const num = item.proceso.etapaActual.numero;
         const nom = item.proceso.etapaActual.nombre;
-        stageDesc = `<span style="font-weight: 800; color: #7fb0f0;">Fase ${num}:</span> ${nom}`;
+        stageDesc = `<span style="font-weight: 800; color: #7fb0f0;">Fase ${num}:</span> ${escapeHtml(nom)}`;
       } else if (item.estado === "finalizada") {
         stageDesc = '<span style="color: #3f9c85; font-weight: 800;">✓ Finalizada (5/5)</span>';
       } else if (item.estado === "cancelada") {
         stageDesc = '<span style="color: #d95f6e; font-weight: 800;">✕ Cancelada</span>';
       }
 
-      const clientName = getCompanyName(item);
-      const preOfertaStr = item.preOferta || "S/N";
-      const radiosCount = item.cantidad || 0;
-      const vendedor = item.vendedor || "-";
-      const codigo = item.codigo || "-";
+      const clientName = escapeHtml(getCompanyName(item));
+      const preOfertaStr = escapeHtml(item.preOferta || "S/N");
+      const vendedor = escapeHtml(item.vendedor || "-");
+      const codigo = escapeHtml(item.codigo || "-");
 
       rows += `
         <tr>
@@ -2646,15 +3885,19 @@
             <div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${codigo} · Vend: ${vendedor}</div>
           </td>
           <td style="text-align: center;">
-            <span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${item.pais || 'GT'}</span>
+            <span class="badge badge-${(item.pais || 'GT').toLowerCase()}">${escapeHtml(item.pais || 'GT')}</span>
           </td>
           <td style="text-align: center;">
             <span style="font-size: 10px; font-weight: 800; color: #e8eaf0; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; display: inline-block;">
-              ${item.negocio || '-'}
+              ${escapeHtml(item.negocio || '-')}
             </span>
+            <div class="inv-submeta">${escapeHtml(getContractType(item))}</div>
           </td>
           <td style="text-align: center;">
-            <strong style="font-family: var(--font-mono); font-size: 13px; color: #fff;">${radiosCount}</strong>
+            ${formatInventoryCell(item)}
+          </td>
+          <td style="text-align: center;">
+            ${formatRadiosEntregaCell(item)}
           </td>
           <td>
             <div style="font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stageDesc}</div>
@@ -2668,7 +3911,7 @@
             ${slaBadgeHtml}
           </td>
           <td style="text-align: right;">
-            <button type="button" class="action-btn" onclick="openDetailModal('${preOfertaStr}')" title="Ver ficha técnica y auditoría" style="padding: 4px 8px; font-size: 11px;">
+            <button type="button" class="action-btn" onclick="openDetailModal('${preOfertaStr}')" title="Ver ficha técnica, anexos y auditoría" style="padding: 4px 8px; font-size: 11px;">
               Ver Auditoría ↗
             </button>
           </td>
@@ -2739,17 +3982,21 @@
     });
     const cols = [
       { header: '#', width: 6 }, { header: 'Fecha', width: 13 }, { header: 'País', width: 13 },
-      { header: 'Pre-Oferta', width: 12 }, { header: 'Cliente / Razón Social', width: 44 },
-      { header: 'Código', width: 14 }, { header: 'Vendedor', width: 26 },
-      { header: 'Línea de Negocio', width: 17 }, { header: 'Radios', width: 10 },
-      { header: 'Etapa Actual', width: 34 }, { header: 'Estado', width: 14 },
-      { header: 'Condición SLA', width: 22 }
+      { header: 'Pre-Oferta', width: 12 }, { header: 'Cliente / Razón Social', width: 42 },
+      { header: 'Código', width: 13 }, { header: 'Vendedor', width: 24 },
+      { header: 'Línea de Negocio', width: 16 }, { header: 'Contratación', width: 16 },
+      { header: 'Condición Inventario', width: 20 }, { header: 'Modelo / Equipo', width: 28 },
+      { header: 'Tecnología', width: 14 }, { header: 'Proveedor', width: 14 },
+      { header: 'Anexos', width: 10 }, { header: 'Equipos', width: 12 },
+      { header: 'SIM Cards', width: 12 }, { header: 'Radios Totales', width: 14 },
+      { header: 'Radios Entregados', width: 16 }, { header: 'Etapa Actual', width: 32 },
+      { header: 'Estado', width: 14 }, { header: 'Condición SLA', width: 22 }
     ];
     ws.columns = cols.map(c => ({ width: c.width }));
     const lastCol = cols.length;
     ws.mergeCells(1, 1, 1, lastCol);
     const t = ws.getCell(1, 1);
-    t.value = 'INFORME DETALLADO DE RADICACIONES';
+    t.value = 'INFORME DETALLADO DE RADICACIONES, ANEXOS E INVENTARIO';
     t.font = { name: 'Calibri', size: 16, bold: true, color: { argb: WHITE } };
     t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
     t.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
@@ -2774,7 +4021,7 @@
       cell.value = c.header;
       cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
-      const center = ['#', 'Fecha', 'País', 'Pre-Oferta', 'Radios', 'Estado', 'Condición SLA'].includes(c.header);
+      const center = ['#', 'Fecha', 'País', 'Pre-Oferta', 'Contratación', 'Condición Inventario', 'Anexos', 'Equipos', 'SIM Cards', 'Radios Totales', 'Radios Entregados', 'Estado', 'Condición SLA'].includes(c.header);
       cell.alignment = { vertical: 'middle', horizontal: center ? 'center' : 'left', indent: center ? 0 : 1 };
     });
     hr.height = 26;
@@ -2782,6 +4029,7 @@
 
     list.forEach((item, idx) => {
       const cond = getItemSlaCondition(item);
+      const inv = getItemInventoryData(item);
       const etapa = (item.proceso && item.proceso.etapaActual)
         ? `Fase ${item.proceso.etapaActual.numero}: ${item.proceso.etapaActual.nombre}`
         : (item.estado === 'finalizada' ? 'Finalizada (5/5)' : item.estado === 'cancelada' ? 'Cancelada' : '-');
@@ -2792,7 +4040,11 @@
         item.pais === 'SV' ? 'El Salvador' : item.pais === 'GT' ? 'Guatemala' : (item.pais || ''),
         item.preOferta ? Number(item.preOferta) || String(item.preOferta) : '',
         getCompanyName(item), item.codigo || '', item.vendedor || '', item.negocio || '',
-        Number(item.cantidad) || 0, etapa, estadoTxt(item.estado), slaTxt(cond)
+        getContractType(item), inv.condition, getRadioModel(item),
+        inv.tecnologias.join(' / '), inv.proveedores.join(' / '),
+        inv.annexCount, inv.equiposE, inv.simsS,
+        getTotalRadiosCount(item), getRadiosEntregadosCount(item),
+        etapa, estadoTxt(item.estado), slaTxt(cond)
       ];
       row.height = 20;
       const zebra = idx % 2 === 1;
@@ -2803,15 +4055,16 @@
         cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
         if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
       }
-      [1, 2, 3, 4, 9, 11, 12].forEach(c => { row.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' }; });
+      [1, 2, 3, 4, 9, 10, 14, 15, 16, 17, 18, 20, 21].forEach(c => { row.getCell(c).alignment = { vertical: 'middle', horizontal: 'center' }; });
       row.getCell(1).font = { name: 'Calibri', size: 11, color: { argb: 'FF64748B' } };
       row.getCell(2).numFmt = 'dd/mm/yyyy';
       row.getCell(2).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
       row.getCell(3).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF047857' } };
       row.getCell(4).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-      row.getCell(9).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-      row.getCell(11).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor(item.estado) } };
-      row.getCell(12).font = { name: 'Calibri', size: 11, bold: true, color: { argb: slaColor(cond) } };
+      row.getCell(17).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+      row.getCell(18).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF15803D' } };
+      row.getCell(20).font = { name: 'Calibri', size: 11, bold: true, color: { argb: estadoColor(item.estado) } };
+      row.getCell(21).font = { name: 'Calibri', size: 11, bold: true, color: { argb: slaColor(cond) } };
     });
 
     const ws2 = wb.addWorksheet('Resumen por negocio', {
@@ -2819,9 +4072,11 @@
     });
     const cols2 = [
       { header: 'Línea de Negocio', width: 22 }, { header: 'Radicaciones', width: 15 },
-      { header: 'Radios', width: 12 }, { header: 'En proceso', width: 13 },
-      { header: 'Finalizadas', width: 13 }, { header: 'Canceladas', width: 13 },
-      { header: 'En tiempo SLA', width: 15 }, { header: 'Vencidas SLA', width: 15 }
+      { header: 'Radios', width: 12 }, { header: 'Anexos', width: 12 },
+      { header: 'Equipos', width: 13 }, { header: 'SIM Cards', width: 12 },
+      { header: 'En proceso', width: 13 }, { header: 'Finalizadas', width: 13 },
+      { header: 'Canceladas', width: 13 }, { header: 'En tiempo SLA', width: 15 },
+      { header: 'Vencidas SLA', width: 15 }
     ];
     ws2.columns = cols2.map(c => ({ width: c.width }));
     const last2 = cols2.length;
@@ -2865,6 +4120,9 @@
       const vals = [
         items.length,
         items.reduce((s, i) => s + (Number(i.cantidad) || 0), 0),
+        items.reduce((s, i) => s + getItemInventoryData(i).annexCount, 0),
+        items.reduce((s, i) => s + getItemInventoryData(i).equiposE, 0),
+        items.reduce((s, i) => s + getItemInventoryData(i).simsS, 0),
         items.filter(i => i.estado === 'en_proceso').length,
         items.filter(i => i.estado === 'finalizada').length,
         items.filter(i => i.estado === 'cancelada').length,
@@ -2894,6 +4152,55 @@
       cell.alignment = { vertical: 'middle', horizontal: c === 1 ? 'left' : 'center', indent: c === 1 ? 1 : 0 };
     }
 
+    // Hoja 3: Desglose de Anexos Temporales, Equipos y SIM Cards
+    const ws3 = wb.addWorksheet('Anexos y Equipos', {
+      views: [{ state: 'frozen', ySplit: 2, showGridLines: false }]
+    });
+    const cols3 = [
+      { header: 'Pre-Oferta', width: 12 }, { header: 'País', width: 10 },
+      { header: 'Cliente', width: 38 }, { header: 'FolCod', width: 12 },
+      { header: 'FolNCC', width: 22 }, { header: 'Tipo', width: 14 },
+      { header: 'Código Equipo', width: 16 }, { header: 'Descripción Equipo', width: 30 },
+      { header: 'IMEI', width: 22 }, { header: 'Estado Cód.', width: 12 },
+      { header: 'Estado Inventario', width: 18 }
+    ];
+    ws3.columns = cols3.map(c => ({ width: c.width }));
+    ws3.mergeCells(1, 1, 1, cols3.length);
+    const t3 = ws3.getCell(1, 1);
+    t3.value = `DESGLOSE DE ANEXOS TEMPORALES, EQUIPOS Y SIM CARDS · ${regionLabel}`;
+    t3.font = { name: 'Calibri', size: 14, bold: true, color: { argb: WHITE } };
+    t3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+    ws3.getRow(1).height = 28;
+    const hr3 = ws3.getRow(2);
+    cols3.forEach((c, i) => {
+      const cell = hr3.getCell(i + 1);
+      cell.value = c.header;
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: WHITE } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+    hr3.height = 24;
+    let r3 = 3;
+    list.forEach(item => {
+      const inv = getItemInventoryData(item);
+      const client = getCompanyName(item);
+      inv.annexList.forEach(anx => {
+        if (anx.equipos.length === 0) {
+          const row = ws3.getRow(r3++);
+          row.values = [item.preOferta || '', item.pais || 'GT', client, anx.folcod, anx.folncc, '-', '-', 'Sin equipos', '-', '-', '-'];
+        } else {
+          anx.equipos.forEach(eq => {
+            const row = ws3.getRow(r3++);
+            row.values = [
+              item.preOferta || '', item.pais || 'GT', client, anx.folcod, anx.folncc,
+              eq.tipo === 'S' ? 'SIM Card' : 'Equipo', eq.eqpcod, eq.eqpnm, eq.imei,
+              eq.estadoCodigo || '-', getConditionLabel(eq.condKey).toUpperCase()
+            ];
+          });
+        }
+      });
+    });
+
     try {
       const buffer = await wb.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -2921,8 +4228,9 @@
     }
 
     let csv = '\uFEFF';
-    csv += 'Pre-Oferta;Fecha Radicación;Cliente / Razón Social;Código Cliente;Vendedor;País;Línea Negocio;Cantidad Radios;Etapa Actual;Fase Número;Estado;Condición SLA\r\n';
+    csv += 'Pre-Oferta;Fecha Radicación;Cliente / Razón Social;Código Cliente;Vendedor;País;Línea Negocio;Contratación;Condición Inventario;Modelo / Equipo;Tecnología;Proveedor;Anexos;Equipos;SIM Cards;Radios Totales;Radios Entregados;Etapa Actual;Fase Número;Estado;Condición SLA\r\n';
     list.forEach(item => {
+      const inv = getItemInventoryData(item);
       const slaCond = getItemSlaCondition(item);
       const slaDesc = slaCond === 'vencidas_global' ? 'Vencida Global (>104h)' : (slaCond === 'vencidas_etapa' ? 'Vencida Etapa' : (slaCond === 'por_vencer' ? 'Por Vencer' : 'En Tiempo'));
       const stageName = (item.proceso && item.proceso.etapaActual) ? item.proceso.etapaActual.nombre : item.estado;
@@ -2931,7 +4239,10 @@
         `"#${item.preOferta || ''}"`, `"${formatDateDisplay(item.fecha)}"`,
         `"${getCompanyName(item).replace(/"/g, '""')}"`, `"${item.codigo || ''}"`,
         `"${(item.vendedor || '').replace(/"/g, '""')}"`, `"${item.pais || 'GT'}"`,
-        `"${item.negocio || ''}"`, `"${item.cantidad || 0}"`, `"${stageName}"`,
+        `"${item.negocio || ''}"`, `"${getContractType(item)}"`, `"${inv.condition}"`,
+        `"${getRadioModel(item).replace(/"/g, '""')}"`, `"${inv.tecnologias.join(' / ')}"`, `"${inv.proveedores.join(' / ')}"`,
+        `"${inv.annexCount}"`, `"${inv.equiposE}"`, `"${inv.simsS}"`,
+        `"${getTotalRadiosCount(item)}"`, `"${getRadiosEntregadosCount(item)}"`, `"${stageName}"`,
         `"${stageNum}"`, `"${item.estado || ''}"`, `"${slaDesc}"`
       ];
       csv += row.join(';') + '\r\n';
@@ -2980,14 +4291,15 @@
     const gt = countryStats('GT');
     const pctColor = (p) => p >= 90 ? '#2f8f76' : '#c59600';
     const pctLabel = (p) => p >= 100 ? 'ÓPTIMO' : (p >= 90 ? 'CUMPLIDO' : 'POR MEJORAR');
-    const negocios = ['ADICION', 'VENTA NUEVA', 'RENOVACION'];
+    const negocios = ['ADICION', 'VENTA NUEVA', 'RENOVACION', 'BACKUP'];
     const negocioRows = negocios.map(n => {
-      const items = list.filter(r => r.negocio === n);
+      const items = list.filter(r => String(r.negocio || '').trim().toUpperCase() === n);
+      if (n === 'BACKUP' && !items.length) return '';
       const radios = items.reduce((s, r) => s + (Number(r.cantidad) || 0), 0);
       return `<div><b>${n}:</b> ${items.length} radicaciones | <b>${radios}</b> radios</div>`;
     }).join('');
     const categoryRows = negocios.map(negocio => {
-      const items = list.filter(item => item.negocio === negocio);
+      const items = list.filter(item => String(item.negocio || '').trim().toUpperCase() === negocio);
       if (!items.length) return '';
       const radios = items.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
       const gt = items.filter(item => item.pais === 'GT').length;
@@ -3015,8 +4327,8 @@
         if (!item.proceso || !item.proceso.etapas) return;
         const st = item.proceso.etapas.find(e => e.numero === num);
         if (!st || !st.fechaInicio) return;
-        const ev = getStageStatus(st, limit);
-        if (st.estado === 'activa') activas++;
+        const ev = getStageStatus(st, limit, item);
+        if (item.estado === 'en_proceso' && st.estado === 'activa') activas++;
         if (ev.status === 'vencida') venc++;
         else if (ev.status === 'near') near++;
         else if (ev.status === 'ok') ok++;
@@ -3027,6 +4339,7 @@
           <td class="c" style="color:#c59600;"><b>${near}</b></td><td class="c" style="color:#c43c50;"><b>${venc}</b></td></tr>`;
     });
     const detalleRows = list.map(item => {
+      const inv = getItemInventoryData(item);
       const cond = getItemSlaCondition(item);
       const bClass = cond === 'en_tiempo' ? 'b-ok' : (cond === 'por_vencer' ? 'b-near' : 'b-venc');
       const bText = cond === 'en_tiempo' ? 'En Tiempo' : cond === 'por_vencer' ? 'Por Vencer'
@@ -3035,9 +4348,10 @@
       if (item.proceso && item.proceso.etapaActual) {
         stage = `Fase ${item.proceso.etapaActual.numero}: ${esc(item.proceso.etapaActual.nombre)}`;
       }
+      const invCell = `${esc(inv.condition)} (${inv.annexCount} anx · ${inv.equiposE}E/${inv.simsS}S)`;
       return `<tr><td><b>#${esc(item.preOferta || 'S/N')}</b></td><td><b>${esc(getCompanyName(item))}</b></td>
         <td class="c">${esc(item.pais || 'GT')}</td><td class="c">${esc(item.negocio || '-')}</td>
-        <td class="c">${esc(item.cantidad || 0)}</td><td>${stage}</td><td class="c">${esc(item.estado || '')}</td>
+        <td class="c">${invCell}</td><td class="c">${getRadiosEntregadosCount(item)} / ${getTotalRadiosCount(item)}</td><td>${stage}</td><td class="c">${esc(item.estado || '')}</td>
         <td class="c"><span class="badge ${bClass}">${bText}</span></td></tr>`;
     }).join('');
     const periodo = `${currentFilter.dateFrom || 'inicio'} al ${currentFilter.dateTo || 'hoy'}`;
@@ -3138,11 +4452,11 @@
     <div class="period-kpi" style="border-top-color:#4f8fd8;"><div class="lbl">Cumplimiento SLA</div><div class="num" style="color:#4f8fd8;">${slaRate}%</div><div class="sub">${cOk} radicaciones dentro de SLA</div></div>
   </div>
   <h2>2. Cumplimiento de SLA global (&lt; 104h laborables L-V 8am-6pm)</h2>
-  <div class="grid2">
-    <div class="box country"><div><div class="name">SV El Salvador (SV)</div><div class="sub">${sv.ok} de ${sv.n} radicaciones dentro de SLA</div></div>
-      <div><div class="pct" style="color:${pctColor(sv.pct)};">${sv.pct}%</div><div class="tag" style="color:${pctColor(sv.pct)};">${pctLabel(sv.pct)}</div></div></div>
-    <div class="box country"><div><div class="name">GT Guatemala (GT)</div><div class="sub">${gt.ok} de ${gt.n} radicaciones dentro de SLA</div></div>
-      <div><div class="pct" style="color:${pctColor(gt.pct)};">${gt.pct}%</div><div class="tag" style="color:${pctColor(gt.pct)};">${pctLabel(gt.pct)}</div></div></div>
+  <div class="grid2" style="${currentFilter.pais !== 'todos' ? 'grid-template-columns: 1fr;' : ''}">
+    ${currentFilter.pais !== 'GT' ? `<div class="box country"><div><div class="name">SV El Salvador (SV)</div><div class="sub">${sv.ok} de ${sv.n} radicaciones dentro de SLA</div></div>
+      <div><div class="pct" style="color:${pctColor(sv.pct)};">${sv.pct}%</div><div class="tag" style="color:${pctColor(sv.pct)};">${pctLabel(sv.pct)}</div></div></div>` : ''}
+    ${currentFilter.pais !== 'SV' ? `<div class="box country"><div><div class="name">GT Guatemala (GT)</div><div class="sub">${gt.ok} de ${gt.n} radicaciones dentro de SLA</div></div>
+      <div><div class="pct" style="color:${pctColor(gt.pct)};">${gt.pct}%</div><div class="tag" style="color:${pctColor(gt.pct)};">${pctLabel(gt.pct)}</div></div></div>` : ''}
   </div>
   <div class="grid2"><div class="box"><h3>Situación Operativa de SLA</h3><div class="sit">
     <svg width="95" height="95" viewBox="0 0 100 100" style="transform: rotate(-90deg);">${donut}</svg>
@@ -3162,7 +4476,7 @@
   </section>
   <section data-pdf-module="informe">
   <h2>5. Detalle completo de radicaciones (${total} registros)</h2>
-  <table><thead><tr><th>Pre-Oferta</th><th>Cliente / Razón Social</th><th class="c">País</th><th class="c">Línea Negocio</th><th class="c">Radios</th><th>Etapa Actual</th><th class="c">Estado</th><th class="c">Condición SLA</th></tr></thead><tbody>${detalleRows}</tbody></table>
+  <table><thead><tr><th>Pre-Oferta</th><th>Cliente / Razón Social</th><th class="c">País</th><th class="c">Línea Negocio</th><th class="c">Inventario / Anexos</th><th class="c">Radios Entregados</th><th>Etapa Actual</th><th class="c">Estado</th><th class="c">Condición SLA</th></tr></thead><tbody>${detalleRows}</tbody></table>
   </section>
   </div>
 </body>
@@ -3193,6 +4507,14 @@
       });
     });
 
+    document.querySelectorAll("#invCondQuickFilter [data-invcond]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentFilter.invCondFilter = btn.getAttribute("data-invcond") || "ALL";
+        updatePillActive("#invCondQuickFilter", currentFilter.invCondFilter, "data-invcond");
+        renderCategoriasTab();
+      });
+    });
+
     document.querySelectorAll("#stageModalFilterPills [data-smview]").forEach(btn => {
       btn.addEventListener("click", () => {
         filterStageModalTables(btn.getAttribute("data-smview"));
@@ -3206,6 +4528,7 @@
         const target = e.currentTarget;
         target.classList.add("active");
         currentFilter.pais = target.getAttribute("data-op");
+        currentFilter.openSlaFocus = null;
         renderApp();
       });
     });
@@ -3214,10 +4537,11 @@
     const dFrom = document.getElementById("dateFrom");
     const dTo = document.getElementById("dateTo");
     const btnResetP = document.getElementById("btnResetPeriod");
-    if (dFrom) dFrom.addEventListener("change", (e) => { currentFilter.dateFrom = e.target.value; renderApp(); });
-    if (dTo) dTo.addEventListener("change", (e) => { currentFilter.dateTo = e.target.value; renderApp(); });
+    if (dFrom) dFrom.addEventListener("change", (e) => { currentFilter.openSlaFocus = null; currentFilter.dateFrom = e.target.value; renderApp(); });
+    if (dTo) dTo.addEventListener("change", (e) => { currentFilter.openSlaFocus = null; currentFilter.dateTo = e.target.value; renderApp(); });
     if (btnResetP) {
       btnResetP.addEventListener("click", () => {
+        currentFilter.openSlaFocus = null;
         const period = getCurrentMonthPeriod();
         currentFilter.dateFrom = period.from;
         currentFilter.dateTo = period.to;
@@ -3259,6 +4583,7 @@
     }
     if (btnApply) {
       btnApply.addEventListener("click", () => {
+        currentFilter.openSlaFocus = null;
         if (xfPanel) xfPanel.classList.add("hidden");
         if (btnToggle) btnToggle.classList.remove("open");
         renderApp();
@@ -3284,7 +4609,25 @@
       });
     }
 
-    // 8. Buscador en Informe Detallado de Activaciones
+    // 8. Buscador en Tabla de Etapas y en Informe Detallado
+    const etapasSearch = document.getElementById("etapasTableSearch");
+    const btnClearEtapas = document.getElementById("btnClearEtapasSearch");
+    if (etapasSearch) {
+      etapasSearch.addEventListener("input", (e) => {
+        tableSearchText = (e.target.value || "").trim();
+        if (btnClearEtapas) btnClearEtapas.style.display = tableSearchText ? "inline-flex" : "none";
+        renderRadicacionesTable();
+      });
+    }
+    if (btnClearEtapas) {
+      btnClearEtapas.addEventListener("click", () => {
+        tableSearchText = "";
+        if (etapasSearch) etapasSearch.value = "";
+        btnClearEtapas.style.display = "none";
+        renderRadicacionesTable();
+      });
+    }
+
     const actInfSearch = document.getElementById("actInformeSearchInput");
     if (actInfSearch) {
       actInfSearch.addEventListener("input", (e) => {
@@ -3292,6 +4635,16 @@
         renderActInformeDetallado();
       });
     }
+
+    // Cerrar modales al hacer clic fuera del contenido
+    ["stageModalBackdrop", "detailModalBackdrop"].forEach(id => {
+      const backdrop = document.getElementById(id);
+      if (backdrop) {
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) backdrop.classList.remove("is-open");
+        });
+      }
+    });
 
     // 9. Botones Exportar en Activaciones
     const btnActExExcel = document.getElementById("btnActExportExcel");

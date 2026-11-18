@@ -1,13 +1,14 @@
 # Retiro del Flujo de ventas anterior
 
-El dashboard actual (`public/dashboards/marketing/flujo-ventas.html`) **no se borra
-de golpe**. Se retira en tres etapas para que nadie se quede sin información.
+El HTML anterior (`public/dashboards/marketing/flujo-ventas.html`) se conserva como respaldo,
+pero ya no está disponible desde el menú del portal. El menú **Flujo de ventas** abre la v2.
+La v2 necesita `RED_API_KEY` configurada en Vercel para cargar los datos.
 
 | Etapa | Cuándo | Qué se hace | ¿Se puede deshacer? |
 |---|---|---|---|
-| **1. Convivencia** | Mientras se construye la v2 | El viejo sigue en el menú. La v2 se prueba aparte. | — |
-| **2. Cambio en el menú** | Cuando la v2 esté aprobada | "Flujo de ventas" del menú apunta a la v2. El archivo viejo se queda en el repo, pero ya nadie llega a él. | Sí, cambiando una línea en `PortalLayout.tsx` |
-| **3. Limpieza** | 2 a 4 semanas después, si nadie lo necesitó | Se borra el archivo viejo y lo que solo él usaba. Git conserva el historial por si hiciera falta recuperarlo. | Sí, desde el historial de Git |
+| **1. Convivencia** | Completada | Ambas versiones estuvieron disponibles durante la construcción y revisión. | — |
+| **2. Cambio en el menú** | Completado el 12/11/2026 | "Flujo de ventas" abre la v2. El HTML anterior queda guardado, fuera del menú, como respaldo. | Sí, revirtiendo el cambio en `PortalLayout.tsx` |
+| **3. Limpieza física** | Pendiente | Borrar el HTML/CSS y las variables exclusivas del dashboard anterior después de revisar sus usos. No se toca Supabase ni el servicio de Redes sociales. | Sí, desde el historial de Git |
 
 ## Qué se quita en la etapa 3
 
