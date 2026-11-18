@@ -227,23 +227,36 @@
           <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4f8fd8;"></span>
           <span>EQUIPOS</span>
         </div>
-        <div class="anexos-kpi-grid">
-          <div class="anexos-kpi-card tone-blue is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de Equipos en Categorías">
-            <div class="anexos-kpi-label" style="color: #7fb0f0;">Equipos</div>
+        <div class="anexos-kpi-grid is-6col">
+          <div class="anexos-kpi-card tone-blue is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Total de equipos solicitados (radios + consolas, sin renovaciones)">
+            <div>
+              <div class="anexos-kpi-label" style="color: #7fb0f0;">Equipos</div>
+              <div class="anexos-kpi-sub" id="kpiEquiposSubNote" style="display: none;"></div>
+            </div>
             <div class="anexos-kpi-val" style="color: #7fb0f0;" id="kpiTotalEquipos">—</div>
           </div>
 
-          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="Ver inventario Nuevo en Categorías">
+          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Radios físicos identificados en anexos">
+            <div class="anexos-kpi-label" style="color: #cbd5e1;">Radios</div>
+            <div class="anexos-kpi-val" style="color: #e2e8f0;" id="kpiTotalRadiosEquipos">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-cyan is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Consolas / aplicativos en anexos">
+            <div class="anexos-kpi-label" style="color: #38bdf8;">Consolas</div>
+            <div class="anexos-kpi-val" style="color: #38bdf8;" id="kpiTotalConsolas">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="Radios y consolas en estado Nuevo">
             <div class="anexos-kpi-label" style="color: #3fb898;">Nuevo</div>
             <div class="anexos-kpi-val" style="color: #3fb898;" id="kpiInvNuevoCount">—</div>
           </div>
 
-          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="Ver inventario Usado en Categorías">
+          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="Radios y consolas en estado Usado">
             <div class="anexos-kpi-label" style="color: #e2b422;">Usado</div>
             <div class="anexos-kpi-val" style="color: #e2b422;" id="kpiInvUsadoCount">—</div>
           </div>
 
-          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="Ver inventario Refurbished en Categorías">
+          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="Radios y consolas en estado Refurbished">
             <div class="anexos-kpi-label" style="color: #a78bfa;">Refurbished</div>
             <div class="anexos-kpi-val" style="color: #a78bfa;" id="kpiInvRefurbCount">—</div>
           </div>
@@ -335,6 +348,35 @@
           </div>
         </div>
       </div>
+
+      <!-- SIM CARDS (SECCIÓN INDEPENDIENTE AL FINAL DEL RESUMEN) -->
+      <section class="anexos-kpi-row" aria-label="SIM Cards" style="margin-top: 18px; margin-bottom: 0;">
+        <div style="font-size: 11px; font-weight: 800; color: #8b909e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #3fb898;"></span>
+          <span>SIM CARDS</span>
+        </div>
+        <div class="anexos-kpi-grid">
+          <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Ver detalle de SIM Cards en Categorías">
+            <div class="anexos-kpi-label" style="color: #cbd5e1;">SIM Cards</div>
+            <div class="anexos-kpi-val" style="color: #e2e8f0;" id="kpiTotalSims">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-green is-clickable" onclick="navigateToCategoriasCond('NUEVO')" title="SIM Cards en estado Nuevo">
+            <div class="anexos-kpi-label" style="color: #3fb898;">Nuevas</div>
+            <div class="anexos-kpi-val" style="color: #3fb898;" id="kpiSimsNuevoCount">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-yellow is-clickable" onclick="navigateToCategoriasCond('USADO')" title="SIM Cards en estado Usado">
+            <div class="anexos-kpi-label" style="color: #e2b422;">Usadas</div>
+            <div class="anexos-kpi-val" style="color: #e2b422;" id="kpiSimsUsadoCount">—</div>
+          </div>
+
+          <div class="anexos-kpi-card tone-purple is-clickable" onclick="navigateToCategoriasCond('REFURBISHED')" title="SIM Cards en estado Refurbished">
+            <div class="anexos-kpi-label" style="color: #a78bfa;">Refurbished</div>
+            <div class="anexos-kpi-val" style="color: #a78bfa;" id="kpiSimsRefurbCount">—</div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- ================= TAB 2: RADICACIONES POR ETAPA ================= -->
@@ -1217,6 +1259,30 @@
     return "Sin estado";
   }
 
+  function getConditionFromConsoleAnx(anx) {
+    if (!anx || typeof anx !== "object") return "sin_estado";
+    const planTexts = [];
+    if (Array.isArray(anx.planes)) {
+      anx.planes.forEach(p => {
+        if (!p) return;
+        if (typeof p === "string") planTexts.push(p);
+        else if (typeof p === "object") {
+          const txt = p.planam ?? p.plan ?? p.nombre ?? p.plan_nombre ?? p.descripcion ?? "";
+          if (txt) planTexts.push(String(txt));
+        }
+      });
+    }
+    const directPlan = anx.planam ?? anx.plan ?? anx.plan_nombre ?? anx.planNombre ?? "";
+    if (directPlan) planTexts.push(String(directPlan));
+
+    const joined = planTexts.join(" ").trim().toUpperCase();
+    if (!joined) return "sin_estado";
+    if (joined.includes("REFURB")) return "refurbished";
+    if (joined.includes("USAD")) return "usado";
+    if (joined.includes("NEW") || joined.includes("NUEV")) return "nuevo";
+    return "sin_estado";
+  }
+
   function getItemInventoryData(item) {
     const currencySymbol = String((item && item.pais) || "GT").trim().toUpperCase() === "SV" ? "$" : "Q";
     if (!item || typeof item !== "object") {
@@ -1227,9 +1293,12 @@
         annexValidated: 0,
         annexPending: 0,
         equiposE: 0,
+        consolasCount: 0,
+        pendingAnnexCount: 0,
         simsS: 0,
         totalDevices: 0,
         eCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        consoleCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
         sCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
         allCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
         condition: "SIN ANEXOS",
@@ -1259,9 +1328,12 @@
         annexValidated: 0,
         annexPending: 0,
         equiposE: 0,
+        consolasCount: 0,
+        pendingAnnexCount: 0,
         simsS: 0,
         totalDevices: 0,
         eCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
+        consoleCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
         sCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
         allCond: { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 },
         condition: "NO APLICA",
@@ -1287,6 +1359,7 @@
     const rawDetalle = Array.isArray(item.detalle) ? item.detalle : [];
 
     const eCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
+    const consoleCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
     const sCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
     const allCond = { nuevo: 0, usado: 0, refurbished: 0, sin_estado: 0 };
     const eModelMap = new Map();
@@ -1295,6 +1368,7 @@
     let annexValidated = 0;
     let annexPending = 0;
     let equiposE = 0;
+    let consolasCount = 0;
     let simsS = 0;
 
     const annexList = rawAnexos.map(anx => {
@@ -1338,6 +1412,13 @@
 
         return { tipo, condKey, eqpcod, eqpnm, imei, estadoCodigo, estadoEquipo };
       });
+
+      if (aE === 0) {
+        consolasCount++;
+        const cCond = getConditionFromConsoleAnx(anx);
+        consoleCond[cCond] = (consoleCond[cCond] || 0) + 1;
+        allCond[cCond] = (allCond[cCond] || 0) + 1;
+      }
 
       return { folcod, folncc, validado, eCount: aE, sCount: aS, eCond: aECond, sCond: aSCond, equipos };
     });
@@ -1423,15 +1504,21 @@
       condition = "SIN ESTADO";
     }
 
+    const totalRadiosSol = getTotalRadiosCount(item);
+    const pendingAnnexCount = Math.max(0, totalRadiosSol - equiposE - consolasCount);
+
     const result = {
       hasAnexosField,
       annexCount: rawAnexos.length,
       annexValidated,
       annexPending,
       equiposE,
+      consolasCount,
+      pendingAnnexCount,
       simsS,
       totalDevices: equiposE + simsS,
       eCond,
+      consoleCond,
       sCond,
       allCond,
       condition,
@@ -2518,22 +2605,56 @@
       setElText("kpiCancelledExact", canceladas.toLocaleString("es-GT"));
       setElText("kpiRadiosCancelados", radiosCancelados.toLocaleString("es-GT"));
 
-      // KPIs de Equipos y Condición de Inventario (Nuevo / Usado / Refurbished)
-      let totalE = 0;
-      let eNuevo = 0, eUsado = 0, eRefurb = 0;
+      // KPIs de Equipos: Equipos = total radios solicitados (cantidad sin renovaciones)
+      // Desglose: Radios físicos + Consolas + Condición (Nuevo / Usado / Refurbished)
+      // Aparte al final del Resumen: SIM Cards (Total + Nuevas / Usadas / Refurbished)
+      let totalRadiosFisicos = 0;
+      let totalConsolas = 0;
+      let totalPendingAnx = 0;
+      let eqNuevo = 0, eqUsado = 0, eqRefurb = 0;
+      let totalSims = 0;
+      let simNuevo = 0, simUsado = 0, simRefurb = 0;
 
       filteredData.forEach(item => {
+        if (isRenovacionItem(item)) return;
         const inv = getItemInventoryData(item);
-        totalE += inv.equiposE;
-        eNuevo += inv.eCond.nuevo;
-        eUsado += inv.eCond.usado;
-        eRefurb += inv.eCond.refurbished;
+        const itemTotal = getTotalRadiosCount(item);
+        totalRadiosFisicos += inv.equiposE;
+        totalConsolas += inv.consolasCount;
+        totalPendingAnx += Math.max(0, itemTotal - inv.equiposE - inv.consolasCount);
+
+        eqNuevo += (inv.eCond.nuevo || 0) + (inv.consoleCond.nuevo || 0);
+        eqUsado += (inv.eCond.usado || 0) + (inv.consoleCond.usado || 0);
+        eqRefurb += (inv.eCond.refurbished || 0) + (inv.consoleCond.refurbished || 0);
+
+        totalSims += inv.simsS;
+        simNuevo += inv.sCond.nuevo || 0;
+        simUsado += inv.sCond.usado || 0;
+        simRefurb += inv.sCond.refurbished || 0;
       });
 
-      setElText("kpiTotalEquipos", totalE.toLocaleString("es-GT"));
-      setElText("kpiInvNuevoCount", eNuevo.toLocaleString("es-GT"));
-      setElText("kpiInvUsadoCount", eUsado.toLocaleString("es-GT"));
-      setElText("kpiInvRefurbCount", eRefurb.toLocaleString("es-GT"));
+      setElText("kpiTotalEquipos", totalRadios.toLocaleString("es-GT"));
+      setElText("kpiTotalRadiosEquipos", totalRadiosFisicos.toLocaleString("es-GT"));
+      setElText("kpiTotalConsolas", totalConsolas.toLocaleString("es-GT"));
+      setElText("kpiInvNuevoCount", eqNuevo.toLocaleString("es-GT"));
+      setElText("kpiInvUsadoCount", eqUsado.toLocaleString("es-GT"));
+      setElText("kpiInvRefurbCount", eqRefurb.toLocaleString("es-GT"));
+
+      const eqSubNote = document.getElementById("kpiEquiposSubNote");
+      if (eqSubNote) {
+        if (totalPendingAnx > 0) {
+          eqSubNote.textContent = `${totalPendingAnx.toLocaleString("es-GT")} sin anexo aún`;
+          eqSubNote.style.display = "block";
+        } else {
+          eqSubNote.textContent = "";
+          eqSubNote.style.display = "none";
+        }
+      }
+
+      setElText("kpiTotalSims", totalSims.toLocaleString("es-GT"));
+      setElText("kpiSimsNuevoCount", simNuevo.toLocaleString("es-GT"));
+      setElText("kpiSimsUsadoCount", simUsado.toLocaleString("es-GT"));
+      setElText("kpiSimsRefurbCount", simRefurb.toLocaleString("es-GT"));
 
       // SLAs para Donut Chart (mismos colores semánticos que las tarjetas de arriba)
       let enTiempo = 0;
