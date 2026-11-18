@@ -1202,6 +1202,11 @@
     if (txt === "nuevo") return "nuevo";
     if (txt === "usado") return "usado";
     if (txt === "refurbished") return "refurbished";
+
+    const nameUpper = String((eq.eqpnm ?? eq.eqpnam) || "").trim().toUpperCase();
+    if (nameUpper.includes("REFURBISHED")) return "refurbished";
+    if (nameUpper.includes("USADO")) return "usado";
+    if (nameUpper.includes("NUEVO")) return "nuevo";
     return "sin_estado";
   }
 
@@ -1310,7 +1315,8 @@
         const tipo = String((eq && eq.tipo_equipo) || "").trim().toUpperCase() === "S" ? "S" : "E";
         const condKey = getConditionFromEquipment(eq);
         const eqpcod = eq && eq.eqpcod != null ? String(eq.eqpcod).trim() : "";
-        const eqpnm = eq && eq.eqpnm != null ? String(eq.eqpnm).trim() : "";
+        const rawEqpName = eq ? (eq.eqpnm ?? eq.eqpnam) : null;
+        const eqpnm = rawEqpName != null ? String(rawEqpName).trim() : "";
         const imei = eq && eq.imei != null ? String(eq.imei).trim() : "";
         const estadoCodigo = eq && eq.estado_codigo != null ? String(eq.estado_codigo).trim() : "";
         const estadoEquipo = eq && eq.estado_equipo != null ? String(eq.estado_equipo).trim() : "";
