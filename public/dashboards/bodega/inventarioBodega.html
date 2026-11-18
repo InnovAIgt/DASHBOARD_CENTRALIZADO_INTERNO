@@ -72,6 +72,7 @@
         <article class="warehouse-kpi"><span>Órdenes pendientes</span><strong id="warehousePendingOrders">—</strong><small>disponible en módulo de OC</small></article>
       </div>
 
+      <article class="warehouse-card" id="warehouseOperationPanel" hidden><div class="warehouse-card-head"><div><span class="warehouse-kicker">Operación de El Salvador</span><h3>Ubicación y función del inventario</h3></div></div><p class="warehouse-note">Existencias actuales por función operativa. Los porcentajes se calculan sobre el inventario de SV. Las bodegas puente son ubicaciones de tránsito; estas cifras no representan movimientos ni disponibilidad para venta.</p><div id="warehouseOperationSummary" class="warehouse-condition-list"></div><p class="warehouse-note">B14 es general y contiene usados sin taller. B15 contiene usados después de taller. B90–B97 identifica equipos con clientes. La condición de los artículos se conserva según SAP.</p></article>
       <div class="warehouse-grid warehouse-grid-wide">
         <article class="warehouse-card warehouse-warehouse-card">
           <div class="warehouse-card-head"><div><span class="warehouse-kicker">Distribución</span><h3>Inventario por bodega</h3></div><span class="warehouse-caption">País y código SAP</span></div>
@@ -85,19 +86,24 @@
       </div>
 
       <article class="warehouse-card warehouse-minimum-card">
-        <div class="warehouse-card-head"><div><span class="warehouse-kicker">Abastecimiento</span><h3>Inventarios mínimos</h3><p class="warehouse-note">Identifica qué productos requieren reposición por bodega. El faltante se calcula restando la existencia al mínimo aplicable.</p></div><span class="warehouse-caption">Hasta 100 registros, ordenados por mayor faltante</span></div>
-        <div class="warehouse-minimum-filters">
+        <div class="warehouse-card-head"><div><span class="warehouse-kicker">Abastecimiento</span><h3>Inventarios mínimos</h3><p class="warehouse-note">Identifica qué productos requieren reposición por bodega. El faltante se calcula restando la existencia al mínimo aplicable.</p></div><span class="warehouse-caption">Prioridad: sin existencias y bajo mínimo</span></div>
+        <div id="minimumIndicators" class="minimum-indicators"></div><p class="warehouse-note">Mínimos recibidos de SAP. Su aplicación por bodega está pendiente de confirmar: el mismo mínimo puede repetirse en varias bodegas de un artículo.</p><div class="warehouse-minimum-filters">
+<label><span>Buscar producto o código</span><input id="minimumSearch" type="search" placeholder="Nombre o código"></label>
+<label><span>País</span><select id="minimumCountry"><option value="">Todos</option><option>GT</option><option>SV</option></select></label>
+<label><span>Ubicación</span><select id="minimumLocation"><option value="internal">Inventario interno</option><option value="clients">Equipos con clientes · SV</option><option value="all">Todas las ubicaciones</option></select></label>
+<label><span>Condición</span><select id="minimumCondition"><option value="">Todas</option></select></label>
+<label><span>Función operativa</span><select id="minimumRole"><option value="">Todas</option><option value="general">General · SV</option><option value="bridge">Puente y taller · SV</option><option value="post">Después de taller · SV</option><option value="client">Con clientes · SV</option><option value="other">Otras / por confirmar</option></select></label>
           <label><span>Bodega</span><select id="warehouseMinimumFilter"><option value="">Todas</option></select></label>
-          <label><span>Estado del inventario</span><select id="warehouseStatusFilter"><option value="">Todos</option><option value="is-red">Bajo mínimo</option><option value="is-amber">Cerca del mínimo</option><option value="is-green">Stock suficiente</option><option value="is-neutral">Sin mínimo definido</option></select></label>
+          <label><span>Estado del inventario</span><select id="warehouseStatusFilter"><option value="risk">Reposición prioritaria</option><option value="">Todos con mínimo</option><option value="empty">Sin existencias</option><option value="is-red">Bajo mínimo</option><option value="is-amber">Cerca del mínimo</option><option value="is-green">Stock suficiente</option><option value="is-neutral">Sin mínimo definido</option></select></label>
           <span id="warehouseUndefinedMinimum" aria-live="polite"></span>
         </div>
         <div class="warehouse-table-wrap">
           <table class="warehouse-table">
-            <thead><tr><th>País</th><th>Bodega</th><th>Código</th><th>Descripción</th><th>Condición</th><th>Existencia</th><th>Mínimo requerido</th><th>Reorden</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Bodega</th><th>Producto</th><th>Condición</th><th>Disponibles</th><th>Mínimo SAP</th><th>Faltan</th><th>Estado</th></tr></thead>
             <tbody id="warehouseMinimumRows"><tr><td colspan="9" class="warehouse-empty">Esperando datos de SAP...</td></tr></tbody>
           </table>
         </div>
-        <p class="warehouse-note">Semáforo pendiente de aprobación: amarillo usa un umbral provisional del 10% por encima del mínimo; no sustituye una regla de negocio oficial.</p>
+        <div class="minimum-pagination"><span id="minimumCount" role="status"></span><label>Filas <select id="minimumPageSize"><option>10</option><option selected>25</option></select></label><button type="button" class="btn" id="minimumPrev">Anterior</button><button type="button" class="btn" id="minimumNext">Siguiente</button><button type="button" class="btn" id="minimumExport">Exportar lista a Excel</button></div><p id="minimumExportStatus" role="status"></p><p class="warehouse-note">Semáforo pendiente de aprobación: amarillo usa un umbral provisional del 10% por encima del mínimo; no sustituye una regla de negocio oficial.</p>
       </article>
 
       <article class="warehouse-card warehouse-future-card">
@@ -195,7 +201,7 @@
               <button type="button" data-chart-mode="critical" aria-pressed="false">Menos stock</button>
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="inventoryChart"></canvas></div>
+          <div class="chart-wrap"><div id="inventoryChart" class="inventory-native-ranking" aria-live="polite"></div></div>
         </div>
       </div>
       <div class="card inventory-table-card">
@@ -591,6 +597,45 @@
           B94: "BODEGA VIRTUAL AF AUTO CONSUMO",
           B95: "BODEGA VIRTUAL AF PRESTAMOS",
           B96: "BODEGA VIRTUAL AF PRESTAMOS TECNICOS",
+        },
+        SV: {
+          B01: "BODEGA GENERAL IDEN",
+          B02: "BODEGA DISPONIBLE PARA LA VENTA IDEN",
+          B03: "BODEGA TEMPORAL",
+          B04: "BODEGA DEMOS DISPONIBLES",
+          B05: "BODEGA PRESTAMOS EN USO",
+          B06: "BODEGA DE RECUPERADOS (TALLER SAC)",
+          B07: "BODEGA DE IRREPARABLES U OBSOLETOS",
+          B08: "BODEGA ARRIENDOS",
+          B09: "BODEGA DE PRODUCCION",
+          B10: "BODEGA DE VENTA SERVICIO AL CLIENTE",
+          B11: "BODEGA DE CONSUMIBLES",
+          B12: "BODEGA DE MATERIALES PARA INGENIERIA",
+          B13: "BODEGA PENDIENTES DE REVISION",
+          B14: "BODEGA ESCANEO PENDIENTES DE REVISION",
+          B15: "BODEGA GENERAL REDPTT",
+          B16: "BODEGA DISPONIBLE PARA LA VENTA REDPTT",
+          B17: "BODEGA DE GARANTIAS (PROVEEDOR)",
+          B18: "BODEGA DE PRESTAMOS DISPONIBLES SAC",
+          B19: "BODEGA DE PRESTAMOS DISPONIBLES",
+          B20: "BODEGA DE ACTIVACIONES",
+          B21: "BODEGA DE SIMCARD OBSOLETA",
+          B80: "BODEGA DE COMODATO",
+          B81: "BODEGA DE DEMOS",
+          B82: "BODEGA DE ARRIENDO",
+          B83: "BODEGA DE BACKUP",
+          B84: "BODEGA DE AUTO CONSUMO",
+          B85: "BODEGA DE PRESTAMOS INTERNOS",
+          B86: "BODEGA DE CAMBIOS A CLIENTES",
+          B87: "BODEGA DE PRESTAMO TECNICO",
+          B90: "BODEGA VIRTUAL AF COMODATO",
+          B91: "BODEGA VIRTUAL AF DEMOS",
+          B92: "BODEGA VIRTUAL AF ARRIENDO",
+          B93: "BODEGA VIRTUAL AF BACKUP",
+          B94: "BODEGA VIRTUAL AF AUTO CONSUMO",
+          B95: "BODEGA VIRTUAL AF PRESTAMOS",
+          B96: "BODEGA VIRTUAL AF CAMBIOS A CLIENTES",
+          B97: "BODEGA VIRTUAL AF PRESTAMO TECNICO",
         }
       };
       const warehouseCode = item => String(item.bodega ?? '').trim().toUpperCase() || 'Sin código';
@@ -599,6 +644,53 @@
         const name = warehouseNames[item.pais]?.[code];
         const label = name ? code + ' · ' + name : code;
         return includeCountry ? item.pais + ' · ' + label : label;
+      }
+      function warehouseOperation(item) {
+        if (item.pais !== 'SV') return '';
+        const code = warehouseCode(item);
+        const roles = {
+          B03: 'Puente · ingresos de compras, reemplazos e ingresos a taller',
+          B06: 'Puente · ingreso al taller gestionado por SAC',
+          B09: 'Puente · salida del taller hacia bodega de SAC',
+          B13: 'Bodega general', B14: 'Bodega general · usados sin taller',
+          B15: 'Usados después de taller', B16: 'Bodega general'
+        };
+        if (roles[code]) return roles[code];
+        if (/^B8[0-7]$/.test(code)) return code === 'B80' ? 'Puente · conecta bodegas generales con bodegas de clientes' : 'Bodega puente';
+        if (/^B9[0-7]$/.test(code)) return 'Fuera de bodega · equipos con clientes';
+        return '';
+      }
+      function renderWarehouseOperations() {
+        const records = inventoryRecords.filter(item => item.pais === 'SV');
+        document.getElementById('warehouseOperationPanel').hidden = !records.length;
+        const groups = [
+          ['Generales · B13, B14 y B16', c => ['B13','B14','B16'].includes(c)],
+          ['Puente y taller · B03, B06 y B09', c => ['B03','B06','B09'].includes(c)],
+          ['Usados después de taller · B15', c => c === 'B15'],
+          ['Puente hacia clientes · B80–B87', c => /^B8[0-7]$/.test(c)],
+          ['Equipos con clientes · B90–B97', c => /^B9[0-7]$/.test(c)],
+          ['Otras bodegas de SV', c => !['B03','B06','B09','B13','B14','B15','B16'].includes(c) && !/^B[89][0-7]$/.test(c)]
+        ];
+        const total = records.reduce((sum, item) => sum + item.existencia, 0);
+        document.getElementById('warehouseOperationSummary').innerHTML = groups.map(([label, match]) => {
+          const units = records.filter(item => match(warehouseCode(item))).reduce((sum, item) => sum + item.existencia, 0);
+          const share = total ? (units / total * 100).toLocaleString('es-GT', { maximumFractionDigits: 1 }) : '0';
+          const byWarehouse = new Map();
+          records.filter(item => match(warehouseCode(item))).forEach(item => {
+            const code = warehouseCode(item);
+            const warehouse = byWarehouse.get(code) || { code, units: 0, conditions: new Map() };
+            warehouse.units += item.existencia;
+            warehouse.conditions.set(item.inventarioClasificado, (warehouse.conditions.get(item.inventarioClasificado) || 0) + item.existencia);
+            byWarehouse.set(code, warehouse);
+          });
+          const details = [...byWarehouse.values()].sort((a,b) => b.units - a.units).map(warehouse => {
+            const item = { pais: 'SV', bodega: warehouse.code };
+            const percentage = total ? (warehouse.units / total * 100).toLocaleString('es-GT', { maximumFractionDigits: 1 }) : '0';
+            const conditions = [...warehouse.conditions].filter(([, count]) => count !== 0).map(([name, count]) => `${escapeValue(name)}: ${formatValue(count)}`).join(' · ');
+            return `<div class="warehouse-operation-detail"><strong>${escapeValue(warehouseLabel(item, false))}</strong><p>${formatValue(warehouse.units)} unidades · ${percentage}% del inventario de SV</p><div class="warehouse-bar-track"><i style="width:${Math.max(0, Math.min(100, total ? warehouse.units / total * 100 : 0))}%"></i></div><p>${escapeValue(warehouseOperation(item) || 'Función operativa pendiente de confirmar')}</p><small>${conditions}</small><p class="warehouse-note">Clasificación vacía: SAP no informa la condición del artículo. Entradas, salidas y traslados: sin datos de movimientos en la consulta actual.</p></div>`;
+          }).join('');
+          return `<details class="warehouse-operation-group"><summary class="warehouse-condition"><span>${escapeValue(label)} · ver bodegas</span><strong>${formatValue(units)}</strong><small>unidades · ${share}% de SV</small></summary>${details || '<p class="warehouse-note">Sin registros de inventario en este grupo.</p>'}</details>`;
+        }).join('');
       }
       const warehouseKey = item => item.pais + " · " + warehouseCode(item);
       function renderWarehouseDashboard(summaryOnly = false) {
@@ -613,7 +705,7 @@
         inventoryRecords.forEach(item => {
           const key = warehouseKey(item);
           const code = warehouseCode(item);
-          const current = warehouseMap.get(key) || { key, code, label: warehouseLabel(item), total: 0, NUEVO: 0, REFURBISHED: 0, USADO: 0, 'GESTIÓN TALLER': 0, ARRUINADO: 0 };
+          const current = warehouseMap.get(key) || { key, code, label: warehouseLabel(item), operation: warehouseOperation(item), total: 0, NUEVO: 0, REFURBISHED: 0, USADO: 0, 'GESTIÓN TALLER': 0, ARRUINADO: 0 };
           const classification = item.inventarioClasificado.toUpperCase() === 'TALLER DE GARANTÍA' ? 'GESTIÓN TALLER' : item.inventarioClasificado.toUpperCase();
           current.total += item.existencia;
           if (Object.prototype.hasOwnProperty.call(current, classification)) current[classification] += item.existencia;
@@ -630,10 +722,11 @@
         setText('warehouseRuined', sumCondition('ARRUINADO'));
         setText('warehouseBelowMinimum', underMinimum.length);
         if (summaryOnly === true) return;
+        renderWarehouseOperations();
         const warehouseList = document.getElementById('warehouseWarehouseList');
         if (warehouseList) warehouseList.innerHTML = warehouses.length ? warehouses.map(item => {
           const percentage = total ? (item.total / total) * 100 : 0;
-          return `<div class="warehouse-bar-row"><div class="warehouse-bar-label"><button type="button" class="btn" data-minimum-warehouse="${escapeValue(item.key)}">${escapeValue(item.label)}</button><span>${formatValue(item.total)} uds · ${percentage.toLocaleString('es-GT', { maximumFractionDigits: 1 })}%</span></div><div class="warehouse-bar-track"><i style="width:${Math.max(0, Math.min(100, percentage))}%"></i></div><div class="warehouse-bar-breakdown"><span>Nuevos ${formatValue(item.NUEVO)}</span><span>Refurb. ${formatValue(item.REFURBISHED)}</span><span>Usados ${formatValue(item.USADO)}</span><span>Taller ${formatValue(item['GESTIÓN TALLER'])}</span><span>Arruinados ${formatValue(item.ARRUINADO)}</span></div></div>`;
+          return `<div class="warehouse-bar-row"><div class="warehouse-bar-label"><button type="button" class="btn" data-minimum-warehouse="${escapeValue(item.key)}">${escapeValue(item.label)}</button><span>${formatValue(item.total)} uds · ${percentage.toLocaleString('es-GT', { maximumFractionDigits: 1 })}%</span></div>${item.operation ? `<p class="warehouse-note">${escapeValue(item.operation)}</p>` : ''}<div class="warehouse-bar-track"><i style="width:${Math.max(0, Math.min(100, percentage))}%"></i></div><div class="warehouse-bar-breakdown"><span>Nuevos ${formatValue(item.NUEVO)}</span><span>Refurb. ${formatValue(item.REFURBISHED)}</span><span>Usados ${formatValue(item.USADO)}</span><span>Taller ${formatValue(item['GESTIÓN TALLER'])}</span><span>Arruinados ${formatValue(item.ARRUINADO)}</span></div></div>`;
         }).join('') : '<div class="warehouse-empty">Sin datos de bodega en la respuesta de SAP.</div>';
         const conditionList = document.getElementById('warehouseConditionList');
         if (conditionList) conditionList.innerHTML = [['Nuevos', 'NUEVO', 'is-green'], ['Reacondicionados', 'REFURBISHED', 'is-blue'], ['Usados', 'USADO', 'is-violet'], ['Gestión Taller', 'GESTION TALLER', 'is-amber'], ['Arruinados', 'ARRUINADO', 'is-red']].map(([label, key, className]) => `<div class="warehouse-condition ${className}"><span>${label}</span><strong>${formatValue(sumCondition(key))}</strong><small>unidades</small></div>`).join('');
@@ -641,26 +734,67 @@
         const selectedWarehouse = warehouseFilter.value;
         warehouseFilter.innerHTML = '<option value="">Todas</option>' + warehouses.map(item => `<option value="${escapeValue(item.key)}">${escapeValue(item.label)}</option>`).join('');
         warehouseFilter.value = warehouses.some(item => item.key === selectedWarehouse) ? selectedWarehouse : '';
-        const selectedStatus = document.getElementById('warehouseStatusFilter').value;
-        const minimumRows = document.getElementById('warehouseMinimumRows');
-        if (minimumRows) {
-          const statusFor = item => {
-            const minimum = minimumFor(item);
-            if (minimum <= 0) return { label: 'Sin mínimo definido', className: 'is-neutral' };
-            if (item.existencia < minimum) return { label: 'Bajo mínimo', className: 'is-red' };
-            if (item.existencia < minimum * (1 + WARNING_THRESHOLD_PERCENT)) return { label: 'Cerca del mínimo', className: 'is-amber' };
-            return { label: 'Stock suficiente', className: 'is-green' };
-          };
-          const scope = inventoryRecords.filter(item => !warehouseFilter.value || warehouseKey(item) === warehouseFilter.value);
-          document.getElementById('warehouseUndefinedMinimum').textContent = hasInventory ? formatValue(scope.filter(item => !minimumFor(item)).length) + ' sin mínimo definido' : '';
-          const rows = scope.filter(item => selectedStatus ? statusFor(item).className === selectedStatus : minimumFor(item) > 0).sort((a, b) => (a.existencia - minimumFor(a)) - (b.existencia - minimumFor(b))).slice(0, 100);
-          minimumRows.innerHTML = rows.length ? rows.map(item => {
-            const minimum = minimumFor(item);
-            const missing = Math.max(0, minimum - item.existencia);
-            const status = statusFor(item);
-            return `<tr><td>${escapeValue(item.pais)}</td><td>${escapeValue(warehouseLabel(item, false))}</td><td><strong>${escapeValue(item.codigo)}</strong></td><td>${escapeValue(item.producto)}</td><td>${escapeValue(item.inventarioClasificado)}</td><td>${formatValue(item.existencia)}</td><td>${minimum > 0 ? formatValue(minimum) + (item.stockMinimo > 0 ? '' : ' · dinámico') : '—'}</td><td>${formatValue(item.cantidadReorden)}</td><td><span class="warehouse-status ${status.className}">${status.label}</span>${minimum > 0 && missing > 0 ? `<small class="warehouse-shortfall">${missing === 1 ? 'Falta 1 unidad' : `Faltan ${formatValue(missing)} unidades`}</small>` : ''}</td></tr>`;
-          }).join('') : '<tr><td colspan="9" class="warehouse-empty">No hay registros para estos filtros.</td></tr>';
-        }
+        renderMinimumInventory();
+      }
+      let minimumPage = 1;
+      let minimumExportRows = [];
+      const minimumStatus = item => {
+        const min = minimumFor(item);
+        if (min <= 0) return {label:'Sin mínimo definido',key:'is-neutral',rank:4};
+        if (item.existencia <= 0) return {label:'Sin existencias',key:'is-red',rank:0};
+        if (item.existencia < min) return {label:'Bajo mínimo',key:'is-red',rank:1};
+        if (item.existencia < min * (1 + WARNING_THRESHOLD_PERCENT)) return {label:'Cerca del mínimo',key:'is-amber',rank:2};
+        return {label:'Stock suficiente',key:'is-green',rank:3};
+      };
+      function minimumRole(item) {
+        const c = warehouseCode(item);
+        if(item.pais !== 'SV') return 'other';
+        if(/^B9[0-7]$/.test(c)) return 'client';
+        if(['B13','B14','B16'].includes(c)) return 'general';
+        if(['B03','B06','B09'].includes(c) || /^B8[0-7]$/.test(c)) return 'bridge';
+        return c === 'B15' ? 'post' : 'other';
+      }
+      function minimumFilteredRows() {
+        const value = id => document.getElementById(id).value;
+        const query = value('minimumSearch').trim().toLocaleLowerCase('es');
+        const scope = inventoryRecords.filter(item => {
+          const clients = minimumRole(item) === 'client';
+          return (!value('minimumCountry') || item.pais === value('minimumCountry')) &&
+            (!value('warehouseMinimumFilter') || warehouseKey(item) === value('warehouseMinimumFilter')) &&
+            (!value('minimumCondition') || item.inventarioClasificado === value('minimumCondition')) &&
+            (!value('minimumRole') || minimumRole(item) === value('minimumRole')) &&
+            (value('minimumLocation') === 'all' || (value('minimumLocation') === 'clients' ? clients : !clients)) &&
+            (!query || (item.codigo + ' ' + item.producto).toLocaleLowerCase('es').includes(query));
+        });
+        const status = value('warehouseStatusFilter');
+        const rows = scope.filter(item => {
+          const state = minimumStatus(item);
+          if(status === 'risk') return state.rank <= 2;
+          if(status === 'empty') return state.rank === 0;
+          return status ? state.key === status : minimumFor(item) > 0;
+        }).sort((a,b) => minimumStatus(a).rank - minimumStatus(b).rank || (minimumFor(b)-b.existencia) - (minimumFor(a)-a.existencia) || warehouseKey(a).localeCompare(warehouseKey(b)));
+        return {scope,rows};
+      }
+      function renderMinimumInventory() {
+        const condition = document.getElementById('minimumCondition');
+        const selected = condition.value;
+        condition.innerHTML = '<option value="">Todas</option>' + [...new Set(inventoryRecords.map(i=>i.inventarioClasificado))].sort().map(c=>'<option value="'+escapeValue(c)+'">'+escapeValue(c)+'</option>').join('');
+        condition.value = selected;
+        const {scope,rows} = minimumFilteredRows();
+        minimumExportRows = rows;
+        const counts = [scope.filter(i=>minimumStatus(i).rank===0).length,scope.filter(i=>minimumStatus(i).key==='is-red').length,scope.filter(i=>minimumStatus(i).rank===2).length,scope.filter(i=>minimumStatus(i).rank===4).length];
+        document.getElementById('minimumIndicators').innerHTML = ['Sin existencias con mínimo','Bajo mínimo · incluye agotados','Cerca del mínimo','Sin mínimo definido'].map((label,index)=>'<button type="button" class="warehouse-kpi" data-minimum-status="'+['empty','is-red','is-amber','is-neutral'][index]+'"><span>'+label+'</span><strong>'+formatValue(counts[index])+'</strong><small>registros artículo / bodega</small></button>').join('');
+        document.getElementById('warehouseUndefinedMinimum').textContent = formatValue(counts[3])+' registros sin mínimo definido';
+        const size=Number(document.getElementById('minimumPageSize').value), pages=Math.max(1,Math.ceil(rows.length/size));
+        minimumPage=Math.max(1,Math.min(minimumPage,pages));
+        document.getElementById('warehouseMinimumRows').innerHTML = rows.slice((minimumPage-1)*size,minimumPage*size).map(item=>{
+          const status=minimumStatus(item), min=minimumFor(item), missing=Math.max(0,min-item.existencia);
+          return '<tr><td>'+escapeValue(warehouseLabel(item))+'</td><td><strong>'+escapeValue(item.producto)+'</strong><small class="warehouse-shortfall">'+escapeValue(item.codigo)+'</small></td><td>'+escapeValue(item.inventarioClasificado)+'</td><td>'+formatValue(item.existencia)+'</td><td>'+(min>0?formatValue(min):'—')+'</td><td>'+(min>0?formatValue(missing):'—')+'</td><td><span class="warehouse-status '+status.key+'">'+status.label+'</span></td></tr>';
+        }).join('') || '<tr><td colspan="7" class="warehouse-empty">No hay registros para estos filtros.</td></tr>';
+        document.getElementById('minimumCount').textContent = formatValue(rows.length)+' registros · página '+(rows.length?minimumPage:0)+' de '+(rows.length?pages:0);
+        document.getElementById('minimumPrev').disabled=minimumPage<=1;
+        document.getElementById('minimumNext').disabled=minimumPage>=pages;
+        document.getElementById('minimumExport').disabled=!rows.length;
       }
       function inventoryStockRanking(rows, mode) {
         const direction = mode === 'critical' ? 1 : -1;
@@ -701,44 +835,11 @@
         const chartSub = document.getElementById('inventoryChartSub');
         if (chartSub) chartSub.textContent = isCriticalMode ? '10 productos con menor existencia disponible' : 'Top 10 con mayor stock — pase el mouse para ver detalle';
         const chartItems = inventoryStockRanking(rows, inventoryChartMode);
-        if (window.Chart) {
-          if (inventoryChart) inventoryChart.destroy();
-          const canvas = document.getElementById('inventoryChart');
-          // Guía §05 · Visualización: el ranking va en barras finas sobre carril
-          // tenue, sin rejilla ni eje visible. En modo crítico se conserva el color
-          // con significado (rojo = bajo mínimo, verde = stock disponible).
-          const color = isCriticalMode
-            ? chartItems.map(item => isCritical(item) ? '#c43c50' : '#2f8f76')
-            : ((window.GuiaGraficas && window.GuiaGraficas.P.red) || '#c43c50');
-          const cfg = window.GuiaGraficas.rank(
-            chartItems.map(item => {
-              const name = item.producto.trim() || item.codigo;
-              return name.length > 24 ? name.slice(0, 23).trimEnd() + '…' : name;
-            }),
-            chartItems.map(item => item.existencia),
-            {
-              label: isCriticalMode ? 'Disponible' : 'Existencia',
-              color,
-              format: value => formatValue(value),
-              tooltip: { callbacks: {
-                title: items => chartItems[items[0]?.dataIndex]?.producto || '',
-                afterTitle: items => {
-                  const item = chartItems[items[0]?.dataIndex];
-                  return item ? `SAP ${item.codigo} · ${warehouseLabel(item)}` : '';
-                },
-                label: context => {
-                  const item = chartItems[context.dataIndex];
-                  const min = minimumFor(item), diff = item.existencia - min;
-                  return isCriticalMode
-                    ? `Disponible: ${formatValue(context.parsed.x)} · Mínimo: ${formatValue(min)} · Dif: ${diff > 0 ? '+' : ''}${formatValue(diff)}`
-                    : `Existencia: ${formatValue(context.parsed.x)}`;
-                }
-              } }
-            }
-          );
-          inventoryChart = new Chart(canvas, cfg);
-          if (inventoryObserver && canvas.closest('.inventory-chart-card')) inventoryObserver.observe(canvas.closest('.inventory-chart-card'));
-        }
+        const maximum = Math.max(1, ...chartItems.map(item => item.existencia));
+        document.getElementById('inventoryChart').innerHTML = chartItems.map(item => {
+          const description = `${item.producto} · Código ${item.codigo} · ${warehouseLabel(item)} · ${formatValue(item.existencia)} unidades`;
+          return `<div class="inventory-rank-row" title="${escapeValue(description)}"><span class="inventory-rank-name">${escapeValue(item.producto)}</span><div class="inventory-rank-track"><i style="width:${item.existencia / maximum * 100}%"></i></div><strong>${formatValue(item.existencia)}</strong></div>`;
+        }).join('') || '<p class="warehouse-note">No hay productos con existencia disponible para estos filtros.</p>';
       }
       // La animación de la gráfica (crecer en cascada al entrar en pantalla) la da la capa común de estandar.js
       function setupInventoryAnimations() { if (!('IntersectionObserver' in window)) { document.querySelector('.inventory-kpis')?.classList.add('is-visible'); document.querySelector('.inventory-content')?.classList.add('is-visible'); document.querySelector('.inventory-table-card')?.classList.add('is-visible'); return; } inventoryObserver = new IntersectionObserver(entries => entries.forEach(entry => { entry.target.classList.toggle('is-visible', entry.isIntersecting); }), { threshold: .2 }); document.querySelectorAll('.inventory-kpis, .inventory-content, .inventory-table-card, .inventory-chart-card').forEach(element => inventoryObserver.observe(element)); }
@@ -1002,13 +1103,7 @@
           }
           loadWarehousePendingOrders(countries);
           loadStatus.textContent = "";
-          ensureChartJs().then(() => {
-            if (requestId === inventoryLoadSequence) renderInventory();
-          }).catch(chartError => {
-            if (requestId !== inventoryLoadSequence) return;
-            console.error('[Inventario] No se pudo inicializar el gráfico:', chartError);
-            loadStatus.textContent = 'Inventario disponible. No se pudo cargar el gráfico.';
-          });
+          renderInventory();
         } catch (error) {
           if (requestId !== inventoryLoadSequence) return;
           if (inventoryLoadedCountry !== country) {
@@ -1071,7 +1166,14 @@
         if (countryChanged) loadInventory(); else renderInventory();
       });
       document.getElementById('inventoryCountry').addEventListener('change', () => { inventoryPage = 1; loadInventory(); });
-      ['warehouseMinimumFilter', 'warehouseStatusFilter'].forEach(id => document.getElementById(id).addEventListener('change', renderWarehouseDashboard));
+      ['warehouseMinimumFilter','warehouseStatusFilter','minimumCountry','minimumLocation','minimumCondition','minimumRole','minimumPageSize','minimumSearch'].forEach(id=>document.getElementById(id).addEventListener(id==='minimumSearch'?'input':'change',()=>{minimumPage=1;renderMinimumInventory();}));
+      document.getElementById('minimumIndicators').addEventListener('click',event=>{const button=event.target.closest('[data-minimum-status]');if(!button)return;document.getElementById('warehouseStatusFilter').value=button.dataset.minimumStatus;minimumPage=1;renderMinimumInventory();});
+      document.getElementById('minimumPrev').addEventListener('click',()=>{minimumPage--;renderMinimumInventory();});
+      document.getElementById('minimumNext').addEventListener('click',()=>{minimumPage++;renderMinimumInventory();});
+      document.getElementById('minimumExport').addEventListener('click',()=>{
+        const status=document.getElementById('minimumExportStatus');
+        try { window.BodegaExcelExport.exportTable({headers:['País','Bodega','Código','Producto','Condición','Disponibles','Mínimo SAP','Faltan','Estado'],rows:minimumExportRows.map(i=>[i.pais,warehouseLabel(i,false),i.codigo,i.producto,i.inventarioClasificado,i.existencia,minimumFor(i)||'',minimumFor(i)>0?Math.max(0,minimumFor(i)-i.existencia):'',minimumStatus(i).label]),sheetName:'Reposición',filename:'reposicion-bodegas.xlsx',numericColumns:[5,6,7],title:'Inventarios mínimos',subtitle:'Lista filtrada completa. Aplicación del mínimo por bodega pendiente de confirmar.'});status.textContent='Lista exportada.'; } catch(error) { status.textContent=error.message; }
+      });
       document.getElementById('warehouseWarehouseList').addEventListener('click', event => {
         const button = event.target.closest('[data-minimum-warehouse]');
         if (!button) return;

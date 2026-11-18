@@ -49,13 +49,13 @@
         <label>EstadoProceso<select id="ocTimelineStage"><option value="">Todos</option></select></label>
         <label>Proveedor<select id="ocTimelineProvider"><option value="">Todos</option></select></label>
         <label>Tipo de compra<select id="ocTimelineType"><option value="">Todos</option></select></label>
-        <label>Mes inicial<input id="ocTimelineStart" type="month"></label>
-        <label>Mes final<input id="ocTimelineEnd" type="month"></label>
-        <label>Entrega prevista<select id="ocDeliveryFilter"><option value="">Todas</option><option value="late">Atrasadas</option><option value="missing">Sin fecha</option></select></label>
-        <label class="oc-pending-toggle"><input id="ocPendingOnly" type="checkbox" checked> Solo pendientes</label>
+        <input id="ocTimelineStart" type="hidden">
+        <input id="ocTimelineEnd" type="hidden">
+        <label>Entrega prevista<select id="ocDeliveryFilter"><option value="">Todas</option><option value="late">Vencidas · prioridad roja</option><option value="soon">Por vencer · próximos 3 días</option><option value="ontime">En tiempo</option><option value="missing">Sin plazo confirmado</option></select></label>
+        <label class="oc-pending-toggle"><input id="ocPendingOnly" type="checkbox" checked> Solo pendientes</label><label class="oc-pending-toggle"><input id="ocIncludeBacklog" type="checkbox"> Incluir pendientes de meses anteriores</label>
         <button type="button" class="oc-redesign-reset" id="ocTimelineReset">Limpiar</button>
       </div>
-      <section class="kpi-grid">
+      <p id="ocPrioritySummary" class="oc-priority-summary" role="status"></p><section class="kpi-grid">
         <div class="kpi">
           <div class="kpi-label">Total de órdenes</div>
           <div class="kpi-value" id="ocKpiOrders">0</div>
@@ -94,8 +94,8 @@
           <div class="oc-chart"><canvas id="ocChartStatus"></canvas></div>
         </article>
         <article class="card">
-          <h2 class="card-title">Órdenes por mes</h2>
-          <p class="card-caption">Cantidad de órdenes agrupadas por fecha</p>
+          <h2 class="card-title">Órdenes por mes de creación</h2>
+          <p class="card-caption" id="ocMonthScope">Órdenes del período seleccionado, agrupadas por mes de creación.</p>
           <div class="oc-chart"><canvas id="ocChartMonth"></canvas></div>
         </article>
         <article class="card oc-provider-chart">
@@ -421,7 +421,7 @@
         }
         ocCutoff = months.today();
       }
-      function filteredRows() { const start = months.start($('ocStart').value), end = months.end($('ocEnd').value, ocCutoff), sap = $('ocSap').value.toLowerCase(), f = ocFilters; return state.records.filter(item => { const key = dateKey(item.date); const itemYear = dateYear(item.date); return inSel(f.year, itemYear) && (!start || key >= start) && (!end || key <= end) && inSel(f.stage, item.stage) && inSel(f.state, item.state) && inSel(f.clientName, item.clientName) && (!sap || item.sap.toLowerCase().includes(sap)); }).sort((a, b) => { const av = a[state.sort] ?? '', bv = b[state.sort] ?? ''; const result = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), 'es'); return result * state.direction; }); }
+      function filteredRows() { const start = months.start($('ocStart').value), end = months.end($('ocEnd').value, ocCutoff), sap = $('ocSap').value.toLowerCase(), f = ocFilters; return state.records.filter(item => { const key = dateKey(item.date); const itemYear = dateYear(item.date); return inSel(f.year, itemYear) && ((!start || key >= start) || ($('ocIncludeBacklog')?.checked && $('ocPendingOnly')?.checked && !isClosedOrder(item.state))) && (!end || key <= end) && inSel(f.stage, item.stage) && inSel(f.state, item.state) && inSel(f.clientName, item.clientName) && (!sap || item.sap.toLowerCase().includes(sap)); }).sort((a, b) => { const av = a[state.sort] ?? '', bv = b[state.sort] ?? ''; const result = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), 'es'); return result * state.direction; }); }
       function render() { state.filtered = filteredRows(); const total = state.records.reduce((sum, item) => sum + totalForView(item), 0), closed = state.records.filter(item => isClosedOrder(item.state)).length; document.querySelectorAll('.oc-combined-only').forEach(element => element.hidden = !combined()); $('ocKpiOrders').textContent = number(state.records.length); $('ocKpiQuantity').textContent = number(state.records.reduce((sum, item) => sum + item.quantity, 0)); $('ocKpiAmount').textContent = primaryMoney(total); $('ocKpiPending').textContent = number(state.records.length - closed); $('ocKpiClosed').textContent = number(closed); $('ocKpiAverage').textContent = primaryMoney(state.records.length ? total / state.records.length : 0); $('ocKpiCompletion').textContent = `${state.records.length ? number((closed / state.records.length) * 100) : 0}%`; $('ocCount').textContent = `${number(state.filtered.length)} registros`; const pages = Math.ceil(state.filtered.length / PAGE_SIZE); state.page = Math.min(Math.max(state.page, 1), Math.max(pages, 1)); const rows = state.filtered.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE); $('ocRows').innerHTML = rows.map(item => { const expanded = expandedOrders.has(item.rowKey); const hasAmount = getMoneyEntries(item.raw).length > 0; return `<tr class="oc-order-row${expanded ? ' is-expanded' : ''}"><td>${text(item.sap || '-')}</td><td>${text(item.clientName || '-')}</td><td class="oc-table-money">${hasAmount ? text(money(totalForView(item))) : '-'}</td><td><button type="button" class="oc-btn oc-details-toggle" data-order-key="${text(item.rowKey)}" aria-expanded="${expanded}"><span>${expanded ? 'Ocultar detalles' : 'Ver detalles'}</span><span class="oc-chevron" aria-hidden="true"></span></button></td></tr>${expanded ? renderOrderDetails(item) : ''}`; }).join('') || '<tr><td colspan="4" class="oc-empty">No hay registros con estos filtros.</td></tr>'; $('ocPageInfo').textContent = `Página ${pages ? state.page : 0} de ${pages}`; $('ocPrev').disabled = state.page <= 1; $('ocNext').disabled = state.page >= pages; syncCurrencyHeaders(); renderPurchaseTimeline(); }
       const hasMilestone = value => {
         if (value === null || value === undefined || value === '' || value === false || value === 0) return false;
@@ -442,21 +442,38 @@
           delivery: $('ocDeliveryFilter').value,
           pending: $('ocPendingOnly').checked
         };
-        const sourceRows = state.filtered || [];
+        const sourceRows = filteredRows();
         const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
         const deliveryKey = item => dateKey(item.delivery);
         const deliveryLate = item => !isClosedOrder(item.state) && Boolean(deliveryKey(item)) && deliveryKey(item) < today;
         const daysFrom = date => date ? Math.round((Date.parse(today) - Date.parse(date)) / 86400000) : null;
+        const priority = item => {
+          if (isClosedOrder(item.state)) return { rank: 4, label: 'Cerrada', color: '#2f8f76' };
+          const due = deliveryKey(item);
+          if (!due) return { rank: 3, label: 'Sin plazo confirmado', color: '#8992a3' };
+          const days = Math.round((Date.parse(due) - Date.parse(today)) / 86400000);
+          if (days < 0) return { rank: 0, label: 'Vencida · ' + Math.abs(days) + ' días de atraso', color: '#c43c50' };
+          if (days <= 3) return { rank: 1, label: 'Por vencer · ' + days + ' días', color: '#c59600' };
+          return { rank: 2, label: 'En tiempo', color: '#2f8f76' };
+        };
         const rows = sourceRows.filter(item => {
           if (values.delivery === 'late' && !deliveryLate(item)) return false;
           if (values.delivery === 'missing' && deliveryKey(item)) return false;
+          if (values.delivery === 'soon' && priority(item).rank !== 1) return false;
+          if (values.delivery === 'ontime' && priority(item).rank !== 2) return false;
           const rawText = `${item.sap} ${item.clientName}`.toLowerCase();
           const key = dateKey(item.date);
           const completed = isClosedOrder(item.state);
           return (!values.search || rawText.includes(values.search)) && (!values.state || item.state === values.state) && (!values.stage || item.stage === values.stage) && (!values.provider || item.clientName === values.provider) && (!values.type || item.purchaseType === values.type) && (!values.start || key >= values.start) && (!values.end || key <= values.end) && (!values.pending || !completed);
         });
 
-        if (values.pending) rows.sort((a, b) => (deliveryKey(a) || "9999").localeCompare(deliveryKey(b) || "9999"));
+        rows.sort((a,b) => priority(a).rank - priority(b).rank || (deliveryKey(a) || '9999').localeCompare(deliveryKey(b) || '9999') || dateKey(a.date).localeCompare(dateKey(b.date)));
+        const pendingRows = rows.filter(item => !isClosedOrder(item.state));
+        const periodStart = months.start($('ocStart').value);
+        const older = rows.filter(item => periodStart && dateKey(item.date) < periodStart).length;
+        const scope = 'Período ' + $('ocStart').value + ' a ' + $('ocEnd').value + (older ? ' · incluye ' + older + ' pendientes anteriores por opción activada. ' : ' · hasta ' + ocCutoff + '. ');
+        $('ocMonthScope').textContent = scope + 'Cantidad de órdenes por mes de creación.';
+        $('ocPrioritySummary').textContent = scope + pendingRows.filter(item => priority(item).rank === 0).length + ' vencidas · ' + pendingRows.filter(item => priority(item).rank === 1).length + ' por vencer · ' + pendingRows.filter(item => priority(item).rank === 3).length + ' sin plazo confirmado. Prioridad roja según entrega prevista; sin fecha no se calcula atraso por etapa.';
         const setOptions = (id, source, selected) => {
           const select = $(id);
           if (!select || !select.options) return;
@@ -500,7 +517,7 @@
             { label: 'Pago', value: raw.pagoEfectuado, active: hasMilestone(raw.pagoEfectuado), detail: raw.fechaPago ? dateLabel(raw.fechaPago) : raw.pagoEfectuado, tone: 'green' }
           ];
           const lastConfirmed = milestones.filter(node => node.active).at(-1);
-          return `<article class="oc-timeline-card"><header><div><span class="oc-timeline-order">OC ${text(item.sap || 'sin número')}</span><h3>${text(item.clientName || 'Proveedor sin registrar')}</h3></div><div class="oc-timeline-summary"><strong>${getMoneyEntries(item.raw).length ? text(primaryMoney(totalForView(item))) : 'Monto no disponible'}</strong><span>${text(dateLabel(item.date))} · ${text(item.country)}</span></div></header><div class="oc-timeline-meta"><span>${text(item.purchaseType)}</span><span class="oc-timeline-state">${text(item.state)}</span><span>Proceso: ${text(item.stage)}</span><span>Entrega prevista: ${deliveryKey(item) ? text(dateLabel(item.delivery)) : 'Sin fecha'}${deliveryLate(item) ? ' · Atrasada ' + number(daysFrom(deliveryKey(item))) + ' días' : ''}</span>${dateKey(item.date) && daysFrom(dateKey(item.date)) >= 0 && !isClosedOrder(item.state) ? `<span>${number(daysFrom(dateKey(item.date)))} días desde la creación</span>` : ''}<span>Último hito confirmado: ${text(lastConfirmed?.label || 'Sin registro en SAP')}</span></div><div class="oc-process-line">${milestones.map(node => `<div class="oc-process-node ${node.active ? `is-active is-${node.tone}` : 'is-pending'}"><i></i><strong>${node.label}</strong><small>${text(node.active ? node.detail : isClosedOrder(item.state) ? 'Sin registro en SAP' : 'Sin confirmar')}</small></div>`).join('')}</div><details class="oc-inline-detail" data-oc-timeline-key="${text(item.rowKey)}" ${openDetails.has(item.rowKey) ? 'open' : ''}><summary class="oc-timeline-detail">Detalle de la orden</summary><div></div></details></article>`;
+          return `<article class="oc-timeline-card" style="border-left:4px solid ${priority(item).color}"><header><div><span class="oc-timeline-order">OC ${text(item.sap || 'sin número')}</span><h3>${text(item.clientName || 'Proveedor sin registrar')}</h3></div><div class="oc-timeline-summary"><strong>${getMoneyEntries(item.raw).length ? text(primaryMoney(totalForView(item))) : 'Monto no disponible'}</strong><span>${text(dateLabel(item.date))} · ${text(item.country)}</span></div></header><div class="oc-timeline-meta"><span>${text(item.purchaseType)}</span><span class="oc-timeline-state" style="color:${priority(item).color}">${text(priority(item).label)}</span><span>${text(item.state)}</span><span>Proceso: ${text(item.stage)}</span><span>Entrega prevista: ${deliveryKey(item) ? text(dateLabel(item.delivery)) : 'Sin fecha'}${deliveryLate(item) ? ' · Atrasada ' + number(daysFrom(deliveryKey(item))) + ' días' : ''}</span>${dateKey(item.date) && daysFrom(dateKey(item.date)) >= 0 && !isClosedOrder(item.state) ? `<span>${number(daysFrom(dateKey(item.date)))} días desde la creación</span>` : ''}<span>Último hito confirmado: ${text(lastConfirmed?.label || 'Sin registro en SAP')}</span></div><div class="oc-process-line">${milestones.map(node => `<div class="oc-process-node ${node.active ? `is-active is-${node.tone}` : 'is-pending'}"><i></i><strong>${node.label}</strong><small>${text(node.active ? node.detail : isClosedOrder(item.state) ? 'Sin registro en SAP' : 'Sin confirmar')}</small></div>`).join('')}</div><details class="oc-inline-detail" data-oc-timeline-key="${text(item.rowKey)}" ${openDetails.has(item.rowKey) ? 'open' : ''}><summary class="oc-timeline-detail">Detalle de la orden</summary><div></div></details></article>`;
         }).join('') : '<div class="oc-timeline-empty">No hay órdenes para los filtros seleccionados.</div>';
       }
       const stateLabels = { C: 'Cerradas', O: 'Pendientes' };
@@ -637,10 +654,11 @@
         populateStates();
         if (countryChanged) loadOrdenesDeCompra(); else render();
       });
-      ['ocTimelineSearch', 'ocTimelineState', 'ocTimelineStage', 'ocTimelineProvider', 'ocTimelineType', 'ocTimelineStart', 'ocTimelineEnd', 'ocDeliveryFilter', 'ocPendingOnly'].forEach(id => $(id).addEventListener($(id).type === 'checkbox' ? 'change' : 'input', renderPurchaseTimeline));
+      ['ocTimelineSearch', 'ocTimelineState', 'ocTimelineStage', 'ocTimelineProvider', 'ocTimelineType', 'ocTimelineStart', 'ocTimelineEnd', 'ocDeliveryFilter', 'ocPendingOnly', 'ocIncludeBacklog'].forEach(id => $(id).addEventListener($(id).type === 'checkbox' ? 'change' : 'input', renderPurchaseTimeline));
       $('ocTimelineReset').addEventListener('click', () => {
         ['ocTimelineSearch', 'ocTimelineState', 'ocTimelineStage', 'ocTimelineProvider', 'ocTimelineType', 'ocTimelineStart', 'ocTimelineEnd', 'ocDeliveryFilter'].forEach(id => { $(id).value = ''; });
         $('ocPendingOnly').checked = true;
+        $('ocIncludeBacklog').checked = false;
         renderPurchaseTimeline();
       });
       $('ocTimelineToggle').addEventListener('click', () => {

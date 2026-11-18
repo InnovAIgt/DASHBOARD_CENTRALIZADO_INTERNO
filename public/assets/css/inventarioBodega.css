@@ -1544,3 +1544,17 @@ html body .bodega-api-updated-row.inventory-api-updated-row {
     outline: 2px solid var(--std-red);
     outline-offset: 1px;
 }
+
+/* Desglose operativo y ranking de existencias sin dependencias externas. */
+.warehouse-operation-group summary { cursor: pointer; }
+.warehouse-operation-detail { margin: 12px; padding: 16px; border: 1px solid var(--std-border); border-radius: 10px; }
+.warehouse-operation-detail p { margin: 10px 0; font-size: 12px; }
+.warehouse-operation-detail small { font-size: 11px; }
+.inventory-native-ranking { display: grid; gap: 16px; width: 100%; padding: 20px 8px; }
+.inventory-rank-row { display: grid; grid-template-columns: minmax(120px, 28%) 1fr 65px; gap: 14px; align-items: center; font-size: 11px; }
+.inventory-rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inventory-rank-track { height: 8px; border-radius: 8px; background: var(--std-border); }
+.inventory-rank-track i { display: block; height: 100%; background: #c43c50; border-radius: inherit; min-width: 2px; }
+.inventory-rank-row strong { text-align: right; }
+@media(max-width:600px) { .inventory-rank-row { grid-template-columns: minmax(90px, 35%) 1fr 48px; gap: 8px; } .warehouse-operation-group summary { grid-template-columns: 1fr auto; } .warehouse-operation-group summary small { grid-column: 1 / -1; } }
+.minimum-indicators { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0; } .minimum-indicators button { text-align:left;cursor:pointer;color:var(--std-text); } .warehouse-minimum-filters { flex-wrap:wrap;gap:14px; } .warehouse-minimum-filters label { min-width:160px;flex:1 1 180px; } .warehouse-minimum-filters input { width:100%;box-sizing:border-box;background:var(--std-elevated);color:var(--std-text);border:1px solid var(--std-border-light);border-radius:8px;padding:12px; } .minimum-pagination { display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px; } .minimum-pagination > span { margin-right:auto; } @media(max-width:700px) { .minimum-indicators { grid-template-columns:repeat(2,minmax(0,1fr)); } }
