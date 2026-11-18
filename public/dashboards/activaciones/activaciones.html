@@ -237,18 +237,12 @@
           </div>
 
           <div class="anexos-kpi-card tone-slate is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Radios físicos identificados en anexos">
-            <div>
-              <div class="anexos-kpi-label" style="color: #cbd5e1;">Radios</div>
-              <div class="anexos-kpi-sub" id="kpiRadiosSubNote" style="display: none;"></div>
-            </div>
+            <div class="anexos-kpi-label" style="color: #cbd5e1;">Radios</div>
             <div class="anexos-kpi-val" style="color: #e2e8f0;" id="kpiTotalRadiosEquipos">—</div>
           </div>
 
           <div class="anexos-kpi-card tone-cyan is-clickable" onclick="navigateToCategoriasCond('ALL')" title="Consolas / aplicativos en anexos">
-            <div>
-              <div class="anexos-kpi-label" style="color: #38bdf8;">Consolas</div>
-              <div class="anexos-kpi-sub" id="kpiConsolasSubNote" style="display: none;"></div>
-            </div>
+            <div class="anexos-kpi-label" style="color: #38bdf8;">Consolas</div>
             <div class="anexos-kpi-val" style="color: #38bdf8;" id="kpiTotalConsolas">—</div>
           </div>
 
@@ -1224,6 +1218,7 @@
 
     const nameUpper = String((eq.eqpnm ?? eq.eqpnam) || "").trim().toUpperCase();
     if (nameUpper.includes("REFURB")) return "refurbished";
+    if (nameUpper === "EQUIPO TSP2-V1 3G SC (AF)" || (nameUpper.includes("TSP2-V1") && nameUpper.includes("(AF)"))) return "refurbished";
     if (nameUpper.includes("USAD")) return "usado";
     if (nameUpper.includes("NUEV")) return "nuevo";
     return "sin_estado";
@@ -1447,9 +1442,9 @@
     });
 
     const eKnown = [];
-    if (eCond.nuevo > 0) eKnown.push("NUEVO");
-    if (eCond.usado > 0) eKnown.push("USADO");
-    if (eCond.refurbished > 0) eKnown.push("REFURBISHED");
+    if (eCond.nuevo > 0 || consoleCond.nuevo > 0) eKnown.push("NUEVO");
+    if (eCond.usado > 0 || consoleCond.usado > 0) eKnown.push("USADO");
+    if (eCond.refurbished > 0 || consoleCond.refurbished > 0) eKnown.push("REFURBISHED");
 
     const sKnown = [];
     if (sCond.nuevo > 0) sKnown.push("NUEVO");
@@ -1457,7 +1452,7 @@
     if (sCond.refurbished > 0) sKnown.push("REFURBISHED");
 
     let condition = "SIN ANEXOS";
-    if (equiposE === 0 && simsS === 0) {
+    if (equiposE === 0 && consolasCount === 0 && simsS === 0) {
       if (item.estado === "cancelada") {
         condition = "SIN ANEXOS";
       } else if (detCondSet.size === 1) {
@@ -2635,8 +2630,6 @@
       let totalRadiosFisicos = 0;
       let totalConsolas = 0;
       let totalPendingAnx = 0;
-      let radiosSinEstado = 0;
-      let consolasSinEstado = 0;
       let eqNuevo = 0, eqUsado = 0, eqRefurb = 0;
 
       filteredData.forEach(item => {
@@ -2646,8 +2639,6 @@
         totalRadiosFisicos += inv.equiposE;
         totalConsolas += inv.consolasCount;
         totalPendingAnx += Math.max(0, itemTotal - inv.equiposE - inv.consolasCount);
-        radiosSinEstado += inv.eCond.sin_estado || 0;
-        consolasSinEstado += inv.consoleCond.sin_estado || 0;
 
         eqNuevo += (inv.eCond.nuevo || 0) + (inv.consoleCond.nuevo || 0);
         eqUsado += (inv.eCond.usado || 0) + (inv.consoleCond.usado || 0);
@@ -2669,28 +2660,6 @@
         } else {
           eqSubNote.textContent = "";
           eqSubNote.style.display = "none";
-        }
-      }
-
-      const radiosSubNote = document.getElementById("kpiRadiosSubNote");
-      if (radiosSubNote) {
-        if (radiosSinEstado > 0) {
-          radiosSubNote.textContent = `${radiosSinEstado.toLocaleString("es-GT")} sin estado`;
-          radiosSubNote.style.display = "block";
-        } else {
-          radiosSubNote.textContent = "";
-          radiosSubNote.style.display = "none";
-        }
-      }
-
-      const consolasSubNote = document.getElementById("kpiConsolasSubNote");
-      if (consolasSubNote) {
-        if (consolasSinEstado > 0) {
-          consolasSubNote.textContent = `${consolasSinEstado.toLocaleString("es-GT")} sin plan/estado`;
-          consolasSubNote.style.display = "block";
-        } else {
-          consolasSubNote.textContent = "";
-          consolasSubNote.style.display = "none";
         }
       }
 
