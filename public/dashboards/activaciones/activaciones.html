@@ -1088,7 +1088,7 @@
     // -------------------------------------------------------------
     
 
-  const WORKFLOW_API_KEY = "b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b";
+  // La llave de Workflow ya no va aquí: la usa el servidor (WORKFLOW_API_KEY) en /api/workflow/preofertas.
   const CLIENT_NAMES_API_URL = "https://innovaigt.github.io/Dashboard---flash-altas/datos.json";
   const STORE_CLIENTES_API_URL = "https://grultaxaxbcruzoeljld.supabase.co/rest/v1/rpc/tablero_cumplimiento_safe";
   const STORE_CLIENTES_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdydWx0YXhheGJjcnV6b2VsamxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTQ3NzUsImV4cCI6MjEwNzMzMDc3NX0.ztwf9manF8h5JtVxqLnEc48tZ3r95iUjz2SwUw0HW6M";
@@ -1589,22 +1589,15 @@
     }
     if (errBanner) errBanner.style.display = "none";
 
-    const endpoints = [
-      "https://workflow.red.com.gt/api/integraciones/dashboard/preofertas",
-      "/integraciones/dashboard/preofertas"
-    ];
+    // Preofertas por la ruta del servidor del portal (la llave queda en el servidor, no en esta página).
+    const endpoints = ["/api/workflow/preofertas"];
 
     let fetchedData = null;
 
     for (const ep of endpoints) {
       try {
         const res = await fetch(ep, {
-          headers: {
-            "Authorization": "Bearer " + WORKFLOW_API_KEY,
-            "DASHBOARD_API_KEY": WORKFLOW_API_KEY,
-            "X-API-KEY": WORKFLOW_API_KEY,
-            "Accept": "application/json"
-          },
+          headers: { "Accept": "application/json" },
           cache: "no-store"
         });
 
@@ -1640,7 +1633,7 @@
       if (dotEl) dotEl.style.background = "#c43c50";
       if (errBanner) {
         errBanner.style.display = "block";
-        errBanner.innerText = "No se pudieron obtener las preofertas desde la API en vivo de Workflow (https://workflow.red.com.gt/api/integraciones/dashboard/preofertas). Verifica tu conexión o credenciales.";
+        errBanner.innerText = "No se pudieron cargar las preofertas. Intenta de nuevo en unos minutos; si sigue, avisa al equipo técnico.";
       }
     }
 
