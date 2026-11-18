@@ -39,11 +39,17 @@ export const SERIES_MES = [
   { key: 'qualified', label: 'Calificados', color: COLORES.azul },
   { key: 'noCalificados', label: 'No calificados', color: GRIS },
   { key: 'won', label: 'Ganados (escala derecha)', color: COLORES.verde, linea: true },
+  { key: 'units', label: 'Unidades vendidas', color: COLORES.amarillo },
 ]
+/** Leyenda de la gráfica: con filtro "Calificado" no se muestra "No calificados" (D19). */
+export const seriesMes = (calificado) => SERIES_MES.filter((s) => !calificado || s.key !== 'noCalificados')
 
-// Alto fijo (240 px) y ancho medido del contenedor: así los textos y las columnas tienen siempre
+// Alto fijo y ancho medido del contenedor: así los textos y las columnas tienen siempre
 // el mismo tamaño, sin agrandarse cuando la pantalla es ancha (antes se escalaba con el ancho).
-export function GraficaMensual({ filas, onMes }) {
+// D19: el total de leads va DENTRO de la columna (arriba), la etiqueta de ganados a la derecha de
+// cada punto con fondo oscuro (para que no se encimen) y, debajo de cada mes, una etiqueta amarilla
+// con las unidades vendidas. Conversión = ganados ÷ total (+ conversión de calificados con "Todos").
+export function GraficaMensual({ filas, onMes, calificado = false }) {
   const [hover, setHover] = useState(null)
   const cajaRef = useRef(null)
   const [ancho, setAncho] = useState(720)
@@ -57,8 +63,8 @@ export function GraficaMensual({ filas, onMes }) {
     return () => obs.disconnect()
   }, [])
   const w = ancho
-  const h = 240
-  const pad = { top: 22, right: 48, bottom: 30, left: 48 }
+  const h = 290
+  const pad = { top: 22, right: 48, bottom: 62, left: 48 }
   const anchoUtil = w - pad.left - pad.right
   const altoUtil = h - pad.top - pad.bottom
   const maxLeads = topeEje(Math.max(1, ...filas.map((f) => f.total)))
@@ -72,7 +78,7 @@ export function GraficaMensual({ filas, onMes }) {
   const linea = filas.map((f, i) => `${xCentro(i)},${yGanados(f.won)}`).join(' ')
 
   return <div className="fv2-grafica-mes" ref={cajaRef}>
-    <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Leads calificados y no calificados por mes, con la línea de ganados">
+    <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Leads por mes, con la línea de ganados y las unidades vendidas de cada mes">
       {[0, 1, 2, 3, 4].map((i) => {
         const y = pad.top + altoUtil * (i / 4)
         return <g key={i}>
@@ -91,7 +97,12 @@ export function GraficaMensual({ filas, onMes }) {
         return <g key={f.month} className="fv2-columna" style={{ '--fv2-i': i }} opacity={hover === null || hover === i ? 1 : 0.55}>
           <rect x={x} y={yCal} width={anchoCol} height={Math.max(0, base - yCal)} fill={COLORES.azul} />
           <rect x={x} y={yTot} width={anchoCol} height={Math.max(0, yCal - yTot)} fill={GRIS} rx="4" />
-          <text x={xCentro(i)} y={yTot - 6} fill={COLORES.texto} fontSize="10" fontWeight="700" textAnchor="middle">{formatNumber(f.total)}</text>
+          {/* Total de leads dentro de la columna, arriba; si la columna es muy baja, encima de ella. */}
+          <text x={xCentro(i)} y={base - yTot >= 22 ? yTot + 14 : yTot - 6} fill="#fff" fontSize="10" fontWeight="800" textAnchor="middle">{formatNumber(f.total)}</text>
+          <g>
+            <rect x={xCentro(i) - 40} y={base + 8} width="80" height="18" rx="9" fill="rgba(197,150,0,.14)" stroke="rgba(197,150,0,.45)" />
+            <text x={xCentro(i)} y={base + 21} fill="#e0b52e" fontSize="10" fontWeight="800" textAnchor="middle">{formatNumber(f.units)} unid.</text>
+          </g>
           <text x={xCentro(i)} y={h - 9} fill={COLORES.tenue} fontSize="11" fontWeight="700" textAnchor="middle">{monthLabel(f.month)}</text>
         </g>
       })}
@@ -99,6 +110,16 @@ export function GraficaMensual({ filas, onMes }) {
       {hover !== null && <line x1={xCentro(hover)} y1={pad.top} x2={xCentro(hover)} y2={base} stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeDasharray="4 3" />}
       {filas.length > 1 && <polyline className="fv2-linea" pathLength="1" points={linea} fill="none" stroke={COLORES.verde} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
       {filas.map((f, i) => <circle key={f.month} cx={xCentro(i)} cy={yGanados(f.won)} r={hover === i ? 6 : 4.5} fill={COLORES.verde} stroke="#151821" strokeWidth="2" />)}
+      {/* Etiqueta de ganados a la derecha de cada punto, con fondo oscuro. */}
+      {filas.map((f, i) => {
+        const texto = `${formatNumber(f.won)} ganado${f.won === 1 ? '' : 's'}`
+        const ancho = texto.length * 6 + 12
+        const x = xCentro(i) + 9 + ancho > w - 4 ? xCentro(i) - 9 - ancho : xCentro(i) + 9
+        return <g key={`g-${f.month}`} pointerEvents="none">
+          <rect x={x} y={yGanados(f.won) - 9} width={ancho} height="18" rx="5" fill="rgba(15,17,23,.88)" stroke="rgba(63,156,133,.45)" />
+          <text x={x + 6} y={yGanados(f.won) + 4} fill="#7fd3b9" fontSize="10" fontWeight="800">{texto}</text>
+        </g>
+      })}
 
       {filas.map((f, i) => <rect key={f.month} x={pad.left + grupo * i} y="0" width={grupo} height={h} fill="transparent"
         style={onMes ? { cursor: "pointer" } : undefined} onClick={onMes ? () => onMes(f) : undefined}
@@ -108,24 +129,43 @@ export function GraficaMensual({ filas, onMes }) {
       <div className="fv2-tooltip-titulo">{monthLabel(filas[hover].month, 'long')}</div>
       <div className="fv2-tooltip-fila"><span>Leads</span><b>{formatNumber(filas[hover].total)}</b></div>
       <div className="fv2-tooltip-fila"><span style={{ color: COLORES.azulClaro }}>■ Calificados</span><b>{formatNumber(filas[hover].qualified)}</b></div>
-      <div className="fv2-tooltip-fila"><span>■ No calificados</span><b>{formatNumber(filas[hover].noCalificados)}</b></div>
+      {!calificado && <div className="fv2-tooltip-fila"><span>■ No calificados</span><b>{formatNumber(filas[hover].noCalificados)}</b></div>}
       <div className="fv2-tooltip-fila"><span style={{ color: COLORES.verdeClaro }}>● Ganados</span><b>{formatNumber(filas[hover].won)}</b></div>
-      <div className="fv2-tooltip-fila"><span>Unidades</span><b>{formatNumber(filas[hover].units)}</b></div>
-      <div className="fv2-tooltip-fila"><span>Conversión de calificados</span><b>{formatearRatio(filas[hover].conversion.ratio)}</b></div>
+      <div className="fv2-tooltip-fila"><span style={{ color: '#e0b52e' }}>Unidades vendidas</span><b>{formatNumber(filas[hover].units)}</b></div>
+      <div className="fv2-tooltip-fila"><span>Conversión</span><b>{formatearRatio(filas[hover].conversion)}</b></div>
+      {!calificado && filas[hover].calificadosD10 && <div className="fv2-tooltip-fila"><span>Conversión de calificados</span><b>{formatearRatio(filas[hover].calificadosD10.ratio)}</b></div>}
     </div>}
   </div>
 }
 
 // ---------- Tarjetas por país (arriba de los indicadores) ----------
-// total, calificados, ganados y unidades por cierre: byCountry() = summarize() por país.
-// Conversión de calificados: corregida (conversionCalificados, D10).
+// D19: todo con la lógica del dashboard de leads (byCountry() = summarize() por país):
+// dona = Conversión = ganados ÷ total de leads; datos = Total leads, Ganados, Unidades y Unid. por cierre.
 // Cada dato de la tarjeta se puede cliquear: abre el "Detalle de leads" de ese dato, solo con los
-// leads de ese país (antes lo hacían las tarjetas de indicadores repetidas, 12/11/2026).
-function DatoPais({ etiqueta, children, onClick }) {
-  return <button type="button" className="fv2-pais-dato" onClick={onClick} title={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
+// leads de ese país.
+function DatoPais({ etiqueta, children, onClick, title }) {
+  return <button type="button" className="fv2-pais-dato" onClick={onClick} title={title ?? `Ver el detalle de ${etiqueta.toLowerCase()}`}>
     <span>{etiqueta}</span>{children}
     <VerDetalle />
   </button>
+}
+
+/** Color de un tono (D12 / D19). Nada en rojo. */
+export const COLOR_TONO = { verde: COLORES.verdeClaro, amarillo: COLORES.amarillo, azul: COLORES.azulClaro, neutro: COLORES.tenue }
+
+/** Dona de conversión (ganados ÷ total), como la del mockup aprobado. */
+export function Dona({ ratio, color, tamano = 92, grosor = 9, children }) {
+  const r = (tamano - grosor) / 2
+  const c = 2 * Math.PI * r
+  const lleno = Math.max(0, Math.min(1, ratio || 0))
+  return <span className="fv2-res-dona" style={{ width: tamano, height: tamano }}>
+    <svg viewBox={`0 0 ${tamano} ${tamano}`} aria-hidden="true">
+      <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={grosor} />
+      <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" stroke={color} strokeWidth={grosor} strokeLinecap="round"
+        strokeDasharray={`${c * lleno} ${c}`} transform={`rotate(-90 ${tamano / 2} ${tamano / 2})`} />
+    </svg>
+    <span className="fv2-res-dona-centro">{children}</span>
+  </span>
 }
 
 /** Pista "Ver detalle ›" para que se note que el dato se puede cliquear. */
@@ -133,25 +173,35 @@ function VerDetalle() {
   return <em className="fv2-ver-detalle">Ver detalle<ChevronRight size={12} aria-hidden="true" /></em>
 }
 
-export function TarjetasPais({ paises, onAbrir }) {
+/**
+ * @param paises      filas de byCountry (summarize por país)
+ * @param calificado  true si el filtro Tipo de lead es "Calificado" (cambia solo la nota al pie)
+ * @param tono        función ratio → 'verde' | 'amarillo' | 'neutro' (rangos de la Conversión, D19)
+ */
+export function TarjetasPais({ paises, calificado, tono, onAbrir }) {
   return <section className="fv2-paises" aria-label="Resultados por país">
     {paises.map((fila) => {
       const abrir = (clave) => () => onAbrir?.(clave, fila.country)
-      return <article key={fila.country} className="fv2-pais-tarjeta">
-        <header>
+      const color = COLOR_TONO[tono(fila.conversion)]
+      return <article key={fila.country} className="fv2-pais-tarjeta fv2-res-pais">
+        <button type="button" className="fv2-res-pais-dona" onClick={abrir('conversionTotal')}
+          title={`Conversión de ${fila.country}: ${formatNumber(fila.won)} ganados ÷ ${formatNumber(fila.total)} leads = ${formatearRatio(fila.conversion)} · clic para ver el detalle`}
+          aria-label={`Ver el detalle de la conversión de ${fila.country}`}>
+          <Dona ratio={fila.conversion} color={color}>
+            <strong style={{ color }}>{formatearRatio(fila.conversion)}</strong>
+            <small>conversión</small>
+          </Dona>
+        </button>
+        <div className="fv2-res-pais-cuerpo">
           <div className="fv2-pais-nombre"><Bandera pais={fila.country} />{fila.country.toUpperCase()} ({CODIGO_PAIS[fila.country]})</div>
-          <button type="button" className="fv2-pais-pct" onClick={abrir('conversion')} title="Ver el detalle de la conversión de calificados">
-            <strong>{formatearRatio(fila.conversion.ratio)}</strong>
-            <small>Conversión de calificados</small>
-            <VerDetalle />
-          </button>
-        </header>
-        <Medidor valor={fila.conversion.ratio} max={1} color={COLORES.azul} alto={6} />
-        <div className="fv2-pais-datos">
-          <DatoPais etiqueta="Total leads" onClick={abrir('total')}><b>{formatNumber(fila.total)}</b></DatoPais>
-          <DatoPais etiqueta="Calificados" onClick={abrir('calificados')}><b style={{ color: COLORES.azulClaro }}>{formatNumber(fila.qualified)}</b></DatoPais>
-          <DatoPais etiqueta="Ganados" onClick={abrir('ganados')}><b style={{ color: COLORES.verdeClaro }}>{formatNumber(fila.won)}</b></DatoPais>
-          <DatoPais etiqueta="Unidades por cierre" onClick={abrir('porCierre')}><b>{fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'}</b></DatoPais>
+          <div className="fv2-pais-datos">
+            <DatoPais etiqueta="Total leads" onClick={abrir('total')} title={`${formatNumber(fila.total)} leads en ${fila.country} · clic para ver el detalle`}><b>{formatNumber(fila.total)}</b></DatoPais>
+            <DatoPais etiqueta="Ganados" onClick={abrir('ganados')} title={`${formatNumber(fila.won)} ganados (= "Radicados" en el dashboard de leads) · clic para ver el detalle`}><b style={{ color: COLORES.verdeClaro }}>{formatNumber(fila.won)}</b></DatoPais>
+            <DatoPais etiqueta="Unidades" onClick={abrir('unidades')} title={`${formatNumber(fila.units)} unidades vendidas en leads ganados · clic para ver el detalle`}><b style={{ color: COLORES.amarillo }}>{formatNumber(fila.units)}</b></DatoPais>
+            <DatoPais etiqueta="Unid. por cierre" onClick={abrir('porCierre')} title={fila.won ? `${formatNumber(fila.units)} unidades ÷ ${formatNumber(fila.won)} ganados` : 'Sin ganados'}><b>{fila.won ? formatNumber(Math.round(fila.avgUnits)) : '—'}</b></DatoPais>
+          </div>
+          <Medidor valor={fila.conversion} max={1} color={color} alto={6} />
+          <p className="fv2-res-nota">{calificado ? 'Solo leads calificados (filtro) · con "Todos" se ven también los no calificados' : 'Todos los tipos de lead · conversión = ganados ÷ total de leads'}</p>
         </div>
       </article>
     })}

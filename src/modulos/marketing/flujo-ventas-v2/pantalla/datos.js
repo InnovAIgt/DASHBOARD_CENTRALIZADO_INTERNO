@@ -125,10 +125,11 @@ export function partesEjecutivo(leads) {
 }
 
 /**
- * Seguimientos vencidos: leads abiertos cuya próxima gestión ya pasó. Misma regla que "vencidos"
- * de calculateMetrics (lógica copiada): OPEN_STATES + isOverdue(proximaGestion).
+ * Seguimientos vencidos: leads abiertos cuya próxima gestión ya pasó. Misma regla que la Vista 2
+ * del dashboard de leads (classifyFollowUps): si no hay próxima gestión, usa la fecha de
+ * seguimiento de la etapa 5 (17/11/2026; antes solo miraba proximaGestion).
  */
-export const esVencido = (lead) => isOpen(lead) && isOverdue(lead.proximaGestion)
+export const esVencido = (lead) => isOpen(lead) && isOverdue(lead.proximaGestion ?? lead.fechaSeguimiento)
 
 /**
  * Ejecutivos que deben aparecer en "Desempeño por ejecutivo" (4.0): todos los que tienen leads en
@@ -493,7 +494,10 @@ export function fichaCoaching(leadsFicha, leadsEquipo, base = []) {
 export const INDICADORES = {
   total: { titulo: 'Total leads', descripcion: 'Todos los leads con los filtros activos.', filtro: () => true },
   calificados: { titulo: 'Calificados', descripcion: 'Solo los leads calificados.', filtro: isQualified },
-  ganados: { titulo: 'Ganados', descripcion: 'Solo los leads ganados, indicando si cada uno era calificado o no.', filtro: isWon, marca: 'calificacion' },
+  noCalificados: { titulo: 'No calificados', descripcion: 'Solo los leads marcados como no calificados.', filtro: (lead) => lead.tipoLead === 'no_calificado' },
+  ganados: { titulo: 'Ganados', descripcion: 'Solo los leads ganados (= "Radicados" en el dashboard de leads), indicando si cada uno era calificado o no.', filtro: isWon, marca: 'calificacion' },
+  // D19: conversión del dashboard de leads = ganados ÷ total de leads. Lista todos los leads y marca los que ganaron.
+  conversionTotal: { titulo: 'Conversión', descripcion: 'Todos los leads; se marcan los que ganaron (ganados ÷ total de leads, como en el dashboard de leads).', filtro: () => true, marca: 'gano' },
   conversion: { titulo: 'Conversión de calificados', descripcion: 'Los leads calificados; se marcan los que ganaron (ganados calificados ÷ calificados).', filtro: isQualified, marca: 'gano' },
   unidades: { titulo: 'Unidades vendidas', descripcion: 'Los leads ganados con sus unidades.', filtro: isWon },
   porCierre: { titulo: 'Unidades por cierre', descripcion: 'Los leads ganados con sus unidades (unidades ÷ ganados).', filtro: isWon },
@@ -568,4 +572,90 @@ export function datosLead(lead) {
   const stage = lead.apiStageLabel || PIPELINE_STAGES[lead.apiStage - 1] || 'Sin etapa'
   const product = typeof lead.producto === 'string' ? lead.producto : lead.raw?.rubro
   return { comments, stage, product }
+}
+
+// ---------- Resumen con la lógica del dashboard de leads (DECISIONES D19) ----------
+// Regla principal: todo lo que viene del dashboard de leads se calcula EXACTAMENTE igual que allá,
+// con summarize / byCountry / byMonth / byAdvisor de ../utils (sin cambios):
+//   total = leads del filtro · ganados ("Radicados") = ganados del filtro · unidades = Σ unidades
+//   de los ganados · unidades por cierre = unidades ÷ ganados · conversión = ganados ÷ total ·
+//   meses: ganados por fecha de cierre; el resto por fecha de creación (leadReferenceMonth).
+// Excepciones con lógica propia (no cambian): Recorrido, "Mejor en esta etapa", ficha de coaching y
+// "Conversión de calificados" (D10).
+
+/** true solo cuando Tipo de lead = exactamente "Calificado" (el filtro por defecto). */
+export const soloCalificados = (filters) => Array.isArray(filters?.filterTipoLead)
+  && filters.filterTipoLead.length === 1 && filters.filterTipoLead[0] === 'calificado'
+
+/**
+ * Tono de la Conversión (ganados ÷ total): rangos de ConversionPill del dashboard de leads
+ * (≥ 10 % verde, > 0 amarillo, 0 neutro). Nada en rojo. La Conversión de calificados (D10) sigue con
+ * tonoConversion (rangos de la v2).
+ */
+export const tonoConversionTotal = (r) => (r >= 0.1 ? 'verde' : r > 0 ? 'amarillo' : 'neutro')
+
+/** Indicadores generales y por país (summarize / byCountry) + la conversión de calificados D10 (dato extra). */
+export function resumenLeads(leads) {
+  return {
+    general: summarize(leads),
+    paises: byCountry(leads),
+    calificados: conversionCalificados(leads),
+  }
+}
+
+/**
+ * Filas de "Leads por mes" (byMonth). `noCalificados` = total − calificados solo para que las
+ * columnas apiladas de la gráfica sumen el total del mes (incluye "sin clasificar"); las tablas usan
+ * `unqualified` de summarize, como el dashboard de leads.
+ */
+export function mesesResumen(leads) {
+  return byMonth(leads).map((m) => {
+    const delMes = leads.filter((lead) => leadReferenceMonth(lead) === m.month)
+    return { ...m, leads: delMes, noCalificados: m.total - m.qualified, calificadosD10: conversionCalificados(delMes) }
+  })
+}
+
+/**
+ * Embudo por mes (copiado de monthlyFunnelGroups de AnalyticsView): tarjeta "Todos" + un mes por
+ * tarjeta, del más reciente al más antiguo. Cada grupo con su summarize.
+ */
+export function embudoPorMes(leads) {
+  const meses = mesesResumen(leads).slice().reverse()
+  return [
+    { key: 'all', label: 'Todos', leads, s: summarize(leads) },
+    ...meses.map((m) => ({ key: m.month, month: m.month, leads: m.leads, s: summarize(m.leads) })),
+  ]
+}
+
+/** Resumen mensual por país (copiado de monthlyCountryTables de AnalyticsView). */
+export function tablaMensualPais(leads) {
+  return COUNTRIES.map((country) => {
+    const delPais = leads.filter((lead) => lead.pais === country)
+    const months = byMonth(delPais).map((m) => ({ ...m, leads: delPais.filter((lead) => leadReferenceMonth(lead) === m.month) }))
+    return { country, leads: delPais, summary: summarize(delPais), months }
+  })
+}
+
+/** Resumen por asesor agrupado por país (copiado de advisorsByCountry de AnalyticsView). */
+export function resumenPorAsesor(leads) {
+  return COUNTRIES.map((country) => {
+    const delPais = leads.filter((lead) => lead.pais === country)
+    return {
+      country,
+      summary: summarize(delPais),
+      advisors: byAdvisor(delPais).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name)),
+    }
+  }).filter((grupo) => grupo.advisors.length)
+}
+
+/**
+ * Top 5 ejecutivos: mismo orden que "Top radicados" del dashboard de leads (más ganados; si empatan,
+ * más leads), recortado a 5. Cada uno con las partes del verde (ganados de calificados / de no
+ * calificados, partesEjecutivo) para la barra.
+ */
+export function topEjecutivos(leads, cantidad = 5) {
+  return byAdvisor(leads)
+    .sort((a, b) => b.won - a.won || b.total - a.total || a.name.localeCompare(b.name))
+    .slice(0, cantidad)
+    .map((fila) => ({ ...fila, partes: partesEjecutivo(fila.leads) }))
 }
