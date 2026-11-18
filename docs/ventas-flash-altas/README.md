@@ -8,17 +8,22 @@ Es una página HTML que el portal muestra dentro de un recuadro (iframe):
 
 ## Qué muestra
 
-**Resumen**, en este orden (DECISIONES D1):
+**Resumen**, en este orden (diseño aprobado, DECISIONES D1):
 1. **Top 3 ejecutivos**
-2. **Ventas por ejecutivo** (nuevas y adiciones; en ámbar, los anexos en proceso)
-3. **Ejecutivo × mes** (con columna *En proceso*)
-4. **Indicadores**: Ventas · En proceso · Radicadas, y debajo Unidades, Clientes, Valor mensual de servicios y % ventas nuevas
-5. **Ventas por mes** y **Ventas por país**
+2. **Indicadores**: Ventas · En proceso · Radicadas, y debajo Unidades, Clientes, Valor mensual de servicios y % ventas nuevas
+3. **Ventas por ejecutivo** (nuevas y adiciones; a la derecha «ventas · equipos eq.»; en ámbar, los anexos en proceso; en 0 los que no vendieron en el período)
+4. **Ingreso promedio por unidad**: valor mensual ÷ equipos, por grupo comercial (jefe) y por ejecutivo, con «Ver en tabla» (D6)
+5. **Ejecutivo × mes** (completa, con columna *En proceso*)
+6. **Ventas por mes** y **Ventas por país**, lado a lado
 
 **Informe detallado**: una línea por equipo (como la manda SAN), con buscador, Excel, CSV y PDF; y la tabla de
 **Radicaciones en proceso** (preofertas de Workflow).
 
-**Contar por** (arriba, en la barra): **Ventas** (por defecto) · **Anexos** · **Unidades (equipos)**.
+**Período**: abre del día 1 del mes actual a hoy (D10).
+
+**Contar por** (arriba, en la barra): **Ventas** · **Anexos** (abre así, con el semáforo) · **Unidades (equipos)**.
+
+En **Ingreso promedio por unidad**, un clic en la dona, una barra o una fila abre el detalle de ese grupo o ejecutivo (D9).
 
 ## Qué significa cada cifra
 

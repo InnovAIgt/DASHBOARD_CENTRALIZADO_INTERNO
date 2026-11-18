@@ -105,6 +105,28 @@ test('si datos.json no responde: "No se pudieron cargar las altas. Intenta más 
   assert.match(html, /const filas = await obtenerAltas\(\);/)
 })
 
+test('ingreso promedio por unidad (valor mensual ÷ equipos, en dólares con TC 7.64489): grupos y promedio general', () => {
+  const ctx = vm.createContext({ TC: { estado: 'ok', tasa: 7.64489 }, EN_Q: false, MONEDA: { SV: '$', GT: 'Q' } })
+  vm.runInContext(`${extraer('aMonedaVista')}\n${extraer('ingresoPorUnidad')}\nthis.f = ingresoPorUnidad;`, ctx)
+  const redondo = n => Math.round(n * 100) / 100
+  const grupos = Object.fromEntries(ctx.f(altas, r => r.jefe || '(sin jefe)').map(o => [o.k, [o.uni, redondo(o.prom)]]))
+  assert.deepEqual(Object.values(grupos).map(([u]) => u).reduce((a, b) => a + b, 0), 4110)
+  assert.deepEqual(Object.values(grupos).sort((a, b) => b[0] - a[0]), [[2237, 17.28], [1486, 16.62], [307, 19.43], [50, 20.8], [30, 16]])
+  const todos = ctx.f(altas, () => 'todos')[0]
+  assert.equal(redondo(todos.val), 70836.9)
+  assert.equal(redondo(todos.prom), 17.24)
+  assert.equal(altas.filter(r => !(r.cantEquipo > 0)).length, 255)   // líneas sin equipo: no entran
+})
+
+test('período por defecto: del día 1 del mes actual a hoy (fecha local)', () => {
+  const ctx = vm.createContext({})
+  vm.runInContext(`${extraer('periodoMesActual')}
+this.f = periodoMesActual;`, ctx)
+  assert.deepEqual({ ...ctx.f(new Date(2026, 10, 18, 23, 59)) }, { desde: '2026-11-01', hasta: '2026-11-18' })
+  assert.deepEqual({ ...ctx.f(new Date(2026, 0, 1, 0, 5)) }, { desde: '2026-01-01', hasta: '2026-01-01' })
+  assert.deepEqual({ ...ctx.f(new Date(2026, 1, 28)) }, { desde: '2026-02-01', hasta: '2026-02-28' })
+})
+
 test('En proceso: sin renovaciones (valor completo) y contando anexos (columna cantidad)', () => {
   assert.equal(F.esRenovacion('RENOVACION'), true)
   assert.equal(F.esRenovacion(' Renovación '), true)

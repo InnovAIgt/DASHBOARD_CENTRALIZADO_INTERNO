@@ -24,3 +24,24 @@
 ### Ajustes del mismo día (confirmados por Keily)
 - Copia de respaldo quitada: si `datos.json` no responde, "No se pudieron cargar las altas. Intenta más tarde." (D5).
 - Semáforo sin color con Ventas: se queda así; pendiente "Ventas debe definir la meta por ventas".
+
+## 18/11/2026 · Diseño aprobado y pantalla completa
+
+### Cambios solicitados
+- Que el Flash se vea como las capturas aprobadas (prototipo `Prototipado_Dashboard_Intelfon`, cambios del 18/11), con la
+  lógica y la información correctas del portal.
+- Que se vea bien en toda la pantalla (se cortaba).
+
+### Resultado
+- Orden del diseño aprobado (D1); Ingreso promedio por unidad con dona, barras y tablas (D6); ejecutivos en 0 (D7);
+  etiquetas «ventas · equipos eq.» en las barras; tablas completas y ajustes para laptop (D8).
+- Se mantuvo la lógica del portal: Ventas / Anexos / Unidades, En proceso en anexos sin renovaciones, sin llave de
+  Workflow y sin la copia de respaldo. Del prototipo NO se trajo «Altas (anexos)» (contaba filas).
+- 67 pruebas pasan (nueva: cifras del ingreso promedio). Lint y build OK.
+
+### Ajustes del mismo día (Keily)
+- Colores del semáforo en Ejecutivo × mes como en la foto: el dashboard abre en **Anexos** (D4) y los números van
+  en verde / amarillo / rojo.
+- Clic en la dona, las barras o las tablas del ingreso promedio → ventana con el detalle exacto (D9).
+- El Período abre del día 1 del mes actual a hoy (D10).
+- 68 pruebas, lint y build OK.
