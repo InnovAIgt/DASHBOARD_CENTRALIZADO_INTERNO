@@ -1,12 +1,12 @@
 // Marketing por canales · pantalla de Mailing dentro del portal (menú MARKETING → "Marketing por canales").
-// Una sola vista, sin pestañas (D31). Datos: /api/marketing/mailing (solo totales). Los filtros eligen
-// campañas (?campanas=, D29) y el servidor recalcula.
+// Formato del Flujo de ventas (D44): módulos "Resumen" e "Informe detallado". Datos: /api/marketing/mailing
+// (solo totales). Los filtros eligen campañas (?campanas=, D29) y el servidor recalcula.
 // Marco estándar del portal (D35): pastilla de estado, círculo de carga, barra de filtros y PDF con la
 // herramienta compartida dashboard-pdf.js (sin modificarla).
 // Estilos: marketing-canales.css (prefijo mkt-). Documentación: docs/marketing-canales/README.md
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { pedirMailing } from './servicios/api.js'
-import { Encabezado, MailingSinDatos, PantallaMailing } from './pantalla/Mailing.jsx'
+import { Encabezado, MODULOS, MailingSinDatos, PantallaMailing } from './pantalla/Mailing.jsx'
 import { ID_BOTON_PDF } from './pantalla/Filtros.jsx'
 import { FILTROS_VACIOS, parametroCampanas } from './pantalla/datos.js'
 import { MODULOS_PDF, cargarHerramientaPdf, chipsFiltros, construirReporteMailing, nombreArchivoPdf } from './pantalla/pdf.js'
@@ -67,7 +67,19 @@ function usePdf(hayDatos, actual) {
   }, [hayDatos])
 }
 
+// El módulo elegido (Resumen / Informe detallado) se recuerda mientras la página esté abierta
+// (sessionStorage), igual que en el Flujo de ventas; si no hay almacenamiento, solo en memoria.
+const CLAVE_MODULO = 'mkt-modulo'
+const leerModulo = () => {
+  try { const v = sessionStorage.getItem(CLAVE_MODULO); return MODULOS.some((m) => m.key === v) ? v : 'resumen' } catch { return 'resumen' }
+}
+
 export function MarketingCanales() {
+  const [modulo, setModuloEstado] = useState(leerModulo)
+  const setModulo = (m) => {
+    setModuloEstado(m)
+    try { sessionStorage.setItem(CLAVE_MODULO, m) } catch { /* solo en memoria */ }
+  }
   const [vista, setVista] = useState('metricas')
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
   // La lista de campañas disponibles llega con la primera respuesta y se conserva para los filtros.
@@ -91,7 +103,7 @@ export function MarketingCanales() {
   } else {
     contenido = <PantallaMailing datos={datos} disponibles={disponibles ?? datos.disponibles} vista={vista} alCambiarVista={setVista}
       filtros={filtros} alCambiarFiltros={setFiltros} cargando={cargando} error={error} actualizadoEn={actualizadoEn}
-      sinCampanas={sinCampanas} alActualizar={actualizar} />
+      sinCampanas={sinCampanas} alActualizar={actualizar} modulo={modulo} alCambiarModulo={setModulo} />
   }
 
   return <div className="mkt">

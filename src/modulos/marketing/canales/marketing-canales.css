@@ -51,7 +51,8 @@
   a, .mkt-enlace { color: var(--mkt-info-texto); }
 
   &.mkt { height: calc(100vh - 64px); overflow-y: auto; overflow-x: hidden; background: var(--mkt-fondo); }
-  .mkt-pagina { display: flex; flex-direction: column; gap: 16px; padding: 28px 32px 48px; max-width: 1200px; min-width: 0; }
+  /* Mismo ancho y márgenes que el Flujo de ventas (.fv2-pagina, D44) */
+  .mkt-pagina { display: flex; flex-direction: column; gap: 18px; padding: 24px 32px 64px; min-width: 0; }
   .mkt-tenue { color: var(--mkt-tenue); }
   .mkt-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .mkt-solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -59,9 +60,13 @@
   .mkt-girando { animation: mkt-girar 1s linear infinite; }
 
   /* ---------- Encabezado (page-header) ---------- */
-  .mkt-encabezado { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
-  .mkt-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--mkt-tenue); margin-bottom: 6px; }
-  .mkt-titulo { font-size: 26px; font-weight: 700; color: var(--mkt-texto); }
+  /* Copia de .fv2-encabezado / .fv2-eyebrow / .fv2-titulo (D44): botón actualizar a la derecha y línea debajo */
+  .mkt-encabezado {
+    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--mkt-borde);
+  }
+  .mkt-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; color: var(--mkt-accion); margin-bottom: 4px; }
+  .mkt-titulo { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -.02em; line-height: 1.15; }
   .mkt-subtitulo { margin-top: 4px; font-size: 13px; color: var(--mkt-tenue); }
   .mkt-boton-rojo {
     display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border: none; border-radius: 8px;
@@ -135,6 +140,25 @@
     border: 1px solid var(--mkt-borde-fuerte); background: var(--mkt-tarjeta); color: var(--mkt-texto); transition: all .2s ease;
   }
   .mkt-btn-actualizar:not(:disabled):hover { background: var(--mkt-elevado); color: #fff; transform: rotate(45deg); }
+  /* Banderas del filtro País (copia de .fv2-bandera) */
+  .mkt-bandera { display: inline-block; flex-shrink: 0; width: 20px; height: 14px; border-radius: 2px; vertical-align: middle; box-shadow: 0 0 1px rgba(0, 0, 0, .6); }
+
+  /* Zona fija: filtros + botones de módulos quedan arriba; solo se desplaza el contenido (copia de .fv2-fijo).
+     .mkt ya se desplaza dentro de su propio contenedor, así que "sticky" funciona. */
+  .mkt-fijo {
+    position: sticky; top: 0; z-index: 25; display: grid; gap: 12px;
+    margin: -12px -32px 0; padding: 12px 32px 12px;
+    background: rgba(15, 17, 23, .94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--mkt-borde);
+  }
+  /* Botones de módulos (copia de .fv2-pestanas / .fv2-pestana, que vienen de act-mod-btn de Activaciones) */
+  .mkt-modulos { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .mkt-modulo {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 9px; background: var(--mkt-caja); color: #fff; font-size: 13px; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .25); transition: all .2s cubic-bezier(.16, 1, .3, 1);
+  }
+  .mkt-modulo:hover { background: var(--mkt-tarjeta); border-color: var(--mkt-accion); transform: translateY(-1px); }
+  .mkt-modulo.is-activo { background: var(--mkt-accion); border-color: var(--mkt-accion); box-shadow: 0 4px 14px rgba(196, 60, 80, .45); }
 
   /* Panel desplegable tipo Excel (.xf-panel) */
   .mkt-xf-panel {
@@ -432,12 +456,12 @@
   .mkt-auditoria-tabla tfoot th { position: sticky; bottom: 0; z-index: 1; background: var(--mkt-elevado); text-align: left; font-size: 12px; line-height: 1.8; }
 
   @media (max-width: 720px) {
-    .mkt-pagina { padding: 16px 16px 40px; }
-    .mkt-titulo { font-size: 22px; }
+    /* Igual que el Flujo de ventas en teléfono: los filtros se acomodan en varias filas (sin apilarse en columna) */
+    .mkt-pagina { padding: 16px; }
+    .mkt-fijo { margin: -12px -16px 0; padding: 12px 16px; }
     .mkt-card { padding: 16px; }
     .mkt-filtros-accion { margin-left: 0; }
     .mkt-xf-grid { grid-template-columns: 1fr; }
-    .mkt-periodo { width: 100%; }
     .mkt-rings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .mkt-grid-graficas { grid-template-columns: 1fr; }
     .mkt-grid-salud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -447,9 +471,6 @@
     .mkt-ventana-caja { max-height: calc(100vh - 16px); }
   }
   @media (max-width: 640px) {
-    .mkt-filtros-barra { flex-direction: column; align-items: stretch; }
-    .mkt-filtros-barra > .mkt-grupo { justify-content: flex-start; }
-    .mkt-filtros-accion { width: 100%; justify-content: flex-end; }
     .mkt-auditoria-tabla tfoot th { min-width: 760px; }
   }
 }

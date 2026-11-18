@@ -1,13 +1,14 @@
-// Marketing por canales · barra de filtros con el FORMATO ESTÁNDAR del portal (D35), copiado del
-// dashboard de Activaciones (activaciones.html / activaciones.css, que no se modificaron), igual que el
-// Flujo de ventas v2:
-//   tarjeta "FILTROS" · País · Período (con restablecer) · botón "Filtros" con contador →
-//   panel tipo Excel (columnas Cargo y Campañas, con buscador, "todo", n/m, "Limpiar todo" y "Aplicar") ·
-//   botón PDF · botón actualizar redondo.
+// Marketing por canales · barra de filtros con el formato del Flujo de ventas (D44), que a su vez sigue
+// a Activaciones (ninguno se modificó). Una sola fila:
+//   tarjeta "FILTROS" · País (Todos / GT / SV con bandera / Sin país) · Período (✕ para limpiar) ·
+//   botón "Filtros" con contador → panel tipo Excel (Cifras arriba; columnas Cargo y Campañas, con
+//   buscador, "todo", n/m, "Limpiar todo" y "Aplicar") · botón PDF a la derecha.
+// El botón actualizar va en el encabezado (Mailing.jsx), como en el modelo.
 // País, Cifras y Período se aplican al instante; Cargo y Campañas, con "Aplicar".
 // El servidor recalcula los totales con todos los filtros (?pais= y ?campanas=).
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { CalendarDays, ChevronDown, Filter, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Filter, Search, X } from 'lucide-react'
+import { Bandera } from './comunes.jsx'
 import {
   FILTROS_VACIOS, PAISES_FILTRO, VISTAS, campanasCandidatas, cargosDisponibles, fechaCorta, filtrosEnPanel, formatoLectura,
   formatoNumero, hayFiltros, textosFiltros,
@@ -99,11 +100,12 @@ export const PanelFiltrosParaPruebas = PanelFiltros
 
 export const ID_BOTON_PDF = 'mktBtnPdf'
 
-export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros, disponibles, cargando, alActualizar }) {
+export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros, disponibles }) {
   const [abierto, setAbierto] = useState(false)
   const caja = useRef(null)
   const id = useId()
-  const enPanel = filtrosEnPanel(filtros)
+  // El contador cuenta lo que está dentro del panel: Cargo, Campañas y Cifras ("Total en Brevo").
+  const enPanel = filtrosEnPanel(filtros) + (vista === 'totalBrevo' ? 1 : 0)
   // Cerrar el panel al hacer clic fuera o con Escape (como en Activaciones).
   useEffect(() => {
     if (!abierto) return undefined
@@ -120,7 +122,7 @@ export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros,
       <div className="mkt-grupo" role="group" aria-label="País">
         <span className="mkt-etiqueta-grupo">País</span>
         {PAISES_FILTRO.map((p) => <button key={p.valor} type="button" className={`mkt-btn-grupo ${filtros.pais === p.valor ? 'is-activo' : ''}`}
-          aria-pressed={filtros.pais === p.valor} onClick={() => alCambiarFiltros({ ...filtros, pais: p.valor })}>{p.etiqueta}</button>)}
+          aria-pressed={filtros.pais === p.valor} onClick={() => alCambiarFiltros({ ...filtros, pais: p.valor })}><Bandera pais={p.valor} />{p.etiqueta}</button>)}
       </div>
 
       <div className="mkt-periodo">
@@ -132,10 +134,10 @@ export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros,
         <label className="mkt-solo-lector" htmlFor={`${id}-hasta`}>Hasta</label>
         <input id={`${id}-hasta`} type="date" className="mkt-fecha" value={filtros.hasta} min={filtros.desde || undefined}
           onChange={(e) => alCambiarFiltros({ ...filtros, hasta: e.target.value })} />
-        <button type="button" className="mkt-periodo-limpiar" title="Restablecer período (todo el histórico)" aria-label="Restablecer período"
-          disabled={!filtros.desde && !filtros.hasta} onClick={() => alCambiarFiltros({ ...filtros, desde: '', hasta: '' })}>
-          <RotateCcw size={14} aria-hidden="true" />
-        </button>
+        {(filtros.desde || filtros.hasta) && <button type="button" className="mkt-periodo-limpiar" title="Quitar el período (ver todo el histórico)"
+          aria-label="Quitar el período" onClick={() => alCambiarFiltros({ ...filtros, desde: '', hasta: '' })}>
+          <X size={14} aria-hidden="true" />
+        </button>}
       </div>
 
       <button type="button" className={`mkt-btn-filtros ${abierto ? 'is-abierto' : ''}`} aria-expanded={abierto} aria-haspopup="dialog"
@@ -151,9 +153,6 @@ export function BarraFiltros({ vista, alCambiarVista, filtros, alCambiarFiltros,
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           PDF
-        </button>
-        <button type="button" className="mkt-btn-actualizar" onClick={alActualizar} disabled={cargando} title="Actualizar datos" aria-label="Actualizar datos">
-          <RefreshCw size={16} className={cargando ? 'mkt-girando' : ''} aria-hidden="true" />
         </button>
       </span>
     </div>

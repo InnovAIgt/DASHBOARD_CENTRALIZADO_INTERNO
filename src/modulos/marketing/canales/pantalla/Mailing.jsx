@@ -1,9 +1,8 @@
-// Marketing por canales · vista de Mailing (una sola vista, sin pestañas), con el formato del mockup
-// aprobado, que sigue al dashboard original "Campañas de correo" (solo referencia; no se modificó).
-// Orden (D31): encabezado · barra de filtros · transparencia de datos ·
-// resumen del mes · salud del envío · métricas de interacción · destacados · gráficas · embudo · ranking.
-// "Marco" estándar del portal (D35): encabezado con pastilla de estado, barra de filtros con panel
-// tipo Excel, botón PDF y actualizar redondo, franja "Filtro activo" y mensajes estándar.
+// Marketing por canales · vista de Mailing con el formato del Flujo de ventas (D44): encabezado con
+// botón actualizar · zona fija (barra de filtros en una fila + botones de módulos) · contenido.
+// Módulo "Resumen" (orden D31/D38): transparencia de datos · resumen del mes · salud del envío ·
+// métricas de interacción · destacados · gráficas · embudo · ranking.
+// Módulo "Informe detallado": buscador, tabla, totales y Excel (InformeDetallado.jsx).
 // Todas las cifras vienen calculadas de /api/marketing/mailing; aquí solo se muestran.
 import { useEffect, useMemo, useState } from 'react'
 import { Inbox, RefreshCw } from 'lucide-react'
@@ -209,7 +208,8 @@ function EstadoConsulta({ cargando, error, actualizadoEn }) {
   return <p className="mkt-estado" role="status">Actualizado: <b>{actualizadoEn ? horaFormato.format(actualizadoEn) : '—'}</b></p>
 }
 
-export function Encabezado({ cargando, error, actualizadoEn, subtitulo }) {
+/** Encabezado como el del Flujo de ventas (D44): textos a la izquierda y botón actualizar redondo a la derecha. */
+export function Encabezado({ cargando, error, actualizadoEn, subtitulo, alActualizar }) {
   return <header className="mkt-encabezado">
     <div>
       <div className="mkt-eyebrow">Marketing · Mailing</div>
@@ -217,8 +217,17 @@ export function Encabezado({ cargando, error, actualizadoEn, subtitulo }) {
       <p className="mkt-subtitulo">{subtitulo}</p>
       <EstadoConsulta cargando={cargando} error={error} actualizadoEn={actualizadoEn} />
     </div>
+    {alActualizar && <button type="button" className="mkt-btn-actualizar" onClick={alActualizar} disabled={cargando} title="Actualizar datos" aria-label="Actualizar datos">
+      <RefreshCw size={16} className={cargando ? 'mkt-girando' : ''} aria-hidden="true" />
+    </button>}
   </header>
 }
+
+/** Botones de módulos, como "Resumen · Ejecutivos · Informe detallado" del Flujo de ventas (D44). */
+export const MODULOS = [
+  { key: 'resumen', label: 'Resumen' },
+  { key: 'informe', label: 'Informe detallado' },
+]
 
 /** Mensaje "sin datos" con el formato estándar (título, texto y acción). */
 function SinDatos({ titulo, texto, accion, alAccion }) {
@@ -233,7 +242,7 @@ function SinDatos({ titulo, texto, accion, alAccion }) {
 /**
  * La vista completa. Recibe los datos y el estado de los filtros (los maneja MarketingCanales.jsx).
  */
-export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, filtros, alCambiarFiltros, cargando, error, actualizadoEn, sinCampanas, alActualizar }) {
+export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, filtros, alCambiarFiltros, cargando, error, actualizadoEn, sinCampanas, alActualizar, modulo = 'resumen', alCambiarModulo }) {
   const [elegida, setElegida] = useState(null)
   const [lista, setLista] = useState(null)
   const def = datos.reglas.definiciones
@@ -243,13 +252,26 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
   const abrirLista = cargando ? undefined : (tipo, etiqueta) => setLista({ tipo, etiqueta })
 
   return <>
-    <Encabezado cargando={cargando} error={error} actualizadoEn={actualizadoEn} subtitulo={`RED Intelfon · Campañas de Brevo · fuente: ${datos.fuente.descripcion ?? '—'}`} />
-    <BarraFiltros vista={vista} alCambiarVista={alCambiarVista} filtros={filtros} alCambiarFiltros={alCambiarFiltros}
-      disponibles={disponibles} cargando={cargando} alActualizar={alActualizar} />
+    <Encabezado cargando={cargando} error={error} actualizadoEn={actualizadoEn} alActualizar={alActualizar}
+      subtitulo={`RED Intelfon · Campañas de Brevo · fuente: ${datos.fuente.descripcion ?? '—'}`} />
+
+    {/* Zona fija (como el Flujo de ventas): filtros y botones de módulos quedan arriba; solo se desplaza el contenido. */}
+    <div className="mkt-fijo">
+      <BarraFiltros vista={vista} alCambiarVista={alCambiarVista} filtros={filtros} alCambiarFiltros={alCambiarFiltros} disponibles={disponibles} />
+      <nav className="mkt-modulos" role="tablist" aria-label="Módulos de Mailing">
+        {MODULOS.map((m) => <button type="button" key={m.key} role="tab" aria-selected={modulo === m.key}
+          className={`mkt-modulo ${modulo === m.key ? 'is-activo' : ''}`} onClick={() => alCambiarModulo?.(m.key)}>{m.label}</button>)}
+      </nav>
+    </div>
+
     <LineaResumen datos={datos} vista={vista} filtros={filtros} disponibles={disponibles} />
     <FranjaFiltroActivo vista={vista} filtros={filtros} disponibles={disponibles} alCambiarFiltros={alCambiarFiltros} />
     {error && <Aviso tipo="atencion" titulo="No se pudo actualizar">{error} Se muestran los últimos datos leídos.</Aviso>}
 
+    {/* Informe detallado: módulo propio; los correos se piden solo al abrirlo. Nunca entra al PDF. */}
+    {modulo === 'informe' && <InformeDetallado datos={datos} vista={vista} filtros={filtros} cargando={cargando} />}
+
+    {modulo === 'resumen' && <>
     <Transparencia datos={datos} />
 
     {sinCampanas ? <SinDatos titulo="No se encontraron campañas con los filtros seleccionados"
@@ -279,8 +301,7 @@ export function PantallaMailing({ datos, disponibles, vista, alCambiarVista, fil
 
       <Ranking campanas={campanas} vista={vista} def={def} alElegir={setElegida} />
     </>}
-
-    <InformeDetallado datos={datos} vista={vista} filtros={filtros} cargando={cargando} />
+    </>}
 
     {elegida && <DetalleCampana campana={elegida} definiciones={def} pctDesconocido={pctDesconocido} vista={vista} alCerrar={() => setElegida(null)} />}
     {lista && <ListaTarjeta tipo={lista.tipo} etiqueta={lista.etiqueta} vista={vista} filtros={filtros}

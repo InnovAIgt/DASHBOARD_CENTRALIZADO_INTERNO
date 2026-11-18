@@ -748,3 +748,24 @@ Pruebas con motivos inventados para cada regla en
 **Resultado con los CSV reales:** 53 rebotes permanentes → todos "corregir o quitar". 82 temporales →
 49 revisar dominio · 10 esperar · 9 revisar manualmente · 7 vigilar buzón · 3 avisar al ejecutivo ·
 2 buzón inactivo · 2 antispam.
+
+## D44 · 17/11/2026 · Mismo formato que el Flujo de ventas
+
+**Decisión:** Mailing se ve igual que el **Flujo de ventas** (`src/modulos/marketing/flujo-ventas-v2`, que
+no se modificó), sin cambiar números, cálculos ni gráficas. Reemplaza la "vista única sin pestañas" de D31.
+- **Encabezado** con el botón actualizar redondo arriba a la derecha y línea divisoria; texto superior en rojo.
+- **Barra de filtros en una sola fila:** País (Todos / GT / SV con las banderas del modelo; "Sin país"
+  con el mismo botón, sin bandera) · Período con ✕ (solo aparece si hay fechas) · Filtros con contador
+  rojo · PDF a la derecha.
+- **Cifras** sigue dentro del panel "Filtros". El contador cuenta Cargo, Campañas y también "Cifras"
+  cuando está en "Total en Brevo".
+- **Zona fija:** la barra y los botones de módulos quedan arriba al desplazarse.
+- **Botones de módulos:** "Resumen" (todo lo que había: transparencia, resumen del mes, salud, anillos,
+  destacados, gráficas, embudo y ranking) e "Informe detallado" (buscador, tabla, totales y Excel). El
+  informe ya no va al final del Resumen y sus correos se piden solo al abrir ese módulo.
+- La línea "Mostrando…" y la franja "Filtro activo" van debajo de los botones de módulos, en los dos módulos.
+- Mismo ancho y márgenes que el modelo; en teléfono los filtros se acomodan en varias filas, como el modelo.
+- **PDF sin cambios:** 4 módulos de totales; el Informe detallado no entra.
+
+**Comprobado:** 853 enviados "Sin internos" / 854 "Total en Brevo" en la ruta y en la pantalla; contador
+en 1 con "Total en Brevo". Capturas lado a lado con el modelo (computadora y teléfono), con correos inventados.

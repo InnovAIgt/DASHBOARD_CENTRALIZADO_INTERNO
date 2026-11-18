@@ -599,6 +599,7 @@ Solo se anota **dónde** están. Los valores no se copian aquí.
 | 17/11/2026 | Textos simples en "¿Cómo se calcula?" (sin nombres técnicos); "(fecha de envío de Brevo)" e "(iPhone)"; Transparencia del PDF en 1 página. | D36 · Textos simples |
 | 17/11/2026 | Pasos B–F para Mailing: campañas repetidas, país/orden, listas, recomendaciones, informe y cierre. | D37–D42 |
 | 17/11/2026 | Reglas de recomendación ajustadas a los motivos reales; capturas y PDF de ejemplo; 2 commits. | D43 |
+| 17/11/2026 | Mailing con el formato del Flujo de ventas: barra en una fila, actualizar en el encabezado, módulos Resumen e Informe detallado. | D44 |
 
 ---
 

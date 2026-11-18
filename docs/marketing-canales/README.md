@@ -8,32 +8,41 @@
 ## La pantalla
 
 Menú **MARKETING → Marketing por canales** (`src/modulos/marketing/canales/`, estilos con prefijo `mkt-`).
-Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que sigue al dashboard original
-"Campañas de correo" (D31). En este orden:
+Tiene **el mismo formato que el Flujo de ventas** (D44): encabezado, zona fija con la barra de filtros
+y los botones de módulos **Resumen** e **Informe detallado**, y debajo el contenido del módulo elegido.
 
-1. **Encabezado:** "Marketing · Mailing", título "Campañas de correo" y estado de consulta.
-2. **Barra de filtros:** **País** (Todos / GT / SV / Sin país), **Período**, **Filtros**, PDF y actualizar.
-    "Cifras" (Sin internos / Total en Brevo) está dentro del panel. La fecha, país y cifras se aplican
-    al instante; Cargo y Campañas usan "Aplicar".
-3. **Transparencia de datos:** archivos leídos, exclusiones y duplicados, con desglose en pantalla.
-4. **Resumen del mes:** solo "Campañas del mes" (cuántas y cuáles, con su fecha de envío). Las tarjetas
+1. **Encabezado:** "Marketing · Mailing", título "Campañas de correo", estado de consulta y, a la
+   derecha, el botón redondo **actualizar** (`?actualizar=1`).
+2. **Zona fija** (queda arriba al desplazarse):
+   - **Barra de filtros en una fila:** **País** (Todos / 🇬🇹 GT / 🇸🇻 SV / Sin país) · **Período** (✕ para
+     limpiar) · **Filtros** (contador rojo; cuenta Cargo, Campañas y "Cifras" cuando está en "Total en
+     Brevo") · **PDF** a la derecha. "Cifras" (Sin internos / Total en Brevo) está dentro del panel.
+     La fecha, el país y las cifras se aplican al instante; Cargo y Campañas usan "Aplicar".
+   - **Botones de módulos:** Resumen · Informe detallado (se recuerda el elegido mientras la página esté abierta).
+3. Línea "Mostrando X correos de N campañas…" y franja "Filtro activo", en los dos módulos.
+
+**Módulo Resumen**, en este orden:
+1. **Transparencia de datos:** archivos leídos, exclusiones y duplicados, con desglose en pantalla.
+2. **Resumen del mes:** solo "Campañas del mes" (cuántas y cuáles, con su fecha de envío). Las tarjetas
    sin datos (meta y leads) se quitaron (D33); ver "Pendiente por falta de datos" en REQUISITOS.
-5. **Salud del envío:** 6 tarjetas (entregados, rebote permanente, rebote temporal, apertura automática,
+3. **Salud del envío:** 6 tarjetas (entregados, rebote permanente, rebote temporal, apertura automática,
    bajas y quejas). Solo entregados + rebotes suman el 100 %.
-6. **Métricas de interacción:** 4 anillos (Entrega, Apertura, CTR y CTOR) con Excelente / Promedio / Bajo
-    y sus rangos (D26).
-7. **Mejor campaña, mejor cargo, peor entrega y mejor país** (D30).
-8. **Aperturas por cargo** y **Evolución por mes.**
-9. **Embudo de conversión.**
-10. **Ranking de campañas.** Ordenado por % de apertura, con la casilla "solo muestra suficiente". Al hacer
-    clic en una fila se abre la **ventana de detalle**.
-11. **Auditoría y exportación · Informe detallado de correos**, al final; los correos se muestran sin
-     pedir una clave adicional y el informe ofrece Excel. Nunca se incluye en el PDF.
+4. **Métricas de interacción:** 4 anillos (Entrega, Apertura, CTR y CTOR) con Excelente / Promedio / Bajo
+   y sus rangos (D26).
+5. **Mejor campaña, mejor cargo, peor entrega y mejor país** (D30).
+6. **Aperturas por cargo** y **Evolución por mes.**
+7. **Embudo de conversión.**
+8. **Ranking de campañas.** Ordenado por % de apertura, con la casilla "solo muestra suficiente". Al hacer
+   clic en una fila se abre la **ventana de detalle**.
+
+**Módulo Informe detallado:** "Auditoría y exportación · Informe detallado de correos" con buscador,
+tabla, totales y Excel. Los correos se piden solo al abrir este módulo, sin clave adicional (D42).
+Nunca se incluye en el PDF.
 
 - **Filtros:** el país recalcula totales, gráficas, ranking, listas, informe y PDF. Período, cargo y
   campañas limitan qué campañas entran; el servidor recalcula (`?campanas=`). La pantalla no recalcula métricas.
 - Las explicaciones de cada cifra quedan en el ícono (i); se quitó la sección extensa "¿Cómo se calcula?".
-- **No incluye:** pestañas, Comparar campañas, Redes sociales, Otros, Lead Scoring, Embudo comercial,
+- **No incluye:** Comparar campañas, Redes sociales, Otros, Lead Scoring, Embudo comercial,
   Pipeline ni nada por empresa (D24, D31).
 - **Colores** (D22, D26, D31):
   - rojo solo para lo crítico;
@@ -46,11 +55,11 @@ Es **una sola vista, sin pestañas**, con el formato del mockup aprobado, que si
 
 | Archivo | Qué hace |
 |---|---|
-| `MarketingCanales.jsx` | Vista única: estado de los filtros y carga de datos (`?pais=` y `?campanas=`). |
+| `MarketingCanales.jsx` | Estado de los filtros y del módulo elegido, y carga de datos (`?pais=` y `?campanas=`). |
 | `servicios/api.js` | Llama a las rutas de totales y detalle por persona. |
 | `pantalla/datos.js` | En un solo lugar: semáforo (`UMBRALES`), rangos de los anillos (`REFERENCIAS`), metas (`METAS`), muestra (`MUESTRA`), filtros, formatos y fechas. |
-| `pantalla/Mailing.jsx` | La vista en el orden aprobado, tarjetas y anillos con acceso a listas, ranking e informe. |
-| `pantalla/Filtros.jsx` | Barra alineada a Activaciones: País, Período, panel tipo Excel con Cifras/Cargo/Campañas, PDF y actualizar. |
+| `pantalla/Mailing.jsx` | Encabezado con actualizar, zona fija con botones de módulos, módulo Resumen (tarjetas y anillos con acceso a listas, ranking) y módulo Informe detallado. |
+| `pantalla/Filtros.jsx` | Barra en una fila como el Flujo de ventas: País con banderas, Período con ✕, panel tipo Excel con Cifras/Cargo/Campañas y PDF. |
 | `pantalla/pdf.js` | Reporte PDF de Mailing para la herramienta compartida `dashboard-pdf.js` (sin modificarla). Solo totales; nunca la lista por persona. "Transparencia de datos" va resumida en 1 página (D36). |
 | `pantalla/DetallePersonas.jsx` | Lista por persona de una campaña, sin pedir clave adicional (D42). |
 | `pantalla/InformeDetallado.jsx` | Listas de tarjetas e informe completo, sin pedir clave adicional; Excel solo para el informe. |
