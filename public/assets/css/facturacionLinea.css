@@ -2424,3 +2424,204 @@ font-family: var(--font-mono);
   }
 }
 
+/* ==========================================================================
+   INFORME DETALLADO: SUB-VISTAS (POR CLIENTE / POR FACTURA) Y ACORDEÓN
+   ========================================================================== */
+.informe-subtabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f1117;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.informe-subtab-btn {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.18s ease;
+}
+
+.informe-subtab-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.informe-subtab-btn.active {
+  background: #c43c50;
+  color: #ffffff;
+  border-color: #c43c50;
+  box-shadow: 0 3px 10px rgba(196, 60, 80, 0.35);
+}
+
+.informe-client-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(15, 17, 23, 0.65);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.informe-client-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.informe-filter-chip {
+  background: #151821;
+  border: 1px solid var(--line-strong);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.informe-filter-chip:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.informe-filter-chip.active {
+  background: rgba(196, 60, 80, 0.18);
+  border-color: #c43c50;
+  color: #ffffff;
+}
+
+.informe-client-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.cli-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cli-row:hover td {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.cli-row.is-expanded td {
+  background: rgba(196, 60, 80, 0.08);
+  border-bottom-color: rgba(196, 60, 80, 0.28);
+}
+
+.cli-expand-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  font-size: 10px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.cli-row.is-expanded .cli-expand-chevron {
+  transform: rotate(90deg);
+  background: #c43c50;
+  color: #ffffff;
+}
+
+.cli-progress-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cli-progress-bar {
+  width: 56px;
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cli-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #3f9c85;
+  transition: width 0.25s ease;
+}
+
+.cli-detail-row td {
+  padding: 0 !important;
+  background: rgba(11, 13, 18, 0.92) !important;
+  border-bottom: 1px solid rgba(196, 60, 80, 0.3);
+}
+
+.cli-detail-box {
+  padding: 12px 16px 14px 36px;
+}
+
+.cli-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.cli-subtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  background: rgba(21, 24, 33, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cli-subtable th {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cli-subtable td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cli-subtable tr:last-child td {
+  border-bottom: none;
+}

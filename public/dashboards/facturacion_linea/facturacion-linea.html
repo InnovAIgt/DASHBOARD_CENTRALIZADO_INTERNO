@@ -287,22 +287,22 @@
     </section>
     </div><!-- FIN #viewFacturacion -->
 
-    <!-- VISTA 2: INFORME DETALLADO (Tabla Dinámica con Buscador, Filtros por Columna y Exportación Excel) -->
+    <!-- VISTA 2: INFORME DETALLADO (Resumen por Cliente Pagó/Debe + Detalle por Factura + Exportación Excel) -->
     <div id="viewInformeDetallado" class="bill-module-view" style="display: none;">
       <section class="bill-card bill-table" style="padding: 22px;">
         <!-- Header row of Informe Detallado -->
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px;">
           <div>
             <p class="bill-eyebrow" style="color: var(--intelfon-red);">AUDITORÍA Y EXPORTACIÓN</p>
             <h2 style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 2px;">Informe Detallado de Facturación SAP</h2>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-              Consulta exhaustiva con filtrado multifactorial por columnas y descarga de reportes oficiales.
+              Consulta consolidada por cliente (cuánto pagó y cuánto debe por pagar) y detalle por factura.
             </div>
           </div>
           
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <span id="informeSummaryBadge" style="background: rgba(196, 60, 80, 0.14); color: #d95f6e; border: 1px solid rgba(196, 60, 80, 0.32); padding: 5px 14px; border-radius: 9999px; font-weight: 800; font-size: 12px; font-family: var(--font-mono);">
-              0 facturas encontradas
+              0 clientes
             </span>
             <!-- Botón Exportar Excel -->
             <button type="button" class="export-btn export-excel" id="btnExportExcel" title="Exportar datos actuales a archivo Excel / CSV">
@@ -317,8 +317,23 @@
           </div>
         </div>
 
+        <!-- Sub-pestañas del Informe Detallado -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+          <div class="informe-subtabs" id="informeSubTabs">
+            <button type="button" class="informe-subtab-btn active" data-informe-tab="clientes" id="btnTabClientes">
+              Por Cliente (Pagó / Debe)
+            </button>
+            <button type="button" class="informe-subtab-btn" data-informe-tab="facturas" id="btnTabFacturas">
+              Por Factura
+            </button>
+          </div>
+          <div class="informe-client-meta" id="informeSubHint">
+            Haz clic en un cliente para ver el detalle de sus facturas.
+          </div>
+        </div>
+
         <!-- Única barra de búsqueda: Hereda automáticamente los filtros del encabezado general -->
-        <div style="width: 100%; margin: 8px 0 14px 0;">
+        <div style="width: 100%; margin: 6px 0 14px 0;">
           <div style="position: relative; width: 100%;">
             <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #8b909e; pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
@@ -328,32 +343,74 @@
               type="text" 
               id="informeSearchInput" 
               class="bill-query" 
-              placeholder="Buscar dentro de las facturas filtradas por número SAP, cliente, código o comentario..." 
+              placeholder="Buscar por cliente, código, número SAP o comentario..." 
               style="width: 100%; box-sizing: border-box; padding: 11px 16px 11px 42px; background: rgba(15,17,23, 0.85); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; color: #ffffff; font-size: 13px; outline: none;"
             />
           </div>
         </div>
 
-        <!-- Tabla dinámica de informe detallado -->
-        <div class="bill-table-wrap" style="max-height: 520px; overflow-y: auto; overflow-x: hidden; width: 100%; margin-top: 14px;">
-          <table id="tableInforme" style="width: 100%; table-layout: fixed;">
-            <thead>
-              <tr>
-                <th style="width: 9%;">SAP</th>
-                <th style="width: 9%;">Fecha</th>
-                <th style="width: 9%;">Vencimiento</th>
-                <th style="width: 24%;">Cliente / Razón Social</th>
-                <th style="width: 10%;">Código</th>
-                <th style="width: 10%; text-align: right;" class="num">Total</th>
-                <th style="width: 10%; text-align: right;" class="num">Saldo</th>
-                <th style="width: 9%; text-align: center;">Estado</th>
-                <th style="width: 10%;">Comentario</th>
-              </tr>
-            </thead>
-            <tbody id="rowsInforme">
-              <!-- Filas dinámicas generadas en tiempo real -->
-            </tbody>
-          </table>
+        <!-- SUB-VISTA A: RESUMEN POR CLIENTE (PAGÓ / DEBE POR PAGAR) -->
+        <div id="informeClientesSection">
+          <div class="informe-client-controls">
+            <div class="informe-client-pills" id="informeClientStatusPills">
+              <button type="button" class="informe-filter-chip active" data-cli-status="ALL">Todos</button>
+              <button type="button" class="informe-filter-chip" data-cli-status="DEBE">Con deuda</button>
+              <button type="button" class="informe-filter-chip" data-cli-status="MORA">Con mora</button>
+              <button type="button" class="informe-filter-chip" data-cli-status="ALDIA">Al día</button>
+            </div>
+            <div class="informe-filter-group">
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Ordenar:</span>
+              <select id="informeClientSort" class="bill-select" aria-label="Ordenar clientes">
+                <option value="saldo_desc">Mayor deuda (Debe)</option>
+                <option value="pagado_desc">Mayor pagado</option>
+                <option value="total_desc">Mayor facturado</option>
+                <option value="nombre_asc">Cliente (A - Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bill-table-wrap" style="max-height: 540px; overflow-y: auto; overflow-x: hidden; width: 100%;">
+            <table id="tableInformeClientes" style="width: 100%; table-layout: fixed;">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Cliente / Razón Social</th>
+                  <th style="width: 11%;">Código</th>
+                  <th style="width: 9%; text-align: center;">Facturas</th>
+                  <th style="width: 12%; text-align: right;" class="num">Facturado</th>
+                  <th style="width: 12%; text-align: right;" class="num">Pagó</th>
+                  <th style="width: 12%; text-align: right;" class="num">Debe por pagar</th>
+                  <th style="width: 14%; text-align: center;">% Cobrado / Estado</th>
+                </tr>
+              </thead>
+              <tbody id="rowsInformeClientes">
+                <!-- Filas dinámicas por cliente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUB-VISTA B: TABLA DINÁMICA POR FACTURA -->
+        <div id="informeFacturasSection" style="display: none;">
+          <div class="bill-table-wrap" style="max-height: 520px; overflow-y: auto; overflow-x: hidden; width: 100%; margin-top: 6px;">
+            <table id="tableInforme" style="width: 100%; table-layout: fixed;">
+              <thead>
+                <tr>
+                  <th style="width: 9%;">SAP</th>
+                  <th style="width: 9%;">Fecha</th>
+                  <th style="width: 9%;">Vencimiento</th>
+                  <th style="width: 24%;">Cliente / Razón Social</th>
+                  <th style="width: 10%;">Código</th>
+                  <th style="width: 10%; text-align: right;" class="num">Total</th>
+                  <th style="width: 10%; text-align: right;" class="num">Saldo</th>
+                  <th style="width: 9%; text-align: center;">Estado</th>
+                  <th style="width: 10%;">Comentario</th>
+                </tr>
+              </thead>
+              <tbody id="rowsInforme">
+                <!-- Filas dinámicas generadas en tiempo real -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Totales / Footer del Informe Detallado -->
@@ -367,7 +424,7 @@
             <strong id="informeTotalPagado" style="color: #3f9c85;">$0.00</strong>
           </div>
           <div class="informe-total-pill">
-            <span>Saldo Pendiente:</span>
+            <span>Debe por Pagar (Saldo):</span>
             <strong id="informeTotalSaldo" style="color: #d95f6e;">$0.00</strong>
           </div>
         </div>
@@ -1250,12 +1307,16 @@
   // BINDING DE EVENTOS
   
   // ==========================================================================
-  // MODULO INFORME DETALLADO: CAMBIO DE VISTAS, FILTRADO Y EXPORTACIÓN
+  // MODULO INFORME DETALLADO: CAMBIO DE VISTAS, POR CLIENTE Y POR FACTURA
   // ==========================================================================
   let currentModule = 'facturacion';
+  let informeSubTab = 'clientes'; // 'clientes' | 'facturas'
   let informeSearchText = '';
+  let informeClientStatus = 'ALL'; // 'ALL' | 'DEBE' | 'MORA' | 'ALDIA'
+  let informeClientSort = 'saldo_desc';
   let informeFilterEstado = 'ALL';
   let informeFilterPais = 'ALL';
+  const expandedInformeClients = new Set();
 
   function switchModule(mod) {
     currentModule = mod;
@@ -1270,6 +1331,24 @@
     if (mod === 'informe') {
       renderInformeDetallado();
     }
+  }
+
+  function switchInformeSubTab(tab) {
+    informeSubTab = tab === 'facturas' ? 'facturas' : 'clientes';
+    document.querySelectorAll('.informe-subtab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-informe-tab') === informeSubTab);
+    });
+    const secCli = $('informeClientesSection');
+    const secFac = $('informeFacturasSection');
+    const hint = $('informeSubHint');
+    if (secCli) secCli.style.display = informeSubTab === 'clientes' ? 'block' : 'none';
+    if (secFac) secFac.style.display = informeSubTab === 'facturas' ? 'block' : 'none';
+    if (hint) {
+      hint.textContent = informeSubTab === 'clientes'
+        ? 'Haz clic en un cliente para ver el detalle de sus facturas.'
+        : 'Listado completo de documentos SAP según los filtros activos.';
+    }
+    renderInformeDetallado();
   }
 
   function getInformeData() {
@@ -1287,8 +1366,209 @@
     });
   }
 
+  // Agrupa facturas por cliente (pais + codigo) con totales Pagó / Debe por pagar
+  function billGroupByClient(list, currency = currentCurrency) {
+    const todayStart = getGuatemalaTodayInfo().todayStart;
+    const map = new Map();
+
+    list.forEach(item => {
+      const key = clientKey(item) || `SIN_COD:${String(item.cliente || 'SIN_REGISTRO').trim().toUpperCase()}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          codigo: item.codigo || '—',
+          cliente: item.cliente || 'Cliente Sin Registro',
+          pais: item.pais || '',
+          lines: new Set(),
+          items: [],
+          total: 0,
+          pagado: 0,
+          saldo: 0,
+          vencido: 0,
+          nSaldadas: 0,
+          nVencidas: 0
+        });
+      }
+      const entry = map.get(key);
+      const t = rowTotal(item, currency);
+      const s = Math.max(rowSaldo(item, currency), 0);
+      const p = Math.max(t - s, 0);
+      entry.items.push(item);
+      if (item.linea_negocio) entry.lines.add(item.linea_negocio);
+      entry.total += t;
+      entry.saldo += s;
+      entry.pagado += p;
+      if (s <= 0.0001) {
+        entry.nSaldadas++;
+      } else if (isOverdue(item, todayStart)) {
+        entry.nVencidas++;
+        entry.vencido += s;
+      }
+    });
+
+    return Array.from(map.values()).map(c => {
+      const pct = c.total > 0 ? Math.max(Math.min(c.pagado / c.total, 1), 0) : 0;
+      const status = c.saldo <= 0.0001 ? 'aldia' : (c.vencido > 0.0001 ? 'mora' : 'debe');
+      return {
+        ...c,
+        linesList: Array.from(c.lines),
+        pct,
+        status
+      };
+    });
+  }
+
+  function getFilteredSortedClients(list) {
+    let clients = billGroupByClient(list, currentCurrency);
+    if (informeClientStatus === 'DEBE') {
+      clients = clients.filter(c => c.saldo > 0.0001);
+    } else if (informeClientStatus === 'MORA') {
+      clients = clients.filter(c => c.vencido > 0.0001);
+    } else if (informeClientStatus === 'ALDIA') {
+      clients = clients.filter(c => c.saldo <= 0.0001);
+    }
+
+    clients.sort((a, b) => {
+      if (informeClientSort === 'pagado_desc') return b.pagado - a.pagado || b.total - a.total;
+      if (informeClientSort === 'total_desc') return b.total - a.total || b.saldo - a.saldo;
+      if (informeClientSort === 'nombre_asc') return a.cliente.localeCompare(b.cliente, 'es');
+      return b.saldo - a.saldo || b.vencido - a.vencido || b.total - a.total;
+    });
+    return clients;
+  }
+
+  function renderInformeClientes(list) {
+    const tbody = $('rowsInformeClientes');
+    const badge = $('informeSummaryBadge');
+    const safeText = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+    const clients = getFilteredSortedClients(list);
+    const todayStart = getGuatemalaTodayInfo().todayStart;
+
+    const totalFact = clients.reduce((sum, c) => sum + c.total, 0);
+    const totalPagado = clients.reduce((sum, c) => sum + c.pagado, 0);
+    const totalSaldo = clients.reduce((sum, c) => sum + c.saldo, 0);
+    const totalFacturas = clients.reduce((sum, c) => sum + c.items.length, 0);
+
+    if (badge) {
+      badge.textContent = `${clients.length} ${clients.length === 1 ? 'cliente' : 'clientes'} · ${totalFacturas} fact.`;
+    }
+    safeText('informeTotalFacturado', formatMoney(totalFact, currentCurrency));
+    safeText('informeTotalPagado', formatMoney(totalPagado, currentCurrency));
+    safeText('informeTotalSaldo', formatMoney(totalSaldo, currentCurrency));
+
+    if (!tbody) return;
+
+    if (clients.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--text-muted);"><div style="font-size:22px;margin-bottom:6px;">🔍</div><b>No se encontraron clientes con los filtros actuales</b></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = clients.map(c => {
+      const isExpanded = expandedInformeClients.has(c.key);
+      const pctNum = Math.round(c.pct * 100);
+      const debeColor = c.saldo <= 0.0001 ? '#8b909e' : (c.vencido > 0.0001 ? 'var(--intelfon-red)' : '#e0b52e');
+      const statusBadge = c.status === 'aldia'
+        ? '<span class="bill-status paid">Al día</span>'
+        : (c.status === 'mora'
+          ? '<span class="bill-status overdue">Con mora</span>'
+          : '<span class="bill-status pending">Por vencer</span>');
+      const linesTxt = [c.pais, c.linesList.join(', ')].filter(Boolean).join(' · ');
+
+      const detailRowHtml = isExpanded ? `
+        <tr class="cli-detail-row">
+          <td colspan="7">
+            <div class="cli-detail-box">
+              <div class="cli-detail-head">
+                <span><strong style="color:#ffffff;">${escapeHTML(c.cliente)}</strong> (${escapeHTML(c.codigo)}) · ${c.items.length} ${c.items.length === 1 ? 'factura' : 'facturas'} en el período</span>
+                <span>Facturado: <b style="color:#ffffff;">${formatMoney(c.total, currentCurrency)}</b> · Pagó: <b style="color:#3f9c85;">${formatMoney(c.pagado, currentCurrency)}</b> · Debe: <b style="color:${debeColor};">${formatMoney(c.saldo, currentCurrency)}</b></span>
+              </div>
+              <table class="cli-subtable">
+                <thead>
+                  <tr>
+                    <th>No. SAP</th>
+                    <th>Emisión</th>
+                    <th>Vencimiento</th>
+                    <th>Línea</th>
+                    <th style="text-align:right;">Facturado</th>
+                    <th style="text-align:right;">Pagó</th>
+                    <th style="text-align:right;">Debe (Saldo)</th>
+                    <th style="text-align:center;">Estado</th>
+                    <th>Comentario</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${c.items.map(inv => {
+                    const itTot = rowTotal(inv, currentCurrency);
+                    const itSal = Math.max(rowSaldo(inv, currentCurrency), 0);
+                    const itPag = Math.max(itTot - itSal, 0);
+                    const itOverdue = isOverdue(inv, todayStart);
+                    const itBadge = itSal <= 0.0001
+                      ? '<span class="bill-status paid">Pagada</span>'
+                      : (itOverdue ? '<span class="bill-status overdue">Vencida</span>' : '<span class="bill-status pending">Pendiente</span>');
+                    const itSalCol = itSal > 0.0001 ? (itOverdue ? 'color:var(--intelfon-red);' : 'color:#e0b52e;') : 'color:#8b909e;';
+                    return `
+                      <tr>
+                        <td><strong style="color:#ffffff;">${escapeHTML(inv.numerosap)}</strong><div>${invoiceTypeBadge(inv)}</div></td>
+                        <td>${escapeHTML(dateText(inv.fecha))}</td>
+                        <td>${escapeHTML(dateText(inv.fechavence))}</td>
+                        <td>${escapeHTML(inv.linea_negocio || '—')}</td>
+                        <td class="num">${formatMoney(itTot, currentCurrency)}</td>
+                        <td class="num" style="color:#3f9c85;">${formatMoney(itPag, currentCurrency)}</td>
+                        <td class="num" style="font-weight:700;${itSalCol}">${formatMoney(itSal, currentCurrency)}</td>
+                        <td style="text-align:center;">${itBadge}</td>
+                        <td style="color:var(--text-muted);">${escapeHTML(inv.comentario || '—')}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </td>
+        </tr>
+      ` : '';
+
+      return `
+        <tr class="cli-row ${isExpanded ? 'is-expanded' : ''}" data-client-key="${escapeHTML(c.key)}">
+          <td>
+            <div style="display:flex;align-items:flex-start;">
+              <span class="cli-expand-chevron">&#9654;</span>
+              <div style="min-width:0;">
+                <strong style="color:#ffffff;display:block;white-space:normal;" title="${escapeHTML(c.cliente)}">${escapeHTML(c.cliente)}</strong>
+                <span style="font-size:11px;color:var(--text-muted);">${escapeHTML(linesTxt)}</span>
+              </div>
+            </div>
+          </td>
+          <td class="code-text">${escapeHTML(c.codigo)}</td>
+          <td style="text-align:center;">
+            <strong style="color:#ffffff;">${c.items.length}</strong>
+            <div style="font-size:10.5px;color:var(--text-muted);">${c.nSaldadas} pag.${c.nVencidas > 0 ? ` · <span style="color:#f07b8a;">${c.nVencidas} venc.</span>` : ''}</div>
+          </td>
+          <td class="num"><b style="color:#ffffff;">${formatMoney(c.total, currentCurrency)}</b></td>
+          <td class="num"><b style="color:#3f9c85;">${formatMoney(c.pagado, currentCurrency)}</b></td>
+          <td class="num">
+            <b style="color:${debeColor};">${formatMoney(c.saldo, currentCurrency)}</b>
+            ${c.vencido > 0.0001 ? `<div style="font-size:10px;color:#f07b8a;">Vencido: ${formatMoney(c.vencido, currentCurrency)}</div>` : ''}
+          </td>
+          <td style="text-align:center;">
+            <div class="cli-progress-wrap" style="margin-bottom:4px;">
+              <div class="cli-progress-bar"><div class="cli-progress-fill" style="width:${pctNum}%;"></div></div>
+              <span class="mono-font" style="font-size:11px;color:#e8eaf0;">${pctNum}%</span>
+            </div>
+            ${statusBadge}
+          </td>
+        </tr>
+        ${detailRowHtml}
+      `;
+    }).join('');
+  }
+
   function renderInformeDetallado() {
     const list = getInformeData();
+    if (informeSubTab === 'clientes') {
+      renderInformeClientes(list);
+      return;
+    }
+
     const todayStart = getGuatemalaTodayInfo().todayStart;
     const rowsInforme = $('rowsInforme');
     const badge = $('informeSummaryBadge');
@@ -1707,6 +1987,56 @@
       rowMonth('TOTAL', st)
     );
 
+    // ==================== HOJA 4: RESUMEN POR CLIENTE (PAGÓ / DEBE) ====================
+    const ws4 = wb.addWorksheet('Resumen por cliente', sheetOpts());
+    const cols4 = [
+      { header: '#', width: 6, align: 'center' },
+      { header: 'Código', width: 14 },
+      { header: 'Cliente / Razón Social', width: 44 },
+      { header: 'País', width: 12, align: 'center' },
+      { header: 'Líneas', width: 20 },
+      { header: 'Facturas', width: 11, align: 'center' },
+      { header: 'Saldadas', width: 11, align: 'center' },
+      { header: 'Vencidas', width: 11, align: 'center' },
+      { header: `Facturado (${cur})`, width: 18, align: 'right', fmt: 'money' },
+      { header: `Pagó (${cur})`, width: 18, align: 'right', fmt: 'money' },
+      { header: `Debe por pagar (${cur})`, width: 20, align: 'right', fmt: 'money' },
+      { header: `Vencido (${cur})`, width: 18, align: 'right', fmt: 'money' },
+      { header: '% Cobrado', width: 12, align: 'center', fmt: 'pct' },
+      { header: 'Estado', width: 14, align: 'center' }
+    ];
+    buildHeader(ws4, cols4, 'RESUMEN POR CLIENTE (PAGÓ / DEBE POR PAGAR)');
+    const cliList = getFilteredSortedClients(list);
+    const cliStatusLabel = { aldia: 'Al día', mora: 'Con mora', debe: 'Por vencer' };
+    const cliTotFact = cliList.reduce((s, c) => s + c.total, 0);
+    const cliTotPag = cliList.reduce((s, c) => s + c.pagado, 0);
+    const cliTotSal = cliList.reduce((s, c) => s + c.saldo, 0);
+    const cliTotVenc = cliList.reduce((s, c) => s + c.vencido, 0);
+    const cliTotDocs = cliList.reduce((s, c) => s + c.items.length, 0);
+    const cliTotSald = cliList.reduce((s, c) => s + c.nSaldadas, 0);
+    const cliTotNVenc = cliList.reduce((s, c) => s + c.nVencidas, 0);
+    const cliTotPct = cliTotFact > 0 ? cliTotPag / cliTotFact : 0;
+    writeSummary(
+      ws4, cols4,
+      cliList.map((c, idx) => [
+        idx + 1,
+        c.codigo,
+        c.cliente,
+        paisTxt(c.pais),
+        c.linesList.join(', '),
+        c.items.length,
+        c.nSaldadas,
+        c.nVencidas,
+        round2(c.total),
+        round2(c.pagado),
+        round2(c.saldo),
+        round2(c.vencido),
+        c.pct,
+        cliStatusLabel[c.status] || 'Al día'
+      ]),
+      ['TOTAL', '', `${cliList.length} clientes`, '', '', cliTotDocs, cliTotSald, cliTotNVenc, round2(cliTotFact), round2(cliTotPag), round2(cliTotSal), round2(cliTotVenc), cliTotPct, '']
+    );
+
     // ==================== DESCARGA ====================
     try {
       const buffer = await wb.xlsx.writeBuffer();
@@ -1858,6 +2188,26 @@
       };
       const lineasRows = lines.map(l => lineRow(l.key, paisTxt(l.pais), l.stats, false)).join('')
         + lineRow('TOTAL', '', st, true);
+
+      // ---- Resumen por cliente (Pagó / Debe por pagar) ----
+      const clientsSummary = getFilteredSortedClients(list);
+      const clientSummaryRows = clientsSummary.map(c => {
+        const pct = Math.round(c.pct * 100);
+        const stCls = c.status === 'aldia' ? 'b-ok' : (c.status === 'mora' ? 'b-venc' : 'b-near');
+        const stTxt = c.status === 'aldia' ? 'Al día' : (c.status === 'mora' ? 'Con mora' : 'Por vencer');
+        const debeCol = c.saldo <= 0.0001 ? '#8b909e' : (c.status === 'mora' ? '#c43c50' : '#c59600');
+        return `
+          <tr>
+            <td><b>${esc(c.cliente)}</b><div style="font-size:9px;color:#8b909e;">${esc([paisTxt(c.pais), c.linesList.join(', ')].filter(Boolean).join(' · '))}</div></td>
+            <td>${esc(c.codigo)}</td>
+            <td class="c">${c.items.length}</td>
+            <td class="r">${m(c.total)}</td>
+            <td class="r" style="color:#2f8f76;"><b>${m(c.pagado)}</b></td>
+            <td class="r" style="color:${debeCol};"><b>${m(c.saldo)}</b></td>
+            <td class="c">${pct}%</td>
+            <td class="c"><span class="badge ${stCls}">${stTxt}</span></td>
+          </tr>`;
+      }).join('');
 
       // ---- Detalle ----
       const detalleRows = list.map(item => {
@@ -2027,7 +2377,19 @@
 
     </section>
     <section data-pdf-module="informe">
-    <h2>4. Detalle completo de facturas (${st.n} registros)</h2>
+    <h2>4. Resumen por cliente — Pagó / Debe por pagar (${clientsSummary.length} clientes)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente / Razón Social</th><th>Código</th><th class="c">Facturas</th>
+          <th class="r">Facturado</th><th class="r">Pagó</th><th class="r">Debe por pagar</th>
+          <th class="c">% Cobrado</th><th class="c">Estado</th>
+        </tr>
+      </thead>
+      <tbody>${clientSummaryRows}</tbody>
+    </table>
+
+    <h2>5. Detalle completo de facturas (${st.n} registros)</h2>
     <table>
       <thead>
         <tr>
@@ -2184,6 +2546,50 @@
       });
     });
 
+    // Sub-pestañas dentro de Informe Detallado (Por Cliente / Por Factura)
+    document.querySelectorAll('.informe-subtab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-informe-tab');
+        if (tab) switchInformeSubTab(tab);
+      });
+    });
+
+    // Filtros de estado y ordenamiento en Por Cliente
+    document.querySelectorAll('#informeClientStatusPills .informe-filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        informeClientStatus = chip.getAttribute('data-cli-status') || 'ALL';
+        document.querySelectorAll('#informeClientStatusPills .informe-filter-chip').forEach(c => {
+          c.classList.toggle('active', c === chip);
+        });
+        renderInformeDetallado();
+      });
+    });
+
+    const cliSortEl = $('informeClientSort');
+    if (cliSortEl) {
+      cliSortEl.addEventListener('change', (e) => {
+        informeClientSort = e.target.value || 'saldo_desc';
+        renderInformeDetallado();
+      });
+    }
+
+    const cliTbody = $('rowsInformeClientes');
+    if (cliTbody) {
+      cliTbody.addEventListener('click', (e) => {
+        if (e.target.closest('.cli-detail-row')) return;
+        const rowEl = e.target.closest('.cli-row');
+        if (!rowEl) return;
+        const key = rowEl.getAttribute('data-client-key');
+        if (!key) return;
+        if (expandedInformeClients.has(key)) {
+          expandedInformeClients.delete(key);
+        } else {
+          expandedInformeClients.add(key);
+        }
+        renderInformeClientes(getInformeData());
+      });
+    }
+
     // Buscador en Informe Detallado
     const infSearch = $('informeSearchInput');
     if (infSearch) {
@@ -2221,7 +2627,7 @@
       buttonId: 'btnDashboardPdf',
       modules: [
         { id: 'facturacion', name: 'Facturación', description: 'Indicadores, gráficas y resumen por línea de negocio.' },
-        { id: 'informe', name: 'Informe detallado', description: 'Detalle de facturas y datos de auditoría.' }
+        { id: 'informe', name: 'Informe detallado', description: 'Resumen por cliente (pagó / debe) y detalle de facturas.' }
       ],
       getFilterChips: () => {
         const selectedLabels = (options, values) => options
