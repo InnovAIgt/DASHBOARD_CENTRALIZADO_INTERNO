@@ -2640,7 +2640,17 @@
       opacity: .6;
       pointer-events: none
     }
-  </style>
+  .pending-detail { padding:20px; border:1px solid var(--border); border-radius:12px; background:var(--panel); white-space:normal; }
+.pending-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0 22px; }
+.pending-detail-grid > div { padding:12px; border:1px solid var(--border); border-radius:8px; min-width:0; }
+.pending-detail-grid span { display:block; color:var(--muted);font-size:11px;margin-bottom:6px; }
+.pending-detail-grid strong { display:block;white-space:normal;overflow-wrap:anywhere; }
+.priority-detail-toggle { white-space:nowrap; padding:9px 12px; }
+#priorityBody > tr[hidden] { display:none; }
+@media(max-width:800px){.pending-detail-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:500px){.pending-detail-grid {grid-template-columns:1fr;}}
+.delivery-date-help { display:block; margin-top:8px; color:var(--muted); font-size:11px; line-height:1.5; font-weight:400; white-space:normal; }
+</style>
   <link rel="stylesheet" href="../../assets/css/dashboard.css?v=20261021tokens">
   <link rel="stylesheet" data-std="temprano" href="../../assets/css/estandar.css?v=20261021tokens">
   <link rel="stylesheet" href="../../assets/css/control-despachos.css?v=20261021tokens">
@@ -2828,7 +2838,7 @@
       </div>
       <div class="panel table-panel">
         <div class="table-head"><div><h2 class="panel-title">Facturas pendientes de despacho</h2><p class="panel-sub">Las 10 más antiguas según los filtros.</p></div><button class="btn" id="verPendientes" type="button">Ver todas las pendientes</button></div>
-        <div class="table-scroll"><table class="detail"><thead><tr><th>Factura</th><th>Cliente</th><th>País</th><th>Emisión</th><th>Días</th><th>Estado</th></tr></thead><tbody id="priorityBody"></tbody></table></div>
+        <div class="table-scroll"><table class="detail"><thead><tr><th>Factura</th><th>Cliente</th><th>País</th><th>Emisión</th><th>Días</th><th>Estado</th><th>Detalle</th></tr></thead><tbody id="priorityBody"></tbody></table></div>
       </div>
       <!-- SLA por país -->
       <div class="sla-grid">
@@ -3747,10 +3757,28 @@
         setText(id + 'Sub', description);
       });
       document.getElementById('verPendientes').disabled = !pendientes.length;
-      document.getElementById('priorityBody').innerHTML = pendientes.length ? pendientes.slice(0, 10).map(f =>
-        '<tr><td><strong>' + escapeHtml(f.numeroFactura) + '</strong></td><td>' + escapeHtml(f.nombreCliente) + '</td><td>' + escapeHtml(f.pais) + '</td><td>' + escapeHtml(f.fechaEmision) + '</td><td>' + (f.diasEmitida ?? '—') + '</td><td><span class="pill ' + f.semaforo.toLowerCase() + '">' + plazoLabel(f.semaforo) + '</span></td></tr>'
-      ).join('') : '<tr><td colspan="6"><div class="empty">' + emptyMessage('Sin facturas pendientes para estos filtros.') + '</div></td></tr>';
+      const body = document.getElementById('priorityBody');
+      const opened = new Set(Array.from(body.querySelectorAll('[data-priority-key][aria-expanded="true"]'), button => button.dataset.priorityKey));
+      body.innerHTML = pendientes.length ? pendientes.slice(0, 10).map((f,index) => {
+        const key = f.pais + ':' + f.docEntry + ':' + f.numeroFactura;
+        const expanded = opened.has(key);
+        return '<tr><td><strong>' + escapeHtml(f.numeroFactura) + '</strong></td><td>' + escapeHtml(f.nombreCliente) + '</td><td>' + escapeHtml(f.pais) + '</td><td>' + escapeHtml(f.fechaEmision) + '</td><td>' + (f.diasEmitida ?? '—') + '</td><td><span class="pill ' + f.semaforo.toLowerCase() + '">' + plazoLabel(f.semaforo) + '</span></td><td><button type="button" class="btn priority-detail-toggle" data-priority-key="' + escapeHtml(key) + '" aria-expanded="' + expanded + '" aria-controls="priority-detail-' + index + '">' + (expanded ? 'Ocultar detalle' : 'Ver detalle') + '</button></td></tr><tr id="priority-detail-' + index + '"' + (expanded ? '' : ' hidden') + '><td colspan="7">' + renderPendingDetail(f) + '</td></tr>';
+      }).join('') : '<tr><td colspan="7"><div class="empty">' + emptyMessage('Sin facturas pendientes para estos filtros.') + '</div></td></tr>';
     }
+    function renderPendingDetail(f) {
+      const fields = [['Factura',f.numeroFactura],['Documento interno SAP',f.docEntry || 'Sin registro'],['Cliente',f.nombreCliente],['Código de cliente',f.codigoCliente],['País',f.pais],['Fecha de emisión',f.fechaEmision],['Estado de factura',f.estatus],['Días desde emisión',f.diasEmitida ?? 'Sin fecha'],['Estado del plazo',plazoLabel(f.semaforo)],['Total factura',fmtMonto(f.pais,f.totalFactura)],['Fecha de entrega','No disponible']];
+      const articles = (f.articulos || []).map(item => '<tr><td>' + escapeHtml(item.CodigoArticulo || '—') + '</td><td>' + escapeHtml(item.Descripcion || '—') + '</td><td>' + escapeHtml(item.Cantidad ?? '—') + '</td><td>' + escapeHtml(item.Precio ?? '—') + '</td><td>' + escapeHtml(item.TotalLinea ?? '—') + '</td></tr>').join('');
+      return '<section class="pending-detail"><h3>Factura ' + escapeHtml(f.numeroFactura) + '</h3><div class="pending-detail-grid">' + fields.map(([label,value]) => '<div><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong>' + (label === 'Fecha de entrega' ? '<small class="delivery-date-help">La fuente actual no incluye la fecha real de entrega. Esto no indica que la factura siga sin entregar.</small>' : '') + '</div>').join('') + '</div><h4>Artículos de la factura</h4>' + (articles ? '<div class="table-scroll"><table class="detail"><thead><tr><th>Código</th><th>Descripción</th><th>Cantidad</th><th>Precio unitario</th><th>Total línea</th></tr></thead><tbody>' + articles + '</tbody></table></div>' : '<p>La fuente no incluye artículos para esta factura.</p>') + '</section>';
+    }
+    document.getElementById('priorityBody').addEventListener('click', event => {
+      const button = event.target.closest('[data-priority-key]');
+      if (!button) return;
+      const row = document.getElementById(button.getAttribute('aria-controls'));
+      const expanded = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(expanded));
+      button.textContent = expanded ? 'Ocultar detalle' : 'Ver detalle';
+      row.hidden = !expanded;
+    });
 
     function renderArticulosFactura(f) {
       if (!f.articulos.length) return '<strong>' + escapeHtml(f.numeroFactura) + '</strong>';
