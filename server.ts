@@ -3,9 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
-import { obtenerMailing } from './server/marketingMailing.js';
-import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
-import { obtenerRedes } from './server/marketingRedes.js';
 import { reenviarSac } from './server/sacProxy.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
@@ -30,51 +27,6 @@ app.all('/api/marketing/reuniones', async (req, res) => {
     method: req.method,
     offset: typeof req.query.offset === 'string' ? req.query.offset : undefined,
   });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', resultado.contentType);
-  res.status(resultado.status).send(resultado.body);
-});
-
-// Marketing por canales · métricas de mailing (docs/marketing-canales/README.md).
-// En Vercel esta misma ruta la atiende api/marketing/mailing.js.
-app.all('/api/marketing/mailing', async (req, res) => {
-  const resultado = await obtenerMailing({
-    method: req.method,
-    actualizar: req.query.actualizar === '1',
-    campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
-    pais: typeof req.query.pais === 'string' ? req.query.pais : undefined,
-  });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', resultado.contentType);
-  res.status(resultado.status).send(resultado.body);
-});
-
-// Marketing por canales · detalle de personas (D34 y D42).
-// En Vercel esta misma ruta la atiende api/marketing/mailing-detalle.js.
-app.all('/api/marketing/mailing-detalle', async (req, res) => {
-  const resultado = await obtenerDetalleMailing({
-    method: req.method,
-    campana: typeof req.query.campana === 'string' ? req.query.campana : undefined,
-    vista: typeof req.query.vista === 'string' ? req.query.vista : undefined,
-    pais: typeof req.query.pais === 'string' ? req.query.pais : undefined,
-    campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
-    desde: typeof req.query.desde === 'string' ? req.query.desde : undefined,
-    hasta: typeof req.query.hasta === 'string' ? req.query.hasta : undefined,
-    cargos: typeof req.query.cargos === 'string' ? req.query.cargos : undefined,
-    tarjeta: typeof req.query.tarjeta === 'string' ? req.query.tarjeta : undefined,
-  });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', resultado.contentType);
-  res.status(resultado.status).send(resultado.body);
-});
-
-// Marketing · Redes sociales: métricas del Excel de RRSS (docs/marketing-redes/README.md).
-// En Vercel esta misma ruta la atiende api/marketing/redes.js.
-app.all('/api/marketing/redes', async (req, res) => {
-  const resultado = await obtenerRedes({ method: req.method });
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', resultado.contentType);
