@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { reenviarSac } from './server/sacProxy.js';
+import { procesarWebhookBrevo } from './server/brevoWebhook.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -38,6 +39,14 @@ app.all('/api/marketing/reuniones', async (req, res) => {
 app.all('/api/sac/:fuente(corte|vivo|historico)', async (req, res) => {
   const i = req.originalUrl.indexOf('?');
   const resultado = await reenviarSac({ fuente: req.params.fuente, method: req.method, query: i < 0 ? '' : req.originalUrl.slice(i) });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · avisos (webhooks de marketing) de Brevo, protegidos con BREVO_WEBHOOK_SECRET.
+// Guarda en el proyecto Supabase «Dashboard Canales de marketing». En Vercel: api/marketing/brevo-webhook.js.
+app.all('/api/marketing/brevo-webhook', async (req, res) => {
+  const resultado = await procesarWebhookBrevo({ method: req.method, headers: req.headers, body: req.body });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });

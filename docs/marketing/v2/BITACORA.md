@@ -2,6 +2,22 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Ruta del webhook de Brevo (código y pruebas, sin Supabase)
+
+- Ruta `POST /api/marketing/brevo-webhook` (local en `server.ts`, Vercel en `api/marketing/brevo-webhook.js`), con la
+  lógica en `server/brevoWebhook.js` y el guardado en `server/mktSupabase.js` (API REST de Supabase, sin paquetes
+  nuevos).
+- Clave en `BREVO_WEBHOOK_SECRET` (solo servidor; agregada al azar en `.env.local`, nunca mostrada). Se acepta en el
+  encabezado `x-webhook-token` o como usuario:clave en la dirección (Basic auth), según lo que permita la pantalla de
+  Brevo.
+- Respuestas: 405 si no es POST, 401 sin clave correcta (no guarda nada), 400 contenido inválido, 413 demasiado grande,
+  429 si falta configuración o Supabase falla (para que Brevo reintente), 200 con conteos. Nunca devuelve correos.
+- Huella SHA-256 (evento|campaña|correo|fecha) para ignorar duplicados; eventos de contactos (sin campaña) se ignoran;
+  nombres de evento nuevos se guardan igual. No se guarda la URL del clic, la IP, segmentos ni listas.
+- 18 pruebas nuevas con datos inventados (25 en total en `server/`), lint y build OK. Prueba local en otro puerto solo
+  con peticiones rechazadas (405 y 401): no se llamó a Supabase.
+- `.env.example`: nombres vacíos `BREVO_WEBHOOK_SECRET`, `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY`.
+
 ## 2026-11-20 · Proyecto Supabase y diseño de las tablas del webhook
 
 - Keily creó el proyecto Supabase «Dashboard Canales de marketing», solo para este dashboard (plan Free: se pausa tras

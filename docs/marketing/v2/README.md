@@ -36,6 +36,10 @@ Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
 | `src/modulos/marketing/marketing-v2/pantalla/comunes.jsx` | Avisos de pendiente y de inicio de sesión, paneles y tablas vacías |
 | `src/modulos/marketing/marketing-v2/marketing-v2.css` | Estilos propios (prefijo `mkv2-`) |
 | `src/components/layout/PortalLayout.tsx` | Entrada del menú (id `marketing-v2`) |
+| `server/brevoWebhook.js` | Recibe los avisos del webhook de Brevo (`POST /api/marketing/brevo-webhook`) |
+| `server/mktSupabase.js` | Guarda en el proyecto Supabase «Dashboard Canales de marketing» (solo servidor) |
+| `api/marketing/brevo-webhook.js` | La misma ruta en Vercel |
+| `server/brevoWebhook.test.js` | Pruebas con datos inventados |
 
 **Estilos:** reutiliza los de **Flujo de ventas** (`src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css`, clase
 `fv2`) y su componente de banderas, **sin modificarlos**. Si cambian allá, cambian aquí. `marketing-v2.css` solo agrega

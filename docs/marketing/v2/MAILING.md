@@ -353,6 +353,10 @@ del destinatario.
   `authenticated`: solo nuestro servidor, con la llave secreta, puede leer y escribir. El portal nunca habla directo
   con Supabase.
 - **No se guarda:** la URL del clic (por ahora), la IP de envío, segmentos ni listas.
+- **Ruta que recibe los avisos:** `POST /api/marketing/brevo-webhook` (`server/brevoWebhook.js`). Clave en
+  `BREVO_WEBHOOK_SECRET`, por el encabezado `x-webhook-token` o como usuario:clave en la dirección. Responde 401 sin la
+  clave correcta (no guarda nada) y 429 si el fallo es nuestro (falta configuración o Supabase no responde), que es el
+  único error con el que Brevo reintenta. Los eventos de contactos (sin campaña) se ignoran.
 - **Estado final** y **CORREGIR / MANTENER** se calculan al leer (secciones 3 y 4); no se guardan.
 - Se guardan **12 meses**; la limpieza mensual se programa más adelante.
 - Datos de la prueba: en las mismas tablas, y se borran al terminar la prueba.
