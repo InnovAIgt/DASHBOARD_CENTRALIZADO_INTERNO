@@ -60,10 +60,10 @@ export const SecretsModal: React.FC<SecretsModalProps> = ({ isOpen, onClose }) =
       description: 'API de preofertas, radicaciones y etapas de activación operativa',
       vars: [
         {
-          key: 'VITE_WORKFLOW_API_KEY',
-          value: 'b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b',
-          label: 'Workflow Bearer & X-API-KEY',
-          usage: 'Token de autorización para https://workflow.red.com.gt/api/'
+          key: 'WORKFLOW_API_KEY',
+          value: '',
+          label: 'Workflow (solo servidor)',
+          usage: 'Se configura en el servidor (Vercel o .env.local), nunca en el navegador. La usa /api/workflow/preofertas'
         },
         {
           key: 'VITE_WORKFLOW_API_URL',
