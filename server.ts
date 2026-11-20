@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { getDispatchData } from './server/bodega-despachos.mjs';
 
 dotenv.config();
 
@@ -16,6 +17,14 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static assets from public directly with correct MIME types
 app.use(express.static(path.resolve(__dirname, 'public')));
+
+app.get('/api/bodega/despachos', async (req, res) => {
+  const country = String(req.query.pais || 'combined');
+  if (!['combined','GT','SV'].includes(country)) { res.status(400).json({ error: 'País inválido' }); return; }
+  res.setHeader('Cache-Control', 'no-store');
+  try { const data = await getDispatchData({ country }); res.status(data.paises.some(pais => pais.ok) ? 200 : 502).json(data); }
+  catch (error: any) { res.status(503).json({ error: error.message }); }
+});
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
