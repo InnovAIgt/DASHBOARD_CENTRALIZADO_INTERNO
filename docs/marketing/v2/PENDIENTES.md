@@ -12,9 +12,10 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Decidir dónde se guardan los eventos del webhook de Brevo (Supabase u otro) | Keily | 2026-11-20 | Resuelto: proyecto Supabase «Dashboard Canales de marketing», solo para este dashboard (plan Free: se pausa tras una semana sin actividad y no tiene respaldos). Variables de servidor: `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` |
 | Crear el webhook de marketing en Brevo, avisando a Ismael | Keily | Por confirmar | Pendiente |
 | Correr `docs/marketing/v2/sql/001_tablas_webhook.sql` en el proyecto «Dashboard Canales de marketing» | Keily | 2026-11-20 | Resuelto: 2 tablas con RLS; con llave secreta 200 y sin llave 401 |
-| Tarea diaria para que el proyecto Free no se pause (Vercel cron con `CRON_SECRET`) | Keily | Por confirmar | Pendiente |
+| Tarea diaria para que el proyecto Free no se pause (Vercel cron con `CRON_SECRET`; solo corre en producción) | Keily | Después de probar el webhook | Pendiente |
 | Prueba local real de la ruta del webhook: 2 eventos inventados, revisar que se guarden y borrarlos (con el «sí» de Keily, después de correr el SQL) | Keily | 2026-11-20 | Resuelto: 2 guardados, el reenvío se ignoró (sin duplicados), borrados; tabla en 0 |
-| Poner en Vercel `BREVO_WEBHOOK_SECRET`, `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` (Preview y después Production) | Keily | Al probar en Preview | Pendiente |
+| Poner en Vercel `BREVO_WEBHOOK_SECRET`, `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` (Preview y después Production) | Keily | 2026-11-20 | Preview hecho (como Secret); Production pendiente al publicar |
+| Confirmar en cuál de los 2 proyectos de Vercel (`dashboard.centralizado` o `dashboard.centralizado.interno`) se hace la prueba del webhook y se pusieron las variables | Keily | — | Pendiente |
 | Al crear el webhook en Brevo, ver si la pantalla permite el encabezado `x-webhook-token` o solo usuario:clave en la dirección | Keily | Al crear el webhook | Pendiente |
 | Definir el respaldo de los eventos del webhook | Keily | Por definir | Pendiente |
 | Limpieza mensual de eventos con más de 12 meses | Keily | Más adelante | Pendiente |
@@ -33,8 +34,9 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
 | Preguntar a Eduardo si el estado «Sin confirmación» se quita del dashboard o se deja (en la reunión dijo que no debería existir) | Eduardo | Por confirmar | Pendiente |
 | Quitar de Vercel las 4 variables viejas | Keily / TI | Al publicar | Pendiente |
-| Valores reales en .env.example del historial del repo (SAP, Workflow, contraseñas maestras, webhooks de Make, llaves públicas de Supabase/Firebase) (también en origin/main hoy): TI debe cambiarlos | Eduardo / TI | 2026-11-20 | Pendiente |
+| Valores reales en .env.example del historial del repo (SAP, Workflow, contraseñas maestras, webhooks de Make, llaves públicas de Supabase/Firebase) (también en origin/main hoy), y llave tipo Google escrita directo en `src/config/env.ts`: TI debe cambiarlos | Eduardo / TI | 2026-11-20 | Pendiente |
 | Vaciar .env.example en main con un PR aparte y pequeño | Keily (con OK de Eduardo) | — | Pendiente |
+| Borrar el código de bypass de Vercel al terminar la prueba del webhook | Keily | — | Pendiente |
 
 Las 4 variables viejas (solo nombres): `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`,
 `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE`.

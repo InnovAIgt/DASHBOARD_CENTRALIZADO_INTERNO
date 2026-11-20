@@ -2,6 +2,19 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Rama en GitHub y versión de prueba en Vercel
+
+- Revisiones antes del push: `.env.example` sin valores; `.env.local`, `.claude/`, `.vscode/` y `.kiro/` ignorados;
+  ningún CSV, Excel ni JSON de llaves agregado; sin llaves en el código nuevo. Los commits viejos de la rama traen el
+  `.env.example` con los mismos valores que ya están en `origin/main` (nada nuevo expuesto).
+- Push solo de `feature/marketing-v2` (sigue a `origin/feature/marketing-v2`); `main` sin cambios y sin PR.
+- Keily puso en Vercel, solo en Preview y como Secret, `BREVO_WEBHOOK_SECRET`, `MKT_SUPABASE_URL` y
+  `MKT_SUPABASE_SECRET_KEY`.
+- Vercel armó la versión de prueba en 2 proyectos (`dashboard.centralizado` y `dashboard.centralizado.interno`). Las 2
+  tienen protección: sin iniciar sesión responden 302 hacia el inicio de sesión de Vercel, así que Brevo no podría
+  llamar al webhook. Decisión: opción A («Protection Bypass for Automation»), solo para la prueba y borrarlo al final.
+- La tarea diaria (Vercel cron) se programa después de probar el webhook: Vercel solo corre crons en producción.
+
 ## 2026-11-20 · Tablas creadas y prueba local del webhook
 
 - Keily corrió `sql/001_tablas_webhook.sql` en el proyecto «Dashboard Canales de marketing»: las 2 tablas con RLS
