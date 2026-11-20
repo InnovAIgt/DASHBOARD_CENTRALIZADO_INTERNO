@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Tablas creadas y prueba local del webhook
+
+- Keily corrió `sql/001_tablas_webhook.sql` en el proyecto «Dashboard Canales de marketing»: las 2 tablas con RLS
+  activado (`relrowsecurity = true`).
+- Revisión de solo lectura: `mkt_brevo_eventos` y `mkt_campana_cargo` responden 200 (0 filas) con la llave secreta y
+  **401 sin llave**.
+- Prueba local (servidor en otro puerto, campaña inventada 999999001, correos de example.com):
+  - 2 eventos inventados (`delivered` y `soft_bounce` con motivo) → 200, 2 guardados.
+  - El mismo envío otra vez → 200, 0 guardados y 2 ignorados (la huella evita duplicados).
+  - En la tabla: 2 filas, 1 con motivo. Se borraron (204) y la tabla quedó con 0 filas.
+- Script temporal borrado; no se mostraron correos ni llaves.
+
 ## 2026-11-20 · .env.example sin valores reales
 
 - Se encontraron 37 valores reales en `.env.example` (también en `origin/main` y en el historial del repo): SAP,
