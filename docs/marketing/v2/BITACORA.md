@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Proyecto Supabase y diseño de las tablas del webhook
+
+- Keily creó el proyecto Supabase «Dashboard Canales de marketing», solo para este dashboard (plan Free: se pausa tras
+  una semana sin actividad y no tiene respaldos). Variables de servidor: `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY`.
+- Archivo `docs/marketing/v2/sql/001_tablas_webhook.sql` con las tablas `mkt_brevo_eventos` y `mkt_campana_cargo`,
+  RLS activado sin reglas y sin permisos públicos. La columna `evento` no se limita (decisión de Keily: un evento con
+  otro nombre se guarda igual y se filtra después). Lo corre Keily en el SQL Editor.
+- Decisiones: tarea diaria (Vercel cron con `CRON_SECRET`) para que el proyecto no se pause; respaldo por definir;
+  eventos 12 meses con limpieza mensual más adelante; datos de prueba en las mismas tablas y borrados al terminar;
+  sin URL del clic; rutas con correos solo con totales hasta que haya inicio de sesión real.
+- Keily aprobó el plan del webhook (MAILING.md, 10.1 y 10.2).
+
 ## 2026-11-20 · Detalle por correo: se usarán los webhooks de Brevo
 
 - Prueba de exportación de destinatarios (`POST /v3/emailCampaigns/74/exportRecipients`, solo rebotes temporales):

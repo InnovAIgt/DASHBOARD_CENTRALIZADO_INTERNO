@@ -64,3 +64,4 @@ Se quitaron del portal el 20/11/2026 (commit `9d08356`, ver [BITACORA.md](BITACO
 - [MAILING.md](MAILING.md) — borrador de la pestaña Mailing.
 - [REDES.md](REDES.md) — borrador de la pestaña Redes sociales.
 - [PENDIENTES.md](PENDIENTES.md) — lo que falta, a quién se le pidió y su estado.
+- [sql/](sql/) — SQL de las tablas del proyecto Supabase «Dashboard Canales de marketing» (se corre a mano).

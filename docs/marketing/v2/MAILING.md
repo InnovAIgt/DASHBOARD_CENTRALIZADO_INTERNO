@@ -338,6 +338,29 @@ del destinatario.
   guardar los eventos (ver PENDIENTES).
 - El webhook lo crea **Keily** en la pantalla de Brevo, **avisando a Ismael**.
 
+### 10.2 Dónde se guardan los eventos (decisiones del 20/11/2026)
+
+- Proyecto Supabase **«Dashboard Canales de marketing»**, solo para este dashboard. Variables de servidor (solo
+  nombres): `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY`. Plan Free: se pausa tras una semana sin actividad y no
+  tiene respaldos.
+- Tablas (archivo [`sql/001_tablas_webhook.sql`](sql/001_tablas_webhook.sql), lo corre Keily en el SQL Editor):
+  - `mkt_brevo_eventos`: tipo de evento, campaña, correo (minúsculas), fecha del evento y del envío, motivo (solo
+    rebotes y spam) y hora de llegada. Una **huella** única (evento + campaña + correo + fecha) evita duplicados
+    cuando Brevo reintenta. El tipo de evento **no se limita**: si Brevo manda uno nuevo, se guarda y se filtra
+    después.
+  - `mkt_campana_cargo`: cargo GG / GF / GO elegido a mano por campaña.
+- **Protección:** RLS (el candado de Supabase) activado sin reglas de acceso y sin permisos para `anon` ni
+  `authenticated`: solo nuestro servidor, con la llave secreta, puede leer y escribir. El portal nunca habla directo
+  con Supabase.
+- **No se guarda:** la URL del clic (por ahora), la IP de envío, segmentos ni listas.
+- **Estado final** y **CORREGIR / MANTENER** se calculan al leer (secciones 3 y 4); no se guardan.
+- Se guardan **12 meses**; la limpieza mensual se programa más adelante.
+- Datos de la prueba: en las mismas tablas, y se borran al terminar la prueba.
+- **Tarea diaria** (Vercel cron, protegida con `CRON_SECRET`) que hace una lectura mínima para que el proyecto Free
+  no se pause.
+- Hasta que el portal tenga **inicio de sesión real**, las rutas de Correos por corregir, Detalle por correo y
+  Relación con clientes devuelven **solo totales**, sin correos (hoy el inicio de sesión solo existe en el navegador).
+
 **Permisos:** `/v3/smtp/statistics/events` responde 403 porque la llave no cubre los correos transaccionales. Es lo
 esperado: el dashboard no los usa.
 

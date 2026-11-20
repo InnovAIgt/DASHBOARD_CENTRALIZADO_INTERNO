@@ -9,8 +9,13 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Renovar la llave de Brevo antes del 2027-11-20 | Keily | 2027-11-01 | Pendiente |
 | Dónde sacar el motivo del rebote por destinatario (la API de lectura no lo trae): probar la exportación de destinatarios o los webhooks | Keily | 2026-11-20 | Resuelto: exportación con 403 (llave de solo lectura); llave con escritura descartada; se usarán los webhooks de marketing, solo para campañas nuevas (MAILING.md, 10.1) |
 | Exportar a mano en Brevo la campaña 74 (solo rebotes temporales) y pasar solo los nombres de las columnas, sin valores | Ismael | Por confirmar | Pendiente |
-| Decidir dónde se guardan los eventos del webhook de Brevo (Supabase u otro) | Keily | — | Pendiente |
+| Decidir dónde se guardan los eventos del webhook de Brevo (Supabase u otro) | Keily | 2026-11-20 | Resuelto: proyecto Supabase «Dashboard Canales de marketing», solo para este dashboard (plan Free: se pausa tras una semana sin actividad y no tiene respaldos). Variables de servidor: `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` |
 | Crear el webhook de marketing en Brevo, avisando a Ismael | Keily | Por confirmar | Pendiente |
+| Correr `docs/marketing/v2/sql/001_tablas_webhook.sql` en el proyecto «Dashboard Canales de marketing» | Keily | — | Pendiente |
+| Tarea diaria para que el proyecto Free no se pause (Vercel cron con `CRON_SECRET`) | Keily | Por confirmar | Pendiente |
+| Definir el respaldo de los eventos del webhook | Keily | Por definir | Pendiente |
+| Limpieza mensual de eventos con más de 12 meses | Keily | Más adelante | Pendiente |
+| Inicio de sesión real del portal (hasta entonces, las rutas con correos devuelven solo totales) | Keily | Por definir | Pendiente |
 | Confirmar si se ocultan las campañas de prueba | Ismael | Por confirmar | Pendiente |
 | Comparar en la pantalla de Brevo la campaña 74 (157 entregados, 44 aperturas, 3 clics) para decidir entre `globalStats` y `campaignStats` (por ahora se usa `globalStats`) | Keily | Por confirmar | Pendiente |
 | Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
