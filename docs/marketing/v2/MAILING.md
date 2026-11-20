@@ -74,6 +74,10 @@ Se aplican en este orden; gana la primera que se cumple:
 Se usa el **motivo del rebote final** (el del rebote temporal si el estado final es Rebote temporal, el del permanente
 si es Rebote permanente). **Por confirmar con datos reales de la API de Brevo** (cómo entrega Brevo cada motivo).
 
+> **Aviso (prueba del 20/11/2026):** la API de lectura **no trae el motivo del rebote por destinatario** (sección
+> 10.1). Sin el motivo, las reglas 2 a 5 no se pueden aplicar. Falta probar la exportación de destinatarios o los
+> webhooks de Brevo (ver PENDIENTES).
+
 La comparación del motivo no distingue mayúsculas. El mensaje original se guarda para auditoría y en pantalla se
 muestra un **motivo técnico** corto (máximo 5 palabras).
 
@@ -181,6 +185,7 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | País | País del cliente identificado |
 | Cliente | Busca por empresa, código, contacto, correo o ejecutivo |
 | Desde / Hasta | Fechas de envío |
+| Campañas de prueba | **Propuesta, por confirmar con Ismael:** ocultar por defecto las campañas de prueba (nombre con TEST o VALIDACIÓN), con un filtro para verlas |
 
 **Las 6 sub-pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
 
@@ -274,13 +279,50 @@ del destinatario.
 
 - Se consulta **desde nuestro servidor** con `BREVO_API_KEY` (solo servidor, nunca `VITE_`), con caché en el servidor.
 - Ya no hay importación de CSV ni de Excel: todo viene directo de Brevo.
-- Por confirmar: si la API de Brevo trae las campañas **programadas** (Keily lo prueba con la llave).
-- **Pendiente: llave de Brevo** (falta el código de verificación para crearla; ver PENDIENTES).
+- Llave **dashboard-marketing-lectura**: solo lectura de campañas de email y contactos, caduca el **2027-11-20**
+  (renovarla antes; ver PENDIENTES). En Brevo está desactivado el bloqueo de IP para claves API porque Vercel cambia
+  de IP.
 - Las pestañas **Correos por corregir**, **Detalle por correo** y **Relación con clientes** muestran correos de
   personas: sus rutas del servidor **deben pedir el inicio de sesión del portal**. No pueden quedar públicas como la
   ruta vieja `mailing-detalle`.
 - Las rutas de totales (sin correos) no devuelven ningún dato personal.
 - Nunca se guardan correos ni datos de clientes en el repo, las pruebas ni las capturas.
+
+### 10.1 Qué trae y qué no trae la API (prueba del 20/11/2026)
+
+**Campañas** — `GET /v3/emailCampaigns`: id, nombre, asunto, estado y fechas (`sentDate`, `scheduledAt`,
+`createdAt`). Ese día: 59 campañas, 54 enviadas (`sent`) y 5 borradores (`draft`).
+
+- Las **programadas** se piden con `status=queued` (Brevo no acepta `scheduled`: responde 400). Ese día había 0.
+- Los nombres casi nunca siguen la regla de la sección 2, por eso hace falta «Asignar cargo a campañas» (7.1).
+- Algunos asuntos traen `{{ contact.NOMBRE }}` (Brevo pone ahí el nombre de cada persona) o saltos de línea: hay que
+  limpiarlos para mostrarlos.
+- Hay campañas de prueba (TEST, VALIDACIÓN) mezcladas con las reales (ver filtro «Campañas de prueba», sección 7).
+
+**Estadísticas de una campaña** — `GET /v3/emailCampaigns/{id}?statistics=…`:
+
+| Opción | Qué trae |
+|---|---|
+| `globalStats` | **La que se usa por ahora.** `sent`, `delivered`, `softBounces`, `hardBounces`, `uniqueViews`, `viewed`, `trackableViews`, `estimatedViews`, `opensRate`, `uniqueClicks`, `clickers`, `appleMppOpens` (aperturas automáticas de Apple, solo el total), `unsubscriptions`, `complaints` |
+| `campaignStats` | Los mismos totales por lista, más `deferred` (envío demorado). En la campaña 74 no coinciden con `globalStats` (aperturas 38 contra 44, clics 1 contra 3): por confirmar en la pantalla de Brevo (ver PENDIENTES). |
+| `linksStats` | Clics por enlace |
+| `statsByDomain`, `statsByDevice`, `statsByBrowser` | Totales por dominio, dispositivo y navegador (`statsByDomain` muestra dominios de clientes: no se guardan en docs ni pruebas) |
+
+**Detalle por destinatario:**
+
+- **No hay** una llamada de lectura que dé todos los destinatarios de una campaña con su resultado (la lista de la
+  campaña puede ya no existir en Brevo).
+- Por contacto sí: `GET /v3/contacts/{id}` → `statistics` con `messagesSent`, `delivered`, `softBounces`,
+  `hardBounces` (cada uno con `campaignId` y `eventTime`), `opened` (`campaignId`, `ip`, `count`, `eventTime`) y
+  `clicked` (`campaignId`, `links` con `url`, `count`, `ip`, `eventTime`). El contacto trae `email`, `listIds`,
+  `emailBlacklisted` y los atributos `EMPRESA` y `NOMBRE`. Habría que consultar contacto por contacto (1,755 ese día).
+- **No trae:** el **motivo del rebote** (necesario para CORREGIR / MANTENER, sección 4) ni la **marca de apertura
+  automática de Apple** por persona.
+- Por probar: la exportación de destinatarios (`POST /v3/emailCampaigns/{id}/exportRecipients`) y los webhooks de
+  marketing.
+
+**Permisos:** `/v3/smtp/statistics/events` responde 403 porque la llave no cubre los correos transaccionales. Es lo
+esperado: el dashboard no los usa.
 
 ## 11. Leads
 

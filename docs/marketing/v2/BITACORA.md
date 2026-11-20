@@ -2,6 +2,22 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Llave de Brevo y primera prueba de la API
+
+- Se creó la llave dashboard-marketing-lectura (solo lectura: campañas de email y contactos, caduca 2027-11-20). Se
+  desactivó en Brevo el bloqueo de IP para claves API porque Vercel cambia de IP; las 6 IP ya autorizadas se dejaron
+  igual.
+- La llave va en `.env.local` como `BREVO_API_KEY` (solo servidor). Prueba hecha con un script temporal fuera del repo,
+  ya borrado; no se guardaron correos ni datos de clientes.
+- Resultado:
+  - 59 campañas de email: 54 enviadas (`sent`) y 5 borradores (`draft`). Programadas (`queued`): 0 hoy.
+  - Las estadísticas por campaña funcionan (`globalStats`, `campaignStats`, enlaces, dominio, dispositivo, navegador).
+  - El detalle por contacto trae envío, entrega, rebotes, aperturas y clics con fecha, pero **no el motivo del rebote
+    ni la marca de apertura automática de Apple**.
+  - 403 esperado en `/v3/smtp/statistics/events` (correos transaccionales, fuera del permiso de la llave).
+- Decisión: por ahora se usan los números de `globalStats`; Keily compara la campaña 74 en la pantalla de Brevo.
+- Detalle en MAILING.md, sección 10.1.
+
 ## 2026-11-20 · Parte 2: sexta sub-pestaña de Mailing «Asignar cargo a campañas»
 
 - Pedida por Eduardo, para Marketing (Ismael): cada campaña de Brevo (nombre, asunto, fecha) con un menú GG / GF / GO

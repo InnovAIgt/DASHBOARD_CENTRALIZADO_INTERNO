@@ -4,8 +4,12 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 
 | Pendiente | A quién se le pidió | Fecha | Estado |
 |---|---|---|---|
-| Código de verificación para crear la llave de Brevo | Ismael / Laura (llega a mercadeo@red.com.sv) | 2026-11-20 | Pendiente |
-| Confirmar si la API de Brevo trae campañas programadas | Keily (prueba con la llave) | — | Pendiente |
+| Código de verificación para crear la llave de Brevo | Ismael / Laura (llega a mercadeo@red.com.sv) | 2026-11-20 | Resuelto (2026-11-20) |
+| Confirmar si la API de Brevo trae campañas programadas | Keily (prueba con la llave) | 2026-11-20 | Resuelto: sí, con el estado `queued` (MAILING.md, 10.1) |
+| Renovar la llave de Brevo antes del 2027-11-20 | Keily | 2027-11-01 | Pendiente |
+| Dónde sacar el motivo del rebote por destinatario (la API de lectura no lo trae): probar la exportación de destinatarios o los webhooks | Keily | Por confirmar | Pendiente |
+| Confirmar si se ocultan las campañas de prueba | Ismael | Por confirmar | Pendiente |
+| Comparar en la pantalla de Brevo la campaña 74 (157 entregados, 44 aperturas, 3 clics) para decidir entre `globalStats` y `campaignStats` (por ahora se usa `globalStats`) | Keily | Por confirmar | Pendiente |
 | Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
 | Permiso de lectura de la base de Cumplimiento de Clientes | Keily | — | Pendiente |
