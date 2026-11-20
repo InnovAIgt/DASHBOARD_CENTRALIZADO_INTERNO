@@ -2,6 +2,14 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Parte 2: sexta sub-pestaña de Mailing «Asignar cargo a campañas»
+
+- Pedida por Eduardo, para Marketing (Ismael): cada campaña de Brevo (nombre, asunto, fecha) con un menú GG / GF / GO
+  y un botón Guardar. Solo estructura vacía: aviso «Pendiente de conexión con Brevo», nota «Pendiente: definir dónde
+  se guarda la selección» y nota de que solo personas autorizadas podrán guardar. Sin base de datos ni Supabase.
+- Regla confirmada por Keily: lo elegido a mano gana sobre lo sugerido por el nombre; sin ninguno, «Sin clasificar».
+- PENDIENTES: dónde se guarda el cargo elegido, quién puede editarlo y preguntar a Eduardo por «Sin confirmación».
+
 ## 2026-11-20 · Parte 2: estructura del dashboard Canales de marketing (3 pestañas, sin datos)
 
 - Menú: **Marketing → Flujo de ventas · Canales de marketing** (id `marketing-v2`).

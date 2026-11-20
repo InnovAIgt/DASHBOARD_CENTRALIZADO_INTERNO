@@ -14,6 +14,9 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Definición de «lectura» e indicadores de Redes | Ingeniero | Por confirmar | Pendiente |
 | Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
 | Explicar a Marketing las diferencias de clasificación con la plantilla (MAILING.md, sección 9) | Ismael / Laura | Por confirmar | Pendiente |
+| Decidir dónde se guarda el cargo elegido por campaña (Supabase u otro) | Keily | — | Pendiente |
+| Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
+| Preguntar a Eduardo si el estado «Sin confirmación» se quita del dashboard o se deja (en la reunión dijo que no debería existir) | Eduardo | Por confirmar | Pendiente |
 | Quitar de Vercel las 4 variables viejas | Keily / TI | Al publicar | Pendiente |
 
 Las 4 variables viejas (solo nombres): `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`,

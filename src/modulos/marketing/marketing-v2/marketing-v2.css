@@ -44,6 +44,10 @@
   border-radius: 10px; color: var(--fv2-texto); font-size: 12px;
 }
 
+/* Asignar cargo a campañas: ejemplo deshabilitado del menú y del botón Guardar */
+.mkv2 .mkv2-ejemplo-cargo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.mkv2 .mkv2-ejemplo-cargo :disabled { cursor: not-allowed; opacity: .55; }
+
 /* Rejillas */
 .mkv2 .mkv2-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .mkv2 .mkv2-kpi:hover { transform: none; box-shadow: none; border-color: var(--fv2-borde); }

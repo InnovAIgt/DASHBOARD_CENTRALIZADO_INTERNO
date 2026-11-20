@@ -32,7 +32,7 @@ Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
 | Archivo | Para qué |
 |---|---|
 | `src/modulos/marketing/marketing-v2/MarketingV2.jsx` | Pantalla principal: encabezado y pestañas Mailing · Redes sociales · Otros |
-| `src/modulos/marketing/marketing-v2/pantalla/Mailing.jsx` | Filtros globales y las 5 sub-pestañas de Mailing |
+| `src/modulos/marketing/marketing-v2/pantalla/Mailing.jsx` | Filtros globales y las 6 sub-pestañas de Mailing |
 | `src/modulos/marketing/marketing-v2/pantalla/comunes.jsx` | Avisos de pendiente y de inicio de sesión, paneles y tablas vacías |
 | `src/modulos/marketing/marketing-v2/marketing-v2.css` | Estilos propios (prefijo `mkv2-`) |
 | `src/components/layout/PortalLayout.tsx` | Entrada del menú (id `marketing-v2`) |

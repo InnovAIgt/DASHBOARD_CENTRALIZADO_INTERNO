@@ -33,7 +33,8 @@ Ejemplo: **`001-GG-SEGURIDAD-Asunto`**. El dashboard saca el **cargo** y el **se
 - Si no se puede deducir, el cargo queda **«Sin clasificar»**. El sector queda «Sin clasificar».
 - No se adivina nada más del nombre.
 
-La regla se le entrega a Marketing para las campañas nuevas (PENDIENTES).
+La regla se le entrega a Marketing para las campañas nuevas (PENDIENTES). Si el nombre no sigue la regla, Marketing
+puede asignar el cargo en la sub-pestaña **Asignar cargo a campañas** (sección 7.1).
 
 ## 3. Qué pasó con cada envío: estado final
 
@@ -181,7 +182,7 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | Cliente | Busca por empresa, código, contacto, correo o ejecutivo |
 | Desde / Hasta | Fechas de envío |
 
-**Las 5 pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
+**Las 6 sub-pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
 
 | Pestaña | Qué tiene |
 |---|---|
@@ -190,6 +191,22 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | **Correos por corregir** | Correo, cliente, ejecutivo, status (CORREGIR), motivo técnico, estado final, campaña y asunto, fecha de rebote; agrupado por ejecutivo con direcciones únicas; aviso al ejecutivo (sección 8) y descarga CSV global o por ejecutivo. **Muestra correos: requiere inicio de sesión** (sección 10). |
 | **Detalle por correo** | Correo, cliente y país, ejecutivo, campaña, cargo, estado final, status, apertura, clic, motivo técnico, fecha de envío y «Ver eventos». Búsqueda, filtros por estado y descarga CSV. **Muestra correos: requiere inicio de sesión.** |
 | **Relación con clientes** | Correo, campaña y cargo objetivo, clasificación del cruce (sección 8), cliente(s), ejecutivo(s), código(s), cargo(s) en la base y estado del mailing; detalle clicable y descarga CSV. **Muestra correos: requiere inicio de sesión.** |
+| **Asignar cargo a campañas** | Para Marketing: cada campaña de Brevo (nombre, asunto, fecha) con un menú para elegir el cargo (GG, GF o GO) y un botón Guardar. Ver sección 7.1. |
+
+### 7.1 Asignar cargo a campañas
+
+Pedida por **Eduardo**, para que **Marketing (Ismael)** asigne el cargo de cada campaña.
+
+- Muestra las campañas que llegan de Brevo: **nombre**, **asunto** y **fecha**.
+- En cada una, un menú para elegir el cargo: **GG** (Gerente General), **GF** (Gerente Financiero) o **GO** (Gerente de
+  Operaciones), y un botón **Guardar**.
+- Si el nombre sigue la regla `código-cargo-sector-asunto`, el cargo viene **sugerido**; si no, se elige a mano.
+- **Regla (confirmada por Keily, 20/11/2026):** lo elegido **a mano gana** sobre lo sugerido por el nombre. Si no hay
+  ninguno de los dos, la campaña queda **«Sin clasificar»**.
+- Lo que se elija alimenta el filtro **Cargo** y el **Análisis por cargo** de todo el dashboard.
+- Estado: solo la estructura vacía (Parte 2), con el aviso «Pendiente de conexión con Brevo» y la nota «Pendiente:
+  definir dónde se guarda la selección». No hay base de datos todavía.
+- Pendientes: dónde se guarda el cargo elegido (Supabase u otro) y quién puede editarlo (Ismael). Ver PENDIENTES.
 
 ## 8. Territorio por comercial: cruce con Cumplimiento de Clientes
 

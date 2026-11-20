@@ -1,7 +1,7 @@
 // Canales de marketing · pestaña Mailing (Parte 2: solo estructura, todo vacío).
 // Las 5 sub-pestañas, columnas y filtros salen de docs/marketing/v2/MAILING.md (secciones 6 y 7).
 // No hay datos reales ni inventados ni llamadas a la API de Brevo (eso va en la Parte 3).
-import { CalendarDays, Search } from 'lucide-react'
+import { CalendarDays, Lock, Search } from 'lucide-react'
 import { Bandera } from '../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { AvisoPendiente, AvisoSesion, KpiVacio, Panel, TablaVacia, Vacio } from './comunes.jsx'
 
@@ -11,6 +11,7 @@ export const SUBPESTANAS_MAILING = [
   { key: 'corregir', label: 'Correos por corregir' },
   { key: 'detalle', label: 'Detalle por correo' },
   { key: 'clientes', label: 'Relación con clientes' },
+  { key: 'cargos', label: 'Asignar cargo a campañas' },
 ]
 
 /** Barra de filtros globales: visible pero deshabilitada hasta que haya datos de Brevo. */
@@ -107,12 +108,41 @@ function RelacionConClientes() {
   </>
 }
 
+/** Pedida por Eduardo: Marketing (Ismael) elige el cargo de cada campaña de Brevo. Lo elegido a mano gana sobre lo
+ *  sugerido por el nombre (código-cargo-sector-asunto); sin ninguno queda «Sin clasificar». Solo estructura: no guarda. */
+function AsignarCargo() {
+  return <>
+    <AvisoPendiente titulo="Pendiente: definir dónde se guarda la selección" texto="Mientras tanto, el cargo sale solo del nombre de la campaña." />
+    <div className="mkv2-aviso-sesion" role="note">
+      <Lock size={15} aria-hidden="true" />
+      Solo las personas autorizadas podrán guardar (por confirmar con Ismael).
+    </div>
+    <Panel titulo="Asignar cargo a campañas" sub="Si el nombre sigue la regla código-cargo-sector-asunto, el cargo viene sugerido; si no, se elige a mano. Lo elegido alimenta el filtro Cargo y el Análisis por cargo.">
+      <TablaVacia columnas={['Campaña', 'Asunto', 'Fecha', 'Cargo sugerido', 'Cargo', 'Guardar']} />
+      <div className="mkv2-ejemplo-cargo" aria-disabled="true">
+        <label className="mkv2-campo">
+          <span className="fv2-etiqueta-grupo">Cargo</span>
+          <select className="mkv2-select" disabled aria-label="Cargo de la campaña (ejemplo)" defaultValue="">
+            <option value="">Elegir…</option>
+            <option value="GG">GG · Gerente General</option>
+            <option value="GF">GF · Gerente Financiero</option>
+            <option value="GO">GO · Gerente de Operaciones</option>
+          </select>
+        </label>
+        <button type="button" className="fv2-btn-pais" disabled>Guardar</button>
+        <span className="fv2-panel-sub">Ejemplo deshabilitado: así se elegirá el cargo en cada campaña.</span>
+      </div>
+    </Panel>
+  </>
+}
+
 const CONTENIDO = {
   generales: ResultadosGenerales,
   comparar: CompararCampanas,
   corregir: CorreosPorCorregir,
   detalle: DetallePorCorreo,
   clientes: RelacionConClientes,
+  cargos: AsignarCargo,
 }
 
 export function Mailing({ sub, onSub }) {
