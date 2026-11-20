@@ -33,6 +33,7 @@ otros). Estas reglas son permanentes y valen para cualquier tarea.
 - Las variables que usa solo el servidor **no** llevan el prefijo `VITE_` (todo lo que empieza con `VITE_` llega al
   navegador y cualquiera lo puede ver).
 - En `.env.example` van solo los nombres, con valores vacíos.
+- Antes de cualquier push, revisar que `.env.example` no tenga valores reales.
 - **Nunca** subir al repositorio:
   - `.claude/`, `.vscode/`, `.kiro/`
   - `.env.local` (ni ningún `.env` con valores)

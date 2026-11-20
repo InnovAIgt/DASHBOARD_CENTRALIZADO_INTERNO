@@ -2,6 +2,13 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · .env.example sin valores reales
+
+- Se encontraron 37 valores reales en `.env.example` (también en `origin/main` y en el historial del repo): SAP,
+  Workflow, contraseñas maestras, webhooks de Make y llaves públicas de Supabase/Firebase. Ningún valor se anotó.
+- En esta rama se dejaron vacíos (solo los nombres). No se trajeron commits de main.
+- PENDIENTES: TI debe cambiarlos (Eduardo / TI). CLAUDE.md: revisar `.env.example` antes de cualquier push.
+
 ## 2026-11-20 · Ruta del webhook de Brevo (código y pruebas, sin Supabase)
 
 - Ruta `POST /api/marketing/brevo-webhook` (local en `server.ts`, Vercel en `api/marketing/brevo-webhook.js`), con la

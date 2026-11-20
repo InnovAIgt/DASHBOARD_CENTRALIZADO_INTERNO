@@ -33,6 +33,8 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
 | Preguntar a Eduardo si el estado «Sin confirmación» se quita del dashboard o se deja (en la reunión dijo que no debería existir) | Eduardo | Por confirmar | Pendiente |
 | Quitar de Vercel las 4 variables viejas | Keily / TI | Al publicar | Pendiente |
+| Valores reales en .env.example del historial del repo (SAP, Workflow, contraseñas maestras, webhooks de Make, llaves públicas de Supabase/Firebase) (también en origin/main hoy): TI debe cambiarlos | Eduardo / TI | 2026-11-20 | Pendiente |
+| Vaciar .env.example en main con un PR aparte y pequeño | Keily (con OK de Eduardo) | — | Pendiente |
 
 Las 4 variables viejas (solo nombres): `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`,
 `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE`.
