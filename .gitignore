@@ -10,3 +10,21 @@ coverage/
 # Datos reales (reportes de Brevo, etc.): NUNCA se suben al repositorio.
 *.csv
 *.CSV
+
+# Excel con datos: NUNCA se suben al repositorio.
+*.xlsx
+*.XLSX
+*.xls
+*.XLS
+
+# Llaves en archivos JSON (cuentas de servicio, credenciales).
+# NO usar *.json: rompería package.json, tsconfig.json, vercel.json y los datos de Ingresos.
+*service-account*.json
+*credentials*.json
+*-key*.json
+client_secret*.json
+
+# Carpetas locales de editores y asistentes (nunca se suben).
+.claude/
+.vscode/
+.kiro/
