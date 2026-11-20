@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Detalle por correo: se usarán los webhooks de Brevo
+
+- Prueba de exportación de destinatarios (`POST /v3/emailCampaigns/74/exportRecipients`, solo rebotes temporales):
+  **403 permission_denied** — la llave de solo lectura no permite exportar. No se creó ningún proceso ni se descargó
+  nada. Script temporal borrado.
+- Decisión de Keily: el detalle por correo (motivo del rebote, CORREGIR / MANTENER) vendrá de los **webhooks de
+  marketing** de Brevo, **solo para campañas nuevas**. Las campañas anteriores se mostrarán solo con totales. La llave
+  con permiso de escritura queda descartada.
+- El webhook lo creará Keily en Brevo, avisando a Ismael.
+- PENDIENTES: exportación manual de la campaña 74 (solo nombres de columnas), dónde se guardan los eventos y crear el
+  webhook.
+
 ## 2026-11-20 · Llave de Brevo y primera prueba de la API
 
 - Se creó la llave dashboard-marketing-lectura (solo lectura: campañas de email y contactos, caduca 2027-11-20). Se

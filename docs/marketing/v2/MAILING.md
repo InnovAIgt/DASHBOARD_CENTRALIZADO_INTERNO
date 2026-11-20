@@ -75,8 +75,8 @@ Se usa el **motivo del rebote final** (el del rebote temporal si el estado final
 si es Rebote permanente). **Por confirmar con datos reales de la API de Brevo** (cómo entrega Brevo cada motivo).
 
 > **Aviso (prueba del 20/11/2026):** la API de lectura **no trae el motivo del rebote por destinatario** (sección
-> 10.1). Sin el motivo, las reglas 2 a 5 no se pueden aplicar. Falta probar la exportación de destinatarios o los
-> webhooks de Brevo (ver PENDIENTES).
+> 10.1). Sin el motivo, las reglas 2 a 5 no se pueden aplicar. **Decisión del 20/11/2026:** el motivo llegará por los
+> webhooks de marketing de Brevo, solo para campañas nuevas; las campañas anteriores se muestran solo con totales.
 
 La comparación del motivo no distingue mayúsculas. El mensaje original se guarda para auditoría y en pantalla se
 muestra un **motivo técnico** corto (máximo 5 palabras).
@@ -318,8 +318,25 @@ del destinatario.
   `emailBlacklisted` y los atributos `EMPRESA` y `NOMBRE`. Habría que consultar contacto por contacto (1,755 ese día).
 - **No trae:** el **motivo del rebote** (necesario para CORREGIR / MANTENER, sección 4) ni la **marca de apertura
   automática de Apple** por persona.
-- Por probar: la exportación de destinatarios (`POST /v3/emailCampaigns/{id}/exportRecipients`) y los webhooks de
-  marketing.
+- **Exportación de destinatarios** (`POST /v3/emailCampaigns/{id}/exportRecipients`): probada el 20/11/2026 con la
+  campaña 74 (solo rebotes temporales) → **403 `permission_denied`** en `campaigns.email`: la llave de solo lectura
+  no permite exportar. No se creó ningún proceso ni se descargó nada. Las columnas del archivo siguen sin confirmar
+  (Ismael puede exportarla a mano en Brevo y pasar solo los nombres de las columnas; ver PENDIENTES).
+- **Llave con permiso de escritura: descartada** (podría también modificar o enviar campañas).
+
+**Decisión (20/11/2026): el detalle por correo sale de los webhooks de marketing de Brevo, solo para campañas nuevas.**
+
+- Con un webhook, **Brevo avisa a nuestro servidor** cada vez que pasa algo con un correo de una campaña (entregado,
+  abierto, clic, rebote temporal, rebote permanente, spam, baja). Según la documentación de Brevo, los eventos
+  `hard_bounce` y `soft_bounce` traen el campo **`reason`** (motivo del rebote); con eso se aplica CORREGIR / MANTENER
+  (sección 4). El formato real del motivo se confirma con la primera campaña de prueba.
+- El evento «abierto» **no trae** la marca de apertura automática de Apple; existe un evento `proxy_open` que la
+  documentación no explica (por confirmar).
+- Solo sirve **hacia adelante**: las campañas enviadas antes de crear el webhook se muestran **solo con totales**
+  (`globalStats`), sin detalle por correo ni CORREGIR / MANTENER.
+- Hace falta una ruta en nuestro servidor que reciba los avisos (protegida con una clave secreta) y un lugar donde
+  guardar los eventos (ver PENDIENTES).
+- El webhook lo crea **Keily** en la pantalla de Brevo, **avisando a Ismael**.
 
 **Permisos:** `/v3/smtp/statistics/events` responde 403 porque la llave no cubre los correos transaccionales. Es lo
 esperado: el dashboard no los usa.
