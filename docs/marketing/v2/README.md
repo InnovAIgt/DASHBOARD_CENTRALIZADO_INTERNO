@@ -3,11 +3,12 @@
 > Dashboard de **Marketing** (Mailing, Redes sociales y Otros). **Flujo de ventas** es otro dashboard y su
 > documentación está en [`docs/marketing/README.md`](../README.md).
 
-Estado: **en construcción** en la rama `feature/marketing-v2` (sin publicar).
+Estado: **en construcción** en la rama `feature/marketing-v2` (sin publicar). Parte 2: estructura lista, sin datos.
 
 ## Qué es
 
-Un solo dashboard de Marketing en el portal (menú **Marketing**), con 3 pestañas:
+Un solo dashboard de Marketing en el portal: menú **Marketing → Canales de marketing** (debajo de Flujo de ventas),
+con 3 pestañas:
 
 | Pestaña | Qué muestra | Detalle |
 |---|---|---|
@@ -25,6 +26,20 @@ Un solo dashboard de Marketing en el portal (menú **Marketing**), con 3 pestañ
 | **Leads** | Bot de WhatsApp → CRM. Los calificados también llegan a Prospekt IA (Flujo de ventas). | Por definir (CRM) · `RED_API_KEY` (Prospekt) |
 
 Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
+
+## Dónde está el código
+
+| Archivo | Para qué |
+|---|---|
+| `src/modulos/marketing/marketing-v2/MarketingV2.jsx` | Pantalla principal: encabezado y pestañas Mailing · Redes sociales · Otros |
+| `src/modulos/marketing/marketing-v2/pantalla/Mailing.jsx` | Filtros globales y las 5 sub-pestañas de Mailing |
+| `src/modulos/marketing/marketing-v2/pantalla/comunes.jsx` | Avisos de pendiente y de inicio de sesión, paneles y tablas vacías |
+| `src/modulos/marketing/marketing-v2/marketing-v2.css` | Estilos propios (prefijo `mkv2-`) |
+| `src/components/layout/PortalLayout.tsx` | Entrada del menú (id `marketing-v2`) |
+
+**Estilos:** reutiliza los de **Flujo de ventas** (`src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css`, clase
+`fv2`) y su componente de banderas, **sin modificarlos**. Si cambian allá, cambian aquí. `marketing-v2.css` solo agrega
+lo que falta y usa las mismas variables de color (`--fv2-*`), sin colores nuevos.
 
 ## Qué reemplazó
 

@@ -2,6 +2,19 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Parte 2: estructura del dashboard Canales de marketing (3 pestañas, sin datos)
+
+- Menú: **Marketing → Flujo de ventas · Canales de marketing** (id `marketing-v2`).
+- Subtítulo: «Campañas de correo, redes sociales y otros canales · Guatemala y El Salvador».
+- **Mailing:** barra de filtros globales deshabilitada (Campaña, Cargo, Asunto, País, Cliente, Desde/Hasta), las 5
+  sub-pestañas con sus paneles y tablas vacías («—»), el aviso «Pendiente de conexión con Brevo», el aviso 🔒 de inicio
+  de sesión en Correos por corregir, Detalle por correo y Relación con clientes, y el panel «Leads · Próximamente» solo
+  en Resultados generales.
+- **Redes sociales:** aviso «Pendiente de conexión con Meta». **Otros:** aviso «Próximamente (PBX, web, etc.)».
+- Reutiliza los estilos de Flujo de ventas sin modificarlos. Sin datos reales ni inventados, sin llamadas a APIs, sin
+  rutas de servidor ni `api/` (eso es la Parte 3).
+- Archivos nuevos en `src/modulos/marketing/marketing-v2/`; editado `PortalLayout.tsx`.
+
 ## 2026-11-20 · Protección en .gitignore
 
 - Se protegieron en `.gitignore` los Excel, los JSON de llaves y las carpetas locales de editores:

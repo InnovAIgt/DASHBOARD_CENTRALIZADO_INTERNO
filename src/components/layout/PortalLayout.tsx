@@ -11,6 +11,7 @@ import { HistoryView } from '../views/HistoryView';
 import { UsersView } from '../views/UsersView';
 import { RegionStatusBar } from './RegionStatusBar';
 import { FlujoVentasV2 } from '../../modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx';
+import { MarketingV2 } from '../../modulos/marketing/marketing-v2/MarketingV2.jsx';
 
 interface NavSectionDef {
   id: string;
@@ -131,6 +132,12 @@ export const PortalLayout: React.FC = () => {
           // Reemplazo del Flujo de ventas anterior. El HTML viejo se conserva como respaldo.
           id: 'flujo-ventas-v2',
           label: 'Flujo de ventas',
+          hasData: true
+        },
+        {
+          // Canales de marketing: módulo src/modulos/marketing/marketing-v2 (docs/marketing/v2/README.md)
+          id: 'marketing-v2',
+          label: 'Canales de marketing',
           hasData: true
         }
       ]
@@ -308,6 +315,11 @@ export const PortalLayout: React.FC = () => {
     // Marketing · Flujo de ventas: componente React del módulo src/modulos/marketing/flujo-ventas-v2
     if (currentItem.id === 'flujo-ventas-v2') {
       return <FlujoVentasV2 />;
+    }
+
+    // Marketing · Canales de marketing: componente React del módulo src/modulos/marketing/marketing-v2
+    if (currentItem.id === 'marketing-v2') {
+      return <MarketingV2 />;
     }
 
     // If it has an external dashboard file (HTML en public/dashboards)

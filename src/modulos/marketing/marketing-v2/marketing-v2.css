@@ -1,0 +1,60 @@
+/*
+ * Canales de marketing · estilos propios (solo lo que no trae Flujo de ventas).
+ * La base es flujo-ventas-v2.css (clase .fv2), que se importa sin modificarlo.
+ * Todo va dentro de .mkv2, con prefijo mkv2- y SOLO las variables --fv2-* (sin colores nuevos).
+ * Documentación: docs/marketing/v2/README.md
+ */
+
+.mkv2 .mkv2-mailing { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+/* Aviso de pendiente (Brevo, Meta, Otros) */
+.mkv2 .mkv2-aviso {
+  display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px;
+  background: var(--fv2-panel); border: 1px dashed var(--fv2-borde-fuerte); border-left: 3px solid var(--fv2-amarillo);
+  border-radius: 14px; color: var(--fv2-amarillo);
+}
+.mkv2 .mkv2-aviso > div { display: flex; flex-direction: column; gap: 3px; }
+.mkv2 .mkv2-aviso strong { font-size: 14px; font-weight: 800; color: var(--fv2-texto); }
+.mkv2 .mkv2-aviso span { font-size: 12px; color: var(--fv2-tenue); }
+
+/* Aviso de inicio de sesión (pestañas que mostrarán correos) */
+.mkv2 .mkv2-aviso-sesion {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 12px; font-weight: 600;
+  background: var(--fv2-caja); border: 1px solid var(--fv2-borde-fuerte); border-radius: 10px; color: var(--fv2-azul-claro);
+}
+
+/* Sub-pestañas de Mailing: más chicas que las pestañas principales */
+.mkv2 .mkv2-subpestanas { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 2px; border-bottom: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-subpestana {
+  padding: 8px 14px; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; background: transparent;
+  color: var(--fv2-tenue); font-size: 12.5px; font-weight: 700; transition: color .18s, border-color .18s;
+}
+.mkv2 .mkv2-subpestana:hover { color: var(--fv2-texto); }
+.mkv2 .mkv2-subpestana.is-activa { color: var(--fv2-texto); border-bottom-color: var(--fv2-rojo); }
+
+/* Filtros deshabilitados */
+.mkv2 .mkv2-filtros { z-index: 1; }
+.mkv2 .mkv2-filtros :disabled { cursor: not-allowed; opacity: .55; }
+.mkv2 .mkv2-campo { display: inline-flex; align-items: center; gap: 4px; background: var(--fv2-caja); border: 1px solid var(--fv2-borde-fuerte); border-radius: 10px; padding: 4px 6px; }
+.mkv2 .mkv2-select { background: var(--fv2-tarjeta); border: 1px solid var(--fv2-borde-fuerte); border-radius: 6px; color: var(--fv2-texto); padding: 4px 8px; font-size: 12px; }
+.mkv2 .mkv2-buscar { position: relative; flex: 1 1 260px; min-width: 220px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-buscar svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.mkv2 .mkv2-buscar input {
+  width: 100%; padding: 8px 10px 8px 30px; background: var(--fv2-caja); border: 1px solid var(--fv2-borde-fuerte);
+  border-radius: 10px; color: var(--fv2-texto); font-size: 12px;
+}
+
+/* Rejillas */
+.mkv2 .mkv2-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-kpi:hover { transform: none; box-shadow: none; border-color: var(--fv2-borde); }
+.mkv2 .mkv2-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mkv2 .mkv2-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+
+@media (max-width: 1200px) {
+  .mkv2 .mkv2-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mkv2 .mkv2-grid3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .mkv2 .mkv2-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mkv2 .mkv2-grid2 { grid-template-columns: 1fr; }
+}
