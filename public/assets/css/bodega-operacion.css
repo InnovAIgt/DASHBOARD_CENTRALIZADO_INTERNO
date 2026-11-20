@@ -1,0 +1,22 @@
+
+.operation-overview { margin:20px 0 28px;padding:22px;background:var(--std-card,var(--panel,#191c25));border:1px solid var(--std-border,var(--border,#303541));border-radius:14px;color:var(--std-text,var(--text,#e7eaf0)); }
+.operation-heading { margin:18px 0 14px; } .operation-heading h2,.operation-heading h3 {margin:6px 0 10px;} .operation-heading p,.operation-note {font-size:12px;line-height:1.65;color:var(--std-text-2,var(--muted,#9ca5b6));}
+.operation-heading > span {font-size:11px;text-transform:uppercase;letter-spacing:.08em;}
+.operation-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}.operation-grid-two{grid-template-columns:repeat(2,minmax(0,1fr));}
+.operation-card {padding:18px;background:var(--std-elevated,#222632);border:1px solid var(--std-border,var(--border,#343947));border-radius:10px;min-width:0;}
+.operation-card h3 {font-size:16px;margin:0 0 12px;}.operation-card p {font-size:12px;line-height:1.65;color:var(--std-text-2,var(--muted,#a7afbd));}
+.api-pending {display:inline-block;padding:5px 9px;border:1px solid #657086;border-radius:20px;font-size:11px;color:#c4ccda;background:#2b3240;}
+.purchase-flow ol{list-style:none;padding:0;display:grid;gap:12px;}.purchase-flow li{padding:10px 12px;border-left:2px solid #657086;background:#191e28;border-radius:6px;}.purchase-flow small{display:block;margin-top:6px;font-size:11px;color:#abb4c4;}
+.operation-secondary{margin:20px 0;}.operation-secondary>summary{cursor:pointer;padding:16px;border:1px solid var(--std-border,#343947);border-radius:10px;font-weight:700;}
+[hidden]{display:none!important;}
+@media(max-width:1000px){.operation-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}@media(max-width:650px){.operation-grid,.operation-grid-two{grid-template-columns:1fr;}.operation-overview{padding:15px;}}
+
+.country-emoji{display:inline-block;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;font-size:20px;line-height:1;vertical-align:middle;margin-right:6px;background:none!important;border:0!important;box-shadow:none!important;}
+
+.warehouse-country-operation { padding:16px 0;min-width:0; } .warehouse-country-operation + .warehouse-country-operation {border-top:1px solid var(--std-border,#343947);margin-top:20px;} .warehouse-country-operation .warehouse-operation-group {margin:8px 0;}
+
+.pending-overview>summary{cursor:pointer;padding:12px 0;color:var(--std-text-2,#a7afbd);font-size:13px;font-weight:600}.pending-overview[open]>.operation-grid{margin-top:14px}#warehouseQuality [aria-pressed="true"]{outline:2px solid #c43c50}#warehouseReviewPanel{scroll-margin-top:90px}
+
+.country-flag{display:inline-block;width:24px;height:17px;object-fit:contain;vertical-align:middle;margin-right:6px;border:0!important;border-radius:2px;background:none!important;box-shadow:none!important}.warehouse-inline-products{margin-top:14px}.warehouse-inline-products>summary{cursor:pointer;display:list-item;padding:10px 0;font-weight:600}.warehouse-inline-content{padding:12px 0}.warehouse-inline-content input{background:var(--std-elevated,#222632);color:var(--std-text,#e7eaf0);border:1px solid var(--std-border,#343947);border-radius:6px;padding:9px}.minimum-indicators{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
+
+.minimum-extra{margin:12px 0;font-size:12px}.minimum-extra>summary{cursor:pointer;padding:10px 0;color:var(--std-text-2,#abb4c4)}.minimum-advanced{flex-basis:100%}.minimum-advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.warehouse-minimum-card>#minimumIndicators{grid-template-columns:repeat(3,minmax(0,1fr))}.warehouse-minimum-card [data-minimum-status][aria-pressed="true"]{outline:2px solid #c43c50}.warehouse-minimum-card>.warehouse-table-wrap th:nth-child(7),.warehouse-minimum-card>.warehouse-table-wrap td:nth-child(7){display:none}.warehouse-minimum-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:end}.warehouse-minimum-filters>label{min-width:0}.warehouse-minimum-filters .minimum-advanced{grid-column:1/-1}@media(max-width:750px){.warehouse-minimum-filters,.minimum-advanced-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.warehouse-minimum-card>#minimumIndicators{grid-template-columns:1fr}}
