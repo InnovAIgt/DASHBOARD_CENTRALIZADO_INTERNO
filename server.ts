@@ -2,11 +2,13 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { getDispatchData } from './server/bodega-despachos.mjs';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { obtenerMailing } from './server/marketingMailing.js';
 import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
 import { obtenerRedes } from './server/marketingRedes.js';
-import { reenviarSac } from './server/sacProxy.js';\nimport { obtenerPreofertas } from './server/flashPreofertas.js';
+import { reenviarSac } from './server/sacProxy.js';
+import { obtenerPreofertas } from './server/flashPreofertas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -97,6 +99,14 @@ app.all('/api/ventas/flash-preofertas', async (req, res) => {
   const resultado = await obtenerPreofertas({ method: req.method });
   if (resultado.status === 405) res.setHeader('Allow', 'GET');
   res.status(resultado.status).json(resultado.body);
+});
+
+app.get('/api/bodega/despachos', async (req, res) => {
+  const country = String(req.query.pais || 'combined');
+  if (!['combined','GT','SV'].includes(country)) { res.status(400).json({ error: 'País inválido' }); return; }
+  res.setHeader('Cache-Control', 'no-store');
+  try { const data = await getDispatchData({ country }); res.status(data.paises.some(pais => pais.ok) ? 200 : 502).json(data); }
+  catch (error: any) { res.status(503).json({ error: error.message }); }
 });
 
 // Health Check Endpoint
