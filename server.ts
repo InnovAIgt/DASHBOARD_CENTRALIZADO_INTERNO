@@ -6,7 +6,7 @@ import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { obtenerMailing } from './server/marketingMailing.js';
 import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
 import { obtenerRedes } from './server/marketingRedes.js';
-import { reenviarSac } from './server/sacProxy.js';
+import { reenviarSac } from './server/sacProxy.js';\nimport { obtenerPreofertas } from './server/flashPreofertas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -88,6 +88,15 @@ app.all('/api/sac/:fuente(corte|vivo|historico)', async (req, res) => {
   const resultado = await reenviarSac({ fuente: req.params.fuente, method: req.method, query: i < 0 ? '' : req.originalUrl.slice(i) });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
+});
+
+// Ventas · Flash de Altas: proxy seguro para consultar preofertas de Workflow.
+app.all('/api/ventas/flash-preofertas', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const resultado = await obtenerPreofertas({ method: req.method });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.status(resultado.status).json(resultado.body);
 });
 
 // Health Check Endpoint

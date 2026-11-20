@@ -1430,9 +1430,7 @@ function pintarDetalle(F) {
    Si la API no respondió: sin pastillas, guiones en la columna y el
    botón de la tabla deshabilitado con aviso. Nunca un 0 que diga «no hay».
    ============================================================== */
-// ATENCIÓN: este token también está escrito en dashboards/activaciones/activaciones.html.
-// Si se regenera el token, hay que cambiarlo en los DOS archivos o uno de los dos deja de funcionar.
-const WORKFLOW_API_KEY = "b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b";
+// La credencial de Workflow se conserva exclusivamente en el servidor (WORKFLOW_API_KEY).
 const RAD = { estado: 'cargando', consultado: '', data: [], error: '' };   // estado: cargando | ok | error · consultado = cuándo se pidió a la API
 const radOk = () => RAD.estado === 'ok';
 let RAD_MONTADO = false;   // ya hay altas en pantalla: al llegar la respuesta, se repinta
@@ -1475,34 +1473,26 @@ function b800Marcado(r) {
     || (Array.isArray(p.etapas) && p.etapas.some(e => e && b800Lleno(e.b800)));
 }
 async function cargarRadicaciones() {
-  // Igual que Activaciones: la dirección completa y, de respaldo, la ruta relativa.
-  const endpoints = [
-    "https://workflow.red.com.gt/api/integraciones/dashboard/preofertas",
-    "/integraciones/dashboard/preofertas"
-  ];
+  // Consulta al proxy del mismo dominio. La credencial nunca se expone al navegador.
   const consultado = new Date().toISOString();
   let items = null, motivo = '';
-  for (const ep of endpoints) {
-    try {
-      const res = await fetch(ep, {
-        headers: {
-          "Authorization": "Bearer " + WORKFLOW_API_KEY,
-          "DASHBOARD_API_KEY": WORKFLOW_API_KEY,
-          "X-API-KEY": WORKFLOW_API_KEY,
-          "Accept": "application/json"
-        },
-        cache: "no-store"
-      });
-      if (!res.ok) { motivo ||= `la API respondió ${res.status}`; continue; }
-      const json = await res.json().catch(() => null);
+  try {
+    const res = await fetch('/api/ventas/flash-preofertas', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store'
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      motivo = (json && json.error) || `el servidor respondió ${res.status}`;
+    } else {
       const lista = Array.isArray(json) ? json : (json && Array.isArray(json.data) ? json.data : null);
-      // Respuesta correcta con lista vacía = 0 en proceso (dato real). Solo un cuerpo sin lista es error.
-      if (lista) { items = lista; break; }
-      motivo ||= 'la API respondió sin una lista de preofertas';
-    } catch (err) {
-      console.warn('Fallo al consultar endpoint:', ep, err.message);
-      motivo ||= 'sin conexión con la API';
+      if (lista) items = lista;
+      else motivo = 'el servidor respondió sin una lista de preofertas';
     }
+  } catch (err) {
+    console.warn('Fallo al consultar proxy de preofertas:', err.message);
+    motivo = 'sin conexión con el servicio de preofertas';
   }
   if (items) {
     const ahora = Date.now();
