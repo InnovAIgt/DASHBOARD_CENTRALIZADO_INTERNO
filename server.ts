@@ -3,8 +3,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { getDispatchData } from './server/bodega-despachos.mjs';
+import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
+import { obtenerMailing } from './server/marketingMailing.js';
+import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
+import { obtenerRedes } from './server/marketingRedes.js';
+import { reenviarSac } from './server/sacProxy.js';
+import { obtenerPreofertas } from './server/flashPreofertas.js';
 
-dotenv.config();
+// Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
+dotenv.config({ path: ['.env.local', '.env'] });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +24,82 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static assets from public directly with correct MIME types
 app.use(express.static(path.resolve(__dirname, 'public')));
+
+// Marketing · Flujo de ventas v2: conexión segura con Prospekt IA (docs/marketing/README.md).
+// En Vercel esta misma ruta la atiende api/marketing/reuniones.js.
+app.all('/api/marketing/reuniones', async (req, res) => {
+  const resultado = await obtenerPaginaReuniones({
+    method: req.method,
+    offset: typeof req.query.offset === 'string' ? req.query.offset : undefined,
+  });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Marketing por canales · métricas de mailing (docs/marketing-canales/README.md).
+// En Vercel esta misma ruta la atiende api/marketing/mailing.js.
+app.all('/api/marketing/mailing', async (req, res) => {
+  const resultado = await obtenerMailing({
+    method: req.method,
+    actualizar: req.query.actualizar === '1',
+    campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
+    pais: typeof req.query.pais === 'string' ? req.query.pais : undefined,
+  });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Marketing por canales · detalle de personas (D34 y D42).
+// En Vercel esta misma ruta la atiende api/marketing/mailing-detalle.js.
+app.all('/api/marketing/mailing-detalle', async (req, res) => {
+  const resultado = await obtenerDetalleMailing({
+    method: req.method,
+    campana: typeof req.query.campana === 'string' ? req.query.campana : undefined,
+    vista: typeof req.query.vista === 'string' ? req.query.vista : undefined,
+    pais: typeof req.query.pais === 'string' ? req.query.pais : undefined,
+    campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
+    desde: typeof req.query.desde === 'string' ? req.query.desde : undefined,
+    hasta: typeof req.query.hasta === 'string' ? req.query.hasta : undefined,
+    cargos: typeof req.query.cargos === 'string' ? req.query.cargos : undefined,
+    tarjeta: typeof req.query.tarjeta === 'string' ? req.query.tarjeta : undefined,
+  });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Marketing · Redes sociales: métricas del Excel de RRSS (docs/marketing-redes/README.md).
+// En Vercel esta misma ruta la atiende api/marketing/redes.js.
+app.all('/api/marketing/redes', async (req, res) => {
+  const resultado = await obtenerRedes({ method: req.method });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', resultado.contentType);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Servicio al Cliente · datos de SAC por el servidor (solo lectura, evita el bloqueo CORS de las Edge Functions).
+// /api/sac/corte, /api/sac/vivo y /api/sac/historico. En Vercel las atienden api/sac/*.js.
+app.all('/api/sac/:fuente(corte|vivo|historico)', async (req, res) => {
+  const i = req.originalUrl.indexOf('?');
+  const resultado = await reenviarSac({ fuente: req.params.fuente, method: req.method, query: i < 0 ? '' : req.originalUrl.slice(i) });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Ventas · Flash de Altas: proxy seguro para consultar preofertas de Workflow.
+app.all('/api/ventas/flash-preofertas', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const resultado = await obtenerPreofertas({ method: req.method });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.status(resultado.status).json(resultado.body);
+});
 
 app.get('/api/bodega/despachos', async (req, res) => {
   const country = String(req.query.pais || 'combined');
@@ -108,14 +191,28 @@ async function startServer() {
   } else {
     // Production mode: Serve built static files
     app.use(express.static(path.resolve(__dirname, 'dist')));
+    app.get('/api/*', (req, res) => {
+      res.status(404).json({ error: 'Endpoint no encontrado' });
+    });
     app.get('*', (req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Server] RED INTELFON Dashboard running on http://0.0.0.0:${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Server] RED INTELFON Dashboard running on http://0.0.0.0:${PORT} (${isProduction ? 'production' : 'development'})`);
   });
+
+  const shutdown = (signal: string) => {
+    console.log(`[Server] Received ${signal}, shutting down gracefully...`);
+    server.close(() => {
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(1), 5000).unref();
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer();

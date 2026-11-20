@@ -247,6 +247,7 @@ svg .ab-mini text{fill:var(--warn-ink);font-size:10px;font-weight:700}
 
   <!-- VISTA 1: RESUMEN -->
   <div id="vistaResumen">
+  <p class="medida-ayuda">Diferencia de medición: <b>Altas</b> cuenta anexos registrados; <b>Unidades</b> suma la cantidad de equipos entregados (campo CANTIDAD EQUIPO).</p>
   <div class="card podio" data-nav="matriz" data-nav-titulo="tPodio">
     <h2 class="card-title" id="tPodio">Top 3 ejecutivos</h2>
     <p class="card-caption">Los 3 primeros con los filtros actuales</p>
@@ -260,7 +261,7 @@ svg .ab-mini text{fill:var(--warn-ink);font-size:10px;font-weight:700}
     <div class="card" data-nav="matriz" data-nav-titulo="tEjec">
       <h2 class="card-title" id="tEjec">Altas por ejecutivo</h2>
       <p class="card-caption">Ordenado de mayor a menor · separado en nuevas y adiciones</p>
-      <div class="legend"><span><b style="background:var(--s1)"></b>Nueva</span><span><b style="background:var(--s2)"></b>Adición</span><span id="legAbEjec" style="display:none"><b class="ab-leyenda"></b>Radicaciones en proceso</span></div>
+      <div class="legend"><span><b style="background:var(--s1)"></b>Nueva</span><span><b style="background:var(--s2)"></b>Adición</span><span id="legAbEjec" style="display:none"><b class="ab-leyenda"></b>Anexos en proceso</span></div>
       <div id="chEjec"></div>
     </div>
     <div style="display:grid;gap:12px;align-content:start">
@@ -277,13 +278,78 @@ svg .ab-mini text{fill:var(--warn-ink);font-size:10px;font-weight:700}
     </div>
   </div>
 
+  <!-- Ingreso promedio por equipo: gráfico interactivo, con moneda controlada desde el filtro superior. -->
+  <section class="card ingreso-unidad-card" id="secIngresoUnidad" aria-labelledby="tIngresoUnidad">
+    <div class="ingreso-unidad-head">
+      <div>
+        <h2 class="card-title" id="tIngresoUnidad">Ingreso mensual promedio por equipo</h2>
+        <p class="card-caption">Comparativo por grupo comercial y ejecutivo · haz clic en una barra para ver el detalle</p>
+      </div>
+      <span class="ingreso-unidad-badge" id="iuMonedaBadge">USD · vista predeterminada</span>
+    </div>
+    <p class="ingreso-unidad-nota">El importe se calcula con el valor mensual de servicios dividido entre los equipos entregados. La moneda se controla desde el selector superior ($ / Q); los países se mantienen separados.</p>
+    <div class="ingreso-unidad-paises" id="ingresosPorUnidad"></div>
+  </section>
+
+  <div class="iu-modal-bg" id="iuModalBg" hidden>
+    <section class="iu-modal" id="iuModal" role="dialog" aria-modal="true" aria-labelledby="iuModalTitle">
+      <header class="iu-modal-head">
+        <div><span class="iu-modal-eyebrow">DETALLE DE INGRESOS</span><h2 id="iuModalTitle">Detalle del ejecutivo</h2><p id="iuModalSub"></p></div>
+        <button type="button" class="iu-modal-close" id="iuModalClose" aria-label="Cerrar ventana">×</button>
+      </header>
+      <div class="iu-modal-content" id="iuModalContent"></div>
+      <footer class="iu-modal-foot"><span id="iuModalFootnote"></span><button type="button" class="iu-modal-done" id="iuModalDone">Cerrar</button></footer>
+    </section>
+  </div>
+
   <div class="card nav-destino" id="secMatriz" tabindex="-1" role="region" aria-labelledby="tMx" style="margin-bottom:12px">
-    <h2 class="card-title" id="tMx">Ejecutivo × mes</h2>
-    <p class="card-caption">Cada celda = cuántas tuvo ese ejecutivo en ese mes</p>
+    <div class="matriz-head">
+      <div><h2 class="card-title" id="tMx">Ejecutivo × mes</h2>
+        <p class="card-caption">Cada celda = cuántas tuvo ese ejecutivo en ese mes</p></div>
+      <button type="button" class="seguimiento-trigger" id="abrirSeguimiento" aria-haspopup="dialog" aria-controls="modalSeguimiento">
+        <span class="seguimiento-trigger-icon" aria-hidden="true">✦</span><span>Ejecutivos que requieren atención</span><span class="seguimiento-trigger-arrow" aria-hidden="true">↗</span>
+      </button>
+    </div>
     <div class="semaforo" id="semaforo"></div>
     <div class="tbl-wrap" id="matriz"></div>
   </div>
   </div><!-- FIN #vistaResumen -->
+
+  <!-- Ficha anual accesible desde el nombre de cualquier ejecutivo. -->
+  <div class="perfil-overlay" id="modalPerfil" hidden>
+    <section class="perfil-dialog" role="dialog" aria-modal="true" aria-labelledby="perfilTitulo" aria-describedby="perfilDescripcion" tabindex="-1">
+      <header class="perfil-cabecera">
+        <div class="perfil-identidad">
+          <span class="perfil-eyebrow">PERFIL COMERCIAL · FLASH DE ALTAS</span>
+          <h2 id="perfilTitulo">Rendimiento del ejecutivo</h2>
+          <p id="perfilDescripcion">Actividad registrada durante el año.</p>
+        </div>
+        <button type="button" class="perfil-cerrar" id="cerrarPerfil" aria-label="Cerrar perfil">×</button>
+      </header>
+      <div class="perfil-contenido" id="perfilContenido"></div>
+      <footer class="perfil-pie"><span>El estado laboral se basa en las bajas comunicadas; las métricas provienen de las altas registradas.</span><button type="button" class="perfil-listo" id="cerrarPerfilPie">Entendido</button></footer>
+    </section>
+  </div>
+
+  <!-- Ventana emergente de seguimiento comercial: se abre desde Ejecutivo × mes. -->
+  <div class="seguimiento-overlay" id="modalSeguimiento" hidden>
+    <section class="seguimiento-dialog" role="dialog" aria-modal="true" aria-labelledby="tSeguimiento" aria-describedby="seguimientoDescripcion" tabindex="-1">
+      <div class="seguimiento-modal-head">
+        <div class="seguimiento-modal-title">
+          <span class="seguimiento-modal-icon" aria-hidden="true">✦</span>
+          <div><span class="seguimiento-eyebrow">ACOMPAÑAMIENTO COMERCIAL</span>
+            <h2 id="tSeguimiento">Ejecutivos que requieren atención</h2>
+            <p id="seguimientoDescripcion">Una guía para identificar dónde enfocar el acompañamiento del equipo.</p></div>
+        </div>
+        <button type="button" class="seguimiento-close" id="cerrarSeguimiento" aria-label="Cerrar ventana">×</button>
+      </div>
+      <div class="seguimiento-modal-meta"><span id="seguimientoPeriodo"></span><span id="seguimientoAlcance"></span></div>
+      <div class="seguimiento-resumen" id="seguimientoResumen"></div>
+      <div id="seguimientoLista" class="seguimiento-lista"></div>
+      <p class="seguimiento-nota">Criterio orientativo: solo ejecutivos sin baja reportada, sin altas o por debajo del promedio de su propio país. Las altas no sustituyen metas comerciales ni una confirmación formal de Recursos Humanos.</p>
+      <div class="seguimiento-modal-foot"><span>Los resultados respetan los filtros de país, período y ejecutivo.</span><button type="button" class="btn" id="cerrarSeguimientoPie">Entendido</button></div>
+    </section>
+  </div>
 
   <!-- VISTA 2: INFORME DETALLADO -->
   <div id="vistaInforme" hidden>
@@ -390,7 +456,7 @@ const CONFIG = {
   API_HEADERS: {},
 
   // Opcional: nombre completo para mostrar en lugar del código del vendedor
-  // Código que no esté aquí (p. ej. AMBONILLA) se sigue mostrando tal cual. No repetir un nombre:
+  // Código que no esté aquí se sigue mostrando tal cual. No repetir un nombre:
   // la columna «En proceso» vuelve del nombre al código.
   NOMBRES_EJECUTIVOS: {
     AHERNANDEZ: 'Anyelo Hernandez',   JFLORES: 'Mabel Flores',         PAGUILAR: 'Pablo Aguilar',
@@ -399,8 +465,14 @@ const CONFIG = {
     JSORIANO: 'Jesus Soriano',        EEVIDES: 'Esau Vides',           MPALACIOS: 'Jonathan Palacios',
     RRAMIREZ: 'Raul Ramirez',         RFUENTES: 'Chelsea Fuentes',     CCHE: 'Cristian Che',
     MDMARROQUIN: 'Nilson Marroquin',  KCARDONA: 'Kleimy Cardona',      GHERRERA: 'Gabriela Herrera',
+    AMBONILLA: 'Ambonilla',
   },
 };
+
+// Ajustes de operación informados por el equipo comercial.
+const PAIS_POR_EJECUTIVO = { RFUENTES: 'GT', MDMARROQUIN: 'SV' };
+// Bajas informadas; los demás vendedores figuran activos de manera provisional.
+const EJECUTIVOS_INACTIVOS = new Set(['KCARDONA', 'JGIRON', 'AMBONILLA']);
 
 /* ==============================================================
    2) CARGAR DATOS  —  cada fuente termina en la misma lista de filas
@@ -508,11 +580,14 @@ async function cargarDatos() {
 function normalizar(r) {
   const g = k => (r[k] ?? '').toString().trim();
   const fecha = leerFecha(g('FECHA ALTA'));
+  const vendedor = g('VENDEDOR').toUpperCase() || '(sin vendedor)';
+  const paisOriginal = normalizarPais(g('PAIS') || 'SV');
   return {
-    pais:        (g('PAIS') || 'SV').toUpperCase(),
+    pais:        PAIS_POR_EJECUTIVO[vendedor] || paisOriginal,
+    paisOrigen:  paisOriginal,
     fecha,
     mes:         fecha ? fecha.slice(0, 7) : '',
-    vendedor:    g('VENDEDOR') || '(sin vendedor)',
+    vendedor,
     jefe:        g('JEFE'),
     cliente:     g('NOMBRE CLIENTE'),
     codCliente:  g('CODIGO CLIENTE'),
@@ -590,6 +665,12 @@ function leerSheets() {
    3) DASHBOARD  —  no depende de dónde vinieron los datos
    ============================================================== */
 const PAISES = { SV: 'El Salvador', GT: 'Guatemala' };
+function normalizarPais(v) {
+  const p = String(v ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  if (p === 'GT' || p === 'GTM' || p.includes('GUATEMALA')) return 'GT';
+  if (p === 'SV' || p === 'SLV' || p.includes('EL SALVADOR') || p === 'SALVADOR') return 'SV';
+  return p;
+}
 // Semáforo de la tabla Ejecutivo × mes (se puede ajustar)
 const SEMAFORO = { verde: 50, amarillo: 20 };  // 50+ verde · 20–49 amarillo · 1–19 rojo
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -597,12 +678,14 @@ const fmt = n => n.toLocaleString('es-GT', { maximumFractionDigits: 0 });
 const MONEDA = { SV: '$', GT: 'Q' };  // SV en dólares, GT en quetzales: nunca se suman juntos
 const fmtMon = (n, p) => (MONEDA[p] || '') + n.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nomMes = ym => { const [y, m] = ym.split('-'); return `${MESES[+m - 1]} ${y.slice(2)}`; };
-// Sin nombre en la lista: el código con el mismo formato que los nombres (AMBONILLA → Ambonilla).
-const nomVend = c => CONFIG.NOMBRES_EJECUTIVOS[c] || String(c).charAt(0).toUpperCase() + String(c).slice(1).toLowerCase();
-// Para el globito: «Nombre · CÓDIGO», para cruzarlo con otros sistemas (también «Ambonilla · AMBONILLA»).
+// Sin nombre validado en la lista: conservar el código original, sin convertirlo en un nombre inventado.
+const nomVend = c => CONFIG.NOMBRES_EJECUTIVOS[c] || String(c).toUpperCase();
+// Para el globito: «Nombre · CÓDIGO», para cruzarlo con otros sistemas.
 const nomVendCod = c => nomVend(c) !== c ? `${nomVend(c)} · ${c}` : c;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const $ = id => document.getElementById(id);
+const estadoEjecutivo = v => EJECUTIVOS_INACTIVOS.has(v) ? 'inactivo' : 'activo';
+const nombrePerfil = v => `<button type="button" class="perfil-nombre estado-${estadoEjecutivo(v)}" data-perfil="${esc(v)}" title="Ver perfil anual de ${esc(nomVendCod(v))}" aria-label="Ver estado y rendimiento anual de ${esc(nomVend(v))}">${esc(nomVend(v))}</button>`;
 
 let DATA = [], medida = 'altas', pagina = 0, orden = { k: 'fecha', dir: -1 };
 const valorDe = r => medida === 'altas' ? 1 : r.cantEquipo;
@@ -612,6 +695,18 @@ function opciones(sel, valores, todos, fmtFn = v => v) {
   sel.innerHTML = (todos ? `<option value="">${todos}</option>` : '') + valores.map(v => `<option value="${esc(v)}">${esc(fmtFn(v))}</option>`).join('');
 }
 function unicos(k) { return [...new Set(DATA.map(r => r[k]).filter(Boolean))].sort(); }
+
+/* Calendario completo de los años presentes en SAN: conserva los meses sin movimiento para
+   que el tablero permita comparar el año desde enero y no oculte meses por falta de altas. */
+function mesesCalendario(filas) {
+  const fechas = filas.map(r => r.fecha).filter(Boolean).sort();
+  if (!fechas.length) return [];
+  const primero = Number(fechas[0].slice(0, 4)), ultimo = Math.max(Number(fechas[fechas.length - 1].slice(0, 4)), Number(infHoyGT().slice(0, 4)));
+  const salida = [];
+  for (let y = primero; y <= ultimo; y++) for (let m = 1; m <= 12; m++) salida.push(`${y}-${String(m).padStart(2, '0')}`);
+  return salida;
+}
+function mesesEnVista() { return [...MESES_SEL].sort((a, b) => a.localeCompare(b)); }
 
 function montarTema() {
   const botones = document.querySelectorAll('#tema button');
@@ -642,7 +737,17 @@ const normTxt = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').to
 function montarBarra(meses) {
   const panel = $('xfPanel'), toggle = $('xfToggle'), columnas = $('xfColumnas');
   document.querySelectorAll('#fxBar [data-icon]').forEach(el => el.innerHTML = ICONOS_FX[el.dataset.icon] || '');
-  const cuantas = {}; DATA.forEach(r => cuantas[r.mes] = (cuantas[r.mes] || 0) + 1);
+  const cuantas = {};
+  const actualizarConteosMes = () => {
+    Object.keys(cuantas).forEach(k => delete cuantas[k]);
+    DATA.filter(r => (!FILTRO.op || r.pais === FILTRO.op)
+      && (!FILTRO.sel.vendedor || FILTRO.sel.vendedor.has(r.vendedor))
+      && (!FILTRO.sel.tipoAlta || FILTRO.sel.tipoAlta.has(r.tipoAlta))
+      && (!FILTRO.sel.tecnologia || FILTRO.sel.tecnologia.has(r.tecnologia)))
+      .forEach(r => cuantas[r.mes] = (cuantas[r.mes] || 0) + 1);
+    const mesCol = COLS.find(c => c.key === 'mes');
+    if (mesCol) mesCol.ops.forEach(o => o.n = cuantas[o.v] || 0);
+  };
   const COLS = [
     { key: 'mes', et: 'Mes', ops: meses.map(m => ({ v: m, t: nomMes(m), n: cuantas[m] || 0 })) },
     { key: 'vendedor', et: 'Ejecutivo', ops: unicos('vendedor').map(v => ({ v, t: nomVend(v), busca: v })) },   // busca: también se encuentra por código
@@ -670,7 +775,7 @@ function montarBarra(meses) {
     const lista = col(c).querySelector('.xf-list');
     lista.innerHTML = vis.length
       ? `<label class="xf-option all"><input type="checkbox" data-all ${todosVis ? 'checked' : ''}> (Seleccionar todo${b ? ' lo visible' : ''})</label>` +
-        vis.map(o => `<label class="xf-option"${o.busca ? ` title="${esc(nomVendCod(o.v))}"` : ''}><input type="checkbox" data-item="${esc(o.v)}" ${sel.has(o.v) ? 'checked' : ''}> ${esc(o.t)}${o.n != null ? `<span class="cant">${fmt(o.n)}</span>` : ''}</label>`).join('')
+        vis.map(o => `<label class="xf-option"${o.busca ? ` title="${esc(nomVendCod(o.v))}"` : ''}><input type="checkbox" data-item="${esc(o.v)}" ${sel.has(o.v) ? 'checked' : ''}> ${o.busca ? `<span class="perfil-texto estado-${estadoEjecutivo(o.v)}">${esc(o.t)}</span>` : esc(o.t)}${o.n != null ? `<span class="cant">${fmt(o.n)}</span>` : ''}</label>`).join('')
       : '<div class="xf-empty">Sin coincidencias</div>';
     const all = lista.querySelector('[data-all]'); if (all) all.indeterminate = algunoVis && !todosVis;
   };
@@ -684,6 +789,7 @@ function montarBarra(meses) {
     });
   });
   const abrir = () => {
+    actualizarConteosMes();
     COLS.forEach(c => { const ap = aplicado(c); borrador[c.key] = new Set(ap ? [...ap] : c.ops.map(o => o.v)); busq[c.key] = ''; col(c).querySelector('.xf-search').value = ''; pintarCol(c); });
     panel.hidden = false; toggle.setAttribute('aria-expanded', 'true');
     panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });   // en pantallas bajas, que se vea completo con "Aplicar"
@@ -698,13 +804,27 @@ function montarBarra(meses) {
       return `<span class="xf-chip">${esc(c.et)}: <b>${esc(txt)}</b><button type="button" data-quitar="${c.key}" aria-label="Quitar filtro ${esc(c.et)}">×</button></span>`;
     }).join('');
   };
+  const ajustarPeriodoAMeses = () => {
+    const elegidos = [...MESES_SEL].sort();
+    if (!elegidos.length) return;
+    const primero = elegidos[0], ultimo = elegidos[elegidos.length - 1];
+    const finMes = new Date(Number(ultimo.slice(0, 4)), Number(ultimo.slice(5, 7)), 0);
+    const finISO = `${finMes.getFullYear()}-${String(finMes.getMonth() + 1).padStart(2, '0')}-${String(finMes.getDate()).padStart(2, '0')}`;
+    PERIODO.desde = desde.value = `${primero}-01` > hoy ? hoy : `${primero}-01`;
+    PERIODO.hasta = hasta.value = finISO > hoy ? hoy : finISO;
+    if (PERIODO.desde > PERIODO.hasta) PERIODO.desde = desde.value = PERIODO.hasta;
+  };
+  const sincronizarMesesConPeriodo = () => {
+    const inicio = PERIODO.desde.slice(0, 7), fin = PERIODO.hasta.slice(0, 7);
+    MESES_SEL = new Set(meses.filter(m => m >= inicio && m <= fin));
+  };
   const cambio = () => { pagina = 0; pintarChips(); pintar(); };
   toggle.onclick = () => panel.hidden ? abrir() : cerrar();
-  $('xfAplicar').onclick = () => { COLS.forEach(c => guardar(c, borrador[c.key])); cerrar(); cambio(); };
+  $('xfAplicar').onclick = () => { COLS.forEach(c => guardar(c, borrador[c.key])); ajustarPeriodoAMeses(); cerrar(); cambio(); };
   $('xfLimpiar').onclick = () => COLS.forEach(c => { borrador[c.key] = new Set(c.ops.map(o => o.v)); pintarCol(c); });
   $('xfChips').onclick = e => {
     const key = e.target.closest('[data-quitar]')?.dataset.quitar; if (!key) return;
-    const c = COLS.find(x => x.key === key); guardar(c, new Set(c.ops.map(o => o.v))); cerrar(); cambio();
+    const c = COLS.find(x => x.key === key); guardar(c, new Set(c.ops.map(o => o.v))); if (key === 'mes') ajustarPeriodoAMeses(); cerrar(); cambio();
   };
   document.addEventListener('click', e => { if (!panel.hidden && !e.composedPath().includes($('xf'))) cerrar(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { cerrar(); toggle.focus(); } });
@@ -716,24 +836,32 @@ function montarBarra(meses) {
   /* ---- Volver a filtros por defecto (lo mismo que hacía "Limpiar filtros") ---- */
   /* ---- Período: fecha de alta DESDE / HASTA (al abrir = rango completo) ---- */
   const fechas = DATA.map(r => r.fecha).sort(), desde = $('periodoDesde'), hasta = $('periodoHasta');
-  PERIODO.min = fechas[0] || ''; PERIODO.max = fechas[fechas.length - 1] || '';
-  const periodoCompleto = () => { PERIODO.desde = desde.value = PERIODO.min; PERIODO.hasta = hasta.value = PERIODO.max; };
+  const hoy = infHoyGT();
+  const [anioHoy, mesHoy] = hoy.split('-');
+  const inicioMesHoy = `${anioHoy}-${mesHoy}-01`;
+  PERIODO.min = fechas[0] ? `${fechas[0].slice(0, 4)}-01-01` : `${anioHoy}-01-01`;
+  PERIODO.max = hoy;
+  desde.min = PERIODO.min; hasta.min = PERIODO.min; desde.max = hoy; hasta.max = hoy;
+  const periodoPredeterminado = () => { PERIODO.desde = desde.value = inicioMesHoy; PERIODO.hasta = hasta.value = hoy; };
   const leerPeriodo = () => {
     if (!desde.value) desde.value = PERIODO.min;          // si borran una fecha, vuelve al extremo del rango
-    if (!hasta.value) hasta.value = PERIODO.max;
+    if (!hasta.value || hasta.value > PERIODO.max) hasta.value = PERIODO.max;
+    if (desde.value > PERIODO.max) desde.value = PERIODO.max;
     if (desde.value > hasta.value) {                       // al revés: se intercambian y se avisa
       [desde.value, hasta.value] = [hasta.value, desde.value];
       const caja = $('periodo'); caja.classList.add('cambiado'); caja.title = 'La fecha DESDE era posterior a HASTA: se intercambiaron.';
       clearTimeout(caja.reloj); caja.reloj = setTimeout(() => { caja.classList.remove('cambiado'); caja.title = ''; }, 3000);
     }
-    PERIODO.desde = desde.value; PERIODO.hasta = hasta.value; cambio();
+    PERIODO.desde = desde.value; PERIODO.hasta = hasta.value; sincronizarMesesConPeriodo(); cambio();
   };
   desde.onchange = leerPeriodo; hasta.onchange = leerPeriodo;
-  $('periodoReset').onclick = () => { periodoCompleto(); cambio(); };
+  $('periodoReset').onclick = () => { periodoPredeterminado(); MESES_SEL = new Set([`${anioHoy}-${mesHoy}`]); cambio(); };
 
-  $('limpiar').onclick = () => { FILTRO.op = ''; marcarOp(); todoMarcado(); periodoCompleto(); $('buscar').value = ''; fijarMoneda(false); cerrar(); cambio(); };
+  $('limpiar').onclick = () => { FILTRO.op = ''; marcarOp(); Object.keys(FILTRO.sel).forEach(k => FILTRO.sel[k] = null); MESES_SEL = new Set([`${anioHoy}-${mesHoy}`]); periodoPredeterminado(); $('buscar').value = ''; fijarMoneda(false); cerrar(); cambio(); };
 
-  todoMarcado(); periodoCompleto(); pintarChips();
+  Object.keys(FILTRO.sel).forEach(k => FILTRO.sel[k] = null);
+  MESES_SEL = new Set([`${anioHoy}-${mesHoy}`]);
+  periodoPredeterminado(); pintarChips();
 }
 /* si la letra Montserrat llega después del primer dibujo, se vuelve a medir que los números quepan (solo visual) */
 /* --- tipo de cambio y tarjeta "Valor mensual de servicios" en $ o Q ---
@@ -756,7 +884,7 @@ async function cargarTipoCambio() {
     } catch (e) { if (intento === 2) TC.estado = 'sin'; }
     finally { clearTimeout(reloj); }
   }
-  pintarBotonTC(); repintarValor();
+  pintarBotonTC(); repintarValor(); pintarIngresosPorUnidad(filtrados());
 }
 function pintarBotonTC() {
   const caja = $('fxMoneda'), rate = $('fxRate'), ok = TC.estado === 'ok';
@@ -799,17 +927,17 @@ function repintarValor() {
   const r = textoValor(VALOR_ULT);
   k.querySelector('.kpi-value').innerHTML = r.v; k.querySelector('.kpi-sub').innerHTML = r.d; k.title = r.tip;
 }
-$('fxSwitch').addEventListener('change', e => { fijarMoneda(e.target.checked); repintarValor(); });
+$('fxSwitch').addEventListener('change', e => { fijarMoneda(e.target.checked); repintarValor(); pintarIngresosPorUnidad(filtrados()); });
 fijarMoneda(false); cargarTipoCambio();
 function montarFiltros() {
-  montarBarra(unicos('mes'));
+  montarBarra(mesesCalendario(DATA));
   document.querySelectorAll('#medida button').forEach(b => b.onclick = () => {
     medida = b.dataset.m; document.querySelectorAll('#medida button').forEach(x => x.setAttribute('aria-pressed', x === b)); pintar();
   });
   $('buscar').oninput = () => { pagina = 0; pintarDetalle(filtrados()); };
   $('prev').onclick = () => { pagina = Math.max(0, pagina - 1); pintarDetalle(filtrados()); };
   $('next').onclick = () => { pagina++; pintarDetalle(filtrados()); };
-  montarVistas(); montarExportes();
+  montarVistas(); montarExportes(); montarModalSeguimiento(); montarModalIngreso(); montarModalPerfil();
 }
 /* --- pestañas Resumen | Informe detallado (solo visual) ---
    Solo muestran u ocultan cada vista: filtros, búsqueda, página y orden se conservan.
@@ -829,11 +957,116 @@ function filtrados() {
   return DATA.filter(r => (!p || r.pais === p) && MESES_SEL.has(r.mes) && (!PERIODO.desde || r.fecha >= PERIODO.desde) && (!PERIODO.hasta || r.fecha <= PERIODO.hasta) && (!S.vendedor || S.vendedor.has(r.vendedor)) && (!S.tipoAlta || S.tipoAlta.has(r.tipoAlta)) && (!S.tecnologia || S.tecnologia.has(r.tecnologia)));
 }
 
+/* Ingreso promedio por equipo. El selector global $ / Q gobierna este módulo.
+   La base se mantiene por país y se convierte únicamente para presentación. */
+function monedaDestino() { return EN_Q ? 'Q' : '$'; }
+function convertirMonto(valor, pais) {
+  if (TC.estado !== 'ok') return valor;
+  const origen = MONEDA[pais] || '$', destino = monedaDestino();
+  if (origen === destino) return valor;
+  return destino === '$' ? valor / TC.tasa : valor * TC.tasa;
+}
+function fmtIngreso(valor, pais) {
+  if (TC.estado !== 'ok') return fmtMon(valor, pais);
+  const n = convertirMonto(valor, pais), simbolo = monedaDestino();
+  return `${simbolo}${n.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+let IU_REGISTROS = [];
+function abrirModalIngreso(item) {
+  const bg = $('iuModalBg');
+  if (!bg || !item) return;
+  $('iuModalTitle').textContent = item.nombre;
+  $('iuModalSub').textContent = `${PAISES[item.pais] || item.pais} · ${item.tipo === 'grupo' ? 'Grupo comercial' : 'Ejecutivo'}`;
+  const tcNota = TC.estado === 'ok' && MONEDA[item.pais] !== monedaDestino()
+    ? `Conversión aplicada con tipo de cambio ${TC.tasa.toFixed(5)} GTQ/USD${TC.fecha ? ` · ${TC.fecha}` : ''}.`
+    : TC.estado === 'ok' ? 'Importes mostrados en la moneda seleccionada.' : 'Tipo de cambio no disponible; se muestran los importes originales en la moneda de cada país.';
+  $('iuModalContent').innerHTML = `
+    <div class="iu-modal-hero"><span>Ingreso mensual promedio por equipo</span><strong>${fmtIngreso(item.promedio, item.pais)}</strong><small>Valor mensual de servicios ÷ equipos entregados</small></div>
+    <div class="iu-modal-stats">
+      <article><span>Equipos entregados</span><b>${fmt(item.equipos)}</b></article>
+      <article><span>Valor mensual de servicios</span><b>${fmtIngreso(item.valor, item.pais)}</b></article>
+      <article><span>Altas registradas</span><b>${fmt(item.altas)}</b></article>
+      <article><span>Ingreso promedio / equipo</span><b>${fmtIngreso(item.promedio, item.pais)}</b></article>
+    </div>
+    <div class="iu-modal-explain"><b>Cómo interpretar este resultado</b><p>Se suman los valores mensuales de servicios asociados a los equipos del período filtrado y se dividen entre la cantidad total de equipos entregados. No representa el precio de venta del dispositivo.</p></div>
+    ${item.tipo === 'ejecutivo' ? `<button type="button" class="iu-perfil-enlace" data-perfil="${esc(item.clave)}">Ver estado y rendimiento anual de ${esc(item.nombre)} ↗</button>` : ''}`;
+  $('iuModalFootnote').textContent = tcNota;
+  bg.hidden = false;
+  document.body.classList.add('iu-modal-open');
+  $('iuModalClose').focus();
+}
+function cerrarModalIngreso() {
+  const bg = $('iuModalBg');
+  if (bg) bg.hidden = true;
+  document.body.classList.remove('iu-modal-open');
+}
+function montarModalIngreso() {
+  $('iuModalClose').onclick = cerrarModalIngreso;
+  $('iuModalDone').onclick = cerrarModalIngreso;
+  $('iuModalBg').addEventListener('click', e => { if (e.target === $('iuModalBg')) cerrarModalIngreso(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('iuModalBg').hidden) cerrarModalIngreso(); });
+}
+function pintarIngresosPorUnidad(F) {
+  const paises = ['GT', 'SV'];
+  const nombreGrupo = codigo => codigo ? nomVend(codigo) : 'Sin grupo asignado';
+  const acumular = (filas, campo, tipo, pais) => {
+    const mapa = new Map();
+    filas.filter(r => r.cantEquipo > 0).forEach(r => {
+      const clave = String(r[campo] || '').trim() || '(sin asignar)';
+      const o = mapa.get(clave) || { clave, pais, tipo, valor: 0, equipos: 0, altas: 0 };
+      o.valor += r.valor; o.equipos += r.cantEquipo; o.altas += 1;
+      mapa.set(clave, o);
+    });
+    return [...mapa.values()].map(o => ({ ...o, nombre: tipo === 'grupo' ? nombreGrupo(o.clave) : nomVend(o.clave), promedio: o.equipos ? o.valor / o.equipos : 0 }))
+      .sort((a, b) => b.promedio - a.promedio || a.nombre.localeCompare(b.nombre));
+  };
+  const colores = ['#4F8FD8','#3F9C85','#D95F6E','#E2A443','#8875C7','#43A6A0','#C87945','#7892B5','#A66C9C','#7D9B59'];
+  const columnas = (filas, pais) => {
+    if (!filas.length) return `<section class="iu-bloque"><div class="iu-bloque-head"><h3>Ingreso promedio por grupo comercial</h3><span>Sin registros</span></div><div class="iu-vacio">No hay equipos para los filtros seleccionados.</div></section>`;
+    const max = Math.max(...filas.map(x => convertirMonto(x.promedio, pais)), 0.0001);
+    const ticks = [1, .75, .5, .25, 0];
+    return `<section class="iu-bloque iu-column-block"><div class="iu-bloque-head"><div><h3>Ingreso promedio por grupo comercial</h3><p>Valor mensual promedio por equipo</p></div><span>${filas.length} grupos</span></div>
+      <div class="iu-column-chart"><div class="iu-y-axis">${ticks.map(t=>`<span>${fmtIngreso(max*t,pais)}</span>`).join('')}</div><div class="iu-column-plot"><div class="iu-grid-lines">${ticks.map(()=>'<i></i>').join('')}</div><div class="iu-columns">${filas.map((o,i)=>{const pct=Math.max(2,convertirMonto(o.promedio,pais)/max*100);return `<button type="button" class="iu-column-item" data-iu-pais="${o.pais}" data-iu-tipo="${o.tipo}" data-iu-key="${esc(o.clave)}" aria-label="Ver detalle de ${esc(o.nombre)}" style="--iu-column-height:${pct}%;--iu-column-color:${colores[i%colores.length]};--iu-delay:${i*65}ms"><span class="iu-column-number">${fmtIngreso(o.promedio,pais)}</span><span class="iu-column-bar"><i></i><b></b></span><span class="iu-column-name" title="${esc(o.nombre)}">${esc(o.nombre)}</span></button>`}).join('')}</div></div></div></section>`;
+  };
+  const dona = (filas, pais) => {
+    if (!filas.length) return `<section class="iu-bloque"><div class="iu-bloque-head"><h3>Participación por ejecutivo</h3><span>Sin registros</span></div><div class="iu-vacio">No hay equipos para los filtros seleccionados.</div></section>`;
+    const totalValor = filas.reduce((a,x)=>a+x.valor,0);
+    const circ=2*Math.PI*66;
+    let acumulado=0;
+    const segmentos=filas.map((o,i)=>{const share=totalValor>0?o.valor/totalValor:1/filas.length;const largo=Math.max(0,share*circ-2.5);const offset=acumulado*circ;acumulado+=share;return {...o,share,color:colores[i%colores.length],largo,offset};});
+    const media=filas.reduce((a,x)=>a+x.promedio*x.equipos,0)/(filas.reduce((a,x)=>a+x.equipos,0)||1);
+    return `<section class="iu-bloque iu-donut-block"><div class="iu-bloque-head"><div><h3>Participación por ejecutivo</h3><p>Distribución del valor mensual de servicios</p></div><span>${filas.length} ejecutivos</span></div>
+      <div class="iu-donut-layout"><div class="iu-donut-wrap"><svg class="iu-donut-svg" viewBox="0 0 180 180" role="img" aria-label="Distribución del valor mensual de servicios por ejecutivo"> <circle class="iu-donut-track" cx="90" cy="90" r="66"/>${segmentos.map((o,i)=>`<circle class="iu-donut-segment" data-iu-pais="${o.pais}" data-iu-tipo="${o.tipo}" data-iu-key="${esc(o.clave)}" cx="90" cy="90" r="66" style="--iu-donut-color:${o.color};--iu-dash:${o.largo} ${circ-o.largo};--iu-offset:${-o.offset};--iu-delay:${i*90}ms" tabindex="0" role="button" aria-label="${esc(o.nombre)}: ${Math.round(o.share*100)} por ciento"/>`).join('')}</svg><div class="iu-donut-center"><small>Promedio ponderado</small><strong>${fmtIngreso(media,pais)}</strong><span>por equipo</span></div></div>
+      <div class="iu-donut-legend">${segmentos.map(o=>`<button type="button" class="iu-legend-row" data-iu-pais="${o.pais}" data-iu-tipo="${o.tipo}" data-iu-key="${esc(o.clave)}"><i style="--iu-dot:${o.color}"></i><span class="iu-legend-name estado-${estadoEjecutivo(o.clave)}" title="${esc(o.nombre)}">${esc(o.nombre)}</span><strong>${fmtIngreso(o.promedio,pais)}</strong><small>${Math.round(o.share*100)}%</small></button>`).join('')}</div></div></section>`;
+  };
+  const html = paises.map(pais => {
+    const filas = F.filter(r => r.pais === pais);
+    if (!filas.length) return '';
+    const grupos = acumular(filas, 'jefe', 'grupo', pais);
+    const personas = acumular(filas, 'vendedor', 'ejecutivo', pais);
+    return `<article class="iu-pais iu-${pais.toLowerCase()}"><header><span class="chip ${pais}">${pais}</span><strong>${PAISES[pais]}</strong><small>${monedaDestino() === '$' ? 'USD' : 'GTQ'}</small></header>
+      ${columnas(grupos,pais)}
+      ${dona(personas,pais)}
+    </article>`;
+  }).filter(Boolean).join('');
+  $('ingresosPorUnidad').innerHTML = html || '<div class="empty">Sin datos para calcular el ingreso promedio por equipo con los filtros seleccionados.</div>';
+  $('iuMonedaBadge').textContent = TC.estado !== 'ok' ? (TC.estado === 'cargando' ? 'Consultando tipo de cambio…' : 'Moneda original · TC no disponible') : `${monedaDestino() === '$' ? 'USD · Dólares' : 'GTQ · Quetzales'}${TC.vieja ? ' · TC anterior' : ''}`;
+  IU_REGISTROS = paises.flatMap(pais => {
+    const filas = F.filter(r => r.pais === pais);
+    return [...acumular(filas, 'jefe', 'grupo', pais), ...acumular(filas, 'vendedor', 'ejecutivo', pais)];
+  });
+  $('ingresosPorUnidad').querySelectorAll('[data-iu-key]').forEach(btn => {
+    const abrir = () => { const item = IU_REGISTROS.find(x => x.pais === btn.dataset.iuPais && x.tipo === btn.dataset.iuTipo && x.clave === btn.dataset.iuKey); abrirModalIngreso(item); };
+    btn.addEventListener('click', abrir);
+    if (btn.tagName.toLowerCase() === 'circle') btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();abrir();}});
+  });
+}
+
 function pintar() {
   const F = filtrados();
   ['tEjec', 'tMes', 'tPais'].forEach(id => $(id).textContent = $(id).textContent.replace(/^(Altas|Unidades)/, palabra()));
   $('tMx').textContent = `Ejecutivo × mes · ${palabra().toLowerCase()}`;
-  pintarKpis(F); pintarPodio(F); pintarEjecutivos(F); pintarMeses(F); pintarPaises(F); pintarMatriz(F); pintarDetalle(F);
+  pintarKpis(F); pintarPodio(F); pintarEjecutivos(F); pintarMeses(F); pintarPaises(F); pintarIngresosPorUnidad(F); pintarMatriz(F); pintarDetalle(F);
   pintarEnProceso(F);   // radicaciones en proceso: se agregan encima de lo ya dibujado, sin tocar las altas
 }
 
@@ -866,7 +1099,7 @@ function enProcesoKpi() {
   if (FILTRO.sel.tecnologia) return { n: null, d: NOTA_TECNOLOGIA };
   if (RAD.estado === 'cargando') return { n: null, d: 'Consultando radicaciones…' };
   if (!radOk()) return { n: null, d: 'Sin conexión con la API de preofertas' };
-  return { n: radFiltradas().length, d: 'en curso en Workflow' };
+  return { n: totalAnexos(radFiltradas()), d: 'anexos en curso en Workflow' };
 }
 /* Las 3 tarjetas de la fila de arriba; las usan la pantalla y el PDF, así nunca se contradicen.
    c = clase de color de la cifra (dashboard.css / estandar.css); color = ese mismo tono, para el PDF. */
@@ -942,7 +1175,7 @@ function pintarEjecutivos(F) {
   L.forEach((o, i) => {
     const y = yDe[i], wn = sx(o.n), wa = sx(o.a), tot = o.n + o.a;
     s += `<rect class="hit" data-i="${i}" x="0" y="${y - gap / 2}" width="${W}" height="${bh + gap + extra(o)}"/>`;
-    s += `<text class="lab" x="${lw - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${esc(nomVend(o.v))}</text>`;
+    s += `<text class="lab perfil-svg estado-${estadoEjecutivo(o.v)}" data-perfil="${esc(o.v)}" tabindex="0" role="button" aria-label="Ver perfil anual de ${esc(nomVend(o.v))}" x="${lw - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${esc(nomVend(o.v))}</text>`;
     s += `<g class="gx-bar-h" style="--gx-i:${i}">`;
     let seg;
     if (o.a > 0) seg = `<rect x="${lw}" y="${y}" width="${Math.max(wn, 0)}" height="${bh}" fill="var(--s1)" pointer-events="none"/><path d="${barra(lw + wn + (wn > 0 ? 2 : 0), y, Math.max(wa - (wn > 0 ? 2 : 0), 1), bh)}" fill="var(--s2)" pointer-events="none"/>`;
@@ -963,7 +1196,7 @@ function pintarEjecutivos(F) {
 function pintarMeses(F) {
   const c = $('chMes'); const m = {};
   F.forEach(r => { const o = m[r.mes] ||= { mes: r.mes, t: 0, n: 0, a: 0, altas: 0 }; const v = valorDe(r); o.t += v; o.altas++; if (r.tipoAlta === 'NUEVA') o.n += v; else o.a += v; });
-  const L = Object.values(m).sort((a, b) => a.mes.localeCompare(b.mes));
+  const L = mesesEnVista().map(mes => m[mes] || { mes, t: 0, n: 0, a: 0, altas: 0 });
   if (!L.length) { c.innerHTML = '<div class="empty">Sin datos con estos filtros</div>'; return; }
   const W = c.clientWidth || 500, H = 220, pl = 40, pb = 24, pt = 18, max = escala(Math.max(...L.map(o => o.t)));
   const band = (W - pl) / L.length, bw = Math.min(24, band * .6), sy = v => (H - pb - pt) * v / max;
@@ -992,7 +1225,7 @@ function pintarPodio(F) {
   const L = Object.values(m).sort((a, b) => b.t - a.t).slice(0, 3);
   $('tPodio').textContent = `Top 3 ejecutivos · ${palabra().toLowerCase()}`;
   $('podioGrid').innerHTML = L.length ? L.map((o, i) => `<div class="puesto p${i + 1}"><div class="medalla">${i + 1}</div>
-    <div><div class="nom" title="${esc(nomVendCod(o.v))} · ${[...o.paises].join(', ')}">${esc(nomVend(o.v))} ${[...o.paises].map(p => `<span class="chip ${p}">${p}</span>`).join('')}</div>
+    <div><div class="nom" title="${esc(nomVendCod(o.v))} · ${[...o.paises].join(', ')}">${nombrePerfil(o.v)} ${[...o.paises].map(p => `<span class="chip ${p}">${p}</span>`).join('')}</div>
     <div class="det">${fmt(o.cli.size)} clientes</div></div>
     <div class="der"><div class="num">${fmt(o.t)}</div><div class="det">${total ? Math.round(o.t / total * 100) : 0}% del total</div></div></div>`).join('')
     : '<div class="empty">Sin datos con estos filtros</div>';
@@ -1009,17 +1242,154 @@ function pintarPaises(F) {
 }
 
 function pintarMatriz(F) {
-  const meses = [...new Set(F.map(r => r.mes))].sort(), m = {};
-  F.forEach(r => { m[r.vendedor] ||= {}; m[r.vendedor][r.mes] = (m[r.vendedor][r.mes] || 0) + valorDe(r); });
-  const vends = Object.keys(m).map(v => [v, Object.values(m[v]).reduce((a, b) => a + b, 0)]).sort((a, b) => b[1] - a[1]);
-  if (!vends.length) { $('matriz').innerHTML = '<div class="empty">Sin datos con estos filtros</div>'; return; }
-  const max = Math.max(...vends.flatMap(([v]) => Object.values(m[v])));
+  const meses = mesesEnVista(), m = {};
+  // Se conserva el universo de ejecutivos de los filtros generales para que un mes sin ventas
+  // muestre 0, no una raya ni una celda vacía.
+  const ejecutivos = [...new Set(DATA.filter(r => (!FILTRO.op || r.pais === FILTRO.op)
+    && (!FILTRO.sel.vendedor || FILTRO.sel.vendedor.has(r.vendedor))
+    && (!FILTRO.sel.tipoAlta || FILTRO.sel.tipoAlta.has(r.tipoAlta))
+    && (!FILTRO.sel.tecnologia || FILTRO.sel.tecnologia.has(r.tecnologia))).map(r => r.vendedor))];
+  ejecutivos.forEach(v => { m[v] = {}; meses.forEach(x => m[v][x] = 0); });
+  F.forEach(r => { if (m[r.vendedor]) m[r.vendedor][r.mes] = (m[r.vendedor][r.mes] || 0) + valorDe(r); });
+  const vends = Object.keys(m).map(v => [v, Object.values(m[v]).reduce((a, b) => a + b, 0)])
+    .sort((a, b) => b[1] - a[1] || nomVend(a[0]).localeCompare(nomVend(b[0])));
+  if (!vends.length) { $('matriz').innerHTML = '<div class="empty">Sin ejecutivos para los filtros seleccionados</div>'; return; }
   const clase = x => !x ? 'sem-0' : x >= SEMAFORO.verde ? 'sem-v' : x >= SEMAFORO.amarillo ? 'sem-a' : 'sem-r';
-  $('semaforo').innerHTML = `<span><b class="sem-v"></b>${SEMAFORO.verde} o más</span><span><b class="sem-a"></b>${SEMAFORO.amarillo} a ${SEMAFORO.verde - 1}</span><span><b class="sem-r"></b>1 a ${SEMAFORO.amarillo - 1}</span><span><b></b>– sin altas ese mes</span>`;
+  $('semaforo').innerHTML = `<span><b class="sem-v"></b>${SEMAFORO.verde} o más</span><span><b class="sem-a"></b>${SEMAFORO.amarillo} a ${SEMAFORO.verde - 1}</span><span><b class="sem-r"></b>1 a ${SEMAFORO.amarillo - 1}</span><span><b class="sem-0"></b>0 = sin altas registradas</span>`;
   let h = '<table class="mx"><thead><tr><th>Ejecutivo</th>' + meses.map(x => `<th class="n">${nomMes(x)}</th>`).join('') + '<th class="n">Total</th></tr></thead><tbody>';
-  vends.forEach(([v, t]) => { h += `<tr><td title="${esc(nomVendCod(v))}">${esc(nomVend(v))}</td>` + meses.map(x => `<td class="n ${clase(m[v][x])}">${m[v][x] ? fmt(m[v][x]) : '–'}</td>`).join('') + `<td class="n"><b>${fmt(t)}</b></td></tr>`; });
-  h += '<tr class="tot"><td>Total</td>' + meses.map(x => `<td class="n">${fmt(vends.reduce((s, [v]) => s + (m[v][x] || 0), 0))}</td>`).join('') + `<td class="n">${fmt(vends.reduce((s, [, t]) => s + t, 0))}</td></tr>`;
+  vends.forEach(([v, t]) => { h += `<tr><td>${nombrePerfil(v)}</td>` + meses.map(x => `<td class="n ${clase(m[v][x])}">${fmt(m[v][x])}</td>`).join('') + `<td class="n"><b>${fmt(t)}</b></td></tr>`; });
+  h += '<tr class="tot"><td>Total</td>' + meses.map(x => `<td class="n">${fmt(vends.reduce((sum, [v]) => sum + m[v][x], 0))}</td>`).join('') + `<td class="n">${fmt(vends.reduce((sum, [, t]) => sum + t, 0))}</td></tr>`;
   $('matriz').innerHTML = h + '</tbody></table>';
+}
+
+
+/* Seguimiento comercial por país. Cada ejecutivo se agrupa junto con su país y el promedio
+   se calcula dentro de cada operación; nunca se compara ni se mezcla GT con SV. */
+function pintarSeguimiento(F) {
+  const hoy = infHoyGT();
+  const anio = (PERIODO.hasta || hoy).slice(0, 4);
+  const inicioAnio = `${anio}-01-01`;
+  const S = FILTRO.sel;
+  const baseAnual = DATA.filter(r => r.fecha >= inicioAnio && r.fecha <= (PERIODO.hasta || hoy)
+    && (!FILTRO.op || r.pais === FILTRO.op)
+    && (!S.tipoAlta || S.tipoAlta.has(r.tipoAlta))
+    && (!S.tecnologia || S.tecnologia.has(r.tecnologia))
+    && (!S.vendedor || S.vendedor.has(r.vendedor)));
+  const paises = FILTRO.op ? [FILTRO.op] : ['GT', 'SV'];
+  const bloques = paises.map(pais => {
+    const vendedores = [...new Set(baseAnual.filter(r => r.pais === pais && estadoEjecutivo(r.vendedor) === 'activo').map(r => r.vendedor))];
+    const conteo = Object.fromEntries(vendedores.map(v => [v, F.filter(r => r.pais === pais && r.vendedor === v).reduce((n, r) => n + valorDe(r), 0)]));
+    const promedio = vendedores.length ? vendedores.reduce((n, v) => n + conteo[v], 0) / vendedores.length : 0;
+    const sinAltas = vendedores.filter(v => conteo[v] === 0);
+    const bajoPromedio = vendedores.filter(v => conteo[v] > 0 && conteo[v] < promedio);
+    const lista = [
+      ...sinAltas.map(v => ({ v, pais, n: 0, nivel: 'prioridad', etiqueta: 'Sin altas registradas', recomendacion: 'Validar primero su actividad y vigencia. Si está activo, revisar prospección, oportunidades abiertas y bloqueos; acordar acciones concretas y seguimiento en 48 horas.' })),
+      ...bajoPromedio.map(v => ({ v, pais, n: conteo[v], nivel: 'revision', etiqueta: 'Debajo del promedio de su país', recomendacion: 'Revisar el embudo comercial, propuestas pendientes y tasa de seguimiento. Acompañar llamadas o visitas y definir un compromiso de avance para la semana.' }))
+    ].sort((a, b) => (a.n - b.n) || nomVend(a.v).localeCompare(nomVend(b.v)));
+    return { pais, vendedores, sinAltas, bajoPromedio, promedio, lista };
+  }).filter(b => b.vendedores.length);
+
+  $('seguimientoPeriodo').textContent = `${infDmy(PERIODO.desde)} – ${infDmy(PERIODO.hasta)}`;
+  $('seguimientoAlcance').textContent = FILTRO.op ? `Operación: ${PAISES[FILTRO.op]}` : 'Operaciones separadas';
+  const total = bloques.reduce((n, b) => n + b.vendedores.length, 0);
+  const sinTotal = bloques.reduce((n, b) => n + b.sinAltas.length, 0);
+  const revisarTotal = bloques.reduce((n, b) => n + b.bajoPromedio.length, 0);
+  $('seguimientoResumen').innerHTML = `<div class="seguimiento-kpi"><b>${total}</b><span>ejecutivos considerados</span></div><div class="seguimiento-kpi urgente"><b>${sinTotal}</b><span>sin altas</span></div><div class="seguimiento-kpi revisar"><b>${revisarTotal}</b><span>debajo del promedio local</span></div><div class="seguimiento-kpi promedio"><b>${bloques.length}</b><span>operaciones analizadas</span></div>`;
+  if (!bloques.length) {
+    $('seguimientoLista').innerHTML = '<div class="seguimiento-vacio">No hay ejecutivos con registros en el año y los filtros seleccionados.</div>';
+    return;
+  }
+  $('seguimientoLista').innerHTML = bloques.map(b => {
+    const listaHtml = !b.lista.length
+      ? '<div class="seguimiento-vacio positivo">No se identifican ejecutivos por debajo del promedio de esta operación. Mantén el seguimiento habitual.</div>'
+      : b.lista.map(o => `<article class="seguimiento-item ${o.nivel}"><div class="seguimiento-identidad"><span class="seguimiento-estado">${o.nivel === 'prioridad' ? 'Atención prioritaria' : 'Requiere revisión'}</span><strong>${nombrePerfil(o.v)}</strong><small>${esc(o.etiqueta)}</small></div><div class="seguimiento-resultado"><b>${fmt(o.n)}</b><span>${palabra().toLowerCase()}</span></div><div class="seguimiento-accion"><b>Recomendación para el jefe</b><p>${esc(o.recomendacion)}</p></div></article>`).join('');
+    return `<section class="seguimiento-pais"><div class="seguimiento-pais-head"><div><span class="chip ${b.pais}">${b.pais}</span><strong>${PAISES[b.pais] || b.pais}</strong></div><div class="seguimiento-pais-stats"><span>${b.vendedores.length} ejecutivos</span><span>Promedio: <b>${fmt(b.promedio)}</b></span></div></div>${listaHtml}</section>`;
+  }).join('');
+}
+
+function montarModalSeguimiento() {
+  const modal = $('modalSeguimiento'), dialog = modal.querySelector('.seguimiento-dialog');
+  const abrir = $('abrirSeguimiento'), cerrar = $('cerrarSeguimiento'), pie = $('cerrarSeguimientoPie');
+  const cerrarModal = () => { modal.hidden = true; document.body.classList.remove('seguimiento-modal-open'); abrir.focus(); };
+  abrir.addEventListener('click', () => {
+    pintarSeguimiento(filtrados());
+    modal.hidden = false; document.body.classList.add('seguimiento-modal-open');
+    cerrar.focus();
+  });
+  cerrar.addEventListener('click', cerrarModal); pie.addEventListener('click', cerrarModal);
+  modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
+  document.addEventListener('keydown', e => {
+    if (modal.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); cerrarModal(); }
+    if (e.key === 'Tab') {
+      const controles = [...dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+      if (!controles.length) return;
+      const primero = controles[0], ultimo = controles[controles.length - 1];
+      if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+    }
+  });
+}
+
+/* Ficha anual: usa las altas disponibles del año seleccionado, nunca proyecta días futuros.
+   No mezcla el historial con el período corto del filtro ni califica personas sin metas oficiales. */
+function pintarPerfilEjecutivo(v) {
+  const hoy = infHoyGT(), anio = (PERIODO.hasta || hoy).slice(0, 4);
+  const corte = `${anio}-12-31` < hoy ? `${anio}-12-31` : hoy;
+  const filas = DATA.filter(r => r.vendedor === v && r.fecha >= `${anio}-01-01` && r.fecha <= corte);
+  const meses = Array.from({ length: 12 }, (_, i) => `${anio}-${String(i + 1).padStart(2, '0')}`);
+  const conteos = meses.map(m => filas.filter(r => r.mes === m).length);
+  const total = filas.length, nuevas = filas.filter(r => r.tipoAlta === 'NUEVA').length;
+  const equipos = filas.reduce((n, r) => n + r.cantEquipo, 0);
+  const clientes = new Set(filas.map(r => r.codCliente || r.cliente).filter(Boolean)).size;
+  const mesesTranscurridos = meses.filter(m => `${m}-01` <= corte), activos = conteos.slice(0, mesesTranscurridos.length).filter(Boolean).length;
+  const mejor = Math.max(0, ...conteos), max = Math.max(1, mejor);
+  const mejorMes = mejor ? MESES[conteos.indexOf(mejor)] : '';
+  const pais = PAIS_POR_EJECUTIVO[v] || filas[0]?.pais || DATA.find(r => r.vendedor === v)?.pais || '';
+  const inactivo = estadoEjecutivo(v) === 'inactivo';
+  const resumen = !total
+    ? `No hay altas registradas para ${anio} hasta el ${infDmy(corte)}. Sin registros no es posible evaluar su rendimiento.`
+    : `${esc(nomVend(v))} registró ${fmt(total)} altas, ${fmt(clientes)} clientes y ${fmt(equipos)} equipos en ${anio}. ${fmt(nuevas)} altas fueron nuevas y ${fmt(total - nuevas)} adiciones. ${activos === mesesTranscurridos.length ? 'Registró actividad en todos los meses transcurridos' : `Tuvo actividad en ${activos} de ${mesesTranscurridos.length} meses transcurridos`}${mejorMes ? `; su mes de mayor movimiento fue ${mejorMes} con ${fmt(mejor)} altas` : ''}.`;
+  $('perfilTitulo').textContent = nomVend(v);
+  $('perfilDescripcion').textContent = `${pais ? `${PAISES[pais] || pais} · ` : ''}${v} · Del 01/01/${anio} al ${infDmy(corte)}`;
+  $('perfilContenido').innerHTML = `
+    <div class="perfil-estado-row"><span class="perfil-badge estado-${estadoEjecutivo(v)}"><i aria-hidden="true"></i>${inactivo ? 'Inactivo · baja informada' : 'Activo · sin baja informada'}</span><span class="perfil-periodo">Histórico anual ${anio}</span></div>
+    <div class="perfil-cifras"><article><span>Altas registradas</span><strong>${fmt(total)}</strong></article><article><span>Clientes atendidos</span><strong>${fmt(clientes)}</strong></article><article><span>Equipos</span><strong>${fmt(equipos)}</strong></article><article><span>Meses con actividad</span><strong>${activos}<small> / ${mesesTranscurridos.length}</small></strong></article></div>
+    <section class="perfil-grafica"><div class="perfil-grafica-head"><div><h3>Evolución mensual</h3><p>Altas por mes · datos hasta ${infDmy(corte)}</p></div><span>${fmt(total)} en el año</span></div>
+      <div class="perfil-barras" role="img" aria-label="Altas mensuales de ${esc(nomVend(v))} en ${anio}: ${meses.map((m,i) => `${MESES[i]} ${`${m}-01` > corte ? 'pendiente' : conteos[i]}`).join(', ')}">${meses.map((m, i) => {
+        const futuro = `${m}-01` > corte;
+        const alto = futuro ? 0 : conteos[i] / max * 100;
+        return `<div class="perfil-mes ${futuro ? 'futuro' : ''}" title="${esc(nomMes(m))}: ${futuro ? 'mes aún no transcurrido' : `${fmt(conteos[i])} altas`}"><span class="perfil-mes-num">${futuro ? '·' : fmt(conteos[i])}</span><div class="perfil-barra-pista"><i style="--perfil-alto:${Math.max(conteos[i] ? 8 : 0, alto)}%;--perfil-retraso:${i*45}ms"></i></div><small>${MESES[i]}</small></div>`;
+      }).join('')}</div><div class="perfil-grafica-leyenda"><span><i></i> Altas registradas</span><span>Los meses futuros no cuentan como 0</span></div>
+    </section>
+    <div class="perfil-conclusion"><span class="perfil-conclusion-icon" aria-hidden="true">✦</span><div><h3>Resumen de actividad</h3><p>${resumen}</p><small>${inactivo ? 'Estado informado por el equipo; el historial refleja su aporte antes de la baja.' : 'El estado activo es provisional hasta confirmación de Recursos Humanos.'} Estas cifras no equivalen a una evaluación formal de desempeño.</small></div></div>`;
+}
+function montarModalPerfil() {
+  const modal = $('modalPerfil'), dialog = modal.querySelector('.perfil-dialog');
+  let origen = null;
+  const cerrar = () => { modal.hidden = true; document.body.classList.remove('perfil-modal-open'); if (origen?.isConnected) origen.focus(); };
+  document.addEventListener('click', e => {
+    const boton = e.target.closest?.('[data-perfil]');
+    if (!boton) return;
+    origen = boton;
+    if (boton.closest('#iuModal')) cerrarModalIngreso();
+    pintarPerfilEjecutivo(boton.dataset.perfil);
+    modal.hidden = false;
+    document.body.classList.add('perfil-modal-open');
+    $('cerrarPerfil').focus();
+  });
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('svg [data-perfil]')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
+    if (modal.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
+    if (e.key !== 'Tab') return;
+    const controles = [...dialog.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')];
+    if (e.shiftKey && document.activeElement === controles[0]) { e.preventDefault(); controles.at(-1).focus(); }
+    else if (!e.shiftKey && document.activeElement === controles.at(-1)) { e.preventDefault(); controles[0].focus(); }
+  });
+  $('cerrarPerfil').addEventListener('click', cerrar);
+  $('cerrarPerfilPie').addEventListener('click', cerrar);
+  modal.addEventListener('click', e => { if (e.target === modal) cerrar(); });
 }
 
 const COLS = [['fecha', 'Fecha'], ['pais', 'País'], ['vendedor', 'Ejecutivo'], ['cliente', 'Cliente'], ['anexo', 'Anexo'], ['tipoAlta', 'Tipo'], ['tecnologia', 'Tecnología'], ['equipo', 'Equipo'], ['cantEquipo', 'Equipos', 1], ['cantSim', 'SIM', 1], ['tipoEquipo', 'Modalidad'], ['valor', 'Valor serv.', 1]];
@@ -1044,7 +1414,7 @@ function pintarDetalle(F) {
   ['infExcel', 'infCsv'].forEach(id => { if (!$(id).dataset.generando) $(id).disabled = !L.length; });
   $('pag').textContent = `Página ${pagina + 1} de ${pags}`; $('prev').disabled = pagina === 0; $('next').disabled = pagina >= pags - 1;
   let h = '<table><thead><tr>' + COLS.map(([k, t, n]) => `<th class="${n ? 'n' : ''}" data-k="${k}">${t}${orden.k === k ? (orden.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('') + '</tr></thead><tbody>';
-  h += V.map(r => '<tr>' + COLS.map(([k, , n]) => `<td class="${n ? 'n' : ''}">${k === 'valor' ? fmtMon(r[k], r.pais) : k === 'pais' ? `<span class="chip ${r.pais}">${r.pais}</span>` : k === 'vendedor' ? `<span title="${esc(nomVendCod(r[k]))} · ${esc(r.pais)}">${esc(nomVend(r[k]))}</span>` : k === 'tipoAlta' ? (r[k] === 'ADICION' ? 'Adición' : 'Nueva') : esc(r[k])}</td>`).join('') + '</tr>').join('');
+  h += V.map(r => '<tr>' + COLS.map(([k, , n]) => `<td class="${n ? 'n' : ''}">${k === 'valor' ? fmtMon(r[k], r.paisOrigen || r.pais) : k === 'pais' ? `<span class="chip ${r.pais}">${r.pais}</span>` : k === 'vendedor' ? nombrePerfil(r[k]) : k === 'tipoAlta' ? (r[k] === 'ADICION' ? 'Adición' : 'Nueva') : esc(r[k])}</td>`).join('') + '</tr>').join('');
   $('detalle').innerHTML = h + '</tbody></table>' + (L.length ? '' : '<div class="empty">Sin resultados</div>');
   $('detalle').querySelectorAll('th').forEach(th => th.onclick = () => { const k = th.dataset.k; orden = { k, dir: orden.k === k ? -orden.dir : (k === 'fecha' ? -1 : 1) }; pintarDetalle(filtrados()); });
 }
@@ -1060,9 +1430,7 @@ function pintarDetalle(F) {
    Si la API no respondió: sin pastillas, guiones en la columna y el
    botón de la tabla deshabilitado con aviso. Nunca un 0 que diga «no hay».
    ============================================================== */
-// ATENCIÓN: este token también está escrito en dashboards/activaciones/activaciones.html.
-// Si se regenera el token, hay que cambiarlo en los DOS archivos o uno de los dos deja de funcionar.
-const WORKFLOW_API_KEY = "b5a71fed3be962e1030da90406158807dccd6784640232a96a32567a818d1d5b";
+// La credencial de Workflow se conserva exclusivamente en el servidor (WORKFLOW_API_KEY).
 const RAD = { estado: 'cargando', consultado: '', data: [], error: '' };   // estado: cargando | ok | error · consultado = cuándo se pidió a la API
 const radOk = () => RAD.estado === 'ok';
 let RAD_MONTADO = false;   // ya hay altas en pantalla: al llegar la respuesta, se repinta
@@ -1072,8 +1440,8 @@ let RAD_MONTADO = false;   // ya hay altas en pantalla: al llegar la respuesta, 
    horasEnEtapa = horas desde que empezó la etapa hasta ahora; vencida = horasEnEtapa ≥ slaHoras.
    Si falta alguno de los dos, vencida queda en null (no se sabe), nunca en falso. */
 function normalizarRad(r, ahora) {
-  const fecha = leerFecha(String(r.fecha ?? '').trim());
-  const numero = v => typeof v === 'number' && isFinite(v) ? v : null;
+  const fecha = leerFecha(String(r.fecha ?? r.fechaRadicacion ?? r.fecha_radicacion ?? r.fechaRegistro ?? '').trim());
+  const numero = v => { if (v == null || v === '') return null; const n = typeof v === 'number' ? v : Number(String(v).replace(/,/g, '').trim()); return Number.isFinite(n) ? n : null; };
   const etapa = r.proceso?.etapaActual || {};
   const inicio = etapa.fechaInicio ? Date.parse(etapa.fechaInicio) : NaN;
   const horasEnEtapa = isNaN(inicio) ? null : Math.round(Math.max(0, (ahora - inicio) / 3600000) * 10) / 10;
@@ -1082,7 +1450,7 @@ function normalizarRad(r, ahora) {
     preOferta: String(r.preOferta ?? ''), fecha, mes: fecha.slice(0, 7),
     empresa: String(r.empresa ?? '').trim(), codigo: String(r.codigo ?? '').trim(),   // codigo: para la empresa vacía (empresaRad)
     vendedor: String(r.vendedor ?? '').trim() || '(sin vendedor)',
-    pais: String(r.pais || '').toUpperCase(), negocio: String(r.negocio ?? ''),
+    pais: PAIS_POR_EJECUTIVO[String(r.vendedor ?? '').trim().toUpperCase()] || normalizarPais(r.pais), negocio: String(r.negocio ?? ''),
     cantidad: numero(r.cantidad),                                   // null = no vino: se muestra «—», nunca 0
     etapaNumero: numero(etapa.numero), etapaNombre: String(etapa.nombre ?? ''),
     horasEnEtapa,
@@ -1105,34 +1473,26 @@ function b800Marcado(r) {
     || (Array.isArray(p.etapas) && p.etapas.some(e => e && b800Lleno(e.b800)));
 }
 async function cargarRadicaciones() {
-  // Igual que Activaciones: la dirección completa y, de respaldo, la ruta relativa.
-  const endpoints = [
-    "https://workflow.red.com.gt/api/integraciones/dashboard/preofertas",
-    "/integraciones/dashboard/preofertas"
-  ];
+  // Consulta al proxy del mismo dominio. La credencial nunca se expone al navegador.
   const consultado = new Date().toISOString();
   let items = null, motivo = '';
-  for (const ep of endpoints) {
-    try {
-      const res = await fetch(ep, {
-        headers: {
-          "Authorization": "Bearer " + WORKFLOW_API_KEY,
-          "DASHBOARD_API_KEY": WORKFLOW_API_KEY,
-          "X-API-KEY": WORKFLOW_API_KEY,
-          "Accept": "application/json"
-        },
-        cache: "no-store"
-      });
-      if (!res.ok) { motivo ||= `la API respondió ${res.status}`; continue; }
-      const json = await res.json().catch(() => null);
+  try {
+    const res = await fetch('/api/ventas/flash-preofertas', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store'
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      motivo = (json && json.error) || `el servidor respondió ${res.status}`;
+    } else {
       const lista = Array.isArray(json) ? json : (json && Array.isArray(json.data) ? json.data : null);
-      // Respuesta correcta con lista vacía = 0 en proceso (dato real). Solo un cuerpo sin lista es error.
-      if (lista) { items = lista; break; }
-      motivo ||= 'la API respondió sin una lista de preofertas';
-    } catch (err) {
-      console.warn('Fallo al consultar endpoint:', ep, err.message);
-      motivo ||= 'sin conexión con la API';
+      if (lista) items = lista;
+      else motivo = 'el servidor respondió sin una lista de preofertas';
     }
+  } catch (err) {
+    console.warn('Fallo al consultar proxy de preofertas:', err.message);
+    motivo = 'sin conexión con el servicio de preofertas';
   }
   if (items) {
     const ahora = Date.now();
@@ -1140,9 +1500,10 @@ async function cargarRadicaciones() {
     // el workflow le faltan etapas: somos nosotros los que dejamos de contarla.
     // BACKUP en «negocio» O en «tipoContratacion» = equipo de respaldo, no es venta (no siempre coinciden).
     // Contadores por regla, en orden: una preoferta cuenta solo en la primera regla que la descarta.
-    const descartes = { b800: 0, negocio: 0, tipoContratacion: 0 };
+    const descartes = { b800: 0, negocio: 0, tipoContratacion: 0, renovacion: 0 };
     const data = items.filter(r => {
       if (!r || typeof r !== 'object' || String(r.estado || '').trim().toLowerCase() !== 'en_proceso') return false;
+      if ([r.negocio, r.tipoContratacion].some(v => /renovaci[oó]n/i.test(String(v || '')))) { descartes.renovacion++; return false; }
       if (b800Marcado(r)) { descartes.b800++; return false; }
       if (esBackup(r.negocio)) { descartes.negocio++; return false; }
       if (esBackup(r.tipoContratacion)) { descartes.tipoContratacion++; return false; }
@@ -1157,39 +1518,40 @@ async function cargarRadicaciones() {
   if (RAD_MONTADO) pintar();
 }
 
-/* Una radicación cuenta como «En proceso» solo si: estado en_proceso, b800 sin contenido (ni true ni
+/* Una preoferta cuenta como «En proceso» solo si: estado en_proceso, b800 sin contenido (ni true ni
    fecha, en ningún nivel), no es BACKUP en negocio ni en tipoContratacion (todo eso en
    cargarRadicaciones) y fecha dentro del período filtrado (radEnPeriodo). Así coincide con el reporte
    por correo: Radicadas = Altas del período + En proceso del período.
    Además aplican los filtros de país, ejecutivo y tipo de alta.
-   Tipo de alta sale de «negocio»: VENTA NUEVA = Nueva, ADICION = Adición. Las RENOVACION sí cuentan
-   (se radicaron), pero no son ni una ni otra: con el filtro de Tipo de alta quedan fuera.
+   Tipo de alta sale de «negocio»: VENTA NUEVA = Nueva, ADICION = Adición. Las renovaciones se excluyen
+   por completo: no representan anexos nuevos ni deben aparecer en el tablero.
    Tecnología no se puede aplicar (la API no la trae). */
 const negocioRad = r => r.negocio.trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const TIPO_RAD = { 'VENTA NUEVA': 'NUEVA', 'ADICION': 'ADICION' };
 function radFiltradas() {
   if (!radOk()) return [];
   const p = FILTRO.op, S = FILTRO.sel;
-  const mesLibre = unicos('mes').every(m => MESES_SEL.has(m));
+  const mesLibre = mesesCalendario(DATA).every(m => MESES_SEL.has(m));
   return RAD.data.filter(r => radEnPeriodo(r, mesLibre) && (!S.tipoAlta || S.tipoAlta.has(TIPO_RAD[negocioRad(r)]))
     && (!p || r.pais === p) && (!S.vendedor || S.vendedor.has(r.vendedor)));
 }
 /* Regla literal: la fecha tiene que caer entre las fechas del período que se ven en pantalla, también
    con el período completo (una radicación más nueva que la última alta no cuenta hasta que se amplíe).
    Sin fecha no se puede ubicar: no cuenta.
-   mesLibre = todos los meses marcados. La lista de meses sale de las altas: sin esto, un mes que todavía
-   no tiene altas daría siempre 0, aunque se elija con las fechas del período. */
+   mesLibre = todos los meses del calendario marcados. Los meses sin altas también forman parte del filtro. */
 function radEnPeriodo(r, mesLibre) {
   if (!r.fecha || (PERIODO.desde && r.fecha < PERIODO.desde) || (PERIODO.hasta && r.fecha > PERIODO.hasta)) return false;
   return mesLibre || MESES_SEL.has(r.mes);
 }
-const radContar = (L, k) => { const m = {}; L.forEach(r => { if (r[k]) m[r[k]] = (m[r[k]] || 0) + 1; }); return m; };
+const anexosDe = r => r.cantidad == null ? 0 : r.cantidad;
+const totalAnexos = L => L.reduce((s, r) => s + anexosDe(r), 0);
+const radContar = (L, k) => { const m = {}; L.forEach(r => { const n = anexosDe(r); if (r[k] && n > 0) m[r[k]] = (m[r[k]] || 0) + n; }); return m; };
 const textoEnProceso = n => `${fmt(n)} en proceso`;
 // Las gráficas de altas muestran el nombre del ejecutivo: de nombre a código, para buscar sus radicaciones.
 const nombreACodigo = codigos => Object.fromEntries(codigos.map(v => [nomVend(v), v]));
-/* Marca de radicaciones en proceso en las gráficas: barra ámbar del mismo largo para todos + el número.
-   No va a la escala de las altas a propósito: 2 radicaciones contra 721 altas medirían menos
-   de 1 px, o la barra mentiría. La barra dice «tiene en proceso»; el número, cuántas. */
+/* Marca de anexos en preofertas en proceso en las gráficas: barra ámbar del mismo largo para todos + el número.
+   No va a la escala de las altas a propósito: pocas unidades frente al volumen de altas medirían menos
+   de 1 px, o la barra mentiría. La barra dice «tiene en proceso»; el número, cuántos anexos. */
 const MINI = { largo: 16, grueso: 7 };
 // Horizontal (ejecutivo): barra en (x, y) con el mismo grosor que Nueva y Adición, y el número a la par,
 // centrado como el de las altas. El largo sigue siendo MINI.largo.
@@ -1201,7 +1563,7 @@ const miniVertical = (x, w, yBase, n) => `<g class="ab-mini" pointer-events="non
 
 // Nada desaparece en silencio: lo que no tiene dónde ir en una gráfica se explica debajo de ella.
 const notaAb = (cont, texto) => cont.insertAdjacentHTML('beforeend', `<p class="nota-ab">${texto}</p>`);
-const cuantasAb = n => `${fmt(n)} ${n === 1 ? 'radicación en proceso' : 'radicaciones en proceso'}`;
+const cuantasAb = n => `${fmt(n)} ${n === 1 ? 'anexo en proceso' : 'anexos en proceso'}`;
 
 function pintarEnProceso(F) {
   try {
@@ -1238,7 +1600,7 @@ function pastillasEjecutivos(porVend, F) {
     $('legAbEjec').style.display = '';
     // Se suma después del globito de siempre (enlazarTips), que se arma primero.
     svg.querySelector(`rect.hit[data-i="${i}"]`)?.addEventListener('mouseenter', e => {
-      tip.insertAdjacentHTML('beforeend', `<div class="r"><span>Radicaciones en proceso</span><b>${fmt(n)}</b></div>`); moverTip(e);
+      tip.insertAdjacentHTML('beforeend', `<div class="r"><span>Anexos en proceso</span><b>${fmt(n)}</b></div>`); moverTip(e);
     });
   });
 }
@@ -1246,11 +1608,11 @@ function pastillasEjecutivos(porVend, F) {
    con el número arriba. La escala y las barras quedan iguales. Leyenda arriba y una línea en el globito. */
 function pastillasMeses(R, F) {
   const c = $('chMes'), svg = c.querySelector('svg'), porMes = radContar(R, 'mes');
-  const meses = svg ? [...new Set(F.map(r => r.mes))].sort((a, b) => a.localeCompare(b)) : [];   // el mismo orden que pintarMeses
+  const meses = svg ? mesesEnVista() : [];   // el mismo orden que pintarMeses
   const conAb = meses.map((m, i) => [i, porMes[m] || 0]).filter(([, n]) => n);
   if (conAb.length) {
     const H = +svg.getAttribute('viewBox').split(' ')[3], yEje = H - 24;   // pintarMeses: eje a 24 px del borde de abajo
-    svg.insertAdjacentHTML('beforebegin', '<div class="legend"><span><b class="ab-leyenda"></b>Radicaciones en proceso</span></div>');
+    svg.insertAdjacentHTML('beforebegin', '<div class="legend"><span><b class="ab-leyenda"></b>Anexos en proceso</span></div>');
     conAb.forEach(([i, n]) => {
       const hit = svg.querySelector(`rect.hit[data-i="${i}"]`); if (!hit) return;
       // pintarMeses: barra de ancho min(24, banda × 0.6), centrada en la banda. La mini columna va 2 px a su
@@ -1259,15 +1621,15 @@ function pastillasMeses(R, F) {
       const w = Math.max(4, Math.min(10, (band - bw) / 2 - 3));
       svg.insertAdjacentHTML('beforeend', miniVertical(cx + bw / 2 + 2, w, yEje, n));
       hit.addEventListener('mouseenter', e => {   // después del globito de siempre (enlazarTips)
-        tip.insertAdjacentHTML('beforeend', `<div class="r"><span>Radicaciones en proceso</span><b>${fmt(n)}</b></div>`); moverTip(e);
+        tip.insertAdjacentHTML('beforeend', `<div class="r"><span>Anexos en proceso</span><b>${fmt(n)}</b></div>`); moverTip(e);
       });
     });
   }
   // Las de un mes sin barra (sin altas en ese mes con estos filtros) no se marcan: se explican en una nota debajo.
-  const fuera = R.filter(r => !meses.includes(r.mes));
-  if (fuera.length) {
+  const fuera = R.filter(r => !meses.includes(r.mes)), totalFuera = totalAnexos(fuera);
+  if (totalFuera) {
     const ms = [...new Set(fuera.map(r => r.mes))].sort();
-    notaAb(c, `${cuantasAb(fuera.length)} de ${ms.map(nomMes).join(', ')}: ${ms.length === 1 ? 'ese mes no tiene' : 'esos meses no tienen'} altas con estos filtros, así que no ${fuera.length === 1 ? 'tiene' : 'tienen'} barra donde marcarlas.`);
+    notaAb(c, `${cuantasAb(totalFuera)} de ${ms.map(nomMes).join(', ')}: ${ms.length === 1 ? 'ese mes no tiene' : 'esos meses no tienen'} altas con estos filtros, así que no ${totalFuera === 1 ? 'tiene' : 'tienen'} barra donde marcarlos.`);
   }
 }
 /* «Altas por país»: mini barra ámbar pegada debajo del inicio de la barra del país, con el número
@@ -1278,7 +1640,7 @@ function pastillasPaises(R) {
     const fila = /^[A-Z]+$/.test(p) && $('chPais').querySelector(`.pais-row.${p}`);
     if (fila) fila.insertAdjacentHTML('beforeend', `<span class="ab-mini-pais" title="${cuantasAb(n)}"><i></i>${fmt(n)}</span>`); else sinFila.push([p, n]);
   });
-  const sinPais = R.filter(r => !r.pais).length;
+  const sinPais = totalAnexos(R.filter(r => !r.pais));
   if (sinFila.length || sinPais) notaAb($('chPais'), [
     ...sinFila.map(([p, n]) => `${cuantasAb(n)} de ${esc(p)}, que no tiene fila en esta gráfica.`),
     ...(sinPais ? [`${cuantasAb(sinPais)} sin país.`] : [])].join(' '));
@@ -1291,16 +1653,16 @@ function pastillasPaises(R) {
 function columnaEnProceso(F, R, porVend) {
   const cont = $('matriz'), tabla = cont.querySelector('table.mx');
   cont.onclick = e => { const b = e.target.closest('[data-ab-vend]'); if (b) abrirRadicaciones(b.dataset.abVend === '*' ? null : b.dataset.abVend); };
-  const celda = (n, v, quien) => n ? `<button type="button" class="ab-pill" data-ab-vend="${esc(v)}" title="Ver ${textoEnProceso(n)} ${esc(quien)}">${fmt(n)}</button>` : '—';
+  const celda = (n, v, quien) => n ? `<button type="button" class="ab-pill" data-ab-vend="${esc(v)}" title="Ver ${cuantasAb(n)} ${esc(quien)}">${fmt(n)}</button>` : '—';
   if (!tabla) {   // sin altas con estos filtros: pintarMatriz dejó «Sin datos»; las que están en proceso igual se dicen
-    if (R.length) notaAb(cont, `No hay altas con estos filtros, pero sí hay ${celda(R.length, '*', 'con estos filtros')} ${R.length === 1 ? 'radicación en proceso' : 'radicaciones en proceso'}.`);
+    if (totalAnexos(R)) notaAb(cont, `No hay altas con estos filtros, pero sí hay ${celda(totalAnexos(R), '*', 'con estos filtros')} ${cuantasAb(totalAnexos(R))}.`);
     return;
   }
   const altasVend = new Set(F.map(r => r.vendedor)), codigo = nombreACodigo([...altasVend]);   // filas de altas: de nombre a código
   const soloRad = Object.keys(porVend).filter(v => !altasVend.has(v))
     .sort((a, b) => porVend[b] - porVend[a] || nomVend(a).localeCompare(nomVend(b)));
   const cab = tabla.querySelector('thead tr'), nMeses = cab.cells.length - 2;   // Ejecutivo + meses + Total
-  cab.insertAdjacentHTML('beforeend', '<th class="n col-ab" title="Radicaciones todavía en proceso (en vivo, API de preofertas). No son altas y no entran en el semáforo.">En proceso</th>');
+  cab.insertAdjacentHTML('beforeend', '<th class="n col-ab" title="Anexos de preofertas todavía en proceso (suma de cantidad). No son altas y no entran en el semáforo.">En proceso</th>');
   const filas = [...tabla.tBodies[0].rows], totFila = filas.find(tr => tr.classList.contains('tot'));
   let suma = 0;
   filas.forEach(tr => {
@@ -1312,15 +1674,16 @@ function columnaEnProceso(F, R, porVend) {
   const guion = '<td class="n muted">—</td>';
   const extra = soloRad.map(v => {
     suma += porVend[v];
-    return `<tr class="fila-sin-altas"><td title="${esc(nomVendCod(v))}">${esc(nomVend(v))} <small class="marca-sin-altas" title="Tiene radicaciones en proceso pero ninguna alta con estos filtros">sin altas</small></td>`
+    return `<tr class="fila-sin-altas"><td>${nombrePerfil(v)} <small class="marca-sin-altas" title="Tiene radicaciones en proceso pero ninguna alta con estos filtros">sin altas</small></td>`
       + guion.repeat(nMeses + 1) + `<td class="n col-ab">${celda(porVend[v], v, 'de ' + nomVend(v))}</td></tr>`;
   }).join('');
   if (!totFila) { tabla.tBodies[0].insertAdjacentHTML('beforeend', extra); return; }
   totFila.insertAdjacentHTML('beforebegin', extra);
   totFila.insertAdjacentHTML('beforeend', `<td class="n col-ab">${celda(suma, '*', 'con estos filtros')}</td>`);
   // El total siempre es la suma de las filas de arriba. Si no coincide con lo filtrado, se explica.
-  if (suma !== R.length) notaAb(cont, `El total de la columna En proceso (${fmt(suma)}) es la suma de las filas y no coincide con las ${cuantasAb(R.length)} con estos filtros: `
-    + (suma < R.length ? `${fmt(R.length - suma)} no se pudieron ubicar en la fila de su ejecutivo.` : `${fmt(suma - R.length)} se cuentan en dos filas porque dos ejecutivos se muestran con el mismo nombre.`)
+  const total = totalAnexos(R);
+  if (suma !== total) notaAb(cont, `El total de la columna En proceso (${fmt(suma)}) es la suma de las filas y no coincide con los ${cuantasAb(total)} con estos filtros: `
+    + (suma < total ? `${fmt(total - suma)} no se pudieron ubicar en la fila de su ejecutivo.` : `${fmt(suma - total)} se cuentan en dos filas porque dos ejecutivos se muestran con el mismo nombre.`)
     + ' Todas están en el Informe detallado, en Radicaciones en proceso.');
 }
 
@@ -1401,7 +1764,7 @@ function pintarInformeRad(R) {
       if (e.origen === 'altas') return `<span title="La API no trae la empresa: nombre tomado de las altas por el código ${esc(r.codigo)}">${esc(e.nombre)}</span>`;
       return r.codigo ? `<span class="muted" title="La API no trae la empresa y el código no está en las altas">Sin nombre · ${esc(r.codigo)}</span>` : '—';
     }
-    if (k === 'vendedor') return `<span title="${esc(nomVendCod(r.vendedor))}${r.pais ? ' · ' + esc(r.pais) : ''}">${esc(nomVend(r.vendedor))}</span>`;
+    if (k === 'vendedor') return nombrePerfil(r.vendedor);
     if (k === 'pais') return r.pais ? `<span class="chip ${esc(r.pais)}">${esc(r.pais)}</span>` : '—';
     if (k === 'cantidad') return r.cantidad == null ? '—' : fmt(r.cantidad);
     if (k === 'etapa') return esc(textoEtapa(r));
@@ -1409,7 +1772,7 @@ function pintarInformeRad(R) {
     if (k === 'vencida') return textoVencida(r.vencida);
     return esc(r[k]) || '—';
   };
-  const vacio = !RAD.data.length ? 'No hay radicaciones en proceso.' : !base.length ? 'No hay radicaciones en proceso con estos filtros.' : 'Ninguna radicación coincide con la búsqueda.';
+  const vacio = !RAD.data.length ? 'No hay preofertas en proceso.' : !base.length ? 'No hay preofertas en proceso con estos filtros.' : 'Ninguna preoferta coincide con la búsqueda.';
   let h = '<table><thead><tr>' + COLS_RAD.map(([, t, n]) => `<th class="${n ? 'n' : ''}">${t}</th>`).join('') + '</tr></thead><tbody>';
   h += L.map(r => `<tr${r.vencida === true ? ' class="fila-vencida"' : ''}>` + COLS_RAD.map(([k, , n]) =>
     `<td class="${[n ? 'n' : '', k === 'vencida' && r.vencida === true ? 'vencida-si' : '', k === 'vencida' && r.vencida == null ? 'muted' : ''].filter(Boolean).join(' ')}">${celda(r, k)}</td>`).join('') + '</tr>').join('');

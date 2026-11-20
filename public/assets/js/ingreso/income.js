@@ -863,7 +863,7 @@ applyCurrency(
 
 function exchangeRateUrl() {
   // El dashboard no se sirve desde Render, así que la ruta relativa daba 404.
-  return 'https://excel-parser-m9q8.onrender.com/api/tipo-cambio';
+  return 'https://excel-parser-ljgb.onrender.com/api/tipo-cambio';
 }
 
 async function loadExchangeRate(forceRender = true) {
@@ -965,14 +965,16 @@ const round2 = v => Math.round((Number(v) + Number.EPSILON) * 100) / 100;
 const txKey = (bankKey, account) => `${bankKey}|${account}`;
 
 let TX_BY_ACCOUNT = {};
-let MIN_DATE = '';
+// Fecha inicial fija del histórico disponible: no permitir consultar antes del 30/09/2026.
+const FECHA_INICIO_HISTORICO = '2026-09-30';
+let MIN_DATE = FECHA_INICIO_HISTORICO;
 let MAX_DATE = '';
 
 function rebuildTransactionIndex() {
   TX_BY_ACCOUNT = {};
   RAW_TRANSACTIONS.forEach(t => { (TX_BY_ACCOUNT[txKey(t.bankKey, t.account)] ||= []).push(t) });
   Object.values(TX_BY_ACCOUNT).forEach(arr => arr.sort((a, b) => a.row - b.row));
-  MIN_DATE = RAW_TRANSACTIONS.reduce((m, t) => !m || t.date < m ? t.date : m, '');
+  MIN_DATE = FECHA_INICIO_HISTORICO;
   MAX_DATE = RAW_TRANSACTIONS.reduce((m, t) => !m || t.date > m ? t.date : m, '');
 }
 
@@ -2517,12 +2519,10 @@ function renderCountryUpdated() {
 const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-// excel-parser escribe generatedAt en hora UTC y sin avisar que lo es: el lote
-// que Make entregó a las 13:58 en Guatemala quedó guardado como "19:59". Si se
-// leyera como hora local la pastilla adelantaba 6 horas. Aquí se interpreta
-// como UTC para que el navegador la lleve a la hora del equipo que mira.
-// Si algún día el microservicio pase a guardar hora local, basta con poner
-// esto en false.
+// excel-parser escribe generatedAt en UTC y sin indicar la zona horaria.
+// Se interpreta como UTC y se presenta siempre en America/Guatemala,
+// independientemente de la zona configurada en el navegador.
+// Si el microservicio cambia a hora local, habrá que ajustar esta conversión.
 const GENERATED_AT_ES_UTC = true;
 
 function parseGeneratedAt(valor) {
@@ -2550,15 +2550,24 @@ function parseGeneratedAt(valor) {
   return isNaN(fecha) ? null : fecha;
 }
 
+const ZONA_HORARIA_DASHBOARD = 'America/Guatemala';
+
 function fechaLargaEs(fecha) {
-  return `${fecha.getDate()} de ${MESES_LARGOS[fecha.getMonth()]} de ${fecha.getFullYear()}`;
+  return new Intl.DateTimeFormat('es-GT', {
+    timeZone: ZONA_HORARIA_DASHBOARD,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(fecha);
 }
 
 function hora12Es(fecha) {
-  const horas = fecha.getHours();
-  const h12 = horas % 12 || 12;
-  const sufijo = horas < 12 ? 'a. m.' : 'p. m.';
-  return `${h12}:${String(fecha.getMinutes()).padStart(2, '0')} ${sufijo}`;
+  return new Intl.DateTimeFormat('es-GT', {
+    timeZone: ZONA_HORARIA_DASHBOARD,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  }).format(fecha);
 }
 
 function ultimaGeneracionData() {
@@ -2580,12 +2589,51 @@ function ultimaGeneracionData() {
   return masReciente([regional.GUATEMALA, regional.EL_SALVADOR, base]);
 }
 
+// Devuelve la fecha calendario del mismo generatedAt que utiliza la pastilla
+// "Actualizado", expresada en la zona horaria oficial del dashboard.
+// No depende de la fecha del último movimiento bancario.
+function fechaISOEnZonaDashboard(fecha) {
+  if (!(fecha instanceof Date) || Number.isNaN(fecha.getTime())) return '';
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONA_HORARIA_DASHBOARD,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(fecha);
+  const valores = Object.fromEntries(partes.map(parte => [parte.type, parte.value]));
+  return `${valores.year}-${valores.month}-${valores.day}`;
+}
+
+function fechaMaximaCalendario() {
+  const generatedAt = ultimaGeneracionData();
+  return generatedAt ? fechaISOEnZonaDashboard(generatedAt) : MAX_DATE;
+}
+
+function actualizarLimitesCalendario() {
+  if (!dateFrom || !dateTo) return;
+
+  const maxCalendario = fechaMaximaCalendario() || MAX_DATE;
+  dateFrom.min = MIN_DATE;
+  dateTo.min = dateFrom.value || MIN_DATE;
+  dateTo.max = maxCalendario;
+  dateFrom.max = dateTo.value || maxCalendario;
+
+  if (dateTo.value && maxCalendario && dateTo.value > maxCalendario) {
+    dateTo.value = maxCalendario;
+  }
+  if (dateFrom.value && dateTo.value && dateFrom.value > dateTo.value) {
+    dateFrom.value = dateTo.value;
+  }
+  dateFrom.max = dateTo.value || maxCalendario;
+}
+
 function renderDataSyncPill() {
   const pill = document.getElementById('dataSyncPill');
   const texto = document.getElementById('dataSyncText');
   if (!pill || !texto) return;
 
   const cuando = ultimaGeneracionData();
+  actualizarLimitesCalendario();
 
   // Sin marca del robot no se promete nada: la pastilla se oculta en vez de
   // decir "recién actualizado" con la hora del navegador.
@@ -2600,17 +2648,20 @@ function renderDataSyncPill() {
   // texto según de dónde salió lo que se está viendo.
   const estados = {
     vivo: { clase: '', texto: `Actualizado: ${fecha}` },
-    snapshot: { clase: 'is-backup', texto: `Actualizado: ${fecha} · respaldo` },
-    quemado: { clase: 'is-offline', texto: `Sin conexión · data del ${fecha}` }
+    snapshot: { clase: '', texto: `Actualizado: ${fecha}` },
+    publicado: { clase: '', texto: `Actualizado: ${fecha}` },
+    // Compatibilidad con versiones anteriores: si solo hay datos incorporados
+    // en el HTML, se muestra su fecha real y no una falsa alerta de conexión.
+    quemado: { clase: '', texto: `Actualizado: ${fecha}` }
   };
   const estado = estados[ORIGEN_DATA] || estados.vivo;
 
   pill.classList.remove('is-backup', 'is-offline');
   if (estado.clase) pill.classList.add(estado.clase);
   texto.textContent = estado.texto;
-  pill.title = ORIGEN_DATA === 'vivo'
-    ? 'Fecha y hora en que Make/excel-parser generó la data del dashboard'
-    : 'La API no respondió; se muestra el último lote guardado en el microservicio';
+  pill.title = ORIGEN_DATA === 'publicado' || ORIGEN_DATA === 'quemado'
+    ? 'Fecha y hora del último lote procesado y publicado por Make en este dashboard'
+    : 'Fecha y hora del último lote recibido desde Excel Parser';
   pill.hidden = false;
 }
 
@@ -2620,11 +2671,12 @@ const periodFilter = document.getElementById('periodFilter');
 
 if (dateFrom && dateTo) {
   dateFrom.min = MIN_DATE;
-  dateFrom.max = MAX_DATE;
   dateTo.min = MIN_DATE;
-  dateTo.max = MAX_DATE;
+  dateTo.max = fechaMaximaCalendario() || MAX_DATE;
+  dateFrom.max = dateTo.max;
   dateFrom.value = MIN_DATE;
-  dateTo.value = MAX_DATE;
+  dateTo.value = dateTo.max;
+  actualizarLimitesCalendario();
 }
 
 function syncPeriodFilterVisibility(target) {
@@ -2635,8 +2687,7 @@ function syncPeriodFilterVisibility(target) {
 
 function syncDateLimits() {
   if (!dateFrom || !dateTo) return;
-  dateFrom.max = dateTo.value || MAX_DATE;
-  dateTo.min = dateFrom.value || MIN_DATE;
+  actualizarLimitesCalendario();
 }
 
 function applyCurrentDateFilter(showAlert = true) {
@@ -2686,7 +2737,7 @@ document.getElementById('applyDateFilter')?.addEventListener('click', () => appl
 document.getElementById('resetDateFilter')?.addEventListener('click', () => {
   if (!dateFrom || !dateTo) return;
   dateFrom.value = MIN_DATE;
-  dateTo.value = MAX_DATE;
+  dateTo.value = fechaMaximaCalendario() || MAX_DATE;
   syncDateLimits();
   applyCurrentDateFilter(false);
 });
@@ -2711,13 +2762,14 @@ function initializeIncomeDashboard() {
     window.DASHBOARD_RAW_TRANSACTIONS = RAW_TRANSACTIONS;
     rebuildTransactionIndex();
 
-    if (dateFrom && dateTo && MIN_DATE && MAX_DATE) {
+    if (dateFrom && dateTo && MIN_DATE) {
       dateFrom.min = MIN_DATE;
-      dateFrom.max = MAX_DATE;
       dateTo.min = MIN_DATE;
-      dateTo.max = MAX_DATE;
+      dateTo.max = fechaMaximaCalendario() || MAX_DATE;
+      dateFrom.max = dateTo.max;
       dateFrom.value = MIN_DATE;
-      dateTo.value = MAX_DATE;
+      dateTo.value = dateTo.max;
+      actualizarLimitesCalendario();
     }
 
     DATA = buildFiltered(dateFrom?.value || MIN_DATE, dateTo?.value || MAX_DATE);
@@ -3339,86 +3391,28 @@ function toggleFullscreen() { document.fullscreenElement ? document.exitFullscre
 window.COUNTRY_CURRENCY_VIEW = COUNTRY_CURRENCY_VIEW;
 
 
-const API_URL = "https://excel-parser-m9q8.onrender.com/data.json";
-// Render en plan gratuito duerme y tarda hasta ~60 s en despertar. Con 60 s el
-// aborto caía justo en el borde del despertar y el dashboard se quedaba con el
-// lote quemado en el HTML: se sube a 120 s, igual que usa actualizar-snapshot.mjs.
-const API_TIMEOUT_MS = 120000;
-// Respaldo sin credenciales que el microservicio expone con el último lote que
-// Make subió. Si `data.json` no responde (Render dormido o caído), el dashboard
-// se sirve de aquí en vez de enseñar la data quemada del HTML.
-const SNAPSHOT_URL = "https://excel-parser-m9q8.onrender.com/snapshot.json";
+// Consulta el snapshot consolidado que publica Excel Parser después de finalizar
+// cada lote de Guatemala y El Salvador. No incluir claves de API en el navegador.
+// ADVERTENCIA: el snapshot es público; proteger el acceso antes de usar datos
+// bancarios confidenciales en un despliegue público.
+const SNAPSHOT_URL = "https://excel-parser-ljgb.onrender.com/snapshot.json";
 const DASHBOARD_DATA_REFRESH_MS = 5 * 60 * 1000;
 let dashboardDataRefreshTimer = null;
 let dashboardDataLoading = false;
 let dashboardDataLoadedAt = 0;   // última consulta a la API (para no repetirla al volver a la pestaña
 
 // De dónde salió la data que se está viendo, para no presentarla como fresca:
-//   'vivo'    → vino de data.json con la API key
-//   'snapshot'→ vino de snapshot.json (la API con key no respondió)
-//   'quemado' → ni la API ni el snapshot respondieron: se quedó lo del HTML
-let ORIGEN_DATA = 'quemado';
+//   'snapshot'→ vino del snapshot publicado por Excel Parser
+//   'quemado' → el snapshot no respondió: se quedó lo del HTML
+let ORIGEN_DATA = 'publicado';
 
 function setOrigenData(origen) {
   ORIGEN_DATA = origen;
   renderDataSyncPill();
 }
 
-const API_KEY = "REd_1ntE1f0n-0654dfvsdf2214dfAD6F54a6d5F16v5a1s1asd6fa51WRef";
-
-
-async function obtenerDashboard() {
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
-  const requestUrl = `${API_URL}?_=${Date.now()}`;
-
-    try {
-
-    const response = await fetch(requestUrl, {
-            method: "GET",
-            headers: {
-                "X-API-Key": API_KEY
-      },
-      signal: controller.signal,
-      cache: 'no-store'
-        });
-
-
-        if (!response.ok) {
-            throw new Error(
-                "Error API: " + response.status
-            );
-        }
-
-
-        const data = await response.json();
-
-        console.log("Datos recibidos:", data);
-
-
-        return data;
-
-
-    } catch(error) {
-
-      const reason = error.name === 'AbortError'
-        ? `tiempo de espera agotado (${API_TIMEOUT_MS / 1000}s)`
-        : error.message;
-      console.warn("No se pudo actualizar el dashboard; se conservan los datos quemados:", reason);
-
-    } finally {
-      clearTimeout(timeout);
-    }
-
-}
-
-// Respaldo sin credenciales que sirve el propio microservicio con el último
-// lote que Make subió. Si `data.json` no responde (Render dormido o caído), el
-// dashboard se sirve de aquí en vez de enseñar la data quemada del HTML.
-// El tiempo de espera es corto a propósito: si la API con key ya agotó sus
-// 120 s, el servicio está caído y no vale la pena esperar otros dos minutos.
-async function obtenerSnapshotPublico(timeoutMs = 45000) {
+// Carga el último lote consolidado, verificando que no venga vacío.
+async function obtenerSnapshotPublico(timeoutMs = 120000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -3493,13 +3487,16 @@ function aplicarDatosDashboard(data) {
   window.DASHBOARD_RAW_TRANSACTIONS = RAW_TRANSACTIONS;
   rebuildTransactionIndex();
 
-  if (dateFrom && dateTo && MIN_DATE && MAX_DATE && !USER_CHANGED_PERIOD) {
+  if (dateFrom && dateTo && MIN_DATE && !USER_CHANGED_PERIOD) {
     dateFrom.min = MIN_DATE;
-    dateFrom.max = MAX_DATE;
     dateTo.min = MIN_DATE;
-    dateTo.max = MAX_DATE;
+    dateTo.max = fechaMaximaCalendario() || MAX_DATE;
+    dateFrom.max = dateTo.max;
     dateFrom.value = MIN_DATE;
-    dateTo.value = MAX_DATE;
+    dateTo.value = dateTo.max;
+    actualizarLimitesCalendario();
+  } else {
+    actualizarLimitesCalendario();
   }
 
   // Reprocesar con buildFiltered para que KPIs, cuentas, resumen diario y
@@ -3530,33 +3527,23 @@ async function cargarDatosAPI(){
     try {
       // 1) Data quemada en el HTML (inmediata, sin consultar nada).
       aplicarDataQuemada();
-      setOrigenData('quemado');
+      setOrigenData('publicado');
 
-      // 2) Data en vivo de Make/excel-parser.
-      let data = await obtenerDashboard();
-      let origen = hasUsableBankData(data) ? 'vivo' : null;
-
-      // 3) Si la API con key no respondió (Render dormido o caído), se cae al
-      //    snapshot público del microservicio. El HTML quemado queda como
-      //    último recurso y la pastilla avisa que no es data en vivo.
-      if (!origen) {
-        const desdeSnapshot = await obtenerSnapshotPublico();
-        if (hasUsableBankData(desdeSnapshot)) {
-          data = desdeSnapshot;
-          origen = 'snapshot';
-        }
-      }
+      // 2) Consultar la fuente consolidada actualizada de Excel Parser.
+      //    Si falla, conservar los datos incorporados en el HTML.
+      const data = await obtenerSnapshotPublico();
+      const origen = hasUsableBankData(data) ? 'snapshot' : null;
 
       if (!origen) {
-        setOrigenData('quemado');
+        setOrigenData('publicado');
         console.warn("La API no devolvio datos bancarios validos; se conserva la ultima data buena");
         return;
       }
 
-      // 4) Solo se reemplaza lo que venga con datos; el resto se conserva.
+      // 3) Solo se reemplaza lo que venga con datos; el resto se conserva.
       const combinado = combinarDashboardData(LAST_GOOD_DASHBOARD_DATA, data);
       if (!combinado) {
-        setOrigenData('quemado');
+        setOrigenData('publicado');
         console.warn("No fue posible combinar los datos; se conserva la ultima data buena");
         return;
       }
