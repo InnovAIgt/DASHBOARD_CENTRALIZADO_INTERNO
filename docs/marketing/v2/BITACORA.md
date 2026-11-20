@@ -2,6 +2,12 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-20 · Reglas permanentes del repositorio
+
+- Se creó `CLAUDE.md` en la raíz con las reglas permanentes: español y explicaciones sencillas, plan y «sí» antes de
+  cambiar, Git (sin `main`, sin push/merge/PR sin pedirlo, sin `-D`/`reset --hard`/borrar stash), Supabase solo con
+  permiso, llaves y datos privados, qué no tocar y cómo documentar Marketing v2.
+
 ## 2026-11-20 · MAILING.md contra los criterios oficiales
 
 - Se comparó MAILING.md con los criterios oficiales (`criterios_mailing.txt`) y con la plantilla HTML anterior
