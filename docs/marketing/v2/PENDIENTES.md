@@ -13,6 +13,7 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Enlace «IR A CORREGIR» desactualizado; el correcto es https://cumplimientoclientes-88n2.onrender.com | Ismael | Por confirmar | Pendiente |
 | Definición de «lectura» e indicadores de Redes | Ingeniero | Por confirmar | Pendiente |
 | Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
+| Explicar a Marketing las diferencias de clasificación con la plantilla (MAILING.md, sección 9) | Ismael / Laura | Por confirmar | Pendiente |
 | Quitar de Vercel las 4 variables viejas | Keily / TI | Al publicar | Pendiente |
 
 Las 4 variables viejas (solo nombres): `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`,
