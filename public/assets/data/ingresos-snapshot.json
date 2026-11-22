@@ -1,7 +1,7 @@
 {
   "_snapshot": {
     "descripcion": "Data quemada compartida del dashboard de Ingresos. Se actualiza sola al procesar un Excel en Make. No editar a mano.",
-    "actualizado_en": "2026-11-21T14:02:45",
+    "actualizado_en": "2026-11-22T14:02:38",
     "origen": "excel-parser / Make",
     "publicado_por": "publicar_snapshot_ingresos",
     "api": "https://excel-parser-m9q8.onrender.com/data.json",
@@ -24,9 +24,9 @@
           }
         ],
         "currency": "GTQ",
-        "file": "Lote 20261121080151 - 2 archivos",
+        "file": "Lote 20261122080148 - 2 archivos",
         "fileCut": "17/11/2026",
-        "generatedAt": "21/11/2026 14:02",
+        "generatedAt": "22/11/2026 14:02",
         "latestMovement": "17/11/2026",
         "mixedCountries": false,
         "movementCount": 444
@@ -9017,9 +9017,9 @@
           }
         ],
         "currency": "USD",
-        "file": "Lote 20261121080151 - 2 archivos",
+        "file": "Lote 20261122080148 - 2 archivos",
         "fileCut": "20/11/2026",
-        "generatedAt": "21/11/2026 14:02",
+        "generatedAt": "22/11/2026 14:02",
         "latestMovement": "20/11/2026",
         "mixedCountries": false,
         "movementCount": 492
@@ -37639,7 +37639,7 @@
     }
   },
   "meta": {
-    "file": "Lote 20261121080151 - 2 archivos",
+    "file": "Lote 20261122080148 - 2 archivos",
     "fileCut": "20/11/2026",
     "latestMovement": "20/11/2026",
     "currency": "MULTI",
@@ -37665,7 +37665,7 @@
         "currency": "USD"
       }
     ],
-    "generatedAt": "21/11/2026 14:02"
+    "generatedAt": "22/11/2026 14:02"
   },
   "totals": {
     "initial": 2611170.03,
