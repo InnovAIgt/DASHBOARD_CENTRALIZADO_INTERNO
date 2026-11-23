@@ -76,7 +76,11 @@
   display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 9px;
   background: var(--fv2-elevado); color: var(--fv2-texto); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s;
 }
-.mkv2 .mkv2-chip-pais:hover { border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-chip-pais:hover:not(:disabled) { border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-chip-pais:disabled { cursor: not-allowed; }
+/* País desactivado (Resultados generales y Cargo y objetivo): se ve en gris y conserva lo elegido */
+.mkv2 .mkv2-barra-grupo.is-inactivo { opacity: .45; filter: grayscale(.6); }
+.mkv2 .mkv2-barra-nota { font-size: 11.5px; color: var(--fv2-tenue); }
 .mkv2 .mkv2-chip-pais.is-activo { background: var(--mkv2-duro); border-color: var(--mkv2-duro); color: #fff; box-shadow: 0 6px 16px rgba(201, 54, 75, .35); }
 .mkv2 .mkv2-barra-periodo { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--fv2-texto); }
 .mkv2 .mkv2-fecha { min-width: 150px; padding: 7px 12px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 9px; background: var(--fv2-tarjeta); color: var(--fv2-texto); font: inherit; font-size: 13px; font-weight: 600; color-scheme: dark; }

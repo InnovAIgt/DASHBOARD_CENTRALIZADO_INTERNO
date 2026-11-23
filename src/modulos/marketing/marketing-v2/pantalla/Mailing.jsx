@@ -16,7 +16,7 @@ import { CompararCampanas } from './mailing/Comparar.jsx'
 import { AsignarCargo } from './mailing/Cargos.jsx'
 import { RelacionConClientes } from './mailing/Clientes.jsx'
 import { CorreosPorCorregir, DetallePorCorreo } from './mailing/Correos.jsx'
-import { BarraFiltros, ID_BOTON_PDF } from './mailing/BarraFiltros.jsx'
+import { BarraFiltros, ID_BOTON_PDF, TEXTO_PAIS_INACTIVO } from './mailing/BarraFiltros.jsx'
 import { ResultadosGenerales } from './mailing/Generales.jsx'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 
@@ -58,8 +58,10 @@ export function Mailing({ sub, onSub }) {
     corregir: cuentas.corregir != null ? `${numero(cuentas.corregir)} direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña)` : undefined,
     clientes: cuentas.clientes != null ? `${numero(cuentas.clientes)} filas (correo + campaña)` : undefined,
   }
-  const porCliente = !!(filtros.pais || filtros.cliente)
   const vistaPorCorreo = ['corregir', 'detalle', 'clientes'].includes(actual)
+  // País: solo en las vistas por correo y en Campañas («Por comercial»); en las demás se ve desactivado y se conserva.
+  const paisActivo = vistaPorCorreo || actual === 'comparar'
+  const porCliente = Boolean(filtros.cliente) && !paisActivo
 
   // Navegación: un clic en una pestaña quita el foco; «abrir» lo pone y cambia de pestaña.
   const irA = (key) => { setFoco(null); onSub(key) }
@@ -71,7 +73,7 @@ export function Mailing({ sub, onSub }) {
   const campanaElegida = filtros.campana ? datos.campanas.find((c) => String(c.id) === String(filtros.campana)) : null
   const dia = (iso) => fechaCorta(`${iso}T12:00:00`)
   const etiquetas = [
-    filtros.pais && { quitar: { pais: '' }, texto: `País: ${filtros.pais}` },
+    filtros.pais && { quitar: { pais: '' }, texto: `País: ${filtros.pais}${paisActivo ? '' : ' (no aplica aquí)'}`, tip: paisActivo ? undefined : TEXTO_PAIS_INACTIVO },
     (filtros.desde || filtros.hasta) && { quitar: { desde: '', hasta: '' }, texto: `Período: ${filtros.desde ? dia(filtros.desde) : 'inicio'} – ${filtros.hasta ? dia(filtros.hasta) : 'hoy'}` },
     filtros.campana && { quitar: { campana: '' }, texto: textosCampana(campanaElegida, filtros.campana).corto, tip: textosCampana(campanaElegida, filtros.campana).tip },
     filtros.cargo && { quitar: { cargo: '' }, texto: NOMBRE_CARGO[filtros.cargo] && filtros.cargo !== NOMBRE_CARGO[filtros.cargo] ? `${filtros.cargo} · ${NOMBRE_CARGO[filtros.cargo]}` : filtros.cargo },
@@ -115,7 +117,7 @@ export function Mailing({ sub, onSub }) {
   }, [datos.cargando])
 
   return <div className="mkv2-mailing" {...globo.manejadores}>
-    <BarraFiltros filtros={filtros} cambiar={setFiltros} opciones={opciones} ocultas={ocultas} pdfListo={pdfListo} />
+    <BarraFiltros filtros={filtros} cambiar={setFiltros} opciones={opciones} ocultas={ocultas} pdfListo={pdfListo} paisActivo={paisActivo} />
 
     <nav className="mkv2-subpestanas" role="tablist" aria-label="Secciones de Mailing">
       {SUBPESTANAS_MAILING.map((p) => <button type="button" key={p.key} role="tab" aria-selected={actual === p.key}
@@ -145,8 +147,8 @@ export function Mailing({ sub, onSub }) {
 
     {!datos.cargando && !datos.error && <>
       {datos.avisos.map((a) => <Aviso key={a} titulo="Aviso" texto={a} />)}
-      {porCliente && !vistaPorCorreo && <Aviso icono="info" titulo="País y Cliente aplican a las vistas por correo"
-        texto="Estos totales vienen de Brevo y no se pueden separar por país ni por cliente. Mira Correos por corregir, Detalle por correo o Relación con clientes." />}
+      {porCliente && <Aviso icono="info" titulo="Buscar empresa / cliente aplica a las vistas por correo"
+        texto="Estos totales vienen de Brevo y no se pueden separar por cliente. Mira Correos por corregir, Detalle por correo, Relación con clientes o «Por comercial» en Campañas." />}
       {datos.detalle?.cruce && datos.detalle.cruce !== 'ok' && vistaPorCorreo && <Aviso titulo="Cliente, País y Ejecutivo no disponibles" texto={datos.detalle.avisoCruce} />}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
         detalle={detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}

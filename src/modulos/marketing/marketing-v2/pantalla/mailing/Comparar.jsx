@@ -67,7 +67,7 @@ function Rendimiento({ lista, pequenas, incluir, setIncluir, resumen, metricaIni
   ]
 
   return <Tarjeta titulo={ganadora ? `${m.titulo}: «${textosCampana(ganadora).titulo}» (${pct(valor(ganadora))})` : m.titulo}
-    sub="Una barra por campaña, de mayor a menor · clic para ver solo esa campaña"
+    sub="Una barra por campaña, de mayor a menor · clic para ver solo esa campaña · Totales de Brevo: no se separan por país"
     acciones={<div className="mkv2-segmento" role="tablist" aria-label="Comparar por">
       {Object.entries(METRICAS).map(([k, v]) => <button key={k} type="button" role="tab" aria-selected={metrica === k}
         className={metrica === k ? 'is-activo' : ''} onClick={() => setMetrica(k)}>{v.boton}</button>)}

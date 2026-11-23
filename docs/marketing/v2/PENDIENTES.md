@@ -44,6 +44,7 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
 | Explicar a Marketing las diferencias de clasificación con la plantilla (MAILING.md, sección 9) | Ismael / Laura | Por confirmar | Pendiente |
 | Rediseño de la pestaña Mailing como la referencia visual negra (5 pasos: estilos y tarjetas, gráficas, comparar, correos por corregir con ventana y correo con diseño, detalle y clientes) | Keily | 2026-11-23 | En curso: pasos 1 y 2, Correos por corregir y Comparar hechos (commits); asunto arriba, Comparar como la maqueta, barra de filtros, PDF y tarjetas compactas listos, esperando la revisión de Keily |
+| Preguntar a Ismael si la campaña #74 fue solo para El Salvador (de 169 destinatarios, 146 son de clientes de SV y solo 2 de GT) | Ismael | 2026-11-23 | Pendiente |
 | Decidir dónde se guarda el cargo elegido por campaña (Supabase u otro) | Keily | — | Pendiente |
 | Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
 | Preguntar a Eduardo si el estado «Sin confirmación» se quita del dashboard o se deja (en la reunión dijo que no debería existir) | Eduardo | Por confirmar | Pendiente |

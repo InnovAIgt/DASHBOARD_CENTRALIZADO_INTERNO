@@ -10,24 +10,27 @@ import { FILTROS_INICIALES, NOMBRE_CARGO, OPCIONES_CARGO, SIN_CLASIFICAR } from 
 import { textosCampana } from '../../datos/campana.js'
 
 export const ID_BOTON_PDF = 'mkv2-boton-pdf'
+export const TEXTO_PAIS_INACTIVO = 'Los totales de Brevo no se separan por país'
 const NOTA_CLIENTES = 'Sale del cruce con Cumplimiento de Clientes: aplica a Correos por corregir, Detalle por correo y Relación con clientes (los totales de Brevo no se separan por país).'
 
-export function BarraFiltros({ filtros, cambiar, opciones, ocultas, pdfListo }) {
+/** paisActivo: solo en las vistas que se pueden separar por país (por correo y «Por comercial»); si no, se ve desactivado. */
+export function BarraFiltros({ filtros, cambiar, opciones, ocultas, pdfListo, paisActivo = true }) {
   const [abierto, setAbierto] = useState(false)
   const poner = (clave) => (e) => cambiar({ ...filtros, [clave]: e.target.value })
   const enPanel = [filtros.campana, filtros.cargo, filtros.asunto, filtros.cliente].filter(Boolean).length + (filtros.mostrarPrueba ? 1 : 0)
   const hayFiltros = Object.keys(FILTROS_INICIALES).some((k) => filtros[k] !== FILTROS_INICIALES[k])
-  const pais = (valor, contenido) => <button type="button" className={`mkv2-chip-pais ${filtros.pais === valor ? 'is-activo' : ''}`}
-    aria-pressed={filtros.pais === valor} onClick={() => cambiar({ ...filtros, pais: valor })} data-tip={NOTA_CLIENTES}>{contenido}</button>
+  const pais = (valor, contenido) => <button type="button" className={`mkv2-chip-pais ${filtros.pais === valor ? 'is-activo' : ''}`} disabled={!paisActivo}
+    aria-pressed={filtros.pais === valor} onClick={() => cambiar({ ...filtros, pais: valor })} data-tip={paisActivo ? NOTA_CLIENTES : TEXTO_PAIS_INACTIVO}>{contenido}</button>
 
   return <section className="mkv2-barra" aria-label="Filtros de Mailing">
     <div className="mkv2-barra-fila">
-      <div className="mkv2-barra-grupo">
+      <div className={`mkv2-barra-grupo ${paisActivo ? '' : 'is-inactivo'}`} data-tip={paisActivo ? undefined : TEXTO_PAIS_INACTIVO}>
         <span className="mkv2-barra-etiqueta">País cliente</span>
         {pais('', 'Todos')}
         {pais('GT', <><Bandera pais="GT" />GT</>)}
         {pais('SV', <><Bandera pais="SV" />SV</>)}
       </div>
+      <span className="mkv2-barra-nota">{paisActivo ? 'Los correos sin identificar no tienen país y no aparecen al filtrar.' : `${TEXTO_PAIS_INACTIVO}: el país no aplica en esta pestaña.`}</span>
     </div>
     <div className="mkv2-barra-fila">
       <div className="mkv2-barra-grupo">

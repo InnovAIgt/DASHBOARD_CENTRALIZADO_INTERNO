@@ -2,6 +2,15 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Mailing: filtro de País solo donde se puede separar
+
+- Revisión (solo conteos): #75 y #76 se mandaron a GT y SV juntos (≈ un tercio GT, dos tercios SV); la #74 es casi
+  solo de El Salvador (146 SV, 2 GT); entre 11 % y 16 % de cada campaña real queda sin identificar (sin país).
+- El filtro de País queda activo solo en Correos por corregir, Detalle por correo, Relación con clientes y Campañas
+  (para «Por comercial»); en Resultados generales y Cargo y objetivo se ve desactivado con el globo «Los totales de
+  Brevo no se separan por país» y lo elegido se conserva. Nota bajo el filtro: los correos sin identificar no tienen
+  país. Los posibles por dominio siguen entrando al filtrar (en ámbar), por decisión de Keily.
+
 ## 2026-11-23 · Mailing: barra de filtros como Facturación, PDF y tarjetas compactas
 
 - Barra de filtros con el estilo de la de Facturación (`facturacion-linea.html`, solo se leyó; es una página suelta, no
