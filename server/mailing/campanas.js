@@ -39,7 +39,10 @@ export function limpiarAsunto(asunto) {
 /** Una campaña de Brevo → fila del dashboard (solo campos sin datos personales). */
 export function filaCampana(c, cargosManuales = new Map()) {
   const { codigo, cargo: cargoSugerido, sector } = cargoDesdeNombre(c.name)
-  const cargoManual = cargosManuales.get(Number(c.id)) ?? null
+  // Lo elegido a mano (mkt_campana_cargo): {cargo, objetivo}; también acepta solo el cargo (texto).
+  const manual = cargosManuales.get(Number(c.id)) ?? null
+  const cargoManual = (typeof manual === 'string' ? manual : manual?.cargo) ?? null
+  const objetivoManual = typeof manual === 'object' && manual ? manual.objetivo ?? null : null
   const totales = totalesDesdeBrevo(c.statistics?.globalStats)
   return {
     id: Number(c.id),
@@ -51,6 +54,7 @@ export function filaCampana(c, cargosManuales = new Map()) {
     sector,
     cargoSugerido,
     cargoManual,
+    objetivoManual,
     cargo: cargoFinal(cargoManual, cargoSugerido),
     esPrueba: esCampanaPrueba(c.name),
     totales,

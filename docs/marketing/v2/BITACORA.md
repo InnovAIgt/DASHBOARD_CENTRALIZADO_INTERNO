@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Campañas, parte 4: «Cargo y objetivo»
+
+- La sub-pestaña «Asignar cargo» pasa a «Cargo y objetivo»: cargo (sugerido por el nombre) y objetivo (los 8 de Keily
+  + «Promoción general de RED», y se puede escribir uno nuevo), cada uno con su estado Sugerido / Revisar /
+  Confirmado; lo elegido a mano gana. «Guardar» sigue deshabilitado hasta el inicio de sesión real.
+- SQL 004 (`docs/marketing/v2/sql/004_objetivo_campana.sql`, lo corre Keily): objetivo como TEXTO LIBRE, cargo deja de
+  ser obligatorio y cada fila debe tener cargo u objetivo. El servidor ya lee el objetivo y, mientras el SQL no se
+  corra, sigue leyendo solo el cargo.
+- Revisión con los datos reales (31 campañas enviadas, sin pruebas): 22 objetivos salen del asunto y 9 del nombre;
+  ninguna necesitó el contenido ni quedó en «Revisar». Los nombres con «CON COSTO» / «SIN COSTO» caen en «Reducir
+  costos operativos» cuando el asunto no coincide (por revisar con Ismael).
+
 ## 2026-11-23 · Campañas, parte 3: detalle de un ejecutivo
 
 - Acordeón de «Por comercial» como la maqueta del ejecutivo desplegado: 4 números (enviados a su cartera, entrega,

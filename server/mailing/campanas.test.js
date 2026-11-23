@@ -144,13 +144,20 @@ test('responderCampanas: si fallan los cargos manuales, sigue con el sugerido y 
   assert.match(datos.avisos[0], /cargos elegidos a mano/)
 })
 
-test('leerCargosManuales: solo campana_id y cargo, con la llave en el encabezado', async () => {
+test('leerCargosManuales: campana_id, cargo y objetivo, con la llave en el encabezado; sin la columna objetivo, solo cargo', async () => {
   const llamadas = []
-  const fetchFn = async (url, opciones) => { llamadas.push({ url, opciones }); return Response.json([{ campana_id: 5, cargo: 'GF' }]) }
+  const fetchFn = async (url, opciones) => { llamadas.push({ url, opciones }); return Response.json([{ campana_id: 5, cargo: 'GF', objetivo: 'Promover el dashboard de rondas' }]) }
   const env = { MKT_SUPABASE_URL: 'https://proyecto-inventado.supabase.co', MKT_SUPABASE_SECRET_KEY: 'llave-inventada' }
   const cargos = await leerCargosManuales({ env, fetchFn })
-  assert.equal(cargos.get(5), 'GF')
-  assert.equal(llamadas[0].url, 'https://proyecto-inventado.supabase.co/rest/v1/mkt_campana_cargo?select=campana_id,cargo')
+  assert.deepEqual(cargos.get(5), { cargo: 'GF', objetivo: 'Promover el dashboard de rondas' })
+  assert.equal(llamadas[0].url, 'https://proyecto-inventado.supabase.co/rest/v1/mkt_campana_cargo?select=campana_id,cargo,objetivo')
+  // Antes del SQL 004: la columna no existe (HTTP 400) → se vuelve a pedir solo el cargo.
+  const antes = []
+  const viejo = await leerCargosManuales({ env, fetchFn: async (url) => { antes.push(url); return url.includes('objetivo') ? new Response('', { status: 400 }) : Response.json([{ campana_id: 6, cargo: 'GO' }]) } })
+  assert.deepEqual(viejo.get(6), { cargo: 'GO', objetivo: null })
+  assert.equal(antes.length, 2)
+  assert.equal(filaCampana(campana(6), viejo).cargoManual, 'GO')
+  assert.equal(filaCampana(campana(5), cargos).objetivoManual, 'Promover el dashboard de rondas')
   assert.equal(llamadas[0].opciones.headers.apikey, 'llave-inventada')
   await assert.rejects(leerCargosManuales({ env, fetchFn: async () => new Response('', { status: 401 }) }), /HTTP 401/)
 })

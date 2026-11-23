@@ -646,6 +646,13 @@
 .mkv2 .mkv2-det-lista li.is-gris { color: var(--fv2-tenue); }
 .mkv2 .mkv2-det-motivo { margin: 5px 0 0 10px; font-size: 11px; color: var(--fv2-tenue); }
 .mkv2 .mkv2-det-leads { margin: 0 0 0 auto; align-self: center; }
+/* Cargo y objetivo: selector + de dónde salió, y estado (Sugerido / Revisar / Confirmado) */
+.mkv2 .mkv2-cargo-celda { display: grid; gap: 4px; min-width: 0; }
+.mkv2 .mkv2-cargo-celda small { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-celda-objetivo { min-width: 240px; }
+.mkv2 .mkv2-celda-objetivo .mkv2-control { height: 32px; }
+.mkv2 .mkv2-estado-celda { display: inline-flex; }
+
 /* Detalle de un ejecutivo (como la maqueta del ejecutivo desplegado) */
 .mkv2 .mkv2-ej-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .mkv2 .mkv2-ej-numeros > div { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--fv2-borde); border-radius: 11px; background: var(--fv2-panel); }

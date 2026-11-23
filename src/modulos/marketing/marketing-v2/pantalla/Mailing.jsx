@@ -26,7 +26,7 @@ export const SUBPESTANAS_MAILING = [
   { key: 'corregir', label: 'Correos por corregir' },
   { key: 'detalle', label: 'Detalle por correo' },
   { key: 'clientes', label: 'Relación con clientes' },
-  { key: 'cargos', label: 'Asignar cargo' },
+  { key: 'cargos', label: 'Cargo y objetivo' },
 ]
 
 const CONTENIDO = {

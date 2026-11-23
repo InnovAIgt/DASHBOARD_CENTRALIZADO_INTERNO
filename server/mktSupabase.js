@@ -21,21 +21,21 @@ export function configuracionMkt(env = process.env) {
 }
 
 /**
- * Cargo elegido a mano por campaña (tabla mkt_campana_cargo). Solo campana_id y cargo: no se lee quién lo asignó.
- * @returns {Promise<Map<number, string>>} id de campaña → GG / GF / GO
+ * Cargo y objetivo elegidos a mano por campaña (tabla mkt_campana_cargo). Solo campana_id, cargo y objetivo: no se lee
+ * quién los asignó. Si la columna «objetivo» todavía no existe (falta correr el SQL 004), se lee solo el cargo.
+ * @returns {Promise<Map<number, {cargo: string|null, objetivo: string|null}>>}
  */
 export async function leerCargosManuales({ env = process.env, fetchFn = fetch, esperaMs = MKT_ESPERA_MS } = {}) {
   const { url, llave } = configuracionMkt(env)
   const control = new AbortController()
   const reloj = setTimeout(() => control.abort(), esperaMs)
   try {
-    const r = await fetchFn(`${url}/rest/v1/mkt_campana_cargo?select=campana_id,cargo`, {
-      headers: { apikey: llave, Accept: 'application/json' },
-      signal: control.signal,
-    })
+    const pedir = (campos) => fetchFn(`${url}/rest/v1/mkt_campana_cargo?select=${campos}`, { headers: { apikey: llave, Accept: 'application/json' }, signal: control.signal })
+    let r = await pedir('campana_id,cargo,objetivo')
+    if (r.status === 400) r = await pedir('campana_id,cargo') // antes del SQL 004 no existe «objetivo»
     if (!r.ok) throw new Error(`Supabase respondió HTTP ${r.status}`)
     const filas = await r.json()
-    return new Map((Array.isArray(filas) ? filas : []).map((f) => [Number(f.campana_id), f.cargo]))
+    return new Map((Array.isArray(filas) ? filas : []).map((f) => [Number(f.campana_id), { cargo: f.cargo ?? null, objetivo: String(f.objetivo ?? '').trim() || null }]))
   } catch (err) {
     if (err?.name === 'AbortError') throw new Error(`Supabase no respondió en ${esperaMs / 1000} s`)
     throw err
