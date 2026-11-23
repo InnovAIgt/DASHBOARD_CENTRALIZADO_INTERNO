@@ -25,6 +25,13 @@ export function fechaCorta(iso) {
   return Number.isNaN(t) ? '—' : FECHA_GT.format(new Date(t))
 }
 
+const HORA_GT = new Intl.DateTimeFormat('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit', hour12: false })
+/** Fecha y hora para mostrar («11/11/2026 · 15:44», hora de Guatemala), o «—». */
+export function fechaHora(iso) {
+  const t = Date.parse(iso)
+  return Number.isNaN(t) ? '—' : `${FECHA_GT.format(new Date(t))} · ${HORA_GT.format(new Date(t))}`
+}
+
 /** Campañas que cumplen los filtros. Las de prueba se ocultan salvo que se pida verlas. */
 export function filtrarCampanas(campanas = [], f = FILTROS_INICIALES) {
   return campanas.filter((c) => {

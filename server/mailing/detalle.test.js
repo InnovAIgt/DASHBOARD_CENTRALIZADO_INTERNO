@@ -151,3 +151,11 @@ test('responderDetalle: filtro por campañas, caché, solo GET y errores', async
   assert.equal(e.status, 502)
   assert.ok(!e.body.includes('@'))
 })
+
+test('responderDetalle: una respuesta vacía no se guarda', async () => {
+  vaciarCacheDetalle()
+  const vacia = leerFalso([])
+  await responderDetalle({ method: 'GET', env: {}, leer: vacia.fn, ahora: 0 })
+  await responderDetalle({ method: 'GET', env: {}, leer: vacia.fn, ahora: 1000 })
+  assert.equal(vacia.llamadas.length, 2, 'la segunda consulta vuelve a leer')
+})

@@ -1,12 +1,15 @@
 // Canales de marketing · Mailing · Resultados generales (MAILING.md, secciones 6 y 7).
-// Dinámico como la plantilla: los filtros cambian todo al momento y cada tarjeta, etapa del recorrido y estado de
-// incidencias abre la sub-pestaña que corresponde ya enfocada (abrir). Totales reales de Brevo; lo que necesita
-// detalle por persona viene del webhook. Nunca correos.
-import { useMemo } from 'react'
-import { AlertTriangle, Check, Eye, MousePointerClick, Send, X } from 'lucide-react'
-import { COLORES } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
-import { detalleWebhook, fechaCorta, NOMBRE_CARGO, numero, pct, porCargo, porCorregirCampana, porcentaje, sumarTotales } from '../../datos/calculos.js'
-import { Aviso, Bloque, COLOR_MAILING, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Kpi, Mini, PildoraEntrega, Tarjeta, TablaOrdenable, TEXTO_WEBHOOK } from './piezas.jsx'
+// Dinámico como la referencia: los filtros cambian todo al momento (números y barras se animan hacia el valor nuevo),
+// cada tarjeta, etapa, sector y cifra abre la sub-pestaña que corresponde ya enfocada (abrir), y el globo muestra el
+// valor exacto. Totales reales de Brevo; lo que necesita detalle por persona viene del webhook. Nunca correos.
+import { Fragment, useMemo } from 'react'
+import { AlertTriangle, Check, Download, Eye, MousePointerClick, Send, X } from 'lucide-react'
+import { aCsv, descargarCsv } from '../../datos/csv.js'
+import { detalleWebhook, diaGuatemala, fechaCorta, NOMBRE_CARGO, numero, pct, porCargo, porCorregirCampana, porcentaje, sumarTotales } from '../../datos/calculos.js'
+import {
+  Aviso, Bloque, Cifra, COLOR_MAILING, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Kpi, LeyendaSemaforo, Mini, MiniBarra,
+  Numero, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TEXTO_WEBHOOK,
+} from './piezas.jsx'
 
 /** Abre «Detalle por correo» enfocado en un estado. */
 const verDetalle = (abrir, estado, titulo) => () => abrir({ vista: 'detalle', estado, titulo })
@@ -14,17 +17,15 @@ const verDetalle = (abrir, estado, titulo) => () => abrir({ vista: 'detalle', es
 /** Las 6 tarjetas, con color por significado (azul, verde, celeste, morado, naranja, rojo). Totales de Brevo. */
 function Indicadores({ t, abrir }) {
   const kpi = (titulo, icono, valor, tasa, base, nota, color, estado, extra = {}) => <Kpi key={titulo} titulo={titulo} icono={icono}
-    valor={numero(valor)} porcentaje={pct(tasa)} base={base} medidor={tasa ?? null} nota={nota} enlace="Ver destinatarios" color={color}
-    onClick={verDetalle(abrir, estado, titulo)} {...extra} />
+    valor={<Numero n={valor} />} porcentaje={<Pct n={tasa} />} base={base} medidor={tasa ?? null} nota={nota} enlace="Ver destinatarios" color={color}
+    tip={`${titulo}: ${numero(valor)} · ${pct(tasa)} ${base}`} onClick={verDetalle(abrir, estado, titulo)} {...extra} />
   return <div className="mkv2-kpis6">
     {kpi('Enviados', Send, t.enviados, t.enviados ? 100 : null, 'de la selección', `Todos los destinatarios · ${numero(t.campanas)} campañas`, COLOR_MAILING.enviados, 'todos')}
     {kpi('Entregados', Check, t.entregados, t.tasas.entrega, 'de los envíos', 'Sin rebote posterior', COLOR_MAILING.entregados, 'entregado')}
-    {kpi('Apertura registrada', Eye, t.aperturas, t.tasas.apertura, 'de entregados', `Incluye automáticas · Apple MPP ${numero(t.aperturasApple)}`, COLOR_MAILING.apertura, 'apertura',
-      { title: 'Aperturas de Brevo con las automáticas incluidas. Apple MPP se muestra aparte: no se resta.' })}
+    {kpi('Apertura registrada', Eye, t.aperturas, t.tasas.apertura, 'de entregados', `Incluye automáticas · Apple MPP ${numero(t.aperturasApple)}`, COLOR_MAILING.apertura, 'apertura')}
     {kpi('Clic registrado', MousePointerClick, t.clics, t.tasas.clic, 'de entregados', 'Origen humano no confirmado', COLOR_MAILING.clic, 'clic')}
     {kpi('Rebote temporal', AlertTriangle, t.reboteTemporal, t.tasas.reboteTemporal, 'de los envíos', 'Problema temporal de entrega', COLOR_MAILING.temporal, 'rebote_temporal')}
-    {kpi('Rebote duro', X, t.rebotePermanente, t.tasas.rebotePermanente, 'de los envíos', 'Rechazo permanente', COLOR_MAILING.duro, 'rebote_permanente',
-      { title: 'Rebote duro = rebote permanente' })}
+    {kpi('Rebote duro', X, t.rebotePermanente, t.tasas.rebotePermanente, 'de los envíos', 'Rechazo permanente (rebote duro)', COLOR_MAILING.duro, 'rebote_permanente')}
   </div>
 }
 
@@ -37,107 +38,159 @@ function Calidad({ t, det, cuentas, abrir }) {
   return <>
     <Bloque titulo="Entregas, rebotes y calidad de contactos" />
     <div className="mkv2-minis mkv2-minis5">
-      <Mini nombre="Tasa de entrega" valor={pct(t.tasas.entrega)} color={COLOR_SEMAFORO[t.semaforo] ?? COLOR_MAILING.gris}
+      <Mini nombre="Tasa de entrega" valor={<Pct n={t.tasas.entrega} />} color={COLOR_SEMAFORO[t.semaforo] ?? COLOR_MAILING.gris}
+        tip={`Tasa de entrega: ${numero(t.entregados)} de ${numero(t.enviados)} enviados (${pct(t.tasas.entrega)})`}
         nota="Semáforo: 100 % verde · 90 % a 99,9 % amarillo · menos de 90 % rojo" enlace="Comparar campañas"
         onClick={() => abrir({ vista: 'comparar', metrica: 'entrega', titulo: 'Tasa de entrega por campaña' })} />
-      <Mini nombre="Correos por corregir" valor={hayCorregir ? numero(cuentas.corregir) : '—'} color={COLOR_MAILING.duro}
+      <Mini nombre="Correos por corregir" valor={hayCorregir ? <Numero n={cuentas.corregir} /> : '—'} color={COLOR_MAILING.duro}
+        tip={hayCorregir ? `${numero(cuentas.corregir)} direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña)` : undefined}
         nota={hayCorregir ? `Direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña) · revisar antes del próximo envío` : TEXTO_WEBHOOK}
         enlace="Ver lista" onClick={() => abrir({ vista: 'corregir', titulo: 'Correos por corregir' })} />
-      <Mini nombre="Sin confirmación" valor={numero(t.sinConfirmacion)} color={COLOR_MAILING.gris} nota={sinConf} enlace="Ver destinatarios"
-        onClick={verDetalle(abrir, 'sin_confirmacion', 'Sin confirmación')} />
-      <Mini nombre="Bajas" valor={numero(t.bajas)} color={COLOR_MAILING.temporal} nota="Se dieron de baja de la lista" enlace="Ver destinatarios"
-        onClick={verDetalle(abrir, 'baja', 'Bajas')} />
-      <Mini nombre="Marcados como spam" valor={numero(t.quejas)} color={COLOR_MAILING.duro} nota="Quejas de los destinatarios" enlace="Ver destinatarios"
-        onClick={verDetalle(abrir, 'spam', 'Marcados como spam')} />
+      <Mini nombre="Sin confirmación" valor={<Numero n={t.sinConfirmacion} />} color={COLOR_MAILING.gris} nota={sinConf} enlace="Ver destinatarios"
+        tip={`Sin confirmación: ${numero(t.sinConfirmacion)}`} onClick={verDetalle(abrir, 'sin_confirmacion', 'Sin confirmación')} />
+      <Mini nombre="Bajas" valor={<Numero n={t.bajas} />} color={COLOR_MAILING.temporal} nota="Se dieron de baja de la lista" enlace="Ver destinatarios"
+        tip={`Bajas: ${numero(t.bajas)}`} onClick={verDetalle(abrir, 'baja', 'Bajas')} />
+      <Mini nombre="Marcados como spam" valor={<Numero n={t.quejas} />} color={COLOR_MAILING.duro} nota="Quejas de los destinatarios" enlace="Ver destinatarios"
+        tip={`Marcados como spam: ${numero(t.quejas)}`} onClick={verDetalle(abrir, 'spam', 'Marcados como spam')} />
     </div>
   </>
 }
 
+/** Recorrido: barras gruesas de color que crecen, y entre etapas el % que pasa de una a la siguiente. */
 function Recorrido({ t, abrir }) {
-  return <Tarjeta titulo="Recorrido del mailing" sub="Cada etapa es clicable · las tasas indican su base"
+  const etapas = [
+    { nombre: 'Enviados', valor: t.enviados, color: COLOR_MAILING.enviados, estado: 'todos' },
+    { nombre: 'Entregados', valor: t.entregados, color: COLOR_MAILING.entregados, estado: 'entregado', paso: porcentaje(t.entregados, t.enviados), de: 'de los enviados' },
+    { nombre: 'Apertura registrada', valor: t.aperturas, color: COLOR_MAILING.apertura, estado: 'apertura', paso: porcentaje(t.aperturas, t.entregados), de: 'de los entregados' },
+    { nombre: 'Clic registrado', valor: t.clics, color: COLOR_MAILING.clic, estado: 'clic', paso: porcentaje(t.clics, t.aperturas), de: 'de las aperturas' },
+  ]
+  return <Tarjeta titulo="Recorrido del mailing" sub="Cada etapa es clicable · entre etapas, el % que pasa a la siguiente"
     acciones={<PildoraEntrega tasa={t.tasas.entrega} semaforo={t.semaforo} />} className="mkv2-compacta">
-    <div className="mkv2-embudo">
-      <FilaBarra nombre="Enviados" valor={t.enviados} max={t.enviados} color={COLORES.azul} detalle="Base de entrega" onClick={verDetalle(abrir, 'todos', 'Enviados')} />
-      <FilaBarra nombre="Entregados" valor={t.entregados} max={t.enviados} color={COLORES.verdeClaro} detalle={`${pct(t.tasas.entrega)} de enviados`} onClick={verDetalle(abrir, 'entregado', 'Entregados')} />
-      <FilaBarra nombre="Aperturas" valor={t.aperturas} max={t.enviados} color={COLORES.azulClaro} detalle={`${pct(t.tasas.apertura)} de entregados`} onClick={verDetalle(abrir, 'apertura', 'Aperturas')} />
-      <FilaBarra nombre="Clics" valor={t.clics} max={t.enviados} color={COLORES.verde} detalle={`${pct(t.tasas.clic)} de entregados`} onClick={verDetalle(abrir, 'clic', 'Clics')} />
+    <div className="mkv2-embudo mkv2-embudo-grueso">
+      {etapas.map((e, i) => <Fragment key={e.nombre}>
+        {i > 0 && <div className="mkv2-paso" data-tip={`${pct(e.paso)} ${e.de} llega a «${e.nombre}» (${numero(e.valor)} de ${numero(etapas[i - 1].valor)})`}>
+          <span>↓ <Pct n={e.paso} /></span> {e.de}
+        </div>}
+        <FilaBarra nombre={e.nombre} valor={e.valor} max={t.enviados} color={e.color}
+          detalle={`${pct(porcentaje(e.valor, t.enviados))} de enviados`}
+          tip={`${e.nombre}: ${numero(e.valor)} · ${pct(porcentaje(e.valor, t.enviados))} de ${numero(t.enviados)} enviados`}
+          onClick={verDetalle(abrir, e.estado, e.nombre)} />
+      </Fragment>)}
     </div>
-    <p className="mkv2-nota">Un correo puede entregarse, abrirse y registrar clic: estos porcentajes no se suman. Aperturas incluye
-      las automáticas (Apple MPP {numero(t.aperturasApple)}). Ni una apertura ni un clic prueban actividad humana.</p>
+    <p className="mkv2-nota">Un correo puede entregarse, abrirse y registrar clic: estos porcentajes no se suman. Apertura registrada
+      incluye las automáticas (Apple MPP {numero(t.aperturasApple)}). Ni una apertura ni un clic prueban actividad humana.</p>
   </Tarjeta>
 }
 
 function Incidencias({ t, abrir }) {
   const parte = (nombre, valor, color, estado) => ({ nombre, valor, color, detalle: pct(porcentaje(valor, t.enviados)), onClick: verDetalle(abrir, estado, nombre) })
   const partes = [
-    parte('Entregado', t.entregados, COLORES.verdeClaro, 'entregado'),
-    parte('Rebote temporal', t.reboteTemporal, COLORES.amarillo, 'rebote_temporal'),
-    parte('Rebote permanente', t.rebotePermanente, COLORES.rosa, 'rebote_permanente'),
-    parte('Sin confirmación', t.sinConfirmacion, COLORES.tenue, 'sin_confirmacion'),
+    parte('Entregado', t.entregados, COLOR_MAILING.entregados, 'entregado'),
+    parte('Rebote temporal', t.reboteTemporal, COLOR_MAILING.temporal, 'rebote_temporal'),
+    parte('Rebote duro', t.rebotePermanente, COLOR_MAILING.duro, 'rebote_permanente'),
+    parte('Sin confirmación', t.sinConfirmacion, COLOR_MAILING.gris, 'sin_confirmacion'),
   ]
-  return <Tarjeta titulo="Incidencias de entrega" sub="Resultado final del envío · cada estado es clicable" className="mkv2-compacta"
+  return <Tarjeta titulo="Incidencias de entrega" sub="Resultado final del envío · cada sector y cada cajita es clicable" className="mkv2-compacta"
     acciones={<button type="button" className="fv2-pildora" onClick={verDetalle(abrir, 'rebotes', 'Con rebote')}>Ver rebotes ↗</button>}>
-    <DonaPartes partes={partes} total={t.enviados} centro={numero(t.reboteTemporal + t.rebotePermanente)} etiqueta="rebotes"
+    <DonaPartes partes={partes} total={t.enviados} centro={t.reboteTemporal + t.rebotePermanente} etiqueta="rebotes"
       onCentro={verDetalle(abrir, 'rebotes', 'Con rebote')} />
     <p className="mkv2-nota">Los 4 estados suman los enviados. Con solo totales de Brevo, «Sin confirmación» = enviados − entregados − rebotes.</p>
   </Tarjeta>
 }
 
-function PorCargo({ campanas, filtrar }) {
+/** Columnas de cifras que abren «Detalle por correo» (después de filtrar por el cargo o la campaña de la fila). */
+const CIFRAS = [
+  { id: 'enviados', label: 'Enviados', estado: 'todos' },
+  { id: 'entregados', label: 'Entregados', estado: 'entregado' },
+  { id: 'aperturas', label: 'Aperturas', estado: 'apertura' },
+  { id: 'clics', label: 'Clics', estado: 'clic' },
+  { id: 'reboteTemporal', label: 'Rebote temporal', estado: 'rebote_temporal' },
+  { id: 'rebotePermanente', label: 'Rebote duro', estado: 'rebote_permanente' },
+]
+
+/**
+ * Análisis por cargo como la referencia (renderRolesInGeneral): leyenda arriba, una barra por cargo con solo el % a
+ * la derecha (la barra siempre tiene espacio) y la tabla de 8 columnas al lado; cifras que abren sus destinatarios.
+ */
+function PorCargo({ campanas, abrir, filtrar }) {
   const filas = porCargo(campanas)
+  const nombre = (f) => NOMBRE_CARGO[f.cargo] ?? f.cargo
+  const abrirCifra = (f, estado, label) => () => { filtrar({ cargo: f.cargo }); abrir({ vista: 'detalle', estado, titulo: `${label} · ${nombre(f)}` }) }
+  const cifra = (f, n, estado, label) => <Cifra n={n} onClick={abrirCifra(f, estado, label)} tip={`${label} · ${nombre(f)}: ${numero(n)} — clic para ver los destinatarios`} />
   const columnas = [
-    { id: 'cargo', label: 'Cargo', celda: (f) => <InsigniaCargo cargo={f.cargo} /> },
+    { id: 'cargo', label: 'Cargo', celda: (f) => <strong className="mkv2-texto-fuerte">{nombre(f)}</strong> },
     { id: 'campanas', label: 'Campañas', num: true, celda: (f) => numero(f.campanas) },
-    { id: 'enviados', label: 'Enviados', num: true, celda: (f) => numero(f.enviados) },
-    { id: 'entregados', label: 'Entregados', num: true, celda: (f) => numero(f.entregados) },
-    { id: 'aperturas', label: 'Aperturas', num: true, celda: (f) => numero(f.aperturas) },
-    { id: 'clics', label: 'Clics', num: true, celda: (f) => numero(f.clics) },
-    { id: 'rebotes', label: 'Rebotes', num: true, celda: (f) => numero(f.reboteTemporal + f.rebotePermanente) },
+    { id: 'enviados', label: 'Enviados', num: true, celda: (f) => cifra(f, f.enviados, 'todos', 'Enviados') },
+    { id: 'entregados', label: 'Entregados', num: true, celda: (f) => cifra(f, f.entregados, 'entregado', 'Entregados') },
+    { id: 'aperturas', label: 'Aperturas', num: true, celda: (f) => cifra(f, f.aperturas, 'apertura', 'Aperturas') },
+    { id: 'clics', label: 'Clics', num: true, celda: (f) => cifra(f, f.clics, 'clic', 'Clics') },
+    { id: 'rebotes', label: 'Rebotes', num: true, celda: (f) => cifra(f, f.reboteTemporal + f.rebotePermanente, 'rebotes', 'Rebotes') },
     { id: 'entrega', label: '% Entrega', num: true, celda: (f) => <PildoraEntrega tasa={f.tasas.entrega} semaforo={f.semaforo} /> },
   ]
-  const porEste = (f) => () => filtrar({ cargo: f.cargo })
-  return <Tarjeta titulo="Análisis por cargo destinatario" sub="Clic en un cargo para filtrar todo el dashboard por ese cargo">
+  return <Tarjeta titulo="Análisis por cargo destinatario" sub="Comparación lista para Gerencia General, Financiera y Operaciones">
     <div className="mkv2-cargos-rejilla">
-      <div className="mkv2-embudo">
-        {filas.map((f) => <FilaBarra key={f.cargo} nombre={f.cargo === 'Sin clasificar' ? f.cargo : `${f.cargo} · ${NOMBRE_CARGO[f.cargo]}`}
-          valor={f.tasas.entrega ?? 0} max={100} color={COLOR_SEMAFORO[f.semaforo] ?? COLORES.tenue} cifra={pct(f.tasas.entrega)}
-          detalle={`entrega · ${numero(f.campanas)} campañas`} onClick={porEste(f)} title={`Filtrar por ${f.cargo}`} />)}
+      <div>
+        <LeyendaSemaforo />
+        <div className="mkv2-embudo mkv2-embudo-rol">
+          {filas.map((f) => <FilaBarra key={f.cargo} nombre={nombre(f)} valor={f.campanas ? f.tasas.entrega ?? 0 : 0} max={100} meta={90}
+            color={COLOR_SEMAFORO[f.semaforo] ?? COLOR_MAILING.gris} cifra={f.campanas ? <Pct n={f.tasas.entrega} /> : <span className="fv2-tenue">Sin datos</span>}
+            tip={f.campanas ? `${nombre(f)}: ${pct(f.tasas.entrega)} de entrega (${numero(f.entregados)} de ${numero(f.enviados)}) · ${numero(f.campanas)} campañas · meta 90 % — clic para filtrar` : `${nombre(f)}: sin campañas en la selección`}
+            onClick={() => filtrar({ cargo: f.cargo })} />)}
+        </div>
       </div>
-      <TablaOrdenable columnas={columnas} filas={filas} clave={(f) => f.cargo} vacio="Sin campañas enviadas con los filtros actuales."
-        onFila={(f) => filtrar({ cargo: f.cargo })} tituloFila={(f) => `Filtrar por ${f.cargo}`} />
+      <TablaOrdenable columnas={columnas} filas={filas.filter((f) => f.campanas)} clave={(f) => f.cargo} vacio="Sin campañas enviadas con los filtros actuales."
+        onFila={(f) => filtrar({ cargo: f.cargo })} tituloFila={(f) => `Filtrar por ${nombre(f)}`} />
     </div>
+    <p className="mkv2-nota">«Sin campañas cargadas» no equivale a un resultado de cero. Puedes hacer clic en las cifras disponibles para ver los correos.</p>
   </Tarjeta>
 }
 
-function PorCampana({ campanas, resumen, filtrar }) {
+function PorCampana({ campanas, resumen, abrir, filtrar }) {
   const filas = [...campanas].sort((a, b) => (Date.parse(b.fecha) || 0) - (Date.parse(a.fecha) || 0))
   const enviada = (c) => c.estado === 'enviada'
-  const n = (c, k) => (enviada(c) ? numero(c.totales[k]) : <Gris texto="—" />)
+  const abrirCifra = (c, x) => () => { filtrar({ campana: String(c.id) }); abrir({ vista: 'detalle', estado: x.estado, titulo: `${x.label} · #${c.id} ${c.nombre}` }) }
+  const cifra = (c, x) => (enviada(c)
+    ? <Cifra n={c.totales[x.id]} onClick={abrirCifra(c, x)} tip={`${x.label} · #${c.id} ${c.nombre}: ${numero(c.totales[x.id])} — clic para ver los destinatarios`} />
+    : <Gris texto="—" />)
   const columnas = [
-    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-larga', celda: (c) => <span className="mkv2-campana-celda"><strong>{c.nombre}</strong><small>{fechaCorta(c.fecha)}{c.esPrueba ? ' · prueba' : ''}{!enviada(c) ? ' · programada' : ''}</small></span> },
+    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-larga', celda: (c) => <span className="mkv2-campana-celda"><strong>{c.nombre}</strong><small>#{c.id} · {fechaCorta(c.fecha)}{c.esPrueba ? ' · prueba' : ''}{!enviada(c) ? ' · programada' : ''}</small></span> },
     { id: 'asunto', label: 'Asunto', clase: 'mkv2-celda-larga', celda: (c) => c.asunto || '—' },
     { id: 'cargo', label: 'Cargo', celda: (c) => <InsigniaCargo cargo={c.cargo} title={c.cargoManual ? 'Elegido a mano' : c.cargoSugerido ? 'Sugerido por el nombre' : 'Sin clasificar'} /> },
-    { id: 'enviados', label: 'Enviados', num: true, celda: (c) => n(c, 'enviados') },
-    { id: 'entregados', label: 'Entregados', num: true, celda: (c) => n(c, 'entregados') },
-    { id: 'aperturas', label: 'Aperturas', num: true, celda: (c) => n(c, 'aperturas') },
-    { id: 'clics', label: 'Clics', num: true, celda: (c) => n(c, 'clics') },
-    { id: 'rt', label: 'Rebote temporal', num: true, celda: (c) => n(c, 'reboteTemporal') },
-    { id: 'rp', label: 'Rebote permanente', num: true, celda: (c) => n(c, 'rebotePermanente') },
+    ...CIFRAS.filter((x) => x.id !== 'aperturas').slice(0, 2).map((x) => ({ id: x.id, label: x.label, num: true, celda: (c) => cifra(c, x) })),
+    { id: 'aperturas', label: 'Aperturas', num: true, celda: (c) => (enviada(c)
+      ? <span className="mkv2-celda-apertura">{cifra(c, CIFRAS[2])}<MiniBarra tasa={c.tasas.apertura} color={COLOR_MAILING.apertura} tip={`Apertura: ${pct(c.tasas.apertura)} de los entregados`} /></span>
+      : <Gris texto="—" />) },
+    ...CIFRAS.slice(3).map((x) => ({ id: x.id, label: x.label, num: true, celda: (c) => cifra(c, x) })),
     { id: 'corregir', label: 'Por corregir', num: true, celda: (c) => <Gris texto={pct(porCorregirCampana(c, resumen))} /> },
     { id: 'entrega', label: '% Entrega', num: true, celda: (c) => (enviada(c) ? <PildoraEntrega tasa={c.tasas.entrega} semaforo={c.semaforo} /> : <Gris texto="—" />) },
   ]
-  return <Tarjeta titulo="Resultado por campaña" sub="Clic en una campaña para ver solo esa en todo el dashboard · «Por corregir» solo con detalle del webhook">
+  const csv = () => descargarCsv(`resumen-mailing_${diaGuatemala(new Date().toISOString())}`, aCsv([
+    { label: 'Id', valor: (c) => c.id },
+    { label: 'Campaña', valor: (c) => c.nombre },
+    { label: 'Fecha', valor: (c) => fechaCorta(c.fecha) },
+    { label: 'Asunto', valor: (c) => c.asunto },
+    { label: 'Cargo', valor: (c) => c.cargo },
+    { label: 'Estado', valor: (c) => (enviada(c) ? 'enviada' : 'programada') },
+    ...CIFRAS.map((x) => ({ label: x.label, valor: (c) => (enviada(c) ? c.totales[x.id] : null) })),
+    { label: '% Apertura (de entregados)', valor: (c) => (enviada(c) ? c.tasas.apertura : null) },
+    { label: '% Clic (de entregados)', valor: (c) => (enviada(c) ? c.tasas.clic : null) },
+    { label: '% Por corregir', valor: (c) => porCorregirCampana(c, resumen) },
+    { label: '% Entrega', valor: (c) => (enviada(c) ? c.tasas.entrega : null) },
+    { label: 'Semáforo', valor: (c) => (enviada(c) ? c.semaforo : null) },
+  ], filas))
+  return <Tarjeta titulo="Resultado por campaña" sub="Clic en una campaña para ver solo esa en todo el dashboard · clic en una cifra para ver sus destinatarios · «Por corregir» solo con detalle del webhook"
+    acciones={<button type="button" className="fv2-pildora" onClick={csv} disabled={!filas.length}><Download size={13} aria-hidden="true" />Descargar resumen CSV</button>}>
     <TablaOrdenable columnas={columnas} filas={filas} clave={(c) => c.id} vacio="Sin campañas con los filtros actuales."
-      onFila={(c) => filtrar({ campana: String(c.id) })} tituloFila={(c) => `Ver solo «${c.nombre}»`} />
+      onFila={(c) => filtrar({ campana: String(c.id) })} tituloFila={(c) => `Ver solo «#${c.id} ${c.nombre}»`} />
   </Tarjeta>
 }
 
-export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, abrir, filtrar }) {
+export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, abrir, filtrar, reintentar }) {
   const t = useMemo(() => sumarTotales(campanas), [campanas])
   const det = useMemo(() => detalleWebhook(campanas, resumen), [campanas, resumen])
   return <>
     {errorResumen
-      ? <Aviso titulo="No se pudo leer el detalle del webhook" texto={`${errorResumen} Se muestran solo los totales de Brevo.`} />
+      ? <Aviso titulo="No se pudo leer el detalle del webhook" texto={`${errorResumen} Se muestran solo los totales de Brevo.`} onReintentar={reintentar} />
       : !det.hayDatos && <Aviso icono="info" titulo="Detalle por correo"
         texto={`Motivo del rebote, CORREGIR / MANTENER y apertura sin automáticas: ${TEXTO_WEBHOOK.toLowerCase()} Las campañas anteriores se muestran solo con los totales de Brevo.`} />}
     <Indicadores t={t} abrir={abrir} />
@@ -148,8 +201,8 @@ export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, 
       <Incidencias t={t} abrir={abrir} />
     </div>
     <Bloque titulo="Cargos y campañas" />
-    <PorCargo campanas={campanas} filtrar={filtrar} />
-    <PorCampana campanas={campanas} resumen={resumen} filtrar={filtrar} />
+    <PorCargo campanas={campanas} abrir={abrir} filtrar={filtrar} />
+    <PorCampana campanas={campanas} resumen={resumen} abrir={abrir} filtrar={filtrar} />
     <Tarjeta titulo="Leads" sub="Bot de WhatsApp → CRM">
       <Aviso icono="info" titulo="Pendiente: acceso al CRM o al bot de leads" texto="Se mostrarán los leads calificados (75 puntos o más) y no calificados de cada campaña." />
     </Tarjeta>

@@ -7,8 +7,8 @@
 //  - «filtrar» cambia un filtro desde un clic (por ejemplo, un cargo o una campaña de una tabla).
 // Los datos los pide datos/useMailingDatos.js a NUESTRO servidor. Nunca se muestran correos.
 import { useMemo, useState } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { contadoresMailing, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, numero, opcionesFiltros } from '../datos/calculos.js'
+import { AlertTriangle, RefreshCw, X } from 'lucide-react'
+import { contadoresMailing, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, NOMBRE_CARGO, numero, opcionesFiltros } from '../datos/calculos.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
 import { AsignarCargo } from './mailing/Cargos.jsx'
@@ -16,7 +16,7 @@ import { RelacionConClientes } from './mailing/Clientes.jsx'
 import { CorreosPorCorregir, DetallePorCorreo } from './mailing/Correos.jsx'
 import { Filtros } from './mailing/Filtros.jsx'
 import { ResultadosGenerales } from './mailing/Generales.jsx'
-import { Aviso } from './mailing/piezas.jsx'
+import { Aviso, useGlobo } from './mailing/piezas.jsx'
 
 export const SUBPESTANAS_MAILING = [
   { key: 'generales', label: 'Resultados generales', icono: '▥' },
@@ -64,8 +64,15 @@ export function Mailing({ sub, onSub }) {
   const abrir = (f) => { setFoco({ ...f, n: (foco?.n ?? 0) + 1 }); onSub(f.vista) }
   const filtrar = (cambio) => setFiltros((f) => ({ ...f, ...cambio }))
   const focoActual = foco?.vista === actual ? foco : null
+  const globo = useGlobo()
+  // Etiquetas «Filtrado por: …» (campaña y cargo, se pongan con un clic o desde los filtros); ✕ quita ese filtro.
+  const campanaElegida = filtros.campana ? datos.campanas.find((c) => String(c.id) === String(filtros.campana)) : null
+  const etiquetas = [
+    filtros.campana && { clave: 'campana', texto: campanaElegida ? `#${campanaElegida.id} ${campanaElegida.nombre}` : `Campaña #${filtros.campana}` },
+    filtros.cargo && { clave: 'cargo', texto: NOMBRE_CARGO[filtros.cargo] && filtros.cargo !== NOMBRE_CARGO[filtros.cargo] ? `${filtros.cargo} · ${NOMBRE_CARGO[filtros.cargo]}` : filtros.cargo },
+  ].filter(Boolean)
 
-  return <div className="mkv2-mailing">
+  return <div className="mkv2-mailing" {...globo.manejadores}>
     <nav className="mkv2-subpestanas" role="tablist" aria-label="Secciones de Mailing">
       {SUBPESTANAS_MAILING.map((p) => <button type="button" key={p.key} role="tab" aria-selected={actual === p.key}
         className={`mkv2-subpestana ${actual === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>
@@ -75,6 +82,12 @@ export function Mailing({ sub, onSub }) {
     </nav>
 
     <Filtros filtros={filtros} cambiar={setFiltros} opciones={opciones} ocultas={ocultas} />
+
+    {etiquetas.length > 0 && <div className="mkv2-filtrado" role="status">
+      <span>Filtrado por:</span>
+      {etiquetas.map((e) => <button type="button" key={e.clave} className="mkv2-filtrado-etiqueta" onClick={() => filtrar({ [e.clave]: '' })}
+        title="Quitar este filtro" aria-label={`Quitar el filtro ${e.texto}`}>{e.texto}<X size={13} aria-hidden="true" /></button>)}
+    </div>}
 
     {datos.cargando && <div className="fv2-vacio"><strong>Cargando campañas de Brevo…</strong><span>La primera vez puede tardar unos 10 segundos.</span></div>}
 
@@ -95,10 +108,11 @@ export function Mailing({ sub, onSub }) {
       {datos.detalle?.cruce && datos.detalle.cruce !== 'ok' && vistaPorCorreo && <Aviso titulo="Cliente, País y Ejecutivo no disponibles" texto={datos.detalle.avisoCruce} />}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
         detalle={detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}
-        foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} />
+        foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} reintentar={datos.reintentar} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">
         Datos de Brevo de las {new Date(datos.actualizado).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit' })} · se actualizan cada 10 minutos.
       </p>}
     </>}
+    {globo.nodo}
   </div>
 }

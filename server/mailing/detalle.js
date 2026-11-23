@@ -139,8 +139,11 @@ export async function responderDetalle({ method, query = {}, env = process.env, 
   else {
     try {
       filas = armarDetalle(await leer({ campanas, env, fetchFn }))
-      if (copias.size >= MAX_COPIAS) copias.delete(copias.keys().next().value)
-      copias.set(clave, { filas, vence: ahora + DETALLE_CACHE_MS })
+      // Una respuesta vacía no se guarda: la siguiente consulta vuelve a leer Supabase.
+      if (filas.length) {
+        if (copias.size >= MAX_COPIAS) copias.delete(copias.keys().next().value)
+        copias.set(clave, { filas, vence: ahora + DETALLE_CACHE_MS })
+      }
     } catch (err) {
       const mensaje = String(err?.message || '')
       console.warn('[Mailing] detalle:', mensaje.replace(/[^\s@]+@[^\s@]+/g, '[correo]'))

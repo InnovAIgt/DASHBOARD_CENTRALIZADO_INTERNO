@@ -156,6 +156,8 @@ export async function responderResumen({ method, query = {}, env = process.env, 
   if (copia && copia.vence > ahora) return respuesta(200, copia.datos, RESUMEN_CACHE_HTTP)
   try {
     const datos = await cargarResumen({ campanas, env, fetchFn, ...(leer ? { leer } : {}) })
+    // Una respuesta vacía no se guarda (ni aquí ni en el navegador): la siguiente consulta vuelve a leer Supabase.
+    if (!datos.hayDatos) return respuesta(200, datos)
     if (copias.size >= MAX_COPIAS) copias.delete(copias.keys().next().value)
     copias.set(clave, { datos, vence: ahora + RESUMEN_CACHE_MS })
     return respuesta(200, datos, RESUMEN_CACHE_HTTP)

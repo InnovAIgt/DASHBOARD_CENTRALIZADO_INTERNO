@@ -36,7 +36,7 @@ function BloqueCliente({ fila, cargoObjetivo }) {
     {tipo === 'posible' && <em className="mkv2-posible-etiqueta">Posible cliente (por dominio): confirmar antes de usar</em>}
     {empresas.map((e) => <div key={`${e.pais}-${e.codigo}`} className="mkv2-ficha-empresa">
       <div className="mkv2-ficha-dato"><small>Cliente</small><strong>{e.cliente}</strong></div>
-      <div className="mkv2-ficha-dato"><small>Ejecutivo</small><strong>{e.ejecutivo || '—'}</strong></div>
+      <div className="mkv2-ficha-dato"><small>Ejecutivo de ventas</small><strong>{e.ejecutivo || 'Sin identificar'}</strong></div>
       <div className="mkv2-ficha-dato"><small>País</small><strong className="mkv2-pais-celda"><Bandera pais={e.pais} />{e.pais}</strong></div>
       <div className="mkv2-ficha-dato"><small>Código</small><strong>{e.codigo}</strong></div>
       <div className="mkv2-ficha-dato"><small>Relación</small><strong>{relacion}</strong></div>
@@ -69,7 +69,7 @@ export function Ficha({ filas, nombres, onCerrar }) {
       <div className="mkv2-modal-cabeza">
         <div>
           <h3 id="mkv2-ficha-titulo">{fila.correo}</h3>
-          <p>Campaña «{campana.nombre ?? fila.campana_id}» · {cargo === 'Sin clasificar' ? cargo : `${cargo} · ${NOMBRE_CARGO[cargo]}`}{campana.asunto ? ` · ${campana.asunto}` : ''}</p>
+          <p title={campana.nombre}>Campaña #{fila.campana_id}{campana.asunto ? ` · ${campana.asunto}` : ''} · {cargo === 'Sin clasificar' ? cargo : NOMBRE_CARGO[cargo]}</p>
         </div>
         <button type="button" className="fv2-pildora" onClick={onCerrar}><X size={14} />Cerrar</button>
       </div>
@@ -89,10 +89,11 @@ export function Ficha({ filas, nombres, onCerrar }) {
       <BloqueCliente fila={fila} cargoObjetivo={cargo} />
 
       <div className="mkv2-ficha-tarjetas">
-        <div className="mkv2-ficha-tarjeta"><small>Motivo técnico</small><strong>{fila.motivoTecnico ?? 'Sin rebote'}</strong><span>{fila.indicacion}</span></div>
+        <div className="mkv2-ficha-tarjeta"><small>Motivo técnico (Brevo)</small><strong>{fila.motivoTecnico ?? 'Sin rebote / sin incidencia técnica'}</strong></div>
         <div className="mkv2-ficha-tarjeta"><small>Destino del clic</small><Destino fila={fila} /></div>
         <div className="mkv2-ficha-tarjeta"><small>Fuente original</small><strong>{ORIGEN[fila.origen] ?? fila.origen}</strong></div>
       </div>
+      {fila.indicacion && <div className="mkv2-ficha-indicacion"><small>Indicación</small><span>{fila.indicacion}</span></div>}
 
       <h4 className="mkv2-ficha-subtitulo">Secuencia registrada</h4>
       <ol className="mkv2-linea-tiempo">
@@ -106,7 +107,14 @@ export function Ficha({ filas, nombres, onCerrar }) {
           </li>)
           : <li className="is-neutro"><span className="mkv2-linea-punto" /><div><strong>Sin eventos con fecha</strong></div></li>}
       </ol>
-      {hayAutomatica && <p className="mkv2-nota">La apertura automática (Apple / proxy) no acredita lectura humana: el sistema del destinatario puede cargar el correo solo.</p>}
+      <p className="mkv2-ficha-auditoria">
+        {fila.apertura === 'APERTURA REGISTRADA'
+          ? 'Brevo informa una apertura fechada; no permite confirmar que fue realizada por el destinatario.'
+          : hayAutomatica || fila.apertura === 'APERTURA AUTOMÁTICA'
+            ? 'La apertura automática (Apple / proxy) no acredita lectura humana: el sistema del destinatario puede cargar el correo solo.'
+            : 'Sin apertura registrada por Brevo.'}
+        {fila.clic === 'CLIC REGISTRADO' ? ' Brevo registra un clic, pero el origen humano no es verificable solo con estos datos.' : ''}
+      </p>
       <p className="mkv2-nota">Fechas en hora de Guatemala. El texto original del motivo del rebote no se muestra (puede traer otros correos).</p>
     </div>
   </div>

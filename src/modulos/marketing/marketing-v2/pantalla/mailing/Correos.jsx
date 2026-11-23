@@ -7,11 +7,13 @@ import { useCallback, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
+import { PorEjecutivo } from './Ejecutivos.jsx'
 import { Ficha } from './Ficha.jsx'
 import {
-  direccionesCorregir, gruposPorEjecutivo, ESTADOS_DETALLE, estadoDetalle, fechaCorta, filtrarDetalle, FILTROS_DETALLE, numero, opcionesDe,
-  paginar, pct, porcentaje, sumarResumen, sumarTotales,
+  CLASIFICACIONES, clasificarCruce, empresasDe, ESTADOS_DETALLE, estadoDetalle, fechaCorta, fechaHora, filtrarDetalle, FILTROS_DETALLE, numero,
+  paginar, sumarResumen, sumarTotales,
 } from '../../datos/calculos.js'
+import { aCsv, descargarCsv } from '../../datos/csv.js'
 import { exportarExcel } from '../../datos/excel.js'
 import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Mini, Tarjeta, TEXTO_WEBHOOK } from './piezas.jsx'
 
@@ -83,8 +85,8 @@ export function Tabla({ columnas, filas, vacio, clave, onFila }) {
 }
 
 /** Aviso cuando el detalle no se puede mostrar (error, interruptor apagado o sin datos). */
-export function AvisoDetalle({ detalle, errorDetalle }) {
-  if (errorDetalle) return <Aviso titulo="No se pudo leer el detalle por correo" texto={errorDetalle} />
+export function AvisoDetalle({ detalle, errorDetalle, onReintentar }) {
+  if (errorDetalle) return <Aviso titulo="No se pudo leer el detalle por correo" texto={errorDetalle} onReintentar={onReintentar} />
   if (detalle && !detalle.mostrarCorreos) return <Aviso icono="candado" titulo="Los correos están ocultos" texto={`${detalle.aviso ?? ''} Hay ${numero(detalle.total)} filas; solo se muestran conteos.`} />
   return null
 }
@@ -109,8 +111,11 @@ export function filasDelCorreo(filas, correo, campanaPrimero = null) {
 const filtrosTexto = (campanas, extra) => [['Campañas (filtros de arriba)', `${campanas.length}: ${campanas.map((c) => c.nombre).join(' · ')}`], ...extra]
 
 // ---------------- Correos por corregir ----------------
+// Misma estructura que la referencia visual: franja con el total y «Exportar lista CSV», «Correos pendientes por
+// ejecutivo» (Ejecutivos.jsx) y el listado con una fila por correo + campaña; «Ver eventos» abre la ficha de siempre.
 
-function Motivos({ titulo, sub, motivos, color, hayDatos }) {
+/** Motivos técnicos (CORREGIR / MANTENER): se muestran en Detalle por correo (paso 5 del rediseño). */
+export function Motivos({ titulo, sub, motivos, color, hayDatos }) {
   const max = motivos[0]?.[1] ?? 0
   return <Tarjeta titulo={titulo} sub={sub}>
     {hayDatos && motivos.length
@@ -119,110 +124,91 @@ function Motivos({ titulo, sub, motivos, color, hayDatos }) {
   </Tarjeta>
 }
 
-/** Una tarjeta desplegable por ejecutivo con sus direcciones únicas. */
-function GrupoEjecutivo({ grupo, nombres, posible }) {
-  return <details className={`mkv2-ejecutivo ${posible ? 'is-posible' : ''}`}>
-    <summary>
-      <span>{grupo.ejecutivo}{posible && <em className="mkv2-posible-etiqueta"> · posible (por dominio)</em>}</span>
-      <Insignia tono={posible ? 'amarillo' : 'rojo'}>{numero(grupo.direcciones.length)} por corregir</Insignia>
-    </summary>
-    <div className="mkv2-ejecutivo-lista">
-      {grupo.direcciones.map((d) => <span key={d.correo}><b>{d.correo}</b> · {textoEmpresas(d, 'cliente')} · {d.motivos.join(', ') || '—'} · {d.campanas.map((id) => nombreCampana(nombres, id)).join(', ')}</span>)}
-    </div>
-  </details>
+const CLASE_RELACION = { objetivo: 'is-verde', otro: 'is-ambar', varias: 'is-ambar', posible: 'is-ambar', sin: 'is-gris' }
+
+/** Celda Cliente como la referencia: empresa en negrita y debajo «código país · relación» (verde = cargo objetivo). */
+export function CeldaCliente({ fila, cargo }) {
+  if (fila?.clientes === null || fila?.clientes === undefined) return <span className="fv2-tenue">Pendiente del cruce</span>
+  const { tipo, empresas } = empresasDe(fila)
+  const relacion = clasificarCruce(fila, cargo)
+  const nombre = tipo === 'sin' ? 'Sin identificar' : relacion === 'varias' ? 'Varias empresas relacionadas' : empresas[0].cliente
+  const codigos = [...new Set(empresas.map((e) => `${e.codigo} ${e.pais}`))]
+  return <span className={`mkv2-cliente-celda ${tipo === 'posible' ? 'is-posible' : ''}`}
+    data-tip={empresas.length ? empresas.map((e) => `${e.cliente} (${e.pais}-${e.codigo})`).join(' · ') : undefined}>
+    <strong>{nombre}</strong>
+    <small>{codigos.join(' / ')}{codigos.length ? ' · ' : ''}<span className={`mkv2-relacion ${CLASE_RELACION[relacion]}`}>{CLASIFICACIONES[relacion]}</span></small>
+  </span>
 }
 
-/** Bloque «Correos pendientes por ejecutivo»: coincidencia exacta, posible por dominio y sin identificar, separados. */
-function PorEjecutivo({ direcciones, nombres, cruce }) {
-  const g = useMemo(() => gruposPorEjecutivo(direcciones), [direcciones])
-  return <Tarjeta titulo="Correos pendientes por ejecutivo de ventas" sub="Direcciones únicas (con los filtros de arriba y del listado) · el ejecutivo sale de la cuenta del cliente (País + Código)">
-    {cruce && cruce !== 'ok'
-      ? <Aviso titulo="Cliente y Ejecutivo no disponibles" texto="No se pudo leer Cumplimiento de Clientes. Todas las direcciones están en el listado de abajo." />
-      : <>
-        <div className="mkv2-subtitulo-bloque">Coincidencia exacta · {numero(g.exacta.reduce((n, x) => n + x.direcciones.length, 0))} direcciones</div>
-        {g.exacta.length ? <div className="mkv2-ejecutivos">{g.exacta.map((x) => <GrupoEjecutivo key={x.ejecutivo} grupo={x} nombres={nombres} />)}</div> : <p className="mkv2-nota">Ninguna con los filtros actuales.</p>}
-        <div className="mkv2-subtitulo-bloque">Posible (por dominio) · {numero(g.posible.reduce((n, x) => n + x.direcciones.length, 0))} direcciones</div>
-        {g.posible.length ? <div className="mkv2-ejecutivos">{g.posible.map((x) => <GrupoEjecutivo key={x.ejecutivo} grupo={x} nombres={nombres} posible />)}</div> : <p className="mkv2-nota">Ninguna con los filtros actuales.</p>}
-        <div className="mkv2-subtitulo-bloque">Sin identificar · {numero(g.sinIdentificar.length)} direcciones</div>
-        <p className="mkv2-nota">No están en Cumplimiento de Clientes ni por dominio (por ejemplo, correos personales o direcciones que ya se corrigieron en la base). Están en el listado de abajo.</p>
-        <p className="mkv2-nota">El aviso por correo a cada ejecutivo (plazo de 48 horas) se prepara en un paso aparte.</p>
-      </>}
-  </Tarjeta>
-}
+const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
 
-export function CorreosPorCorregir({ campanas, resumen, errorResumen, detalle, errorDetalle, foco, limpiarFoco, volver }) {
-  const s = useMemo(() => sumarResumen(campanas, resumen), [campanas, resumen])
+export function CorreosPorCorregir({ campanas, errorResumen, detalle, errorDetalle, foco, limpiarFoco, volver, reintentar }) {
   const { nombres, filas } = usarDetalle(campanas, detalle)
-  const [f, setF] = useState({ texto: '', motivo: '', origen: '' })
+  const [texto, setTexto] = useState('')
   const [pagina, setPagina] = useState(1)
   const [tamano, setTamano] = useState(25)
-  const corregir = useMemo(() => filas.filter((x) => x.status === 'CORREGIR'), [filas])
   const [ficha, setFicha] = useState(null)
   const cerrarFicha = useCallback(() => setFicha(null), [])
+  const nombreDe = useCallback((id) => nombreCampana(nombres, id), [nombres])
+  const cargoDe = (id) => nombres[id]?.cargo ?? 'Sin clasificar'
+  // Una fila por correo + campaña marcada CORREGIR; la más reciente primero.
+  const corregir = useMemo(() => filas.filter((x) => x.status === 'CORREGIR')
+    .sort((a, b) => String(b.fechaRebote ?? '').localeCompare(String(a.fechaRebote ?? '')) || a.correo.localeCompare(b.correo)), [filas])
   const lista = useMemo(() => {
-    const base = filtrarDetalle(corregir, { ...FILTROS_DETALLE, texto: f.texto, motivo: f.motivo }, { nombres })
-    return direccionesCorregir(base).filter((d) => !f.origen || d.origenes.includes(f.origen))
-  }, [corregir, f, nombres])
+    const q = normalizar(texto)
+    if (!q) return corregir
+    return corregir.filter((x) => normalizar(`${x.correo} ${textoEmpresas(x, 'ejecutivo')} ${textoEmpresas(x, 'cliente')} #${x.campana_id}`).includes(q))
+  }, [corregir, texto])
+  const unicas = new Set(corregir.map((x) => x.correo.toLowerCase())).size
   const p = paginar(lista, pagina, tamano)
-  const poner = (k) => (val) => { setF((x) => ({ ...x, [k]: val })); setPagina(1) }
 
   const columnas = [
-    { label: 'Dirección de correo', clase: 'mkv2-celda-correo', celda: (d) => <strong className="mkv2-texto-fuerte">{d.correo}</strong>, valor: (d) => d.correo, ancho: 34 },
-    { label: 'Cliente', clase: 'mkv2-celda-media', celda: (d) => <CeldaEmpresas fila={d} campo="cliente" />, valor: (d) => textoEmpresas(d, 'cliente'), ancho: 34 },
-    { label: 'País', celda: (d) => <CeldaEmpresas fila={d} campo="pais" />, valor: (d) => textoEmpresas(d, 'pais'), ancho: 16 },
-    { label: 'Ejecutivo de ventas', clase: 'mkv2-celda-media', celda: (d) => <CeldaEmpresas fila={d} campo="ejecutivo" />, valor: (d) => textoEmpresas(d, 'ejecutivo'), ancho: 26 },
-    { label: 'Status de correo', celda: () => <Insignia tono="rojo">CORREGIR</Insignia>, valor: () => 'CORREGIR CORREO', ancho: 18 },
-    { label: 'Motivo técnico', clase: 'mkv2-celda-media', celda: (d) => d.motivos.join(' · '), valor: (d) => d.motivos, ancho: 30 },
-    { label: 'Indicación', clase: 'mkv2-celda-larga', celda: (d) => d.indicaciones.join(' · '), valor: (d) => d.indicaciones, ancho: 44 },
-    { label: 'Resultado final', clase: 'mkv2-celda-media', celda: (d) => d.estados.join(' · '), valor: (d) => d.estados, ancho: 20 },
-    { label: 'Campaña(s)', clase: 'mkv2-celda-larga', celda: (d) => d.campanas.map((id) => nombreCampana(nombres, id)).join(' · '), valor: (d) => d.campanas.map((id) => nombreCampana(nombres, id)), ancho: 40 },
-    { label: 'Asunto(s)', clase: 'mkv2-celda-larga', celda: (d) => [...new Set(d.campanas.map((id) => nombres[id]?.asunto).filter(Boolean))].join(' · ') || '—', valor: (d) => [...new Set(d.campanas.map((id) => nombres[id]?.asunto).filter(Boolean))], ancho: 40 },
-    { label: 'Fecha de rebote', celda: (d) => <span className="fv2-sin-salto">{fechaCorta(d.fechaRebote)}</span>, valor: (d) => fechaCorta(d.fechaRebote), ancho: 14 },
-    { label: 'Origen', celda: (d) => d.origenes.map((o) => ORIGEN[o] ?? o).join(' · '), valor: (d) => d.origenes.map((o) => ORIGEN[o] ?? o), ancho: 20 },
+    { label: 'Dirección de correo', clase: 'mkv2-celda-correo', celda: (x) => <strong className="mkv2-texto-fuerte">{x.correo}</strong>, valor: (x) => x.correo },
+    { label: 'Cliente', clase: 'mkv2-celda-media', celda: (x) => <CeldaCliente fila={x} cargo={cargoDe(x.campana_id)} />,
+      valor: (x) => `${textoEmpresas(x, 'cliente')} · ${x.clientes == null ? 'Pendiente del cruce' : CLASIFICACIONES[clasificarCruce(x, cargoDe(x.campana_id))]}` },
+    { label: 'Ejecutivo de ventas', clase: 'mkv2-celda-media', celda: (x) => <CeldaEmpresas fila={x} campo="ejecutivo" />, valor: (x) => textoEmpresas(x, 'ejecutivo') },
+    { label: 'Status de correo', celda: () => <Insignia tono="rojo">CORREGIR CORREO</Insignia>, valor: () => 'CORREGIR CORREO' },
+    { label: 'Motivo técnico', clase: 'mkv2-celda-media', celda: (x) => x.motivoTecnico ?? 'Pendiente de verificar', valor: (x) => x.motivoTecnico ?? 'Pendiente de verificar' },
+    { label: 'Resultado final', celda: (x) => <Insignia tono={TONO_ESTADO[x.estado]}>{x.estadoTexto}</Insignia>, valor: (x) => x.estadoTexto },
+    { label: 'Campaña', celda: (x) => <Insignia tono="azul" title={nombreDe(x.campana_id)}>#{x.campana_id}</Insignia>, valor: (x) => `#${x.campana_id}` },
+    { label: 'Asunto', clase: 'mkv2-celda-asunto', celda: (x) => <span className="mkv2-recorte" data-tip={nombres[x.campana_id]?.asunto || undefined}>{nombres[x.campana_id]?.asunto || '—'}</span>, valor: (x) => nombres[x.campana_id]?.asunto ?? '' },
+    { label: 'Fecha rebote', celda: (x) => <span className="fv2-sin-salto">{fechaHora(x.fechaRebote)}</span>, valor: (x) => fechaHora(x.fechaRebote) },
+    { label: 'Detalle', celda: (x) => <button type="button" className="fv2-pildora mkv2-ver-eventos" onClick={() => setFicha({ correo: x.correo, campana: x.campana_id })}>Ver eventos</button>, valor: null },
   ]
-  const exportar = () => exportarExcel({
-    nombreBase: `correos-por-corregir_${new Date().toISOString().slice(0, 10)}`,
-    titulo: 'CORREOS POR CORREGIR · MAILING', subtitulo: `${numero(lista.length)} direcciones únicas · ${numero(campanas.length)} campañas`,
-    columnas, filas: lista,
-    filtros: filtrosTexto(campanas, [['Búsqueda', f.texto || 'Ninguna'], ['Motivo técnico', f.motivo || 'Todos'], ['Origen', ORIGEN[f.origen] ?? 'Todos']]),
-  })
+  const exportar = () => descargarCsv(`correos-por-corregir_${new Date().toISOString().slice(0, 10)}`, aCsv([
+    ...columnas.filter((c) => c.valor).map((c) => ({ label: c.label, valor: c.valor })),
+    { label: 'Indicación', valor: (x) => x.indicacion },
+  ], lista))
 
   return <>
     {foco && <Enfoque titulo={foco.titulo ?? 'Correos por corregir'} detalle={detalleFiltro(campanas)} onTodos={limpiarFoco} onVolver={volver} />}
-    <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} />
-    {errorResumen && <Aviso titulo="No se pudo leer el resumen de eventos" texto={errorResumen} />}
-    {s.hayDatos
-      ? <Aviso titulo={`${numero(direccionesCorregir(corregir).length)} direcciones únicas requieren corrección o verificación`} texto="Solo las marcadas «CORREGIR CORREO» según el motivo del rebote final. CORREGIR es una revisión de datos, no prueba que la cuenta no exista." />
-      : <Aviso icono="info" titulo="Correos por corregir" texto={`${TEXTO_WEBHOOK} Las demás campañas no tienen motivo de rebote por persona.`} />}
-    <div className="mkv2-minis">
-      <Mini nombre="Correos por corregir" valor={v(s, s.corregir)} nota="Filas CORREGIR (correo y campaña)" color={COLORES.rosa} />
-      <Mini nombre="% de los enviados" valor={s.hayDatos ? pct(porcentaje(s.corregir, s.enviados)) : '—'} nota="Sobre los enviados con detalle" color={COLORES.amarillo} />
-      <Mini nombre="Rebotes que se mantienen" valor={v(s, s.estados.rebote_temporal + s.estados.rebote_permanente - s.corregir)} nota="Rebote sin error de dirección (MANTENER)" color={COLORES.azulClaro} />
-      <Mini nombre="Campañas con detalle" valor={numero(s.campanasConDetalle)} nota={`${numero(s.conHistorial)} con historial importado · ${numero(s.conWebhook)} con webhook`} />
-    </div>
-    <div className="mkv2-duo">
-      <Motivos titulo="Motivos técnicos · CORREGIR" sub="Por qué se pide revisar la dirección" motivos={s.motivosCorregir} color={COLORES.rosa} hayDatos={s.hayDatos} />
-      <Motivos titulo="Motivos técnicos · MANTENER" sub="Rebotes que no prueban que la dirección esté mal" motivos={s.motivosMantener} color={COLORES.azulClaro} hayDatos={s.hayDatos} />
-    </div>
-    <PorEjecutivo direcciones={lista} nombres={nombres} cruce={detalle?.cruce} />
-    <Tarjeta titulo="Listado de correos por corregir" sub="Una fila por dirección (aunque haya fallado en varias campañas) · exporta lo que se ve"
-      acciones={<BotonExcel onClick={exportar} total={lista.length} />}>
-      <div className="mkv2-barra-tabla">
-        <Buscador valor={f.texto} onCambio={poner('texto')} placeholder="Buscar dirección, dominio o campaña" />
-        <Selector etiqueta="Motivo técnico" valor={f.motivo} onCambio={poner('motivo')} opciones={opcionesDe(corregir, 'motivoTecnico')} />
-        <Selector etiqueta="Origen" valor={f.origen} onCambio={poner('origen')} opciones={Object.entries(ORIGEN).slice(0, 2)} />
+    <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
+    {errorResumen && <Aviso titulo="No se pudo leer el resumen de eventos" texto={errorResumen} onReintentar={reintentar} />}
+    <div className="mkv2-franja-roja" role="status">
+      <div>
+        <strong>{numero(unicas)} {unicas === 1 ? 'correo requiere' : 'correos requieren'} corrección o verificación</strong>
+        <span>{numero(corregir.length)} casos (correo + campaña) · se muestran únicamente los marcados «CORREGIR CORREO» en la base de análisis.{filas.length ? '' : ` ${TEXTO_WEBHOOK}`}</span>
       </div>
-      <Tabla columnas={columnas} filas={p.filas} clave={(d) => d.correo} onFila={(d) => setFicha({ correo: d.correo })}
-        vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : corregir.length ? 'Sin resultados con esta búsqueda o filtros.' : TEXTO_WEBHOOK} />
+      <button type="button" className="fv2-pildora" onClick={exportar} disabled={!lista.length}><Download size={13} />Exportar lista CSV</button>
+    </div>
+    <PorEjecutivo filas={lista} nombreCampana={nombreDe} cruce={detalle?.cruce} />
+    <Tarjeta titulo="Listado de correos por corregir" sub="Detalle completo por campaña, disponible también para exportar."
+      acciones={<>
+        <Buscador valor={texto} onCambio={(v) => { setTexto(v); setPagina(1) }} placeholder="Buscar dirección, dominio o ejecutivo" />
+        <button type="button" className="fv2-pildora" onClick={exportar} disabled={!lista.length}><Download size={13} />Exportar lista</button>
+      </>}>
+      <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`}
+        vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : corregir.length ? 'Sin resultados con esta búsqueda.' : 'No hay correos por corregir con los filtros actuales.'} />
       <Paginacion p={p} onPagina={setPagina} tamano={tamano} onTamano={(t) => { setTamano(t); setPagina(1) }} />
+      <p className="mkv2-nota">«CORREGIR CORREO» significa verificar y corregir la dirección o su configuración antes del próximo envío. No prueba, por sí solo, que el buzón sea inexistente.</p>
     </Tarjeta>
-    {ficha && <Ficha filas={filasDelCorreo(filas, ficha.correo)} nombres={nombres} onCerrar={cerrarFicha} />}
+    {ficha && <Ficha filas={filasDelCorreo(filas, ficha.correo, ficha.campana)} nombres={nombres} onCerrar={cerrarFicha} />}
   </>
 }
 
 // ---------------- Detalle por correo ----------------
 
-export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, errorDetalle, foco, limpiarFoco, volver }) {
+export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, errorDetalle, foco, limpiarFoco, volver, reintentar }) {
   const [f, setF] = useState({ ...FILTROS_DETALLE, estado: foco?.estado ?? 'todos' })
   const [pagina, setPagina] = useState(1)
   const [tamano, setTamano] = useState(25)
@@ -263,8 +249,8 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
 
   return <>
     {foco && <Enfoque titulo={`Detalle del indicador · ${e.label}`} detalle={detalleFiltro(campanas)} onTodos={() => { setF(FILTROS_DETALLE); limpiarFoco() }} onVolver={volver} />}
-    <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} />
-    {errorResumen && <Aviso titulo="No se pudo leer el resumen de eventos" texto={errorResumen} />}
+    <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
+    {errorResumen && <Aviso titulo="No se pudo leer el resumen de eventos" texto={errorResumen} onReintentar={reintentar} />}
 
     <div className="mkv2-minis mkv2-minis5">
       {ESTADOS_DETALLE.filter((x) => x.id !== 'todos').map((x) => <Mini key={x.id} nombre={x.label} valor={numero(x.brevo(t))} color={COLOR_ESTADO[x.id]}

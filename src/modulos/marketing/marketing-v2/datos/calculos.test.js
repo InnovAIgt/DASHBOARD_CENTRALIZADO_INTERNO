@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { contadoresMailing, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { contadoresMailing, fechaHora, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -196,4 +196,9 @@ test('contadoresMailing: direcciones únicas a corregir, casos y filas de client
   assert.deepEqual(contadoresMailing(filas, [{ id: 1 }, { id: 2 }]), { corregir: 2, casosCorregir: 3, clientes: 4 })
   assert.deepEqual(contadoresMailing(filas, [{ id: 2 }]), { corregir: 1, casosCorregir: 1, clientes: 1 })
   assert.deepEqual(contadoresMailing(null, [{ id: 1 }]), { corregir: null, casosCorregir: null, clientes: null })
+})
+
+test('fechaHora: fecha y hora de Guatemala, o «—»', () => {
+  assert.equal(fechaHora('2026-11-11T21:44:12.000Z'), '11/11/2026 · 15:44')
+  assert.equal(fechaHora(null), '—')
 })

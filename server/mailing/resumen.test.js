@@ -170,3 +170,15 @@ test('leerEventos: pide página por página, filtra por campaña y no pide colum
   await assert.rejects(leerEventos({ env, fetchFn: async () => new Response('', { status: 500 }) }), /HTTP 500/)
   await assert.rejects(leerEventos({ env: {} }), /faltan las variables/)
 })
+
+test('responderResumen: una respuesta vacía no se guarda (ni en el servidor ni en el navegador)', async () => {
+  vaciarCacheResumen()
+  const vacia = leerFalso([])
+  const r = await responderResumen({ method: 'GET', leer: vacia.fn, ahora: 0 })
+  assert.equal(r.headers['Cache-Control'], 'no-store')
+  await responderResumen({ method: 'GET', leer: vacia.fn, ahora: 1000 })
+  assert.equal(vacia.llamadas.length, 2, 'la segunda consulta vuelve a leer')
+  const llena = leerFalso()
+  const d = JSON.parse((await responderResumen({ method: 'GET', leer: llena.fn, ahora: 2000 })).body)
+  assert.equal(d.hayDatos, true, 'cuando ya hay eventos, se ven de inmediato')
+})

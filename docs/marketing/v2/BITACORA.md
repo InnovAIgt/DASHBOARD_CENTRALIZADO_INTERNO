@@ -2,6 +2,34 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Rediseño de Mailing: Correos por corregir y Comparar iguales a la referencia
+
+- Regla de Keily: misma estructura, columnas, textos y botones que la referencia visual, con nuestro tema negro.
+- Correos por corregir: solo la franja «N correos requieren corrección o verificación» con «Exportar lista CSV» (los
+  motivos CORREGIR / MANTENER pasan a Detalle por correo en el paso 5). Ejecutivos en tarjetas cerradas de 3 columnas
+  (coincidencia exacta · posible por dominio en ámbar · sin identificar) que abren una ventana emergente con el correo
+  del ejecutivo (de `correos_usuarios`, editable y recordado en el navegador), «Correo con diseño», «Correo simple» y
+  «Exportar lista CSV». El correo con diseño (enlace https://cumplimientoclientes-88n2.onrender.com) se copia con
+  formato o se baja como borrador .eml; nunca se envía solo. En el grupo posible dice «confirmar antes de corregir».
+- Listado: una fila por correo + campaña con las columnas de la referencia y «Ver eventos», que abre la misma ficha de
+  Detalle por correo (ahora con «Campaña #id · asunto · cargo», «Ejecutivo de ventas», «Motivo técnico (Brevo)», la
+  indicación y la nota de apertura). Sin filtros de Motivo ni Origen: solo el buscador.
+- Comparar campañas: recuadro y aviso iniciales, barras «#id · asunto» con el cargo debajo y color según la métrica,
+  resultados por cargo con semáforo y meta de 90 %, y comparación detallada con las columnas de la referencia.
+
+## 2026-11-23 · Rediseño de Mailing, paso 2 de 5 (gráficas dinámicas)
+
+- Paso 1 aprobado por Keily (commit sin push). Aclarado el «0 campañas con detalle»: era el filtro de la campaña #73
+  (sin historial); por eso ahora se ve arriba «Filtrado por: … ✕».
+- Recorrido con barras gruesas de color que crecen y, entre etapas, el % que pasa a la siguiente; dona SVG con
+  separación entre sectores, que aparece girando y muestra en el centro el estado bajo el mouse; leyenda en cajitas.
+- Análisis por cargo con semáforo, línea punteada en la meta de 90 % y su leyenda; cifras de las tablas que abren
+  Detalle por correo; Resultado por campaña con mini barra de apertura y «Descargar resumen CSV».
+- Globo con el valor exacto en tarjetas, barras, sectores y cifras; números y barras se animan hacia el valor nuevo al
+  cambiar un filtro (sin animación con «reducir movimiento»).
+- Arreglos pedidos por Keily: el servidor ya no guarda una respuesta vacía del resumen ni del detalle (vuelve a leer
+  Supabase), y los avisos de error del resumen y del detalle tienen botón «Reintentar».
+
 ## 2026-11-23 · Rediseño de Mailing, paso 1 de 5 (tema negro y tarjetas)
 
 - Keily pidió que la pestaña Mailing se vea y funcione como la referencia visual negra (solo se lee; no entra al repo

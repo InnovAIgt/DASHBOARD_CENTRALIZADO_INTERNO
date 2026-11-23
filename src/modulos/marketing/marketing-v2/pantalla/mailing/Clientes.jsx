@@ -19,7 +19,7 @@ const TARJETAS = [
   { id: 'sin', sub: 'No está en GG, GF ni GO, ni por dominio', color: COLORES.tenue, tono: 'neutro' },
 ]
 
-export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, limpiarFoco, volver }) {
+export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, limpiarFoco, volver, reintentar }) {
   const [categoria, setCategoria] = useState('')
   const [texto, setTexto] = useState('')
   const [pagina, setPagina] = useState(1)
@@ -60,7 +60,7 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
 
   return <>
     {foco && <Enfoque titulo={foco.titulo ?? 'Relación con clientes'} detalle={`${numero(campanas.length)} campañas según los filtros de arriba`} onTodos={limpiarFoco} onVolver={volver} />}
-    <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} />
+    <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
     {sinCruce && <Aviso titulo="No se pudo leer Cumplimiento de Clientes" texto={detalle.avisoCruce} />}
     <div className="mkv2-minis mkv2-minis5">
       {TARJETAS.map((t) => <Mini key={t.id} nombre={CLASIFICACIONES[t.id]} valor={sinCruce ? '—' : numero(conteo[t.id])} color={t.color} nota={t.sub}
