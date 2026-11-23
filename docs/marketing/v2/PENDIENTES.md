@@ -22,12 +22,16 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Al crear el webhook en Brevo, ver si la pantalla permite el encabezado `x-webhook-token` o solo usuario:clave en la dirección | Keily | 2026-11-23 | Resuelto: autenticación Básica (usuario «brevo», contraseña = `BREVO_WEBHOOK_SECRET`) y encabezado `x-vercel-protection-bypass`; la dirección no lleva claves |
 | Definir el respaldo de los eventos del webhook | Keily | Por definir | Pendiente |
 | Limpieza mensual de eventos con más de 12 meses | Keily | Más adelante | Pendiente |
-| Inicio de sesión real del portal (hasta entonces, las rutas con correos devuelven solo totales) | Keily | Por definir | Pendiente |
+| Inicio de sesión real del portal (hasta entonces, las rutas con correos devuelven solo totales) | Keily | 2026-11-23 | Cambió: por decisión de Keily se muestran correos sin inicio de sesión (DECISIONES.md); el inicio de sesión queda para después |
+| Opción B (sesión para Marketing): pendiente, decidir después | Keily | Por definir | Pendiente |
+| Confirmar con Eduardo antes de publicar en producción que se muestren correos sin inicio de sesión | Eduardo | Antes de publicar | Pendiente |
 | Confirmar si se ocultan las campañas de prueba | Ismael | Por confirmar | Pendiente |
 | Comparar en la pantalla de Brevo la campaña 74 (157 entregados, 44 aperturas, 3 clics) para decidir entre `globalStats` y `campaignStats` (por ahora se usa `globalStats`) | Keily | 2026-11-23 | Resuelto: se usa `globalStats`; `uniqueViews` = «Aperturas (incluye automáticas)», Apple MPP aparte (MAILING.md, sección 6) |
 | Poner `BREVO_API_KEY` en Vercel (Preview para probar la ruta de campañas; Production al publicar) | Keily | 2026-11-23 | Hecho: la llave nueva (dashboard-marketing-lectura) está solo para la rama `feature/marketing-v2` en Preview |
 | En Vercel ya existe una `BREVO_API_KEY` **vieja** (Production y Preview) que Keily no puso. Ningún código de `origin/main` la lee: solo aparece como nombre en `.env.example`, `Dockerfile`, `docker-compose.yml`, documentación vieja y un texto de `SecretsModal.tsx`. Confirmar de quién es y si se puede borrar (y la llave en Brevo, si ya no se usa). Al publicar, Production debe quedar con la llave nueva | Keily / Eduardo | Antes de publicar | Pendiente |
-| Confirmar con la campaña de prueba qué es el evento `proxy_open` (¿apertura automática de Apple?) para clasificar APERTURA AUTOMÁTICA por destinatario | Keily | Con la campaña [PRUEBA] | Pendiente: en la primera revisión (23/11, ~15 min) no llegó ningún `proxy_open`. El webhook está suscrito a «cargado por proxy» |
+| Confirmar con la campaña de prueba qué es el evento `proxy_open` (¿apertura automática de Apple?) para clasificar APERTURA AUTOMÁTICA por destinatario | Keily | Con la campaña [PRUEBA] | Pendiente: tampoco llegó con la campaña [PRUEBA] (id 80, 23/11). El webhook está suscrito a «cargado por proxy»; se revisa otra vez el 24/11 |
+| Segunda revisión de la campaña [PRUEBA] (id 80): clics (Brevo 2 personas, tabla 1 persona con 2 clics) y `proxy_open` | Keily (avisa a Claude) | 2026-11-24 | Pendiente |
+| Borrar de la tabla los eventos de la campaña [PRUEBA] (id 80) al terminar la prueba | Keily | Al terminar la prueba | Pendiente |
 | Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
 | Permiso de lectura de la base de Cumplimiento de Clientes | Keily | — | Pendiente |
@@ -40,7 +44,7 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
 | Preguntar a Eduardo si el estado «Sin confirmación» se quita del dashboard o se deja (en la reunión dijo que no debería existir) | Eduardo | Por confirmar | Pendiente |
 | Quitar de Vercel las 4 variables viejas | Keily / TI | Al publicar | Pendiente |
-| Valores reales en .env.example del historial del repo (SAP, Workflow, contraseñas maestras, webhooks de Make, llaves públicas de Supabase/Firebase) (también en origin/main hoy), y llave tipo Google escrita directo en `src/config/env.ts`: TI debe cambiarlos | Eduardo / TI | 2026-11-20 | Pendiente |
+| Valores reales en .env.example del historial del repo (SAP, Workflow, contraseñas maestras, webhooks de Make, llaves públicas de Supabase/Firebase) (también en origin/main hoy), y llave tipo Google escrita directo en `src/config/env.ts`; además, una contraseña escrita directo en `src/context/AuthContext.tsx` (usuario semilla) y las contraseñas `VITE_MASTER_*`, que llegan al navegador. Nota: el login del portal acepta cualquier usuario y contraseña (no se verifica en el servidor): TI debe cambiarlos | Eduardo / TI | 2026-11-20 | Pendiente |
 | Vaciar .env.example en main con un PR aparte y pequeño | Keily (con OK de Eduardo) | — | Pendiente |
 | Borrar el código de bypass de Vercel al terminar la prueba del webhook | Keily | — | Pendiente |
 | Confirmar con Eduardo si las rutas de totales de Mailing pueden quedar abiertas en producción hasta tener inicio de sesión real | Eduardo | Antes de publicar | Pendiente |

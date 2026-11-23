@@ -2,6 +2,20 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Campaña [PRUEBA] Webhook dashboard (id 80): primera revisión
+
+- Keily envió la campaña autorizada por Ismael a 4 destinatarios internos (1 dirección inexistente a propósito) y
+  pidió abrirla y dar clic. Revisión de solo lectura a los ~8 minutos (solo conteos, correos tapados).
+- Brevo: enviados 4 · entregados 2 · soft 1 · hard 1 · aperturas 2 (Apple MPP 0) · clics 2.
+- Tabla (todo con `origen = 'webhook'`): 9 eventos de 4 destinatarios — entregados 2, soft 1, hard 1, aperturas
+  3 eventos de 2 personas, clics 2 eventos de **1** persona. Demora entre el evento y su llegada: 2 a 9 segundos.
+- Motivos reales (correo tapado): hard «550 5.1.1 [correo] does not exist» → CORREGIR · Cuenta destinataria
+  inexistente; soft «452-4.2.2 … inbox is out of storage space … OverQuotaTemp … gsmtp» → MANTENER · Buzón lleno.
+  Las reglas clasifican bien los dos. Confirma que el texto del motivo **puede traer el correo**: en pantalla solo
+  se muestra el motivo técnico.
+- `proxy_open`: no llegó ninguno.
+- Diferencia por revisar mañana: Brevo cuenta 2 personas con clic; en la tabla los 2 clics son de la misma persona.
+
 ## 2026-11-23 · Webhook de marketing creado en Brevo y primera revisión
 
 - Keily creó el webhook en Brevo: nombre «Dashboard Canales de marketing», tipo Marketing email, activo. Dirección:
