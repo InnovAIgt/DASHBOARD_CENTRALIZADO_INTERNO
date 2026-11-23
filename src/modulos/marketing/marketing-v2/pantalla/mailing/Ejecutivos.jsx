@@ -14,8 +14,8 @@ import { Aviso, Tarjeta, TituloCampana } from './piezas.jsx'
 
 // Correos de ejecutivos que la persona escribió (solo en este navegador). Si no hay, se usa el de correos_usuarios.
 const CLAVE_LIBRETA = 'mkv2-correos-ejecutivos'
-const leerLibreta = () => { try { return JSON.parse(localStorage.getItem(CLAVE_LIBRETA) || '{}') || {} } catch { return {} } }
-const guardarLibreta = (libreta) => { try { localStorage.setItem(CLAVE_LIBRETA, JSON.stringify(libreta)) } catch { /* solo en memoria */ } }
+export const leerLibreta = () => { try { return JSON.parse(localStorage.getItem(CLAVE_LIBRETA) || '{}') || {} } catch { return {} } }
+export const guardarLibreta = (libreta) => { try { localStorage.setItem(CLAVE_LIBRETA, JSON.stringify(libreta)) } catch { /* solo en memoria */ } }
 const nombreArchivo = (t) => String(t).replace(/[^a-zA-ZÀ-ſ0-9]+/g, '_')
 const hoy = () => new Date().toISOString().slice(0, 10)
 
@@ -30,7 +30,7 @@ function useEsc(activo, cerrar) {
 }
 
 /** Vista previa del correo con diseño, con «Borrador HTML (.eml)», «Copiar con formato» y «Correo simple». */
-function VistaCorreo({ grupo, para, onCerrar, onSimple, onPara }) {
+export function VistaCorreo({ grupo, para, onCerrar, onSimple, onPara }) {
   const [aviso, setAviso] = useState('')
   useEsc(true, onCerrar)
   const html = useMemo(() => htmlCorreo(grupo), [grupo])
@@ -222,4 +222,16 @@ export function PorEjecutivo({ filas, campanaDe, cruce }) {
     <p className="mkv2-nota">Las cifras por ejecutivo cuentan <strong>direcciones únicas</strong>; si un correo figura en varias campañas, se muestra una sola vez para ese responsable. Las direcciones vinculadas con más de un ejecutivo aparecen en los grupos correspondientes. <strong>Correo con diseño</strong> muestra una vista previa y permite copiar el diseño o preparar un borrador para Outlook. <strong>No envía mensajes automáticamente.</strong></p>
     {elegido && <VentanaEjecutivo key={elegido.clave} grupo={elegido} correoInicial={correoDe(elegido)} onGuardarCorreo={guardarCorreo} onCerrar={cerrar} />}
   </Tarjeta>
+}
+
+/** Abre el programa de correo con el borrador simple (nunca envía). Devuelve si se usó la lista abreviada. */
+export function abrirCorreoSimple(grupo, para) {
+  const { enlace, corto } = enlaceMailto(grupo, String(para ?? '').trim())
+  const a = document.createElement('a')
+  a.href = enlace
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  return corto
 }

@@ -8,11 +8,12 @@
 // Al hacer clic en una tarjeta, su detalle se abre AHÍ MISMO, debajo (acordeón); otro clic lo cierra; uno por gráfica.
 // Con menos de 5 entregados: «pocos datos», nunca gana ni lleva medalla.
 // La comparación por asunto es descriptiva: no prueba que el asunto sea la causa (las audiencias cambian).
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { campanasComparables, diaGuatemala, fechaCorta, MINIMO_ENTREGADOS, MINIMO_ENVIOS, NOMBRE_CARGO, numero, ordenarPor, pct, pocosDatos, porCargo, porCorregirCampana, porcentaje } from '../../datos/calculos.js'
 import { limpiarCampo, textosCampana } from '../../datos/campana.js'
 import { metricasPorEjecutivo, SIN_IDENTIFICAR, textoPaises } from '../../datos/porEjecutivo.js'
 import { DetalleCampana } from './DetalleCampana.jsx'
+import { DetalleEjecutivo } from './DetalleEjecutivo.jsx'
 import { Aviso, COLOR_MAILING, COLOR_SEMAFORO, Enfoque, FilaBarra, LeyendaSemaforo, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TituloCampana } from './piezas.jsx'
 
 const VISIBLES = 10
@@ -103,7 +104,7 @@ function GraficaCampanas({ lista, pequenas, incluir, setIncluir, metrica, resume
   </section>
 }
 
-function GraficaComerciales({ ejecutivos, campanasConDetalle, metrica, cruce, hayCartera }) {
+function GraficaComerciales({ ejecutivos, campanasConDetalle, metrica, cruce, hayCartera, campanaDe, verCartera }) {
   const m = METRICAS[metrica]
   const [todas, setTodas] = useState(false)
   const [abierta, setAbierta] = useState(null)
@@ -136,7 +137,7 @@ function GraficaComerciales({ ejecutivos, campanasConDetalle, metrica, cruce, ha
                 <span className="mkv2-chip">{numero(e.totales.enviados)} enviados</span>
                 {pocos(e) && <span className="mkv2-chip is-pocos">pocos datos</span>}
               </>}>
-              <p className="mkv2-nota">El detalle del ejecutivo (clientes interesados, no reciben, nunca abren, sus campañas y el aviso) se completa en la Parte 3.</p>
+              <DetalleEjecutivo e={e} campanaDe={campanaDe} verCartera={verCartera} />
             </TarjetaRanking>
           })}
         </div>
@@ -148,7 +149,7 @@ function GraficaComerciales({ ejecutivos, campanasConDetalle, metrica, cruce, ha
 }
 
 /** Las dos gráficas con un solo selector de métrica, la nota y los 3 cuadritos (de las campañas). */
-function Rendimiento({ lista, pequenas, incluir, setIncluir, resumen, metricaInicial, verCampana, verCorreos, filasDe, ejecutivos, campanasConDetalle, cruce, hayCartera }) {
+function Rendimiento({ lista, pequenas, incluir, setIncluir, resumen, metricaInicial, verCampana, verCorreos, filasDe, campanaDe, verCartera, ejecutivos, campanasConDetalle, cruce, hayCartera }) {
   const [metrica, setMetrica] = useState(METRICAS[metricaInicial] ? metricaInicial : 'entrega')
   const solidas = lista.filter((c) => !pocosDatos(c))
   const porEntrega = ordenarPor(solidas.filter((c) => c.tasas.entrega !== null), (c) => c.tasas.entrega)
@@ -166,7 +167,7 @@ function Rendimiento({ lista, pequenas, incluir, setIncluir, resumen, metricaIni
     {metrica === 'entrega' && <div className="mkv2-rank-herramientas"><LeyendaSemaforo /></div>}
     <div className="mkv2-dos-graficas">
       <GraficaCampanas lista={lista} pequenas={pequenas} incluir={incluir} setIncluir={setIncluir} metrica={metrica} resumen={resumen} verCampana={verCampana} verCorreos={verCorreos} filasDe={filasDe} />
-      <GraficaComerciales ejecutivos={ejecutivos} campanasConDetalle={campanasConDetalle} metrica={metrica} cruce={cruce} hayCartera={hayCartera} />
+      <GraficaComerciales ejecutivos={ejecutivos} campanasConDetalle={campanasConDetalle} metrica={metrica} cruce={cruce} hayCartera={hayCartera} campanaDe={campanaDe} verCartera={verCartera} />
     </div>
     <p className="mkv2-nota mkv2-pie">Una diferencia entre asuntos no demuestra por sí sola que un asunto causó mejores resultados: las audiencias y los tamaños de campaña pueden ser diferentes.</p>
     <div className="mkv2-cuadritos">
@@ -244,6 +245,10 @@ export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco
     return m
   }, [detalleTodo])
   const filasDe = (id) => porCampana.get(id) ?? []
+  const nombres = useMemo(() => Object.fromEntries(campanas.map((c) => [c.id, c])), [campanas])
+  const campanaDe = useCallback((id) => nombres[id] ?? null, [nombres])
+  // «Ver cartera completa»: Relación con clientes filtrada por ese ejecutivo.
+  const verCartera = (e) => { filtrar({ cliente: e.ejecutivo }); abrir({ vista: 'clientes', titulo: `Cartera de ${e.ejecutivo}` }) }
   const [incluir, setIncluir] = useState(false)
   const { lista, pequenas } = useMemo(() => campanasComparables(campanas, incluir), [campanas, incluir])
   // «Por comercial»: filas por correo de las campañas filtradas (ya con País y Cliente aplicados arriba).
@@ -264,7 +269,7 @@ export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco
           : <>Comparando <b>{numero(lista.length)} campañas</b>{incluir ? '' : ` (con ${MINIMO_ENVIOS} envíos o más)`}. Cada tasa utiliza el denominador indicado.</>}
     </div>
     <Rendimiento key={foco?.metrica ?? 'entrega'} lista={lista} pequenas={pequenas} incluir={incluir} setIncluir={setIncluir} resumen={resumen} metricaInicial={foco?.metrica}
-      verCampana={verCampana} verCorreos={verCorreos} filasDe={filasDe} ejecutivos={ejecutivos} campanasConDetalle={campanasConDetalle} cruce={detalle?.cruce} hayCartera={Array.isArray(detalle?.carteras)} />
+      verCampana={verCampana} verCorreos={verCorreos} filasDe={filasDe} campanaDe={campanaDe} verCartera={verCartera} ejecutivos={ejecutivos} campanasConDetalle={campanasConDetalle} cruce={detalle?.cruce} hayCartera={Array.isArray(detalle?.carteras)} />
     <PorCargo campanas={campanas} filtrar={filtrar} />
     <Detallada lista={lista} verCampana={verCampana} />
   </>

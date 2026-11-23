@@ -39,3 +39,27 @@ test('metricasPorEjecutivo: sin cartera leída, cartera = null y el país sale d
   assert.equal(a.clientesAlcanzados, 1)
   assert.equal(textoPaises(new Set(['SV', 'GT'])), 'GT y SV')
 })
+
+test('detalleCartera: interesados (clic o 2+ aperturas), no reciben, nunca abren y sus campañas', async () => {
+  const { detalleCartera } = await import('./porEjecutivo.js')
+  const c1 = { pais: 'SV', codigo: '1', cliente: 'Empresa Uno', ejecutivo: 'Ana Ejemplo' }
+  const c2 = { pais: 'SV', codigo: '2', cliente: 'Empresa Dos', ejecutivo: 'Ana Ejemplo' }
+  const c3 = { pais: 'SV', codigo: '3', cliente: 'Empresa Tres', ejecutivo: 'Ana Ejemplo' }
+  const c4 = { pais: 'SV', codigo: '4', cliente: 'Empresa Cuatro', ejecutivo: 'Ana Ejemplo' }
+  const f = (correo, campana_id, cli, extra = {}) => ({ correo, campana_id, estado: 'entregado', apertura: 'NO REGISTRADA', clic: 'SIN CLIC REGISTRADO', status: 'MANTENER', clientes: [cli], ...extra })
+  const filas = [
+    f('u@uno.example.com', 74, c1, { clic: 'CLIC REGISTRADO', apertura: 'APERTURA REGISTRADA' }),
+    f('d@dos.example.com', 74, c2, { apertura: 'APERTURA REGISTRADA' }),
+    f('d@dos.example.com', 75, c2, { apertura: 'APERTURA REGISTRADA' }),
+    f('t@tres.example.com', 74, c3, { estado: 'rebote_permanente', status: 'CORREGIR', motivoTecnico: 'Cuenta inexistente' }),
+    f('c@cuatro.example.com', 74, c4),
+    f('c@cuatro.example.com', 75, c4),
+  ]
+  const e = metricasPorEjecutivo(filas, null).find((x) => x.ejecutivo === 'Ana Ejemplo')
+  const d = detalleCartera(e)
+  assert.deepEqual(d.interesados.map((x) => [x.nombre, x.motivo]), [['Empresa Uno', 'clic'], ['Empresa Dos', 'aperturas']])
+  assert.equal(d.interesados[0].campanaId, 74)
+  assert.deepEqual(d.noReciben, [{ nombre: 'Empresa Tres', motivo: 'Cuenta inexistente', correos: 1 }])
+  assert.deepEqual(d.nuncaAbren, [{ nombre: 'Empresa Cuatro', de: 2 }])
+  assert.deepEqual(d.campanas.map((x) => [x.id, x.enviados, x.entrega]), [[75, 2, 100], [74, 4, 75]])
+})

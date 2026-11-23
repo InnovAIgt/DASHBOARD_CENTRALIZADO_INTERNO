@@ -73,3 +73,52 @@ export function metricasPorEjecutivo(filas = [], carteras = null) {
     }
   })
 }
+
+/**
+ * Detalle de la cartera de UN ejecutivo (acordeón de «Por comercial»), con sus filas correo + campaña.
+ * Agrupa por empresa (País + Código) de ese ejecutivo; en «Sin identificar» agrupa por dirección de correo.
+ *  - interesados: dio clic en alguna campaña, o abrió (apertura registrada) 2 o más campañas → «Llamar».
+ *  - noReciben: tiene direcciones marcadas CORREGIR (rebotaron) → motivo y «Corregir».
+ *  - nuncaAbren: recibió campañas pero ninguna apertura registrada ni clic → «0 de N».
+ *  - campanas: por campaña, entrega y apertura de SU cartera (semáforo en la entrega).
+ */
+export function detalleCartera(e) {
+  const nombre = e.ejecutivo
+  const grupos = new Map()
+  for (const f of e.filas) {
+    const propias = (f.clientes ?? []).filter((x) => (x.ejecutivo || SIN_IDENTIFICAR) === nombre)
+    const claves = propias.length ? propias.map((x) => [`${x.pais}-${x.codigo}`, x.cliente]) : [[`correo:${String(f.correo).toLowerCase()}`, String(f.correo).toLowerCase()]]
+    for (const [clave, etiqueta] of claves) {
+      const g = grupos.get(clave) ?? { clave, nombre: etiqueta, filas: [] }
+      g.filas.push(f)
+      grupos.set(clave, g)
+    }
+  }
+  const interesados = []
+  const noReciben = []
+  const nuncaAbren = []
+  for (const g of grupos.values()) {
+    const campanas = new Set(g.filas.map((f) => f.campana_id))
+    const clic = g.filas.find((f) => f.clic === 'CLIC REGISTRADO')
+    const abiertas = new Set(g.filas.filter((f) => f.apertura === 'APERTURA REGISTRADA').map((f) => f.campana_id))
+    if (clic) interesados.push({ nombre: g.nombre, motivo: 'clic', campanaId: clic.campana_id, abiertas: abiertas.size, de: campanas.size })
+    else if (abiertas.size >= 2) interesados.push({ nombre: g.nombre, motivo: 'aperturas', abiertas: abiertas.size, de: campanas.size })
+    const corregir = g.filas.filter((f) => f.status === 'CORREGIR')
+    if (corregir.length) noReciben.push({ nombre: g.nombre, motivo: corregir[0].motivoTecnico ?? 'Pendiente de verificar', correos: new Set(corregir.map((f) => String(f.correo).toLowerCase())).size })
+    const entregadas = new Set(g.filas.filter((f) => f.estado === 'entregado').map((f) => f.campana_id))
+    if (entregadas.size && !abiertas.size && !clic) nuncaAbren.push({ nombre: g.nombre, de: entregadas.size })
+  }
+  const porId = new Map()
+  for (const f of e.filas) porId.set(f.campana_id, [...(porId.get(f.campana_id) ?? []), f])
+  const campanas = [...porId].map(([id, filas]) => {
+    const entregados = filas.filter((f) => f.estado === 'entregado').length
+    return { id, enviados: filas.length, entrega: porcentaje(entregados, filas.length), apertura: porcentaje(filas.filter((f) => f.apertura === 'APERTURA REGISTRADA').length, entregados), semaforo: semaforoEntrega(entregados, filas.length) }
+  }).sort((a, b) => b.id - a.id)
+  const orden = (a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es')
+  return {
+    interesados: interesados.sort((a, b) => (a.motivo === b.motivo ? orden(a, b) : a.motivo === 'clic' ? -1 : 1)),
+    noReciben: noReciben.sort(orden),
+    nuncaAbren: nuncaAbren.sort((a, b) => b.de - a.de || orden(a, b)),
+    campanas,
+  }
+}

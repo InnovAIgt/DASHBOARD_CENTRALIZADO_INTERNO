@@ -2,6 +2,16 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Campañas, parte 3: detalle de un ejecutivo
+
+- Acordeón de «Por comercial» como la maqueta del ejecutivo desplegado: 4 números (enviados a su cartera, entrega,
+  apertura, por corregir); «🔥 Clientes interesados» (dieron clic, con el asunto de esa campaña, o abrieron 2+
+  campañas) con «Llamar»; «No reciben» (rebotaron, con motivo y «Corregir») y «Nunca abren» (0 de N) lado a lado;
+  «Sus campañas» con el asunto de título y «#id NOMBRE · cargo · fecha» debajo, entrega (semáforo) y apertura de su
+  cartera; fila del aviso con el correo del ejecutivo (de correos_usuarios o el guardado en el navegador), «Aviso
+  48 h» (la misma vista previa del correo con diseño; nunca se envía solo) y «Ver cartera completa» (Relación con
+  clientes filtrada por ese ejecutivo); «Leads de su cartera: próximamente».
+
 ## 2026-11-23 · Campañas, parte 2: detalle de una campaña con su objetivo
 
 - Objetivo de cada campaña con la lista de 8 de Keily (DECISIONES.md): se sugiere por el asunto, el nombre o el
