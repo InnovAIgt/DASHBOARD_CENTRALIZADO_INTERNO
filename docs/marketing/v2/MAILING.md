@@ -27,11 +27,20 @@ código correlativo - cargo - sector - asunto
 
 Ejemplo: **`001-GG-SEGURIDAD-Asunto`**. El dashboard saca el **cargo** y el **sector** del nombre de la campaña.
 
-**Campañas viejas que no cumplen la regla** (por ejemplo «GERENTE GENERAL NOVIEMBRE 5»):
-- El cargo se **deduce del nombre** cuando trae el cargo escrito completo («GERENTE GENERAL» → GG,
-  «GERENTE FINANCIERO» → GF, «GERENTE OPERATIVO» o «GERENTE DE OPERACIONES» → GO).
-- Si no se puede deducir, el cargo queda **«Sin clasificar»**. El sector queda «Sin clasificar».
-- No se adivina nada más del nombre.
+**Campañas viejas que no cumplen la regla** (por ejemplo «GERENTE GENERAL NOVIEMBRE 5»). El cargo se **deduce del
+nombre** solo con estas formas (sin importar mayúsculas ni tildes; ampliado por Keily el 23/11/2026):
+
+| Forma en el nombre | Cargo |
+|---|---|
+| «GERENTE GENERAL», «G.G», «- GG -» | GG |
+| «GERENTE FINANCIERO», «GERENTE DE FINANZAS», «GERENTE FINANZAS», «G.F», «- GF -» | GF |
+| «GERENTE OPERATIVO», «GERENTE DE OPERACIONES», «G.O», «- GO -» | GO |
+
+- Si no encaja en ninguna forma, o si el nombre trae **dos cargos distintos**, el cargo queda **«Sin clasificar»**.
+  El sector solo sale de la regla oficial; en las campañas viejas queda «Sin clasificar».
+- No se adivina nada más del nombre: por ejemplo «GERENTE FINACIERO» (mal escrito) o «GERENTE OPERACIONES» quedan
+  «Sin clasificar» y se asignan a mano.
+- Código: `server/mailing/reglas.js` (`cargoDesdeNombre`, `cargoFinal`).
 
 La regla se le entrega a Marketing para las campañas nuevas (PENDIENTES). Si el nombre no sigue la regla, Marketing
 puede asignar el cargo en la sub-pestaña **Asignar cargo a campañas** (sección 7.1).
@@ -162,6 +171,10 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | % por corregir | Destinatarios con CORREGIR CORREO ÷ Enviados × 100 |
 | Lectura | Por confirmar con el ingeniero |
 
+- **Campañas con solo totales** (`globalStats` de Brevo): apertura = `uniqueViews`, con la etiqueta **«por
+  confirmar»** hasta que Keily compare la campaña 74 en la pantalla de Brevo; clic = `clickers` (destinatarios que
+  hicieron clic); Sin confirmación = enviados − entregados − rebotes (si da negativo queda en 0 con aviso).
+- Los porcentajes llevan un decimal; si el divisor es 0 se muestra «—» (no 0 %).
 - Los 4 **estados finales** se excluyen entre sí (suman los enviados).
 - **Enviados → entregados → aperturas → clics** son **etapas**: sus porcentajes **no** se suman.
 
@@ -172,6 +185,9 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | 100 % | Verde |
 | 90 % a menos de 100 % | Amarillo |
 | Menos de 90 % | Rojo |
+
+El semáforo se calcula con los números exactos, no con el porcentaje redondeado (9 996 de 10 000 es amarillo aunque
+se vea «100,0 %»).
 
 ## 7. Filtros y pestañas
 
@@ -185,7 +201,7 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | País | País del cliente identificado |
 | Cliente | Busca por empresa, código, contacto, correo o ejecutivo |
 | Desde / Hasta | Fechas de envío |
-| Campañas de prueba | **Propuesta, por confirmar con Ismael:** ocultar por defecto las campañas de prueba (nombre con TEST o VALIDACIÓN), con un filtro para verlas |
+| Campañas de prueba | Ocultas por defecto las campañas con **TEST, VALIDACIÓN o PRUEBA** en el nombre (también en plural, sin importar mayúsculas ni tildes), con un interruptor para verlas. Por confirmar con Ismael. |
 
 **Las 6 sub-pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
 

@@ -39,6 +39,8 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Valores reales en .env.example del historial del repo (SAP, Workflow, contraseñas maestras, webhooks de Make, llaves públicas de Supabase/Firebase) (también en origin/main hoy), y llave tipo Google escrita directo en `src/config/env.ts`: TI debe cambiarlos | Eduardo / TI | 2026-11-20 | Pendiente |
 | Vaciar .env.example en main con un PR aparte y pequeño | Keily (con OK de Eduardo) | — | Pendiente |
 | Borrar el código de bypass de Vercel al terminar la prueba del webhook | Keily | — | Pendiente |
+| Confirmar con Eduardo si las rutas de totales de Mailing pueden quedar abiertas en producción hasta tener inicio de sesión real | Eduardo | Antes de publicar | Pendiente |
+| Carga inicial única del historial: exportar desde Brevo los CSV de las campañas reales anteriores e importarlos a mkt_brevo_eventos (paso aparte, después de las pantallas) | Keily | — | Pendiente |
 
 Las 4 variables viejas (solo nombres): `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`,
 `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE`.

@@ -40,6 +40,7 @@ Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
 | `server/mktSupabase.js` | Guarda en el proyecto Supabase «Dashboard Canales de marketing» (solo servidor) |
 | `api/marketing/brevo-webhook.js` | La misma ruta en Vercel |
 | `server/brevoWebhook.test.js` | Pruebas con datos inventados |
+| `server/mailing/reglas.js` | Reglas oficiales de MAILING.md (cargo, campañas de prueba, estado final, CORREGIR / MANTENER, tasas, semáforo); pruebas en `reglas.test.js` |
 
 **Estilos:** reutiliza los de **Flujo de ventas** (`src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css`, clase
 `fv2`) y su componente de banderas, **sin modificarlos**. Si cambian allá, cambian aquí. `marketing-v2.css` solo agrega

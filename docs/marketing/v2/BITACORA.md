@@ -2,6 +2,20 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Datos reales de Mailing · Paso 1: reglas oficiales en código
+
+- Plan aprobado por Keily: conectar Mailing en 6 pasos (reglas, ruta de campañas, ruta de resumen, Resultados
+  generales, Comparar y Asignar cargo, Correos por corregir y Detalle), un commit por paso.
+- `server/mailing/reglas.js` (sin conexiones): cargo y sector desde el nombre, cargo final (a mano gana), campañas de
+  prueba, estado final, CORREGIR / MANTENER con la tabla de motivos, apertura y clic, porcentajes, totales desde
+  `globalStats`, tasas y semáforo de entrega.
+- Decisiones de Keily: el cargo también se deduce de «GERENTE DE FINANZAS», «GERENTE FINANZAS», «G.G», «G.F», «G.O» y
+  «- GG -» / «- GF -» / «- GO -»; lo demás queda «Sin clasificar». Apertura con totales = `uniqueViews` «por
+  confirmar». Campañas de prueba: TEST, VALIDACIÓN o PRUEBA, ocultas por defecto. Las rutas de totales pueden quedar
+  abiertas por ahora (confirmar con Eduardo antes de publicar).
+- El semáforo usa los números exactos (no el porcentaje redondeado).
+- 20 pruebas nuevas con datos inventados (45 en total en `server/`), lint y build OK.
+
 ## 2026-11-23 · Webhook funcionando en la versión de prueba (dashboard.centralizado.interno)
 
 - Causa del 429 anterior: `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` estaban en Production y no en Preview. Keily
