@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { detalleWebhook, diaGuatemala, direccionesCorregir, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -121,6 +121,41 @@ test('direccionesCorregir: una fila por dirección con todas sus campañas y mot
   assert.deepEqual(d[0].motivos.sort(), ['Dominio sin registros MX', 'Usuario desconocido'])
   assert.equal(d[0].fechaRebote, '2026-11-11T18:00:00.000Z')
   assert.deepEqual(d[0].origenes.sort(), ['historial', 'webhook'])
+})
+
+const EMP = (pais, codigo, cliente, ejecutivo, cargos = ['GG']) => ({ pais, codigo, cliente, ejecutivo, usuarioEjecutivo: '', cargos })
+const CRUZADAS = [
+  FILA(1, 'a@uno.test', { clientes: [EMP('GT', '100', 'Empresa Uno', 'Ejecutiva A')], posibles: [], status: 'CORREGIR', motivoTecnico: 'Usuario desconocido' }),
+  FILA(1, 'b@dos.test', { clientes: [EMP('SV', '200', 'Empresa Dos', 'Ejecutivo B', ['GF']), EMP('GT', '300', 'Empresa Tres', 'Ejecutiva A')], posibles: [], status: 'CORREGIR' }),
+  FILA(2, 'c@uno.test', { clientes: [], posibles: [EMP('GT', '100', 'Empresa Uno', 'Ejecutiva A')], status: 'CORREGIR' }),
+  FILA(2, 'd@nada.test', { clientes: [], posibles: [], status: 'CORREGIR' }),
+  FILA(2, 'e@sincruce.test', { clientes: null, posibles: null }),
+]
+
+test('empresasDe y filtrarPorCliente (País y Cliente de arriba)', () => {
+  assert.equal(empresasDe(CRUZADAS[0]).tipo, 'exacta')
+  assert.equal(empresasDe(CRUZADAS[2]).tipo, 'posible')
+  assert.equal(empresasDe(CRUZADAS[3]).tipo, 'sin')
+  const correos = (l) => l.map((f) => f.correo.split('@')[0])
+  assert.deepEqual(correos(filtrarPorCliente(CRUZADAS, { pais: 'SV' })), ['b'])
+  assert.deepEqual(correos(filtrarPorCliente(CRUZADAS, { pais: 'GT' })), ['a', 'b', 'c'])
+  assert.deepEqual(correos(filtrarPorCliente(CRUZADAS, { cliente: 'empresa uno' })), ['a', 'c'])
+  assert.deepEqual(correos(filtrarPorCliente(CRUZADAS, { cliente: 'ejecutivo b' })), ['b'])
+  assert.equal(filtrarPorCliente(CRUZADAS, {}).length, 5, 'sin filtros pasan todas')
+  assert.equal(filtrarDetalle(CRUZADAS, { ...FILTROS_DETALLE, texto: 'Empresa Tres' }).length, 1, 'el buscador también busca por cliente')
+})
+
+test('gruposPorEjecutivo: separa coincidencia exacta, posible y sin identificar', () => {
+  const g = gruposPorEjecutivo(direccionesCorregir(CRUZADAS))
+  assert.deepEqual(g.exacta.map((x) => [x.ejecutivo, x.direcciones.length]), [['Ejecutiva A', 2], ['Ejecutivo B', 1]])
+  assert.deepEqual(g.posible.map((x) => [x.ejecutivo, x.direcciones.length]), [['Ejecutiva A', 1]])
+  assert.deepEqual(g.sinIdentificar.map((d) => d.correo), ['d@nada.test'])
+})
+
+test('relacionClientes y conteoClasificaciones (cargo de la campaña)', () => {
+  const r = relacionClientes(CRUZADAS, { 1: 'GG', 2: 'GF' })
+  assert.deepEqual(r.map((f) => f.clasificacion), ['objetivo', 'varias', 'posible', 'sin', null])
+  assert.deepEqual(conteoClasificaciones(r), { varias: 1, objetivo: 1, otro: 0, posible: 1, sin: 1 })
 })
 
 test('paginar y opcionesDe', () => {

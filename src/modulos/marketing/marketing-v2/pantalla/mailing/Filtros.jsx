@@ -1,12 +1,13 @@
 // Canales de marketing · Mailing: filtros globales (aplican a todas las sub-pestañas).
-// Forma de la plantilla: etiqueta arriba de cada campo, en cuadrícula. País y Cliente esperan el cruce con clientes.
+// Forma de la plantilla: etiqueta arriba de cada campo, en cuadrícula. País y Cliente salen del cruce con Cumplimiento
+// de Clientes y aplican a las vistas por correo.
 import { X } from 'lucide-react'
 import { FILTROS_INICIALES, NOMBRE_CARGO, OPCIONES_CARGO, SIN_CLASIFICAR } from '../../datos/calculos.js'
 
 export function Filtros({ filtros, cambiar, opciones, ocultas }) {
   const poner = (clave) => (e) => cambiar({ ...filtros, [clave]: e.target.value })
-  const hayFiltros = filtros.campana || filtros.cargo || filtros.asunto || filtros.desde || filtros.hasta
-  const pendienteClientes = 'Requiere el cruce con Cumplimiento de Clientes (pendiente)'
+  const hayFiltros = filtros.campana || filtros.cargo || filtros.asunto || filtros.desde || filtros.hasta || filtros.pais || filtros.cliente
+  const notaClientes = 'Sale del cruce con Cumplimiento de Clientes: aplica a Correos por corregir, Detalle por correo y Relación con clientes (los totales de Brevo no se pueden separar por país)'
   return <section className="mkv2-tarjeta mkv2-filtros-tarjeta" aria-label="Filtros">
     <div className="mkv2-filtros-rejilla">
       <label className="mkv2-campo-v">
@@ -30,13 +31,17 @@ export function Filtros({ filtros, cambiar, opciones, ocultas }) {
           {opciones.asuntos.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
       </label>
-      <label className="mkv2-campo-v" title={pendienteClientes}>
+      <label className="mkv2-campo-v" title={notaClientes}>
         <span>País cliente</span>
-        <select className="mkv2-control" disabled><option>Todos (pendiente del cruce)</option></select>
+        <select className="mkv2-control" value={filtros.pais} onChange={poner('pais')}>
+          <option value="">Todos los países</option>
+          <option value="GT">GT · Guatemala</option>
+          <option value="SV">SV · El Salvador</option>
+        </select>
       </label>
-      <label className="mkv2-campo-v" title={pendienteClientes}>
+      <label className="mkv2-campo-v" title={notaClientes}>
         <span>Buscar empresa / cliente</span>
-        <input className="mkv2-control" type="search" disabled placeholder="Pendiente del cruce con clientes" />
+        <input className="mkv2-control" type="search" value={filtros.cliente} onChange={poner('cliente')} placeholder="Empresa, código o ejecutivo" />
       </label>
       <label className="mkv2-campo-v">
         <span>Envío desde</span>

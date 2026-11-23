@@ -6,14 +6,14 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
+import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
 import {
-  direccionesCorregir, ESTADOS_DETALLE, estadoDetalle, fechaCorta, filtrarDetalle, FILTROS_DETALLE, numero, opcionesDe,
+  direccionesCorregir, gruposPorEjecutivo, ESTADOS_DETALLE, estadoDetalle, fechaCorta, filtrarDetalle, FILTROS_DETALLE, numero, opcionesDe,
   paginar, pct, porcentaje, sumarResumen, sumarTotales,
 } from '../../datos/calculos.js'
 import { exportarExcel } from '../../datos/excel.js'
 import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Mini, Tarjeta, TEXTO_WEBHOOK } from './piezas.jsx'
 
-const PENDIENTE_CRUCE = 'Pendiente del cruce'
 const v = (s, n) => (s.hayDatos ? numero(n) : '—')
 const detalleFiltro = (campanas) => `${numero(campanas.length)} campañas según los filtros de arriba`
 const TAMANOS = [25, 50, 100]
@@ -21,19 +21,19 @@ const COLOR_ESTADO = {
   todos: COLORES.azul, entregado: COLORES.verdeClaro, apertura: COLORES.azulClaro, apertura_automatica: COLORES.azulClaro, clic: COLORES.verde,
   rebotes: COLORES.rosa, rebote_temporal: COLORES.amarillo, rebote_permanente: COLORES.rosa, sin_confirmacion: COLORES.tenue, baja: COLORES.amarillo, spam: COLORES.rosa,
 }
-const TONO_ESTADO = { entregado: 'verde', rebote_temporal: 'amarillo', rebote_permanente: 'rojo', sin_confirmacion: 'neutro' }
-const ORIGEN = { historial: 'Historial importado', webhook: 'Webhook', ambos: 'Historial y webhook' }
+export const TONO_ESTADO = { entregado: 'verde', rebote_temporal: 'amarillo', rebote_permanente: 'rojo', sin_confirmacion: 'neutro' }
+export const ORIGEN = { historial: 'Historial importado', webhook: 'Webhook', ambos: 'Historial y webhook' }
 
 // ---------------- Piezas de tabla: buscador, selector, paginación, exportar ----------------
 
-function Buscador({ valor, onCambio, placeholder }) {
+export function Buscador({ valor, onCambio, placeholder }) {
   return <label className="mkv2-buscar-v">
     <Search size={14} aria-hidden="true" />
     <input className="mkv2-control" type="search" value={valor} onChange={(e) => onCambio(e.target.value)} placeholder={placeholder} aria-label={placeholder} />
   </label>
 }
 
-function Selector({ etiqueta, valor, onCambio, opciones, todos = 'Todos' }) {
+export function Selector({ etiqueta, valor, onCambio, opciones, todos = 'Todos' }) {
   return <label className="mkv2-campo-v mkv2-campo-chico">
     <span>{etiqueta}</span>
     <select className="mkv2-control" value={valor} onChange={(e) => onCambio(e.target.value)}>
@@ -43,7 +43,7 @@ function Selector({ etiqueta, valor, onCambio, opciones, todos = 'Todos' }) {
   </label>
 }
 
-function Paginacion({ p, onPagina, tamano, onTamano }) {
+export function Paginacion({ p, onPagina, tamano, onTamano }) {
   return <div className="mkv2-paginacion">
     <span>{numero(p.total)} filas · página {numero(p.pagina)} de {numero(p.paginas)}</span>
     <div className="mkv2-acciones">
@@ -56,7 +56,7 @@ function Paginacion({ p, onPagina, tamano, onTamano }) {
   </div>
 }
 
-function BotonExcel({ onClick, total }) {
+export function BotonExcel({ onClick, total }) {
   const [estado, setEstado] = useState('')
   const exportar = async () => { setEstado('Preparando…'); const tipo = await onClick(); setEstado(tipo === 'csv' ? 'Se descargó en CSV' : '') }
   return <button type="button" className="fv2-pildora" onClick={exportar} disabled={!total || estado === 'Preparando…'} title="Exporta lo que se ve, con los filtros aplicados">
@@ -65,7 +65,7 @@ function BotonExcel({ onClick, total }) {
 }
 
 /** Tabla simple con filas ya paginadas. */
-function Tabla({ columnas, filas, vacio, clave }) {
+export function Tabla({ columnas, filas, vacio, clave }) {
   return <div className="fv2-tabla-caja">
     <table className="fv2-tabla mkv2-tabla">
       <thead><tr>{columnas.map((c) => <th key={c.label} scope="col">{c.label}</th>)}</tr></thead>
@@ -78,7 +78,7 @@ function Tabla({ columnas, filas, vacio, clave }) {
 }
 
 /** Aviso cuando el detalle no se puede mostrar (error, interruptor apagado o sin datos). */
-function AvisoDetalle({ detalle, errorDetalle }) {
+export function AvisoDetalle({ detalle, errorDetalle }) {
   if (errorDetalle) return <Aviso titulo="No se pudo leer el detalle por correo" texto={errorDetalle} />
   if (detalle && !detalle.mostrarCorreos) return <Aviso icono="candado" titulo="Los correos están ocultos" texto={`${detalle.aviso ?? ''} Hay ${numero(detalle.total)} filas; solo se muestran conteos.`} />
   return null
@@ -94,7 +94,7 @@ function usarDetalle(campanas, detalle) {
   }, [campanas, detalle])
 }
 
-const nombreCampana = (nombres, id) => nombres[id]?.nombre ?? `Campaña ${id}`
+export const nombreCampana = (nombres, id) => nombres[id]?.nombre ?? `Campaña ${id}`
 const filtrosTexto = (campanas, extra) => [['Campañas (filtros de arriba)', `${campanas.length}: ${campanas.map((c) => c.nombre).join(' · ')}`], ...extra]
 
 // ---------------- Correos por corregir ----------------
@@ -105,6 +105,37 @@ function Motivos({ titulo, sub, motivos, color, hayDatos }) {
     {hayDatos && motivos.length
       ? <div className="mkv2-embudo">{motivos.map(([m, n]) => <FilaBarra key={m} nombre={m} valor={n} max={max} color={color} />)}</div>
       : <Aviso icono="info" titulo={hayDatos ? 'Sin casos en las campañas filtradas' : 'Sin detalle por correo todavía'} texto={hayDatos ? undefined : TEXTO_WEBHOOK} />}
+  </Tarjeta>
+}
+
+/** Una tarjeta desplegable por ejecutivo con sus direcciones únicas. */
+function GrupoEjecutivo({ grupo, nombres, posible }) {
+  return <details className={`mkv2-ejecutivo ${posible ? 'is-posible' : ''}`}>
+    <summary>
+      <span>{grupo.ejecutivo}{posible && <em className="mkv2-posible-etiqueta"> · posible (por dominio)</em>}</span>
+      <Insignia tono={posible ? 'amarillo' : 'rojo'}>{numero(grupo.direcciones.length)} por corregir</Insignia>
+    </summary>
+    <div className="mkv2-ejecutivo-lista">
+      {grupo.direcciones.map((d) => <span key={d.correo}><b>{d.correo}</b> · {textoEmpresas(d, 'cliente')} · {d.motivos.join(', ') || '—'} · {d.campanas.map((id) => nombreCampana(nombres, id)).join(', ')}</span>)}
+    </div>
+  </details>
+}
+
+/** Bloque «Correos pendientes por ejecutivo»: coincidencia exacta, posible por dominio y sin identificar, separados. */
+function PorEjecutivo({ direcciones, nombres, cruce }) {
+  const g = useMemo(() => gruposPorEjecutivo(direcciones), [direcciones])
+  return <Tarjeta titulo="Correos pendientes por ejecutivo de ventas" sub="Direcciones únicas (con los filtros de arriba y del listado) · el ejecutivo sale de la cuenta del cliente (País + Código)">
+    {cruce && cruce !== 'ok'
+      ? <Aviso titulo="Cliente y Ejecutivo no disponibles" texto="No se pudo leer Cumplimiento de Clientes. Todas las direcciones están en el listado de abajo." />
+      : <>
+        <div className="mkv2-subtitulo-bloque">Coincidencia exacta · {numero(g.exacta.reduce((n, x) => n + x.direcciones.length, 0))} direcciones</div>
+        {g.exacta.length ? <div className="mkv2-ejecutivos">{g.exacta.map((x) => <GrupoEjecutivo key={x.ejecutivo} grupo={x} nombres={nombres} />)}</div> : <p className="mkv2-nota">Ninguna con los filtros actuales.</p>}
+        <div className="mkv2-subtitulo-bloque">Posible (por dominio) · {numero(g.posible.reduce((n, x) => n + x.direcciones.length, 0))} direcciones</div>
+        {g.posible.length ? <div className="mkv2-ejecutivos">{g.posible.map((x) => <GrupoEjecutivo key={x.ejecutivo} grupo={x} nombres={nombres} posible />)}</div> : <p className="mkv2-nota">Ninguna con los filtros actuales.</p>}
+        <div className="mkv2-subtitulo-bloque">Sin identificar · {numero(g.sinIdentificar.length)} direcciones</div>
+        <p className="mkv2-nota">No están en Cumplimiento de Clientes ni por dominio (por ejemplo, correos personales o direcciones que ya se corrigieron en la base). Están en el listado de abajo.</p>
+        <p className="mkv2-nota">El aviso por correo a cada ejecutivo (plazo de 48 horas) se prepara en un paso aparte.</p>
+      </>}
   </Tarjeta>
 }
 
@@ -124,8 +155,9 @@ export function CorreosPorCorregir({ campanas, resumen, errorResumen, detalle, e
 
   const columnas = [
     { label: 'Dirección de correo', clase: 'mkv2-celda-correo', celda: (d) => <strong className="mkv2-texto-fuerte">{d.correo}</strong>, valor: (d) => d.correo, ancho: 34 },
-    { label: 'Cliente', celda: () => <span className="fv2-tenue">{PENDIENTE_CRUCE}</span>, valor: () => PENDIENTE_CRUCE, ancho: 20 },
-    { label: 'Ejecutivo de ventas', celda: () => <span className="fv2-tenue">{PENDIENTE_CRUCE}</span>, valor: () => PENDIENTE_CRUCE, ancho: 20 },
+    { label: 'Cliente', clase: 'mkv2-celda-media', celda: (d) => <CeldaEmpresas fila={d} campo="cliente" />, valor: (d) => textoEmpresas(d, 'cliente'), ancho: 34 },
+    { label: 'País', celda: (d) => <CeldaEmpresas fila={d} campo="pais" />, valor: (d) => textoEmpresas(d, 'pais'), ancho: 16 },
+    { label: 'Ejecutivo de ventas', clase: 'mkv2-celda-media', celda: (d) => <CeldaEmpresas fila={d} campo="ejecutivo" />, valor: (d) => textoEmpresas(d, 'ejecutivo'), ancho: 26 },
     { label: 'Status de correo', celda: () => <Insignia tono="rojo">CORREGIR</Insignia>, valor: () => 'CORREGIR CORREO', ancho: 18 },
     { label: 'Motivo técnico', clase: 'mkv2-celda-media', celda: (d) => d.motivos.join(' · '), valor: (d) => d.motivos, ancho: 30 },
     { label: 'Indicación', clase: 'mkv2-celda-larga', celda: (d) => d.indicaciones.join(' · '), valor: (d) => d.indicaciones, ancho: 44 },
@@ -159,10 +191,7 @@ export function CorreosPorCorregir({ campanas, resumen, errorResumen, detalle, e
       <Motivos titulo="Motivos técnicos · CORREGIR" sub="Por qué se pide revisar la dirección" motivos={s.motivosCorregir} color={COLORES.rosa} hayDatos={s.hayDatos} />
       <Motivos titulo="Motivos técnicos · MANTENER" sub="Rebotes que no prueban que la dirección esté mal" motivos={s.motivosMantener} color={COLORES.azulClaro} hayDatos={s.hayDatos} />
     </div>
-    <Tarjeta titulo="Correos pendientes por ejecutivo de ventas" sub="Direcciones únicas agrupadas por ejecutivo · aviso con plazo de 48 horas">
-      <Aviso icono="info" titulo="Pendiente del cruce con Cumplimiento de Clientes"
-        texto="El ejecutivo sale de la cuenta del cliente (País + Código). Mientras tanto, todas las direcciones están en el listado de abajo." />
-    </Tarjeta>
+    <PorEjecutivo direcciones={lista} nombres={nombres} cruce={detalle?.cruce} />
     <Tarjeta titulo="Listado de correos por corregir" sub="Una fila por dirección (aunque haya fallado en varias campañas) · exporta lo que se ve"
       acciones={<BotonExcel onClick={exportar} total={lista.length} />}>
       <div className="mkv2-barra-tabla">
@@ -194,8 +223,9 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
 
   const columnas = [
     { label: 'Correo', clase: 'mkv2-celda-correo', celda: (x) => <strong className="mkv2-texto-fuerte">{x.correo}</strong>, valor: (x) => x.correo, ancho: 34 },
-    { label: 'Cliente y país', celda: () => <span className="fv2-tenue">{PENDIENTE_CRUCE}</span>, valor: () => PENDIENTE_CRUCE, ancho: 20 },
-    { label: 'Ejecutivo', celda: () => <span className="fv2-tenue">{PENDIENTE_CRUCE}</span>, valor: () => PENDIENTE_CRUCE, ancho: 20 },
+    { label: 'Cliente', clase: 'mkv2-celda-media', celda: (x) => <CeldaEmpresas fila={x} campo="cliente" />, valor: (x) => textoEmpresas(x, 'cliente'), ancho: 34 },
+    { label: 'País', celda: (x) => <CeldaEmpresas fila={x} campo="pais" />, valor: (x) => textoEmpresas(x, 'pais'), ancho: 16 },
+    { label: 'Ejecutivo', clase: 'mkv2-celda-media', celda: (x) => <CeldaEmpresas fila={x} campo="ejecutivo" />, valor: (x) => textoEmpresas(x, 'ejecutivo'), ancho: 26 },
     { label: 'Campaña', clase: 'mkv2-celda-larga', celda: (x) => nombreCampana(nombres, x.campana_id), valor: (x) => nombreCampana(nombres, x.campana_id), ancho: 36 },
     { label: 'Cargo', celda: (x) => <InsigniaCargo cargo={nombres[x.campana_id]?.cargo ?? 'Sin clasificar'} />, valor: (x) => nombres[x.campana_id]?.cargo ?? 'Sin clasificar', ancho: 14 },
     { label: 'Estado final', celda: (x) => <Insignia tono={TONO_ESTADO[x.estado]}>{x.estadoTexto}</Insignia>, valor: (x) => x.estadoTexto, ancho: 18 },

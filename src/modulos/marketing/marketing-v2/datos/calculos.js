@@ -2,13 +2,13 @@
 // Las reglas oficiales vienen de server/mailing/reglas.js (una sola fuente, sin conexiones: se puede usar en el
 // navegador). Los datos llegan ya calculados por campaña desde /api/marketing/mailing/campanas y /resumen.
 // Documentación: docs/marketing/v2/MAILING.md, secciones 6 y 7.
-import { CARGOS, porcentaje, semaforoEntrega, SIN_CLASIFICAR, tasas } from '../../../../../server/mailing/reglas.js'
+import { CARGOS, CLASIFICACIONES, clasificarCruce, porcentaje, semaforoEntrega, SIN_CLASIFICAR, tasas } from '../../../../../server/mailing/reglas.js'
 
-export { porcentaje, semaforoEntrega, SIN_CLASIFICAR }
+export { CLASIFICACIONES, clasificarCruce, porcentaje, semaforoEntrega, SIN_CLASIFICAR }
 export const OPCIONES_CARGO = [...CARGOS, SIN_CLASIFICAR]
 export const NOMBRE_CARGO = { GG: 'Gerente General', GF: 'Gerente Financiero', GO: 'Gerente de Operaciones', [SIN_CLASIFICAR]: SIN_CLASIFICAR }
 
-export const FILTROS_INICIALES = { campana: '', cargo: '', asunto: '', desde: '', hasta: '', mostrarPrueba: false }
+export const FILTROS_INICIALES = { campana: '', cargo: '', asunto: '', desde: '', hasta: '', mostrarPrueba: false, pais: '', cliente: '' }
 
 const DIA_GT = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala', year: 'numeric', month: '2-digit', day: '2-digit' })
 const FECHA_GT = new Intl.DateTimeFormat('es-GT', { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -200,7 +200,8 @@ export function filtrarDetalle(filas = [], f = FILTROS_DETALLE, { ids = null, no
     if (f.motivo && x.motivoTecnico !== f.motivo) return false
     if (buscar) {
       const c = nombres[x.campana_id] ?? {}
-      if (!normalizarTexto(`${x.correo} ${c.nombre ?? ''} ${c.asunto ?? ''} ${x.campana_id}`).includes(buscar)) return false
+      const empresas = [...(x.clientes ?? []), ...(x.posibles ?? [])].map((e) => `${e.cliente} ${e.codigo} ${e.ejecutivo}`).join(' ')
+      if (!normalizarTexto(`${x.correo} ${c.nombre ?? ''} ${c.asunto ?? ''} ${x.campana_id} ${empresas}`).includes(buscar)) return false
     }
     return true
   })
@@ -216,7 +217,7 @@ export function direccionesCorregir(filas = []) {
   const porCorreo = new Map()
   for (const x of filas) {
     if (x.status !== 'CORREGIR') continue
-    const d = porCorreo.get(x.correo) ?? { correo: x.correo, campanas: [], motivos: new Set(), indicaciones: new Set(), estados: new Set(), origenes: new Set(), fechaRebote: null }
+    const d = porCorreo.get(x.correo) ?? { correo: x.correo, campanas: [], motivos: new Set(), indicaciones: new Set(), estados: new Set(), origenes: new Set(), fechaRebote: null, clientes: x.clientes ?? null, posibles: x.posibles ?? null }
     d.campanas.push(x.campana_id)
     if (x.motivoTecnico) d.motivos.add(x.motivoTecnico)
     d.indicaciones.add(x.indicacion)
@@ -238,6 +239,64 @@ export function paginar(lista, pagina = 1, tamano = 25) {
   const paginas = Math.max(1, Math.ceil(lista.length / tamano))
   const actual = Math.min(Math.max(1, pagina), paginas)
   return { filas: lista.slice((actual - 1) * tamano, actual * tamano), pagina: actual, paginas, total: lista.length }
+}
+
+// ---------------- Cruce con Cumplimiento de Clientes (filas con «clientes» y «posibles») ----------------
+
+/** Empresas de una fila: las exactas si hay; si no, las posibles por dominio. */
+export function empresasDe(fila) {
+  if (fila?.clientes?.length) return { tipo: 'exacta', empresas: fila.clientes }
+  if (fila?.posibles?.length) return { tipo: 'posible', empresas: fila.posibles }
+  return { tipo: 'sin', empresas: [] }
+}
+
+/**
+ * Filtros de arriba País (GT / SV) y Cliente (texto: empresa, código o ejecutivo). Solo aplican a las filas por correo.
+ * Sin cruce (clientes === null), País y Cliente no pueden filtrar: la fila se deja pasar solo si no hay filtro.
+ */
+export function filtrarPorCliente(filas = [], { pais = '', cliente = '' } = {}) {
+  const buscar = normalizarTexto(cliente)
+  if (!pais && !buscar) return filas
+  return filas.filter((f) => {
+    const { empresas } = empresasDe(f)
+    if (pais && !empresas.some((e) => e.pais === pais)) return false
+    if (buscar && !empresas.some((e) => normalizarTexto(`${e.cliente} ${e.codigo} ${e.ejecutivo} ${e.usuarioEjecutivo ?? ''}`).includes(buscar))) return false
+    return true
+  })
+}
+
+/**
+ * Bloque «Correos pendientes por ejecutivo»: direcciones únicas (de direccionesCorregir) agrupadas por ejecutivo,
+ * separando coincidencia exacta y posible por dominio. Una dirección en varias empresas aparece con cada ejecutivo.
+ * @returns {{exacta: Array<{ejecutivo, direcciones}>, posible: Array<{ejecutivo, direcciones}>, sinIdentificar: object[]}}
+ */
+export function gruposPorEjecutivo(direcciones = []) {
+  const grupos = { exacta: new Map(), posible: new Map() }
+  const sinIdentificar = []
+  for (const d of direcciones) {
+    const { tipo, empresas } = empresasDe(d)
+    if (tipo === 'sin') { sinIdentificar.push(d); continue }
+    for (const ejecutivo of new Set(empresas.map((e) => e.ejecutivo || 'Sin ejecutivo'))) {
+      const lista = grupos[tipo].get(ejecutivo) ?? []
+      lista.push(d)
+      grupos[tipo].set(ejecutivo, lista)
+    }
+  }
+  const ordenar = (m) => [...m.entries()].map(([ejecutivo, lista]) => ({ ejecutivo, direcciones: lista }))
+    .sort((a, b) => b.direcciones.length - a.direcciones.length || a.ejecutivo.localeCompare(b.ejecutivo, 'es'))
+  return { exacta: ordenar(grupos.exacta), posible: ordenar(grupos.posible), sinIdentificar }
+}
+
+/** Relación con clientes: cada fila (correo + campaña) con su clasificación (sección 8) según el cargo de la campaña. */
+export function relacionClientes(filas = [], cargoDe = {}) {
+  return filas.map((f) => ({ ...f, clasificacion: f.clientes === null ? null : clasificarCruce(f, cargoDe[f.campana_id]) }))
+}
+
+/** Conteo por clasificación. */
+export function conteoClasificaciones(filas = []) {
+  const c = Object.fromEntries(Object.keys(CLASIFICACIONES).map((k) => [k, 0]))
+  for (const f of filas) if (f.clasificacion) c[f.clasificacion] += 1
+  return c
 }
 
 /** % por corregir de UNA campaña (null si no tiene detalle del webhook). */

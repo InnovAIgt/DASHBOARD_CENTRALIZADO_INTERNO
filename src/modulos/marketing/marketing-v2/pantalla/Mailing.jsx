@@ -8,7 +8,7 @@
 // Los datos los pide datos/useMailingDatos.js a NUESTRO servidor. Nunca se muestran correos.
 import { useMemo, useState } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { filtrarCampanas, FILTROS_INICIALES, numero, opcionesFiltros, sumarResumen } from '../datos/calculos.js'
+import { filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, numero, opcionesFiltros, sumarResumen } from '../datos/calculos.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
 import { AsignarCargo } from './mailing/Cargos.jsx'
@@ -47,6 +47,12 @@ export function Mailing({ sub, onSub }) {
   const ocultas = useMemo(() => datos.campanas.filter((c) => c.esPrueba).length, [datos.campanas])
   const webhook = useMemo(() => sumarResumen(filtradas, datos.resumen), [filtradas, datos.resumen])
   const cuenta = { comparar: filtradas.filter((c) => c.estado === 'enviada').length, corregir: webhook.hayDatos ? webhook.corregir : null, cargos: filtradas.length }
+  // País y Cliente (cruce con Cumplimiento) solo aplican a las filas por correo; los totales de Brevo no se separan.
+  const detalle = useMemo(() => (datos.detalle?.mostrarCorreos
+    ? { ...datos.detalle, filas: filtrarPorCliente(datos.detalle.filas, { pais: filtros.pais, cliente: filtros.cliente }) }
+    : datos.detalle), [datos.detalle, filtros.pais, filtros.cliente])
+  const porCliente = !!(filtros.pais || filtros.cliente)
+  const vistaPorCorreo = ['corregir', 'detalle', 'clientes'].includes(actual)
 
   // Navegación: un clic en una pestaña quita el foco; «abrir» lo pone y cambia de pestaña.
   const irA = (key) => { setFoco(null); onSub(key) }
@@ -79,8 +85,11 @@ export function Mailing({ sub, onSub }) {
 
     {!datos.cargando && !datos.error && <>
       {datos.avisos.map((a) => <Aviso key={a} titulo="Aviso" texto={a} />)}
+      {porCliente && !vistaPorCorreo && <Aviso icono="info" titulo="País y Cliente aplican a las vistas por correo"
+        texto="Estos totales vienen de Brevo y no se pueden separar por país ni por cliente. Mira Correos por corregir, Detalle por correo o Relación con clientes." />}
+      {datos.detalle?.cruce && datos.detalle.cruce !== 'ok' && vistaPorCorreo && <Aviso titulo="Cliente, País y Ejecutivo no disponibles" texto={datos.detalle.avisoCruce} />}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
-        detalle={datos.detalle} errorDetalle={datos.errorDetalle}
+        detalle={detalle} errorDetalle={datos.errorDetalle}
         foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">
         Datos de Brevo de las {new Date(datos.actualizado).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit' })} · se actualizan cada 10 minutos.
