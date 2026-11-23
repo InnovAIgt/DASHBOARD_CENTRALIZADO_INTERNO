@@ -31,17 +31,82 @@ export async function leerCargosManuales({ env = process.env, fetchFn = fetch, e
   const reloj = setTimeout(() => control.abort(), esperaMs)
   try {
     const pedir = (campos) => fetchFn(`${url}/rest/v1/mkt_campana_cargo?select=${campos}`, { headers: { apikey: llave, Accept: 'application/json' }, signal: control.signal })
-    let r = await pedir('campana_id,cargo,objetivo')
+    let r = await pedir(CAMPOS_CARGO)
     if (r.status === 400) r = await pedir('campana_id,cargo') // antes del SQL 004 no existe «objetivo»
     if (!r.ok) throw new Error(`Supabase respondió HTTP ${r.status}`)
     const filas = await r.json()
-    return new Map((Array.isArray(filas) ? filas : []).map((f) => [Number(f.campana_id), { cargo: f.cargo ?? null, objetivo: String(f.objetivo ?? '').trim() || null }]))
+    return new Map((Array.isArray(filas) ? filas : []).map((f) => [Number(f.campana_id), filaManual(f)]))
   } catch (err) {
     if (err?.name === 'AbortError') throw new Error(`Supabase no respondió en ${esperaMs / 1000} s`)
     throw err
   } finally {
     clearTimeout(reloj)
   }
+}
+
+// ---------- Escribir cargo y objetivo (sub-pestaña «Cargo y objetivo», protegido con clave de Marketing) ----------
+// ÚNICA tabla en la que se escribe desde aquí: mkt_campana_cargo. Nunca Cumplimiento de Clientes ni Brevo.
+export const TABLA_CARGO = 'mkt_campana_cargo'
+const CAMPOS_CARGO = 'campana_id,cargo,objetivo,asignado_por,asignado_en,objetivo_asignado_en'
+
+/** Fila de la tabla → lo elegido a mano (con quién y cuándo). */
+const filaManual = (f) => ({
+  cargo: f.cargo ?? null,
+  objetivo: String(f.objetivo ?? '').trim() || null,
+  asignadoPor: f.asignado_por ?? null,
+  cargoAsignadoEn: f.cargo ? f.asignado_en ?? null : null,
+  objetivoAsignadoEn: f.objetivo_asignado_en ?? null,
+})
+
+/** Llamada a la tabla de cargos (y solo a esa). */
+async function pedirTablaCargo(consulta, { method = 'GET', body, prefer, env = process.env, fetchFn = fetch, esperaMs = MKT_ESPERA_MS } = {}) {
+  const { url, llave } = configuracionMkt(env)
+  const control = new AbortController()
+  const reloj = setTimeout(() => control.abort(), esperaMs)
+  try {
+    const r = await fetchFn(`${url}/rest/v1/${TABLA_CARGO}?${consulta}`, {
+      method,
+      headers: { apikey: llave, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}), ...(prefer ? { Prefer: prefer } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      signal: control.signal,
+    })
+    if (!r.ok) throw new Error(`Supabase respondió HTTP ${r.status}`)
+    const filas = await r.json().catch(() => [])
+    return Array.isArray(filas) ? filas : []
+  } catch (err) {
+    if (err?.name === 'AbortError') throw new Error(`Supabase no respondió en ${esperaMs / 1000} s`)
+    throw err
+  } finally {
+    clearTimeout(reloj)
+  }
+}
+
+const idSeguro = (id) => { const n = Number(id); if (!Number.isInteger(n) || n <= 0) throw new Error('campana_id inválido'); return n }
+
+/** La fila guardada de una campaña (o null). */
+export async function leerCargoDeCampana(campanaId, opciones = {}) {
+  const filas = await pedirTablaCargo(`campana_id=eq.${idSeguro(campanaId)}&select=${CAMPOS_CARGO}`, opciones)
+  return filas[0] ?? null
+}
+
+/** Guarda (crea o reemplaza) la fila de una campaña y devuelve lo guardado. */
+export async function guardarCargoDeCampana(fila, opciones = {}) {
+  const limpia = {
+    campana_id: idSeguro(fila.campana_id),
+    cargo: fila.cargo ?? null,
+    objetivo: fila.objetivo ?? null,
+    asignado_por: fila.asignado_por ?? null,
+    asignado_en: fila.asignado_en ?? null,
+    objetivo_asignado_en: fila.objetivo_asignado_en ?? null,
+  }
+  const filas = await pedirTablaCargo('on_conflict=campana_id', { ...opciones, method: 'POST', body: [limpia], prefer: 'resolution=merge-duplicates,return=representation' })
+  return filaManual(filas[0] ?? limpia)
+}
+
+/** Borra la fila de UNA campaña («Volver a lo sugerido»). Devuelve cuántas filas se borraron. */
+export async function borrarCargoDeCampana(campanaId, opciones = {}) {
+  const filas = await pedirTablaCargo(`campana_id=eq.${idSeguro(campanaId)}`, { ...opciones, method: 'DELETE', prefer: 'return=representation' })
+  return filas.length
 }
 
 export const EVENTOS_POR_PAGINA = 1000

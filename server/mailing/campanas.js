@@ -43,6 +43,7 @@ export function filaCampana(c, cargosManuales = new Map()) {
   const manual = cargosManuales.get(Number(c.id)) ?? null
   const cargoManual = (typeof manual === 'string' ? manual : manual?.cargo) ?? null
   const objetivoManual = typeof manual === 'object' && manual ? manual.objetivo ?? null : null
+  const quien = typeof manual === 'object' && manual ? manual : {}
   const totales = totalesDesdeBrevo(c.statistics?.globalStats)
   return {
     id: Number(c.id),
@@ -55,6 +56,10 @@ export function filaCampana(c, cargosManuales = new Map()) {
     cargoSugerido,
     cargoManual,
     objetivoManual,
+    // Quién y cuándo lo eligió a mano (con clave de Marketing): «Confirmado · por <nombre> · <fecha>».
+    asignadoPor: quien.asignadoPor ?? null,
+    cargoAsignadoEn: quien.cargoAsignadoEn ?? null,
+    objetivoAsignadoEn: quien.objetivoAsignadoEn ?? null,
     cargo: cargoFinal(cargoManual, cargoSugerido),
     esPrueba: esCampanaPrueba(c.name),
     totales,
@@ -112,14 +117,27 @@ export async function cargarCampanas({ env = process.env, fetchFn = fetch, esper
   }
 
   const campanas = [...programadas, ...enviadas].map((c) => filaCampana(c, cargos))
-  return { actualizado: new Date().toISOString(), campanas, avisos }
+  // edicionHabilitada: hay clave de Marketing en el servidor (la clave nunca se envía).
+  return { actualizado: new Date().toISOString(), campanas, avisos, edicionHabilitada: Boolean(String(env?.MKT_CLAVE_EDICION ?? '').trim()) }
 }
 
 // Caché en memoria (por instancia del servidor).
 let copia = null // { datos, vence }
 
-/** Solo para pruebas. */
+/** Vacía la copia (pruebas, y después de guardar un cargo u objetivo). */
 export function vaciarCacheCampanas() { copia = null }
+
+/**
+ * Ids de las campañas que existen: de la copia en memoria y, si no hay copia, leyendo Brevo SOLO PARA LEER (con la
+ * llave de solo lectura). Lo usa la ruta que guarda cargo y objetivo para rechazar campañas inexistentes.
+ */
+export async function idsCampanasConocidas({ env = process.env, fetchFn = fetch, leerCargos, ahora = Date.now() } = {}) {
+  if (!copia) {
+    const datos = await cargarCampanas({ env, fetchFn, ...(leerCargos ? { leerCargos } : {}) })
+    copia = { datos, vence: ahora + CAMPANAS_CACHE_MS }
+  }
+  return new Set(copia.datos.campanas.map((c) => c.id))
+}
 
 function respuesta(status, datos, cache = 'no-store') {
   return { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': cache }, body: JSON.stringify(datos) }

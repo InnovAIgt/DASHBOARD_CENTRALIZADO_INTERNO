@@ -146,15 +146,16 @@ test('responderCampanas: si fallan los cargos manuales, sigue con el sugerido y 
 
 test('leerCargosManuales: campana_id, cargo y objetivo, con la llave en el encabezado; sin la columna objetivo, solo cargo', async () => {
   const llamadas = []
-  const fetchFn = async (url, opciones) => { llamadas.push({ url, opciones }); return Response.json([{ campana_id: 5, cargo: 'GF', objetivo: 'Promover el dashboard de rondas' }]) }
+  const fetchFn = async (url, opciones) => { llamadas.push({ url, opciones }); return Response.json([{ campana_id: 5, cargo: 'GF', objetivo: 'Promover el dashboard de rondas', asignado_por: 'Persona Inventada', asignado_en: '2026-11-23T10:00:00Z', objetivo_asignado_en: '2026-11-23T11:00:00Z' }]) }
   const env = { MKT_SUPABASE_URL: 'https://proyecto-inventado.supabase.co', MKT_SUPABASE_SECRET_KEY: 'llave-inventada' }
   const cargos = await leerCargosManuales({ env, fetchFn })
-  assert.deepEqual(cargos.get(5), { cargo: 'GF', objetivo: 'Promover el dashboard de rondas' })
-  assert.equal(llamadas[0].url, 'https://proyecto-inventado.supabase.co/rest/v1/mkt_campana_cargo?select=campana_id,cargo,objetivo')
+  assert.deepEqual(cargos.get(5), { cargo: 'GF', objetivo: 'Promover el dashboard de rondas', asignadoPor: 'Persona Inventada', cargoAsignadoEn: '2026-11-23T10:00:00Z', objetivoAsignadoEn: '2026-11-23T11:00:00Z' })
+  assert.equal(llamadas[0].url, 'https://proyecto-inventado.supabase.co/rest/v1/mkt_campana_cargo?select=campana_id,cargo,objetivo,asignado_por,asignado_en,objetivo_asignado_en')
+  assert.equal(filaCampana(campana(5), cargos).asignadoPor, 'Persona Inventada')
   // Antes del SQL 004: la columna no existe (HTTP 400) → se vuelve a pedir solo el cargo.
   const antes = []
   const viejo = await leerCargosManuales({ env, fetchFn: async (url) => { antes.push(url); return url.includes('objetivo') ? new Response('', { status: 400 }) : Response.json([{ campana_id: 6, cargo: 'GO' }]) } })
-  assert.deepEqual(viejo.get(6), { cargo: 'GO', objetivo: null })
+  assert.deepEqual([viejo.get(6).cargo, viejo.get(6).objetivo], ['GO', null])
   assert.equal(antes.length, 2)
   assert.equal(filaCampana(campana(6), viejo).cargoManual, 'GO')
   assert.equal(filaCampana(campana(5), cargos).objetivoManual, 'Promover el dashboard de rondas')

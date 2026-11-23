@@ -7,6 +7,7 @@ import { reenviarSac } from './server/sacProxy.js';
 import { procesarWebhookBrevo } from './server/brevoWebhook.js';
 import { responderCampanas } from './server/mailing/campanas.js';
 import { responderResumen } from './server/mailing/resumen.js';
+import { responderCargo } from './server/mailing/cargoEditar.js';
 import { responderDetalle } from './server/mailing/detalle.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
@@ -66,6 +67,15 @@ app.all('/api/marketing/mailing/campanas', async (req, res) => {
 app.all('/api/marketing/mailing/resumen', async (req, res) => {
   const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
   const resultado = await responderResumen({ method: req.method, query: { campanas } });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: guardar cargo y objetivo con clave de Marketing (sin inicio de sesión; decisión de
+// Keily, DECISIONES.md). Solo escribe en mkt_campana_cargo. En Vercel: api/marketing/mailing/cargo.js.
+app.all('/api/marketing/mailing/cargo', async (req, res) => {
+  const ip = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? 'desconocida').split(',')[0].trim();
+  const resultado = await responderCargo({ method: req.method, body: req.body, ip });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });
