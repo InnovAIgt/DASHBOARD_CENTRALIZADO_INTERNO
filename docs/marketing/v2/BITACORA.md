@@ -2,6 +2,22 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Datos reales de Mailing · Paso 2: ruta de campañas con totales de Brevo
+
+- Ajustes al paso 1 (decisión de Keily): «GERENTE FINACIERO» → GF y «GERENTE OPERACIONES» → GO. Apertura con totales:
+  `uniqueViews` = «Aperturas (incluye automáticas)», con «Apple MPP» aparte y sin restar (Keily comparó la campaña 74
+  en Brevo: Entregados 157, Aperturas 45, Apple MPP 11, Total de aperturas 62, Clics 3).
+- Revisión de solo lectura: la **lista** de campañas trae `globalStats` en una sola llamada. La API **no trae** los
+  motivos de rebote agrupados por campaña que muestra la pantalla de Brevo: para campañas viejas solo la carga inicial
+  del historial podrá traerlos.
+- Ruta `GET /api/marketing/mailing/campanas` (`server/mailing/campanas.js`, `api/marketing/mailing/campanas.js`,
+  `server.ts`): enviadas y programadas, cargo manual desde `mkt_campana_cargo`, caché de 10 min, copia anterior si
+  Brevo falla, sin datos personales. `vercel.json`: 60 s de tiempo máximo.
+- 11 pruebas nuevas con datos inventados (56 en total en `server/`), lint y build OK.
+- Revisión real (portal local, solo conteos): 54 campañas enviadas y 0 programadas; 23 de prueba y 31 reales
+  (9 GG, 9 GF, 9 GO, 4 «Sin clasificar»); semáforo 15 verde, 13 amarillo, 26 rojo; campaña 74 igual a la pantalla de
+  Brevo; respuesta sin `@`. Primera carga 9,5 s; con caché 0,1 s.
+
 ## 2026-11-23 · Datos reales de Mailing · Paso 1: reglas oficiales en código
 
 - Plan aprobado por Keily: conectar Mailing en 6 pasos (reglas, ruta de campañas, ruta de resumen, Resultados

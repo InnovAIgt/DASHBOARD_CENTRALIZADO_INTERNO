@@ -22,8 +22,8 @@ const REGLA_OFICIAL = /^\s*(\d+)\s*-\s*(GG|GF|GO)\s*-\s*([^-]+?)\s*-\s*(.+?)\s*$
 /** Formas viejas aceptadas (decisión de Keily, 23/11/2026). Todo lo demás queda «Sin clasificar». */
 const FORMAS_VIEJAS = [
   { cargo: 'GG', patron: /\bGERENTE\s+GENERAL\b/ },
-  { cargo: 'GF', patron: /\bGERENTE\s+(FINANCIERO|DE\s+FINANZAS|FINANZAS)\b/ },
-  { cargo: 'GO', patron: /\bGERENTE\s+(OPERATIVO|DE\s+OPERACIONES)\b/ },
+  { cargo: 'GF', patron: /\bGERENTE\s+(FINANCIERO|FINACIERO|DE\s+FINANZAS|FINANZAS)\b/ },
+  { cargo: 'GO', patron: /\bGERENTE\s+(OPERATIVO|DE\s+OPERACIONES|OPERACIONES)\b/ },
   { cargo: 'GG', patron: /(^|[^A-Z0-9.])G\.\s?G(?![A-Z0-9])/ },
   { cargo: 'GF', patron: /(^|[^A-Z0-9.])G\.\s?F(?![A-Z0-9])/ },
   { cargo: 'GO', patron: /(^|[^A-Z0-9.])G\.\s?O(?![A-Z0-9])/ },
@@ -161,7 +161,9 @@ export function porcentaje(parte, total) {
 
 /**
  * Totales de una campaña desde globalStats de Brevo (campañas viejas: solo hay totales).
- * - Apertura: uniqueViews, POR CONFIRMAR (Keily compara la campaña 74 en la pantalla de Brevo).
+ * - Aperturas: uniqueViews = «Aperturas» de la pantalla de Brevo, que INCLUYE las automáticas (confirmado por Keily
+ *   con la campaña 74, 23/11/2026). Apple MPP (appleMppOpens) se muestra aparte; no se resta uno del otro.
+ *   La apertura registrada (sin automáticas) solo existe con el detalle por persona (webhook o carga inicial).
  * - Clic: clickers (destinatarios que hicieron clic).
  * - Sin confirmación = enviados − entregados − rebotes; si da negativo queda en 0 y se avisa.
  */
@@ -173,9 +175,9 @@ export function totalesDesdeBrevo(g = {}) {
     enviados, entregados, reboteTemporal, rebotePermanente,
     sinConfirmacion: Math.max(0, resto),
     sinConfirmacionAjustado: resto < 0,
-    aperturas: n(g.uniqueViews),
-    aperturasPorConfirmar: true,
-    aperturasApple: n(g.appleMppOpens),
+    aperturas: n(g.uniqueViews), // «Aperturas (incluye automáticas)»
+    aperturasApple: n(g.appleMppOpens), // «Apple MPP», aparte
+
     clics: n(g.clickers),
   }
 }

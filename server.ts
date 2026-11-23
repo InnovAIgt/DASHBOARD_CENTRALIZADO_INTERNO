@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { reenviarSac } from './server/sacProxy.js';
 import { procesarWebhookBrevo } from './server/brevoWebhook.js';
+import { responderCampanas } from './server/mailing/campanas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -47,6 +48,14 @@ app.all('/api/sac/:fuente(corte|vivo|historico)', async (req, res) => {
 // Guarda en el proyecto Supabase «Dashboard Canales de marketing». En Vercel: api/marketing/brevo-webhook.js.
 app.all('/api/marketing/brevo-webhook', async (req, res) => {
   const resultado = await procesarWebhookBrevo({ method: req.method, headers: req.headers, body: req.body });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: campañas de Brevo con sus totales (sin datos personales, con caché).
+// En Vercel: api/marketing/mailing/campanas.js.
+app.all('/api/marketing/mailing/campanas', async (req, res) => {
+  const resultado = await responderCampanas({ method: req.method });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });

@@ -26,6 +26,8 @@ test('formas viejas escritas completas', () => {
     ['Gerente Financiero con costo', 'GF'],
     ['GERENTE DE FINANZAS SIN COSTO', 'GF'],
     ['GERENTE FINANZAS CON COSTO', 'GF'],
+    ['GERENTE FINACIERO NOVIEMBRE', 'GF'], // mal escrito, aceptado por Keily (23/11/2026)
+    ['GERENTE OPERACIONES SIN COSTO', 'GO'], // sin «DE», aceptado por Keily (23/11/2026)
     ['GERENTE OPERATIVO NOVIEMBRE', 'GO'],
     ['DASHBOARD GERENTE DE OPERACIONES', 'GO'],
   ]
@@ -53,8 +55,8 @@ test('formas viejas abreviadas: G.G, G.F, G.O y «- GG -»', () => {
 test('lo que no encaja queda sin cargo (Sin clasificar)', () => {
   for (const nombre of [
     'CONSTRUCCION ABRIL INVENTADO',
-    'GERENTE FINACIERO NOVIEMBRE', // con error de escritura: no se adivina
-    'GERENTE OPERACIONES SIN COSTO', // forma no aceptada
+    'GERENTE FINANCIEROS INVENTADO', // otra palabra
+    'GERENTE DE OPERACION', // forma no aceptada
     'GG CAMPAÑA SIN GUIONES',
     'ALGO-GGX-OTRO',
     'GOOGLE ADS INVENTADO',
@@ -200,8 +202,8 @@ test('totales desde globalStats (números inventados) y tasas', () => {
   const t = totalesDesdeBrevo({ sent: 200, delivered: 180, softBounces: 12, hardBounces: 3, uniqueViews: 50, appleMppOpens: 9, clickers: 4, uniqueClicks: 6 })
   assert.equal(t.sinConfirmacion, 5)
   assert.equal(t.sinConfirmacionAjustado, false)
-  assert.equal(t.aperturas, 50)
-  assert.equal(t.aperturasPorConfirmar, true)
+  assert.equal(t.aperturas, 50) // incluye automáticas
+  assert.equal(t.aperturasApple, 9) // aparte, no se resta
   assert.equal(t.clics, 4)
   assert.deepEqual(tasas(t), { entrega: 90, reboteTemporal: 6, rebotePermanente: 1.5, apertura: 27.8, clic: 2.2 })
   const raro = totalesDesdeBrevo({ sent: 10, delivered: 9, softBounces: 3, hardBounces: 0 })

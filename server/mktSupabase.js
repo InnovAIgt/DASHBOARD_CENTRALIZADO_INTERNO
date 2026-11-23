@@ -21,6 +21,30 @@ export function configuracionMkt(env = process.env) {
 }
 
 /**
+ * Cargo elegido a mano por campaña (tabla mkt_campana_cargo). Solo campana_id y cargo: no se lee quién lo asignó.
+ * @returns {Promise<Map<number, string>>} id de campaña → GG / GF / GO
+ */
+export async function leerCargosManuales({ env = process.env, fetchFn = fetch, esperaMs = MKT_ESPERA_MS } = {}) {
+  const { url, llave } = configuracionMkt(env)
+  const control = new AbortController()
+  const reloj = setTimeout(() => control.abort(), esperaMs)
+  try {
+    const r = await fetchFn(`${url}/rest/v1/mkt_campana_cargo?select=campana_id,cargo`, {
+      headers: { apikey: llave, Accept: 'application/json' },
+      signal: control.signal,
+    })
+    if (!r.ok) throw new Error(`Supabase respondió HTTP ${r.status}`)
+    const filas = await r.json()
+    return new Map((Array.isArray(filas) ? filas : []).map((f) => [Number(f.campana_id), f.cargo]))
+  } catch (err) {
+    if (err?.name === 'AbortError') throw new Error(`Supabase no respondió en ${esperaMs / 1000} s`)
+    throw err
+  } finally {
+    clearTimeout(reloj)
+  }
+}
+
+/**
  * Guarda los eventos en mkt_brevo_eventos. Si una huella ya existe, esa fila se ignora sin error
  * (Brevo puede reintentar el mismo aviso).
  * @param {Array<object>} filas  filas ya armadas por filaDeEvento (server/brevoWebhook.js)

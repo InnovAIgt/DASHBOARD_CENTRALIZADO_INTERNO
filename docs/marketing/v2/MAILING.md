@@ -33,13 +33,14 @@ nombre** solo con estas formas (sin importar mayúsculas ni tildes; ampliado por
 | Forma en el nombre | Cargo |
 |---|---|
 | «GERENTE GENERAL», «G.G», «- GG -» | GG |
-| «GERENTE FINANCIERO», «GERENTE DE FINANZAS», «GERENTE FINANZAS», «G.F», «- GF -» | GF |
-| «GERENTE OPERATIVO», «GERENTE DE OPERACIONES», «G.O», «- GO -» | GO |
+| «GERENTE FINANCIERO», «GERENTE FINACIERO» (mal escrito en Brevo), «GERENTE DE FINANZAS», «GERENTE FINANZAS», «G.F», «- GF -» | GF |
+| «GERENTE OPERATIVO», «GERENTE DE OPERACIONES», «GERENTE OPERACIONES», «G.O», «- GO -» | GO |
 
 - Si no encaja en ninguna forma, o si el nombre trae **dos cargos distintos**, el cargo queda **«Sin clasificar»**.
   El sector solo sale de la regla oficial; en las campañas viejas queda «Sin clasificar».
-- No se adivina nada más del nombre: por ejemplo «GERENTE FINACIERO» (mal escrito) o «GERENTE OPERACIONES» quedan
-  «Sin clasificar» y se asignan a mano.
+- No se adivina nada más del nombre: lo que no encaja se asigna a mano.
+- Resultado con las 54 campañas enviadas (23/11/2026): 31 reales (9 GG, 9 GF, 9 GO y 4 «Sin clasificar») y 23 de
+  prueba. Ninguna sigue todavía la regla oficial.
 - Código: `server/mailing/reglas.js` (`cargoDesdeNombre`, `cargoFinal`).
 
 La regla se le entrega a Marketing para las campañas nuevas (PENDIENTES). Si el nombre no sigue la regla, Marketing
@@ -171,9 +172,15 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | % por corregir | Destinatarios con CORREGIR CORREO ÷ Enviados × 100 |
 | Lectura | Por confirmar con el ingeniero |
 
-- **Campañas con solo totales** (`globalStats` de Brevo): apertura = `uniqueViews`, con la etiqueta **«por
-  confirmar»** hasta que Keily compare la campaña 74 en la pantalla de Brevo; clic = `clickers` (destinatarios que
-  hicieron clic); Sin confirmación = enviados − entregados − rebotes (si da negativo queda en 0 con aviso).
+- **Campañas con solo totales** (`globalStats` de Brevo):
+  - **«Aperturas (incluye automáticas)»** = `uniqueViews`. Confirmado por Keily el 23/11/2026 con la campaña 74: la
+    pantalla de Brevo muestra Entregados 157, Aperturas 45 («aperturas automatizadas incluidas»), Apple MPP 11, Total
+    de aperturas 62 y Clics 3; `uniqueViews` = 45 y `viewed` = 62.
+  - **«Apple MPP»** = `appleMppOpens`, se muestra **aparte**. **No se resta** uno del otro.
+  - La **apertura registrada** (sin automáticas) solo existe con el detalle por persona: webhook o carga inicial del
+    historial. Con solo totales, la tasa de apertura se muestra como «Aperturas (incluye automáticas) ÷ Entregados».
+  - Clic = `clickers` (destinatarios que hicieron clic).
+  - Sin confirmación = enviados − entregados − rebotes (si da negativo queda en 0 con aviso).
 - Los porcentajes llevan un decimal; si el divisor es 0 se muestra «—» (no 0 %).
 - Los 4 **estados finales** se excluyen entre sí (suman los enviados).
 - **Enviados → entregados → aperturas → clics** son **etapas**: sus porcentajes **no** se suman.
@@ -302,6 +309,11 @@ del destinatario.
   personas: sus rutas del servidor **deben pedir el inicio de sesión del portal**. No pueden quedar públicas como la
   ruta vieja `mailing-detalle`.
 - Las rutas de totales (sin correos) no devuelven ningún dato personal.
+- **`GET /api/marketing/mailing/campanas`** (`server/mailing/campanas.js`): campañas enviadas y programadas con id,
+  nombre, asunto limpio (`{{ contact.NOMBRE }}` → `[NOMBRE]`), fecha, código, sector, cargo sugerido / manual / final,
+  si es de prueba, totales, tasas y semáforo. Nunca remitente, respuesta, contenido ni correos. Caché de 10 min en el
+  servidor y 5 min en Vercel; si Brevo falla y hay una copia anterior, se usa con aviso. La primera carga tarda unos
+  10 s (Brevo calcula los totales), por eso la función tiene 60 s de tiempo máximo en `vercel.json`.
 - Nunca se guardan correos ni datos de clientes en el repo, las pruebas ni las capturas.
 
 ### 10.1 Qué trae y qué no trae la API (prueba del 20/11/2026)
@@ -319,8 +331,8 @@ del destinatario.
 
 | Opción | Qué trae |
 |---|---|
-| `globalStats` | **La que se usa por ahora.** `sent`, `delivered`, `softBounces`, `hardBounces`, `uniqueViews`, `viewed`, `trackableViews`, `estimatedViews`, `opensRate`, `uniqueClicks`, `clickers`, `appleMppOpens` (aperturas automáticas de Apple, solo el total), `unsubscriptions`, `complaints` |
-| `campaignStats` | Los mismos totales por lista, más `deferred` (envío demorado). En la campaña 74 no coinciden con `globalStats` (aperturas 38 contra 44, clics 1 contra 3): por confirmar en la pantalla de Brevo (ver PENDIENTES). |
+| `globalStats` | **La que se usa.** También llega en la **lista** de campañas (`GET /v3/emailCampaigns?statistics=globalStats`, hasta 100 por página): no hace falta pedir campaña por campaña. `sent`, `delivered`, `softBounces`, `hardBounces`, `uniqueViews`, `viewed`, `trackableViews`, `estimatedViews`, `opensRate`, `uniqueClicks`, `clickers`, `appleMppOpens` (aperturas automáticas de Apple, solo el total), `unsubscriptions`, `complaints` |
+| `campaignStats` | Los mismos totales por lista, más `deferred` (envío demorado). En la campaña 74 no coinciden con `globalStats`; **se usa `globalStats`**, que coincide con la pantalla de Brevo (comparado por Keily el 23/11/2026). |
 | `linksStats` | Clics por enlace |
 | `statsByDomain`, `statsByDevice`, `statsByBrowser` | Totales por dominio, dispositivo y navegador (`statsByDomain` muestra dominios de clientes: no se guardan en docs ni pruebas) |
 
@@ -334,6 +346,11 @@ del destinatario.
   `emailBlacklisted` y los atributos `EMPRESA` y `NOMBRE`. Habría que consultar contacto por contacto (1,755 ese día).
 - **No trae:** el **motivo del rebote** (necesario para CORREGIR / MANTENER, sección 4) ni la **marca de apertura
   automática de Apple** por persona.
+- **Motivos de rebote agrupados por campaña:** la pantalla de Brevo los muestra (por ejemplo, en la campaña 74:
+  Conexión 8, Usuario 2, Desconocido 2), pero la **API de solo lectura no trae ese resumen** (revisado el
+  23/11/2026: ningún campo de la campaña tiene motivos, y `/emailCampaigns/{id}/bounces`, `/statistics` y `/reports`
+  no existen). Para las campañas viejas, los motivos solo pueden llegar con la **carga inicial del historial** (CSV de
+  Brevo, ver PENDIENTES).
 - **Exportación de destinatarios** (`POST /v3/emailCampaigns/{id}/exportRecipients`): probada el 20/11/2026 con la
   campaña 74 (solo rebotes temporales) → **403 `permission_denied`** en `campaigns.email`: la llave de solo lectura
   no permite exportar. No se creó ningún proceso ni se descargó nada. Las columnas del archivo siguen sin confirmar
