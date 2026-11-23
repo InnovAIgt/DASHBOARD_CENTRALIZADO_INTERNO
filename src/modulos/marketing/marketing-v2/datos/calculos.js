@@ -2,7 +2,7 @@
 // Las reglas oficiales vienen de server/mailing/reglas.js (una sola fuente, sin conexiones: se puede usar en el
 // navegador). Los datos llegan ya calculados por campaña desde /api/marketing/mailing/campanas y /resumen.
 // Documentación: docs/marketing/v2/MAILING.md, secciones 6 y 7.
-import { CARGOS, CLASIFICACIONES, clasificarCruce, porcentaje, semaforoEntrega, SIN_CLASIFICAR, tasas } from '../../../../../server/mailing/reglas.js'
+import { CARGOS, CLASIFICACIONES, cargoFinal, clasificarCruce, porcentaje, semaforoEntrega, SIN_CLASIFICAR, tasas } from '../../../../../server/mailing/reglas.js'
 
 export { CLASIFICACIONES, clasificarCruce, porcentaje, semaforoEntrega, SIN_CLASIFICAR }
 export const OPCIONES_CARGO = [...CARGOS, SIN_CLASIFICAR]
@@ -47,6 +47,17 @@ export function filtrarCampanas(campanas = [], f = FILTROS_INICIALES) {
     }
     return true
   })
+}
+
+/**
+ * Aplica a una campaña lo guardado a mano (cargo y objetivo con clave de Marketing), o lo quita (manual = null:
+ * «Volver a lo sugerido»). Lo elegido a mano gana; así se refleja al instante en todo el dashboard.
+ */
+export function aplicarManual(c, manual) {
+  const m = manual ?? {}
+  const cargoManual = m.cargo ?? null
+  return { ...c, cargoManual, cargo: cargoFinal(cargoManual, c.cargoSugerido), objetivoManual: m.objetivo ?? null,
+    asignadoPor: m.asignadoPor ?? null, cargoAsignadoEn: cargoManual ? m.cargoAsignadoEn ?? null : null, objetivoAsignadoEn: m.objetivo ? m.objetivoAsignadoEn ?? null : null }
 }
 
 /** Comparar campañas: por defecto solo las de 20 envíos o más (único lugar donde se define el 20). */

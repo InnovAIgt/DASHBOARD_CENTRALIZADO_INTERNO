@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { campanasComparables, contadoresMailing, fechaHora, MINIMO_ENVIOS, pocosDatos, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { aplicarManual, campanasComparables, contadoresMailing, fechaHora, MINIMO_ENVIOS, pocosDatos, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -212,4 +212,14 @@ test('campanasComparables: solo enviadas con 20+ envíos salvo que se incluyan l
   assert.deepEqual(campanasComparables(campanas, true).lista.map((x) => x.id), [1, 2, 3])
   assert.equal(pocosDatos(c(3, 5, 3)), true)
   assert.equal(pocosDatos(c(1, 120, 110)), false)
+})
+
+test('aplicarManual: lo guardado gana (cargo, objetivo, quién) y «volver a lo sugerido» lo quita', () => {
+  const c = { id: 74, cargoSugerido: 'GG', cargoManual: null, cargo: 'GG', objetivoManual: null }
+  const g = aplicarManual(c, { cargo: 'GF', objetivo: 'Mejorar la productividad', asignadoPor: 'Persona Inventada', cargoAsignadoEn: '2026-11-23T10:00:00Z', objetivoAsignadoEn: '2026-11-23T10:00:00Z' })
+  assert.deepEqual([g.cargo, g.cargoManual, g.objetivoManual, g.asignadoPor], ['GF', 'GF', 'Mejorar la productividad', 'Persona Inventada'])
+  const solo = aplicarManual(c, { cargo: null, objetivo: 'Otro objetivo nuevo', asignadoPor: 'X' })
+  assert.equal(solo.cargo, 'GG', 'sin cargo elegido, queda el sugerido')
+  const v = aplicarManual(g, null)
+  assert.deepEqual([v.cargo, v.cargoManual, v.objetivoManual, v.asignadoPor], ['GG', null, null, null])
 })

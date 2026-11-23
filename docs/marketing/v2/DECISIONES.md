@@ -3,6 +3,20 @@
 Decisiones tomadas para el dashboard Canales de marketing, con fecha y quién decidió. Lo más reciente va arriba.
 El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimiento en [PENDIENTES.md](PENDIENTES.md).
 
+## 2026-11-23 · Guardar cargo y objetivo con clave de Marketing
+
+- **Guardar cargo y objetivo protegido con clave de Marketing (sin inicio de sesión), por decisión de Keily,
+  23/11/2026.**
+- **Cómo:** la clave vive solo en el servidor (`MKT_CLAVE_EDICION`, sin `VITE_`; en `.env.example` solo el nombre).
+  El servidor la valida (nunca el navegador), en tiempo constante, y devuelve un permiso firmado de 8 horas que no
+  contiene la clave; la pestaña lo recuerda solo mientras esté abierta. Se pide también «Tu nombre», que queda como
+  «por <nombre>».
+- **Candados:** 5 claves incorrectas en 15 minutos desde la misma dirección bloquean 15 minutos (en Vercel el conteo es
+  por instancia, no global; cada fallo además espera 1 segundo). Solo se escribe en `mkt_campana_cargo` del proyecto
+  «Dashboard Canales de marketing»; nunca en Cumplimiento de Clientes ni en Brevo. Solo campañas que existen en Brevo.
+- **Riesgo aceptado:** quien tenga la clave puede editar sin identificarse de verdad (el nombre lo escribe la persona).
+  Para cambiar la clave basta con cambiar la variable (los permisos viejos dejan de valer).
+
 ## 2026-11-23 · Objetivo de cada campaña
 
 - **Lista de objetivos creada por Keily (23/11/2026); Marketing puede confirmarlos o cambiarlos.** En este orden; gana

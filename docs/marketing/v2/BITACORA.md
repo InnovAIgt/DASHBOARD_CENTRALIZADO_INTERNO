@@ -2,6 +2,16 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · «Cargo y objetivo»: Guardar con clave de Marketing
+
+- Ruta `POST/DELETE /api/marketing/mailing/cargo`: «entrar» valida la clave de Marketing en el servidor
+  (`MKT_CLAVE_EDICION`) y da un permiso firmado de 8 h; «guardar» y «volver a lo sugerido» lo exigen. Límite de 5
+  claves incorrectas en 15 min. Solo escribe en `mkt_campana_cargo`; la campaña se valida contra la lista en memoria
+  o leyendo Brevo solo para leer.
+- Pantalla: cargo y objetivo editables, ventana «Clave de Marketing» + «Tu nombre» la primera vez, Guardar (también
+  confirma lo sugerido tal cual), «Volver a lo sugerido» y «Confirmado · por <nombre> · <fecha>». Lo guardado se aplica
+  al instante en todo el dashboard.
+
 ## 2026-11-23 · Palabras del cargo fuera del nombre de la campaña
 
 - En el NOMBRE de la campaña también se ignoran las palabras del cargo (gerente, general, financiero, finaciero,

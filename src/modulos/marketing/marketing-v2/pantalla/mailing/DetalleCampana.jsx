@@ -17,7 +17,7 @@ export function ObjetivoCampana({ c }) {
   return <div className="mkv2-objetivo" data-tip={`${o.objetivo}\n${o.textoFuente}`}>
     <span className={`mkv2-estado-objetivo ${CLASE_ESTADO_OBJETIVO[o.estado]}`}>{TEXTO_ESTADO[o.estado]}</span>
     <strong>{o.objetivo}</strong>
-    <small>{o.textoFuente}</small>
+    <small>{o.textoFuente}{o.estado === 'confirmado' && c.asignadoPor ? ` · por ${c.asignadoPor}` : ''}{o.estado === 'confirmado' && c.objetivoAsignadoEn ? ` · ${fechaCorta(c.objetivoAsignadoEn)}` : ''}</small>
   </div>
 }
 

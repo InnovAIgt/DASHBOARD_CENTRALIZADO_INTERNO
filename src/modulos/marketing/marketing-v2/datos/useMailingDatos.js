@@ -4,6 +4,7 @@
 //   /api/marketing/mailing/detalle  → una fila por correo y campaña (muestra correos: decisión de Keily, DECISIONES.md)
 // Si el resumen o el detalle fallan, la pantalla sigue con los totales y avisa.
 import { useCallback, useEffect, useState } from 'react'
+import { aplicarManual } from './calculos.js'
 
 async function pedir(url, señal) {
   const r = await fetch(url, { headers: { Accept: 'application/json' }, signal: señal })
@@ -40,6 +41,7 @@ export function useMailingDatos() {
         campanas: campanas.value.campanas ?? [],
         avisos: [...(campanas.value.avisos ?? []), ...(ok(resumen) ? resumen.value.avisos ?? [] : [])],
         actualizado: campanas.value.actualizado ?? null,
+        edicionHabilitada: campanas.value.edicionHabilitada === true,
         resumen: ok(resumen) ? resumen.value : null,
         errorResumen: ok(resumen) ? null : resumen.reason?.message || 'No se pudo leer el detalle de los eventos.',
         detalle: ok(detalle) ? detalle.value : null,
@@ -49,5 +51,7 @@ export function useMailingDatos() {
     return () => control.abort()
   }, [vuelta])
 
-  return { ...estado, reintentar }
+  // Lo guardado con la clave de Marketing se aplica al instante (sin esperar la caché del servidor).
+  const actualizarCampana = useCallback((id, manual) => setEstado((e) => ({ ...e, campanas: e.campanas.map((c) => (c.id === id ? aplicarManual(c, manual) : c)) })), [])
+  return { ...estado, reintentar, actualizarCampana }
 }

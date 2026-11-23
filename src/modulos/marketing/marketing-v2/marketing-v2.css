@@ -651,7 +651,16 @@
 .mkv2 .mkv2-cargo-celda small { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--fv2-tenue); }
 .mkv2 .mkv2-celda-objetivo { min-width: 240px; }
 .mkv2 .mkv2-celda-objetivo .mkv2-control { height: 32px; }
-.mkv2 .mkv2-estado-celda { display: inline-flex; }
+.mkv2 .mkv2-estado-celda { display: inline-grid; gap: 3px; justify-items: start; }
+.mkv2 .mkv2-estado-celda small { font-size: 10.5px; color: var(--fv2-tenue); white-space: nowrap; }
+.mkv2 .mkv2-guardar-celda { display: grid; gap: 5px; justify-items: start; }
+.mkv2 .mkv2-guardar-celda small { font-size: 11px; font-weight: 700; }
+.mkv2 .mkv2-guardar-celda small.is-ok { color: #6fd3a6; }
+.mkv2 .mkv2-guardar-celda small.is-error { color: #ff8a99; }
+/* Ventana de la clave de Marketing */
+.mkv2 .mkv2-ventana-clave { display: grid; gap: 12px; width: min(440px, 100%); }
+.mkv2 .mkv2-ventana-clave h3 { display: flex; align-items: center; gap: 8px; }
+.mkv2 .mkv2-error-clave { margin: 0; padding: 8px 10px; border-radius: 8px; background: rgba(201, 54, 75, .16); color: #ff8a99; font-size: 12px; font-weight: 700; }
 
 /* Detalle de un ejecutivo (como la maqueta del ejecutivo desplegado) */
 .mkv2 .mkv2-ej-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }

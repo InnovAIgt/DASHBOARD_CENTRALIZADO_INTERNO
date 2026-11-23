@@ -47,6 +47,7 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Preguntar a Ismael si la campaña #74 fue solo para El Salvador (de 169 destinatarios, 146 son de clientes de SV y solo 2 de GT) | Ismael | 2026-11-23 | Pendiente |
 | Revisar con Ismael la lista de objetivos y sus reglas (8 objetivos creados por Keily el 23/11/2026; DECISIONES.md) | Ismael | 2026-11-23 | Pendiente |
 | Correr `docs/marketing/v2/sql/004_objetivo_campana.sql` en el proyecto «Dashboard Canales de marketing» (objetivo como texto libre) | Keily | 2026-11-23 | Resuelto (2026-11-23): objetivo (text) y objetivo_asignado_en (timestamptz) creados, cargo opcional; el servidor ya lee la columna (HTTP 200) |
+| Poner `MKT_CLAVE_EDICION` (clave de Marketing para Guardar cargo y objetivo) en `.env.local`, luego en Vercel Preview y al publicar en Production; compartirla solo con Marketing | Keily | 2026-11-23 | Pendiente |
 | Borrar `.git/worktrees/wt` (registro de una copia temporal de la rama) con `git worktree prune` cuando OneDrive lo libere; hoy da «permiso denegado». No afecta la rama | Keily / Claude | Cuando OneDrive lo libere | Pendiente |
 | Decidir dónde se guarda el cargo elegido por campaña (Supabase u otro) | Keily | — | Pendiente |
 | Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
