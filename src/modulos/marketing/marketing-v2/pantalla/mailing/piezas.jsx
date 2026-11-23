@@ -134,19 +134,29 @@ export function Bloque({ titulo }) {
  * Tarjeta de indicador como la de la referencia: ícono y título, número grande en su color, porcentaje con su base,
  * barrita del porcentaje (medidor: 0 a 100; null = sin barrita), texto corto y enlace abajo («Ver destinatarios ↗»).
  */
-export function Kpi({ titulo, icono: Icono, valor, porcentaje, base, medidor = null, nota, enlace, color = COLOR_MAILING.enviados, onClick, title, tip }) {
+export function Kpi({ titulo, icono: Icono, valor, porcentaje, base, medidor = null, color = COLOR_MAILING.enviados, onClick, tip }) {
+  // Compacta (maqueta de tarjetas): título corto en una línea, «?» con la explicación (en el globo), número, % con su
+  // base, barrita delgada y ↗ en la esquina. Toda la tarjeta se puede abrir.
   const ancho = Number.isFinite(medidor) ? Math.max(0, Math.min(100, medidor)) : null
-  return <Caja onClick={onClick} className="mkv2-kpi-t" title={title} tip={tip} style={{ '--mkv2-acento': colorDe(valor, color) }}>
+  return <Caja onClick={onClick} className="mkv2-kpi-t" tip={tip} style={{ '--mkv2-acento': colorDe(valor, color) }}>
     <span className="mkv2-kpi-cabeza">
-      {Icono && <span className="mkv2-kpi-icono" aria-hidden="true"><Icono size={15} strokeWidth={2.6} /></span>}
+      {Icono && <span className="mkv2-kpi-icono" aria-hidden="true"><Icono size={12} strokeWidth={2.8} /></span>}
       <span className="mkv2-kpi-titulo">{titulo}</span>
+      <span className="mkv2-ayuda" aria-hidden="true">?</span>
     </span>
     <span className="mkv2-kpi-num">{valor}</span>
     {base && <span className="mkv2-kpi-base">{porcentaje && <b>{porcentaje}</b>} {base}</span>}
     {ancho !== null && <span className="mkv2-kpi-medidor" aria-hidden="true"><i style={{ '--mkv2-medida': `${ancho}%` }} /></span>}
-    <span className="mkv2-kpi-sep" aria-hidden="true" />
-    {nota && <span className="mkv2-kpi-nota">{nota}</span>}
-    {onClick && enlace && <span className="mkv2-enlace">{enlace}<ArrowUpRight size={12} aria-hidden="true" /></span>}
+    {onClick && <span className="mkv2-kpi-ir" aria-hidden="true"><ArrowUpRight size={13} /></span>}
+  </Caja>
+}
+
+/** Tarjeta bajita de calidad (maqueta): número + título (y un dato chico); la explicación va en el «?» (globo). */
+export function TarjetaBajita({ valor, titulo, sub, color = COLOR_MAILING.gris, onClick, tip }) {
+  return <Caja onClick={onClick} className="mkv2-bajita" tip={tip} style={{ '--mkv2-color': colorDe(valor, color) }}>
+    <span className="mkv2-bajita-num">{valor}</span>
+    <span className="mkv2-bajita-titulo">{titulo}{sub && <small>{sub}</small>}</span>
+    <span className="mkv2-ayuda" aria-hidden="true">?</span>
   </Caja>
 }
 

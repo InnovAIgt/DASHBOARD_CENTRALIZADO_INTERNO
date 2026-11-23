@@ -2,6 +2,20 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Mailing: barra de filtros como Facturación, PDF y tarjetas compactas
+
+- Barra de filtros con el estilo de la de Facturación (`facturacion-linea.html`, solo se leyó; es una página suelta, no
+  un componente que se pueda importar; la `BarraFiltros` de Flujo de ventas está atada a sus filtros de leads):
+  País cliente (Todos · GT · SV con banderas), Período (desde–hasta + ↺), «Filtros ▾» (Campaña, Cargo, Asunto, Buscar
+  empresa/cliente y campañas de prueba), PDF y ↺ redondo para limpiar todo. Sin tipo de cambio. Reemplaza a Filtros.jsx.
+- PDF de la vista actual con la herramienta compartida del portal (`/assets/js/dashboard-pdf.js`, sin modificarla):
+  módulos Resultados generales, Resultado por campaña, Comparar campañas y Correos por corregir (con direcciones,
+  decisión de Keily), con los filtros aplicados.
+- Sub-pestañas con el estilo de los botones «Facturación / Informe detallado» (activa en rojo) y «Filtrado por: …»
+  debajo, ahora para cualquier filtro activo.
+- Tarjetas compactas como la maqueta: las 6 principales a la mitad de alto (título corto, «?» con la explicación,
+  número de 27 px, barrita delgada, ↗) y la fila de calidad en tarjetas bajitas.
+
 ## 2026-11-23 · Mailing: asunto arriba y nombre real abajo; Comparar como la maqueta
 
 - Regla de Keily para toda la pestaña: cada campaña se muestra con su ASUNTO como título y debajo «#id · NOMBRE REAL de

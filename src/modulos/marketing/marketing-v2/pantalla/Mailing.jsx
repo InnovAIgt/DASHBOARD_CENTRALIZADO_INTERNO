@@ -1,31 +1,32 @@
 // Canales de marketing · pestaña Mailing (docs/marketing/v2/MAILING.md).
-// Arma la pantalla: barra de sub-pestañas, filtros globales y la sub-pestaña elegida (carpeta mailing/).
+// Arma la pantalla: barra de filtros (estilo Facturación, con PDF), sub-pestañas, «Filtrado por» y la sub-pestaña elegida.
 // Dinámica como la plantilla de Mailing:
 //  - los filtros de arriba cambian al momento todas las tarjetas, gráficos y tablas de todas las sub-pestañas;
 //  - «abrir» lleva desde un clic (tarjeta, etapa, estado) a la sub-pestaña que corresponde, enfocada en ese dato
 //    («foco»), con una franja que dice qué se está viendo y botones «Ver todos» y «Volver a resultados»;
 //  - «filtrar» cambia un filtro desde un clic (por ejemplo, un cargo o una campaña de una tabla).
 // Los datos los pide datos/useMailingDatos.js a NUESTRO servidor. Nunca se muestran correos.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, RefreshCw, X } from 'lucide-react'
-import { contadoresMailing, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, NOMBRE_CARGO, numero, opcionesFiltros } from '../datos/calculos.js'
+import { contadoresMailing, fechaCorta, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, NOMBRE_CARGO, numero, opcionesFiltros } from '../datos/calculos.js'
 import { textosCampana } from '../datos/campana.js'
+import { cargarHerramientaPdf, chipsFiltros, construirReporteMailing, MODULOS_PDF_MAILING, nombreArchivoPdf } from '../datos/pdfMailing.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
 import { AsignarCargo } from './mailing/Cargos.jsx'
 import { RelacionConClientes } from './mailing/Clientes.jsx'
 import { CorreosPorCorregir, DetallePorCorreo } from './mailing/Correos.jsx'
-import { Filtros } from './mailing/Filtros.jsx'
+import { BarraFiltros, ID_BOTON_PDF } from './mailing/BarraFiltros.jsx'
 import { ResultadosGenerales } from './mailing/Generales.jsx'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 
 export const SUBPESTANAS_MAILING = [
-  { key: 'generales', label: 'Resultados generales', icono: '▥' },
-  { key: 'comparar', label: 'Comparar campañas', icono: '▤' },
-  { key: 'corregir', label: 'Correos por corregir', icono: '⚠' },
-  { key: 'detalle', label: 'Detalle por correo', icono: '≡' },
-  { key: 'clientes', label: 'Relación con clientes', icono: '♧' },
-  { key: 'cargos', label: 'Asignar cargo a campañas', icono: '◎' },
+  { key: 'generales', label: 'Resultados generales' },
+  { key: 'comparar', label: 'Comparar campañas' },
+  { key: 'corregir', label: 'Correos por corregir' },
+  { key: 'detalle', label: 'Detalle por correo' },
+  { key: 'clientes', label: 'Relación con clientes' },
+  { key: 'cargos', label: 'Asignar cargo' },
 ]
 
 const CONTENIDO = {
@@ -68,27 +69,66 @@ export function Mailing({ sub, onSub }) {
   const globo = useGlobo()
   // Etiquetas «Filtrado por: …» (campaña y cargo, se pongan con un clic o desde los filtros); ✕ quita ese filtro.
   const campanaElegida = filtros.campana ? datos.campanas.find((c) => String(c.id) === String(filtros.campana)) : null
+  const dia = (iso) => fechaCorta(`${iso}T12:00:00`)
   const etiquetas = [
-    filtros.campana && { clave: 'campana', texto: textosCampana(campanaElegida, filtros.campana).corto, tip: textosCampana(campanaElegida, filtros.campana).tip },
-    filtros.cargo && { clave: 'cargo', texto: NOMBRE_CARGO[filtros.cargo] && filtros.cargo !== NOMBRE_CARGO[filtros.cargo] ? `${filtros.cargo} · ${NOMBRE_CARGO[filtros.cargo]}` : filtros.cargo },
+    filtros.pais && { quitar: { pais: '' }, texto: `País: ${filtros.pais}` },
+    (filtros.desde || filtros.hasta) && { quitar: { desde: '', hasta: '' }, texto: `Período: ${filtros.desde ? dia(filtros.desde) : 'inicio'} – ${filtros.hasta ? dia(filtros.hasta) : 'hoy'}` },
+    filtros.campana && { quitar: { campana: '' }, texto: textosCampana(campanaElegida, filtros.campana).corto, tip: textosCampana(campanaElegida, filtros.campana).tip },
+    filtros.cargo && { quitar: { cargo: '' }, texto: NOMBRE_CARGO[filtros.cargo] && filtros.cargo !== NOMBRE_CARGO[filtros.cargo] ? `${filtros.cargo} · ${NOMBRE_CARGO[filtros.cargo]}` : filtros.cargo },
+    filtros.asunto && { quitar: { asunto: '' }, texto: `Asunto: ${filtros.asunto}` },
+    filtros.cliente && { quitar: { cliente: '' }, texto: `Cliente: ${filtros.cliente}` },
+    filtros.mostrarPrueba && { quitar: { mostrarPrueba: false }, texto: 'Con campañas de prueba' },
   ].filter(Boolean)
 
+  // ---- PDF de la vista actual: herramienta compartida del portal (dashboard-pdf.js), sin modificarla ----
+  // La ventana de módulos se crea una vez; siempre lee los datos actuales desde esta referencia.
+  const datosPdf = useRef(null)
+  datosPdf.current = { filtros, campanaElegida, filtradas, cuentas, detalle }
+  const [pdfListo, setPdfListo] = useState(false)
+  useEffect(() => {
+    if (datos.cargando) return undefined
+    let activo = true
+    const antes = new Set(document.querySelectorAll('.dashboard-pdf-picker'))
+    cargarHerramientaPdf().then((pdf) => {
+      if (!activo || !document.getElementById(ID_BOTON_PDF)) return
+      pdf.openModulePicker({
+        buttonId: ID_BOTON_PDF,
+        modules: MODULOS_PDF_MAILING,
+        getFilterChips: () => chipsFiltros(datosPdf.current.filtros, datosPdf.current.campanaElegida),
+        buildReport: async (seleccion) => {
+          const d = datosPdf.current
+          const ids = new Set(d.filtradas.map((c) => c.id))
+          const corregir = (d.detalle?.mostrarCorreos ? d.detalle.filas : []).filter((f) => f.status === 'CORREGIR' && ids.has(f.campana_id))
+          return construirReporteMailing({ seleccion, campanas: d.filtradas, cuentas: d.cuentas, corregir, nombres: Object.fromEntries(d.filtradas.map((c) => [c.id, c])),
+            chips: chipsFiltros(d.filtros, d.campanaElegida), origen: window.location.origin })
+        },
+        filename: () => nombreArchivoPdf(datosPdf.current.filtros),
+      })
+      setPdfListo(true)
+    }).catch((err) => console.error('PDF de Mailing:', err))
+    return () => {
+      activo = false
+      setPdfListo(false)
+      // Al salir de Mailing se quita la ventana de módulos que se creó para ella.
+      document.querySelectorAll('.dashboard-pdf-picker').forEach((el) => { if (!antes.has(el)) el.remove() })
+    }
+  }, [datos.cargando])
+
   return <div className="mkv2-mailing" {...globo.manejadores}>
+    <BarraFiltros filtros={filtros} cambiar={setFiltros} opciones={opciones} ocultas={ocultas} pdfListo={pdfListo} />
+
     <nav className="mkv2-subpestanas" role="tablist" aria-label="Secciones de Mailing">
       {SUBPESTANAS_MAILING.map((p) => <button type="button" key={p.key} role="tab" aria-selected={actual === p.key}
         className={`mkv2-subpestana ${actual === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>
-        <span aria-hidden="true">{p.icono}</span>{p.label}
-        {!datos.cargando && cuenta[p.key] != null && <span className="mkv2-subpestana-cuenta" title={tituloCuenta[p.key]}>{numero(cuenta[p.key])}</span>}
+        {p.label}
+        {!datos.cargando && cuenta[p.key] != null && <span className="mkv2-subpestana-cuenta" data-tip={tituloCuenta[p.key]}>{numero(cuenta[p.key])}</span>}
       </button>)}
     </nav>
 
-    <Filtros filtros={filtros} cambiar={setFiltros} opciones={opciones} ocultas={ocultas} />
-
     {etiquetas.length > 0 && <div className="mkv2-filtrado" role="status">
       <span>Filtrado por:</span>
-      {etiquetas.map((e) => <button type="button" key={e.clave} className="mkv2-filtrado-etiqueta" onClick={() => filtrar({ [e.clave]: '' })}
-        data-tip={e.tip ? `${e.tip}
-Clic para quitar este filtro` : 'Clic para quitar este filtro'} aria-label={`Quitar el filtro ${e.texto}`}>{e.texto}<X size={13} aria-hidden="true" /></button>)}
+      {etiquetas.map((e) => <button type="button" key={e.texto} className="mkv2-filtrado-etiqueta" onClick={() => filtrar(e.quitar)}
+        data-tip={e.tip ? `${e.tip}\nClic para quitar este filtro` : 'Clic para quitar este filtro'} aria-label={`Quitar el filtro ${e.texto}`}>{e.texto}<X size={13} aria-hidden="true" /></button>)}
     </div>}
 
     {datos.cargando && <div className="fv2-vacio"><strong>Cargando campañas de Brevo…</strong><span>La primera vez puede tardar unos 10 segundos.</span></div>}
