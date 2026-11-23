@@ -2,6 +2,19 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Webhook funcionando en la versión de prueba (dashboard.centralizado.interno)
+
+- Causa del 429 anterior: `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` estaban en Production y no en Preview. Keily
+  las pasó a solo Preview e hizo Redeploy.
+- Prueba repetida (campaña inventada 999999003, correos de example.com):
+  - Sin bypass de Vercel: 302. Con bypass y sin nuestra clave: **401** ✔.
+  - Con la clave correcta y 2 eventos (`delivered` y `hard_bounce` con motivo): **200, 2 guardados** ✔.
+  - El mismo envío otra vez: 200, 0 guardados y 2 ignorados (la huella evita duplicados) ✔.
+  - En la tabla: 2 filas, 1 con motivo. Borradas (204); la tabla quedó en 0.
+- Script temporal borrado; no se mostraron correos ni llaves.
+- Siguiente: crear el webhook en Brevo (Keily, avisando a Ismael) apuntando a la versión de prueba y mandar una
+  campaña de prueba.
+
 ## 2026-11-23 · Prueba del webhook en la versión de prueba de Vercel (resultado parcial)
 
 - La prueba se hace en el proyecto de Vercel **`dashboard.centralizado.interno`**: ahí están las 3 variables de Preview
