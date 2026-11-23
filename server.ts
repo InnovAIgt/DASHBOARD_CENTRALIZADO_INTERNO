@@ -7,6 +7,7 @@ import { reenviarSac } from './server/sacProxy.js';
 import { procesarWebhookBrevo } from './server/brevoWebhook.js';
 import { responderCampanas } from './server/mailing/campanas.js';
 import { responderResumen } from './server/mailing/resumen.js';
+import { responderDetalle } from './server/mailing/detalle.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -65,6 +66,15 @@ app.all('/api/marketing/mailing/campanas', async (req, res) => {
 app.all('/api/marketing/mailing/resumen', async (req, res) => {
   const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
   const resultado = await responderResumen({ method: req.method, query: { campanas } });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: detalle por correo. Muestra correos sin inicio de sesión (decisión de Keily,
+// docs/marketing/v2/DECISIONES.md); interruptor MKT_MOSTRAR_CORREOS. En Vercel: api/marketing/mailing/detalle.js.
+app.all('/api/marketing/mailing/detalle', async (req, res) => {
+  const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
+  const resultado = await responderDetalle({ method: req.method, query: { campanas } });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });
