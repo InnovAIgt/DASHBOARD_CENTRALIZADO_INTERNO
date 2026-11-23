@@ -80,6 +80,7 @@ export function Mailing({ sub, onSub }) {
     {!datos.cargando && !datos.error && <>
       {datos.avisos.map((a) => <Aviso key={a} titulo="Aviso" texto={a} />)}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
+        detalle={datos.detalle} errorDetalle={datos.errorDetalle}
         foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">
         Datos de Brevo de las {new Date(datos.actualizado).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit' })} · se actualizan cada 10 minutos.

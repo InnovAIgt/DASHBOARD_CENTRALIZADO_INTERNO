@@ -68,6 +68,8 @@ export function filaDetalle(eventos) {
     indicacion: indicacion({ estado: final.estado, ...s }),
     apertura: estadoApertura({ conFecha: tipos.has('opened'), automaticas: tipos.has('apple_mpp') ? 1 : 0 }),
     clic: estadoClic(tipos.has('click') ? 1 : 0),
+    baja: tipos.has('unsubscribe'),
+    spam: tipos.has('spam'),
     origen: origenes.size > 1 ? 'ambos' : [...origenes][0],
     fechaEnvio: envio.length ? ISO(Math.min(...envio)) : null,
     fechaRebote: rebote ? ISO(Math.max(...tiempos((e) => e.evento === rebote))) : null,

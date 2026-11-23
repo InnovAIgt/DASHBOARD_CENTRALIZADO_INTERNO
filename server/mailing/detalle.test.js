@@ -56,6 +56,9 @@ test('armarDetalle: una fila por correo y campaña, con estado, CORREGIR, apertu
   assert.equal(f('persona6@example.com', 11).apertura, 'APERTURA AUTOMÁTICA')
   assert.equal(f('persona5@example.com', 11).indicacion, 'Verificar el dominio y confirmar la dirección')
   assert.equal(p1.fechaEnvio, '2026-11-05T18:00:00.000Z')
+  assert.deepEqual([p1.baja, p1.spam], [false, false])
+  const conBaja = armarDetalle([ev(12, 'persona7@example.com', 'delivered', '2026-11-05T18:00:05Z'), ev(12, 'persona7@example.com', 'unsubscribe', '2026-11-05T19:00:00Z'), ev(12, 'persona7@example.com', 'spam', '2026-11-05T19:01:00Z')])[0]
+  assert.deepEqual([conBaja.baja, conBaja.spam, conBaja.estado], [true, true, 'entregado'])
 })
 
 test('armarDetalle: nunca devuelve el texto original del motivo (puede traer correos)', () => {

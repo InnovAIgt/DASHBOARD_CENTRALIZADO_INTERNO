@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { detalleWebhook, diaGuatemala, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { detalleWebhook, diaGuatemala, direccionesCorregir, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -92,6 +92,42 @@ test('ordenarPor: números y textos, con vacíos al final', () => {
   assert.deepEqual(ordenarPor(filas, (f) => f.v).map((f) => f.v), [10, 2, 1, null])
   assert.deepEqual(ordenarPor(filas, (f) => f.v, 'asc').map((f) => f.v), [1, 2, 10, null])
   assert.deepEqual(ordenarPor([{ v: 'b' }, { v: 'a' }], (f) => f.v, 'asc').map((f) => f.v), ['a', 'b'])
+})
+
+const FILA = (campana_id, correo, extra = {}) => ({ campana_id, correo, estado: 'entregado', estadoTexto: 'Entregado', status: 'MANTENER', motivoTecnico: null, indicacion: 'Sin acción', apertura: 'NO REGISTRADA', clic: 'SIN CLIC REGISTRADO', origen: 'historial', baja: false, spam: false, fechaRebote: null, ...extra })
+const DETALLE = [
+  FILA(1, 'persona1@example.com', { apertura: 'APERTURA REGISTRADA', clic: 'CLIC REGISTRADO' }),
+  FILA(1, 'persona2@example.com', { estado: 'rebote_permanente', estadoTexto: 'Rebote permanente', status: 'CORREGIR', motivoTecnico: 'Usuario desconocido', indicacion: 'Pedir', fechaRebote: '2026-11-05T18:00:00.000Z' }),
+  FILA(2, 'persona2@example.com', { estado: 'rebote_temporal', estadoTexto: 'Rebote temporal', status: 'CORREGIR', motivoTecnico: 'Dominio sin registros MX', indicacion: 'Verificar', fechaRebote: '2026-11-11T18:00:00.000Z', origen: 'webhook' }),
+  FILA(2, 'persona3@empresa-inventada.test', { estado: 'rebote_temporal', estadoTexto: 'Rebote temporal', motivoTecnico: 'Buzón lleno', apertura: 'APERTURA AUTOMÁTICA', baja: true }),
+]
+
+test('filtrarDetalle: campañas de arriba, estado, filtros y búsqueda', () => {
+  const ids = (l) => l.map((x) => `${x.campana_id}:${x.correo.split('@')[0]}`)
+  assert.deepEqual(ids(filtrarDetalle(DETALLE, FILTROS_DETALLE, { ids: new Set([2]) })), ['2:persona2', '2:persona3'])
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, estado: 'rebotes' }).length, 3)
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, estado: 'apertura' }).length, 2)
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, estado: 'apertura_automatica' }).length, 1)
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, estado: 'baja' }).length, 1)
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, status: 'CORREGIR', origen: 'webhook' }).length, 1)
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, texto: 'EMPRESA-INVENTADA' }).length, 1)
+  assert.equal(filtrarDetalle(DETALLE, { ...FILTROS_DETALLE, texto: 'campaña uno' }, { nombres: { 1: { nombre: 'Campaña UNO inventada' } } }).length, 2)
+})
+
+test('direccionesCorregir: una fila por dirección con todas sus campañas y motivos', () => {
+  const d = direccionesCorregir(DETALLE)
+  assert.equal(d.length, 1)
+  assert.deepEqual(d[0].campanas, [2, 1])
+  assert.deepEqual(d[0].motivos.sort(), ['Dominio sin registros MX', 'Usuario desconocido'])
+  assert.equal(d[0].fechaRebote, '2026-11-11T18:00:00.000Z')
+  assert.deepEqual(d[0].origenes.sort(), ['historial', 'webhook'])
+})
+
+test('paginar y opcionesDe', () => {
+  const p = paginar([1, 2, 3, 4, 5], 2, 2)
+  assert.deepEqual([p.filas, p.pagina, p.paginas, p.total], [[3, 4], 2, 3, 5])
+  assert.equal(paginar([], 5, 25).pagina, 1)
+  assert.deepEqual(opcionesDe(DETALLE, 'motivoTecnico'), ['Buzón lleno', 'Dominio sin registros MX', 'Usuario desconocido'])
 })
 
 test('pct: un decimal o «—»; el número y el % no se separan de línea', () => {

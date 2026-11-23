@@ -1,7 +1,8 @@
 // Canales de marketing · Mailing: pide los datos a NUESTRO servidor (nunca directo a Brevo ni a Supabase).
 //   /api/marketing/mailing/campanas → campañas con totales de Brevo (sin datos personales)
-//   /api/marketing/mailing/resumen  → conteos de los eventos del webhook (nunca correos)
-// Si el resumen falla, la pantalla sigue con los totales y avisa.
+//   /api/marketing/mailing/resumen  → conteos de los eventos (historial importado y webhook)
+//   /api/marketing/mailing/detalle  → una fila por correo y campaña (muestra correos: decisión de Keily, DECISIONES.md)
+// Si el resumen o el detalle fallan, la pantalla sigue con los totales y avisa.
 import { useCallback, useEffect, useState } from 'react'
 
 async function pedir(url, señal) {
@@ -12,8 +13,10 @@ async function pedir(url, señal) {
   return datos
 }
 
+const VACIO = { cargando: true, error: null, campanas: [], avisos: [], resumen: null, errorResumen: null, detalle: null, errorDetalle: null, actualizado: null }
+
 export function useMailingDatos() {
-  const [estado, setEstado] = useState({ cargando: true, error: null, campanas: [], avisos: [], resumen: null, errorResumen: null, actualizado: null })
+  const [estado, setEstado] = useState(VACIO)
   const [vuelta, setVuelta] = useState(0)
   const reintentar = useCallback(() => setVuelta((v) => v + 1), [])
 
@@ -23,20 +26,24 @@ export function useMailingDatos() {
     Promise.allSettled([
       pedir('/api/marketing/mailing/campanas', control.signal),
       pedir('/api/marketing/mailing/resumen', control.signal),
-    ]).then(([campanas, resumen]) => {
+      pedir('/api/marketing/mailing/detalle', control.signal),
+    ]).then(([campanas, resumen, detalle]) => {
       if (control.signal.aborted) return
       if (campanas.status === 'rejected') {
         setEstado((e) => ({ ...e, cargando: false, error: campanas.reason?.message || 'No se pudieron cargar las campañas.' }))
         return
       }
+      const ok = (r) => r.status === 'fulfilled'
       setEstado({
         cargando: false,
         error: null,
         campanas: campanas.value.campanas ?? [],
-        avisos: [...(campanas.value.avisos ?? []), ...(resumen.status === 'fulfilled' ? resumen.value.avisos ?? [] : [])],
+        avisos: [...(campanas.value.avisos ?? []), ...(ok(resumen) ? resumen.value.avisos ?? [] : [])],
         actualizado: campanas.value.actualizado ?? null,
-        resumen: resumen.status === 'fulfilled' ? resumen.value : null,
-        errorResumen: resumen.status === 'rejected' ? resumen.reason?.message || 'No se pudo leer el detalle del webhook.' : null,
+        resumen: ok(resumen) ? resumen.value : null,
+        errorResumen: ok(resumen) ? null : resumen.reason?.message || 'No se pudo leer el detalle de los eventos.',
+        detalle: ok(detalle) ? detalle.value : null,
+        errorDetalle: ok(detalle) ? null : detalle.reason?.message || 'No se pudo leer el detalle por correo.',
       })
     })
     return () => control.abort()

@@ -204,6 +204,15 @@
 .mkv2 .mkv2-campana-celda strong, .mkv2 .mkv2-texto-fuerte { font-size: 12px; font-weight: 700; color: var(--fv2-texto); }
 .mkv2 .mkv2-campana-celda small { font-size: 10.5px; color: var(--fv2-tenue); }
 .mkv2 .mkv2-vacio-fila { padding: 26px 16px; line-height: 1.6; }
+.mkv2 .mkv2-celda-correo { min-width: 200px; max-width: 300px; white-space: normal; overflow-wrap: anywhere; }
+.mkv2 .mkv2-celda-media { min-width: 130px; max-width: 220px; white-space: normal; }
+
+/* Tablas con correos: barra de búsqueda y filtros, paginación */
+.mkv2 .mkv2-barra-tabla { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 14px; }
+.mkv2 .mkv2-barra-tabla .mkv2-buscar-v { flex: 1 1 260px; }
+.mkv2 .mkv2-campo-chico { min-width: 150px; }
+.mkv2 .mkv2-campo-chico .mkv2-control { height: 36px; }
+.mkv2 .mkv2-paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 11.5px; color: var(--fv2-tenue); }
 
 /* ---------- Ancho de pantalla ---------- */
 @media (max-width: 1240px) {

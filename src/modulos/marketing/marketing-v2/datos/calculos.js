@@ -166,6 +166,80 @@ export function ordenarPor(filas, valor, direccion = 'desc') {
   })
 }
 
+// ---------------- Detalle por correo (filas de /api/marketing/mailing/detalle) ----------------
+
+/** ¿La fila cumple el estado elegido (mismos ids que ESTADOS_DETALLE)? */
+export function cumpleEstado(fila, estado = 'todos') {
+  switch (estado) {
+    case 'todos': return true
+    case 'apertura': return fila.apertura === 'APERTURA REGISTRADA' || fila.apertura === 'APERTURA AUTOMÁTICA'
+    case 'apertura_automatica': return fila.apertura === 'APERTURA AUTOMÁTICA'
+    case 'clic': return fila.clic === 'CLIC REGISTRADO'
+    case 'rebotes': return fila.estado === 'rebote_temporal' || fila.estado === 'rebote_permanente'
+    case 'baja': return !!fila.baja
+    case 'spam': return !!fila.spam
+    default: return fila.estado === estado
+  }
+}
+
+export const FILTROS_DETALLE = { texto: '', estado: 'todos', status: '', apertura: '', clic: '', origen: '', motivo: '' }
+
+/**
+ * Filtra las filas del detalle: solo campañas de los filtros de arriba (ids), estado, CORREGIR/MANTENER, apertura,
+ * clic, origen, motivo técnico y búsqueda (correo, dominio, campaña o asunto, sin importar mayúsculas ni tildes).
+ */
+export function filtrarDetalle(filas = [], f = FILTROS_DETALLE, { ids = null, nombres = {} } = {}) {
+  const buscar = normalizarTexto(f.texto)
+  return filas.filter((x) => {
+    if (ids && !ids.has(x.campana_id)) return false
+    if (!cumpleEstado(x, f.estado)) return false
+    if (f.status && x.status !== f.status) return false
+    if (f.apertura && x.apertura !== f.apertura) return false
+    if (f.clic && x.clic !== f.clic) return false
+    if (f.origen && x.origen !== f.origen) return false
+    if (f.motivo && x.motivoTecnico !== f.motivo) return false
+    if (buscar) {
+      const c = nombres[x.campana_id] ?? {}
+      if (!normalizarTexto(`${x.correo} ${c.nombre ?? ''} ${c.asunto ?? ''} ${x.campana_id}`).includes(buscar)) return false
+    }
+    return true
+  })
+}
+
+const normalizarTexto = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+
+/**
+ * Correos por corregir: UNA fila por dirección (aunque haya fallado en varias campañas), con sus campañas, motivos,
+ * indicaciones, estados, orígenes y la fecha del último rebote. Ordenadas por fecha de rebote (más reciente primero).
+ */
+export function direccionesCorregir(filas = []) {
+  const porCorreo = new Map()
+  for (const x of filas) {
+    if (x.status !== 'CORREGIR') continue
+    const d = porCorreo.get(x.correo) ?? { correo: x.correo, campanas: [], motivos: new Set(), indicaciones: new Set(), estados: new Set(), origenes: new Set(), fechaRebote: null }
+    d.campanas.push(x.campana_id)
+    if (x.motivoTecnico) d.motivos.add(x.motivoTecnico)
+    d.indicaciones.add(x.indicacion)
+    d.estados.add(x.estadoTexto)
+    d.origenes.add(x.origen)
+    if (x.fechaRebote && (!d.fechaRebote || x.fechaRebote > d.fechaRebote)) d.fechaRebote = x.fechaRebote
+    porCorreo.set(x.correo, d)
+  }
+  return [...porCorreo.values()]
+    .map((d) => ({ ...d, campanas: [...new Set(d.campanas)].sort((a, b) => b - a), motivos: [...d.motivos], indicaciones: [...d.indicaciones], estados: [...d.estados], origenes: [...d.origenes] }))
+    .sort((a, b) => String(b.fechaRebote ?? '').localeCompare(String(a.fechaRebote ?? '')) || a.correo.localeCompare(b.correo))
+}
+
+/** Valores distintos de un campo (para los menús de filtro). */
+export const opcionesDe = (filas, campo) => [...new Set(filas.map((x) => x[campo]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'es'))
+
+/** Una página de una lista. */
+export function paginar(lista, pagina = 1, tamano = 25) {
+  const paginas = Math.max(1, Math.ceil(lista.length / tamano))
+  const actual = Math.min(Math.max(1, pagina), paginas)
+  return { filas: lista.slice((actual - 1) * tamano, actual * tamano), pagina: actual, paginas, total: lista.length }
+}
+
 /** % por corregir de UNA campaña (null si no tiene detalle del webhook). */
 export function porCorregirCampana(campana, resumen = null) {
   const r = resumen?.campanas?.[campana.id]
