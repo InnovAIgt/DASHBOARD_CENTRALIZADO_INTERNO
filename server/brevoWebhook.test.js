@@ -152,6 +152,13 @@ test('limpiarUrl y enlaces de baja', () => {
   for (const u of ['https://example.com/unsubscribe?token=abc', 'https://r.example.com/optout/123', 'https://example.com/darse-de-baja', 'https://example.com/es/baja'])
     assert.equal(limpiarUrl(u), ENLACE_DE_BAJA, u)
   assert.equal(esEnlaceBaja('https://example.com/bajada-de-precios'), false)
+  // Excepción de YouTube: solo el ID del video (parámetro v); todo lo demás se quita.
+  assert.equal(limpiarUrl('https://www.youtube.com/watch?v=VIDEOinventado&utm_source=brevo&email=persona1@example.com#t=10'), 'https://www.youtube.com/watch?v=VIDEOinventado')
+  assert.equal(limpiarUrl('https://m.youtube.com/watch?list=x&v=OTROvideo'), 'https://m.youtube.com/watch?v=OTROvideo')
+  assert.equal(limpiarUrl('https://youtu.be/VIDEOcorto?si=rastreo'), 'https://youtu.be/VIDEOcorto')
+  assert.equal(limpiarUrl('https://www.youtube.com/watch?v=VIDEO_in-ventado='), 'https://www.youtube.com/watch?v=VIDEO_in-ventado', 'sin el «=» que agrega Brevo')
+  assert.equal(limpiarUrl('https://www.youtube.com/channel/abc?x=1'), 'https://www.youtube.com/channel/abc')
+  assert.equal(limpiarUrl('https://noesyoutube.com/watch?v=abc'), 'https://noesyoutube.com/watch')
   for (const malo of ['', null, 'no es url', 'javascript:alert(1)', 'mailto:persona1@example.com']) assert.equal(limpiarUrl(malo), null, String(malo))
 })
 

@@ -460,7 +460,13 @@ Para las campañas enviadas **antes** del webhook, el detalle por persona sale d
 `Total Apple MPP Opens`, `Hard_Bounce_Date` / `Reason`, `Soft_Bounce_Date` / `Reason`, `Clicked_Links_Count`,
 `Unsubscribe_Date`, `Complaint_date`). Las fechas vienen como día-mes-año en hora de Guatemala.
 
-- Se importan **una sola vez** con un script temporal **fuera del repo**; los CSV **nunca** entran al repo.
+- Se importan con `node scripts/importar-historial-brevo.mjs --carpeta "<carpeta fuera del repo>" --campanas 1,2,3`
+  (prueba en seco por defecto; solo escribe con `--cargar`; correrlo dos veces no duplica). La lógica está en
+  `server/mailing/historialCsv.js`, con pruebas sobre un CSV inventado. Los CSV **nunca** entran al repo.
+- **Clics:** cada enlace es una columna del CSV y su celda trae la **fecha real del clic**; el clic se guarda con esa
+  fecha y con su destino limpio (en YouTube solo el ID del video, parámetro `v`). Solo si el CSV no trae fecha se usa
+  la de apertura o envío, marcada como aproximada. Los 12 clics de 74, 75 y 76 se pasaron a su fecha real el
+  23/11/2026.
 - Columnas nuevas (`sql/002_historial_importado.sql`): `origen` (`webhook` / `historial`), `cantidad` (aperturas o
   aperturas Apple MPP) y `fecha_aproximada`.
 - Cada persona se convierte en eventos con `origen = 'historial'`: `delivered`, `soft_bounce` y `hard_bounce` (con su

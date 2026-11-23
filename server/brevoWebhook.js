@@ -82,7 +82,12 @@ export function limpiarUrl(url) {
   try {
     const u = new URL(texto)
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return null
-    return `${u.protocol}//${u.host}${u.pathname === '/' ? '' : u.pathname}`
+    const base = `${u.protocol}//${u.host}${u.pathname === '/' ? '' : u.pathname}`
+    // Excepción aprobada por Keily (23/11/2026): en YouTube se conserva SOLO el parámetro v (el ID del video), que no
+    // es un dato de la persona. youtu.be ya lleva el ID en la ruta.
+    // Solo los caracteres válidos de un ID de YouTube (Brevo a veces agrega un «=» al final del enlace).
+    const video = /(^|\.)youtube\.com$/i.test(u.hostname) ? (u.searchParams.get('v') ?? '').match(/^[A-Za-z0-9_-]+/)?.[0] : null
+    return video ? `${base}?v=${video}` : base
   } catch {
     return null
   }

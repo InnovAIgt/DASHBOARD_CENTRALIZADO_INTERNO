@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Destino y fecha real de los clics
+
+- SQL 003 (corrido por Keily): columna `url` en `mkt_brevo_eventos`. El webhook guarda el destino del clic limpio
+  (sin «?» ni «#»; enlaces de baja como `ENLACE_DE_BAJA`); excepción aprobada por Keily: en YouTube solo el ID del
+  video (`v`), sin el «=» que agrega Brevo.
+- En el CSV de Brevo cada enlace es una columna con la fecha del clic: los 12 clics de 74, 75 y 76 pasaron a su
+  **fecha real** (sin «aproximada») y a su destino, con huella nueva (segunda corrida: 0 cambios).
+- El importador quedó en el repo (`scripts/importar-historial-brevo.mjs` + `server/mailing/historialCsv.js`, con
+  pruebas): con `--cargar` sobre 74, 75 y 76 agrega 0 de 1 076, así que las cargas futuras no duplican.
+- `/detalle` trae la secuencia de eventos de cada correo; Cumplimiento aporta el nombre del contacto (solo coincidencia
+  exacta) y el correo del ejecutivo (10 de 13 lo tienen en `correos_usuarios`).
+
 ## 2026-11-23 · Cruce con Cumplimiento de Clientes (solo lectura)
 
 - Regla nueva en CLAUDE.md: «Cumplimiento de Clientes: SOLO LECTURA. Nunca escribir, cambiar ni borrar nada en ese
