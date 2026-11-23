@@ -13,6 +13,7 @@
  * de Vercel (no-store) y pide no indexarse.
  */
 import { cruzarFilas, indiceCumplimiento } from '../clientes/cruce.js'
+import { carteraCumplimiento } from '../clientes/cumplimiento.js'
 import { leerEventos } from '../mktSupabase.js'
 import { estadoApertura, estadoClic, estadoFinal, ESTADOS, statusCorreo } from './reglas.js'
 import { leerParametroCampanas } from './resumen.js'
@@ -124,7 +125,7 @@ function respuesta(status, datos, extra = {}) {
  * Atiende GET /api/marketing/mailing/detalle (?campanas=12,13 opcional).
  * @param {{method: string, query?: {campanas?: string}, env?: object, fetchFn?: Function, leer?: Function, ahora?: number}} p
  */
-export async function responderDetalle({ method, query = {}, env = process.env, fetchFn = fetch, leer = leerEventos, indice = indiceCumplimiento, ahora = Date.now() }) {
+export async function responderDetalle({ method, query = {}, env = process.env, fetchFn = fetch, leer = leerEventos, indice = indiceCumplimiento, cartera = carteraCumplimiento, ahora = Date.now() }) {
   if (method !== 'GET') return respuesta(405, { error: 'Método no permitido. Usa GET.' }, { Allow: 'GET' })
   let campanas
   try {
@@ -158,8 +159,10 @@ export async function responderDetalle({ method, query = {}, env = process.env, 
   // Cruce con Cumplimiento de Clientes (SOLO LECTURA). Si falla, el detalle sigue sin Cliente/Ejecutivo y avisa.
   let cruce = 'ok'
   let avisoCruce = null
+  let carteras = null // cartera por ejecutivo y país (solo conteos); si falla, la pantalla dice «cartera no disponible»
   try {
     filas = cruzarFilas(filas, await indice({ env }))
+    try { carteras = await cartera({ env }) } catch (err) { console.warn('[Mailing] cartera de Cumplimiento:', String(err?.message || '').slice(0, 120)) }
   } catch (err) {
     const mensaje = String(err?.message || '')
     const sinConfigurar = /CC_DB_PASSWORD/.test(mensaje)
@@ -168,5 +171,5 @@ export async function responderDetalle({ method, query = {}, env = process.env, 
     console.warn('[Mailing] cruce con Cumplimiento:', avisoCruce)
     filas = filas.map((f) => ({ ...f, clientes: null, posibles: null }))
   }
-  return respuesta(200, { ...base, mostrarCorreos: true, cruce, avisoCruce, filas })
+  return respuesta(200, { ...base, mostrarCorreos: true, cruce, avisoCruce, carteras, filas })
 }

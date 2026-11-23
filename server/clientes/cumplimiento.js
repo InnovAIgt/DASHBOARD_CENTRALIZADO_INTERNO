@@ -43,6 +43,19 @@ export const CONSULTA_CRUCE = `
     left join public.correos_usuarios cu on cu.ejecutivo_id = e.id
    where k.email <> ''`
 
+/**
+ * Cartera de cada ejecutivo: cuántos clientes tiene asignados por país (aprobada por Keily el 23/11/2026).
+ * Solo conteos y el nombre del ejecutivo: ningún correo, cliente ni contacto.
+ */
+export const CONSULTA_CARTERA = `
+  select e.nombre as ejecutivo,
+         c.pais,
+         count(*) as clientes
+    from public.clientes c
+    join public.ejecutivos e on e.id = c.ejecutivo_id
+   group by e.nombre, c.pais
+   order by e.nombre, c.pais`
+
 /** Conteos (sin datos personales) para la primera revisión. */
 export const CONSULTA_CONTEOS = `
   select (select count(*) from public.clientes) as clientes,
@@ -110,7 +123,18 @@ export async function leerSoloLectura(sql, { env = process.env, Cliente = pg.Cli
 let copia = null // { filas, vence }
 
 /** Solo para pruebas. */
-export function vaciarCacheCumplimiento() { copia = null }
+export function vaciarCacheCumplimiento() { copia = null; copiaCartera = null }
+
+let copiaCartera = null // { filas, vence }
+
+/** Cartera por ejecutivo y país (caché de 30 min, como los contactos). [{ejecutivo, pais, clientes}] */
+export async function carteraCumplimiento({ env = process.env, Cliente = pg.Client, ahora = Date.now() } = {}) {
+  if (copiaCartera && copiaCartera.vence > ahora) return copiaCartera.filas
+  const filas = (await leerSoloLectura(CONSULTA_CARTERA, { env, Cliente }))
+    .map((f) => ({ ejecutivo: f.ejecutivo, pais: f.pais, clientes: Number(f.clientes) || 0 }))
+  copiaCartera = { filas, vence: ahora + CC_CACHE_MS }
+  return filas
+}
 
 /** Contactos con correo de Cumplimiento (caché de 30 min en el servidor). */
 export async function contactosCumplimiento({ env = process.env, Cliente = pg.Client, ahora = Date.now() } = {}) {

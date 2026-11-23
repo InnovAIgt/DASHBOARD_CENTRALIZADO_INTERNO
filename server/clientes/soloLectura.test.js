@@ -6,7 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { CONSULTA_CONTEOS, CONSULTA_CRUCE, contactosCumplimiento, exigirSoloLectura, leerSoloLectura, vaciarCacheCumplimiento } from './cumplimiento.js'
+import { CONSULTA_CARTERA, CONSULTA_CONTEOS, CONSULTA_CRUCE, contactosCumplimiento, exigirSoloLectura, leerSoloLectura, vaciarCacheCumplimiento } from './cumplimiento.js'
 
 const CARPETA = path.dirname(fileURLToPath(import.meta.url))
 const ARCHIVOS = fs.readdirSync(CARPETA).filter((f) => /\.(js|mjs|ts)$/.test(f) && !f.endsWith('.test.js'))
@@ -32,6 +32,7 @@ test('ningún archivo de server/clientes/ contiene operaciones de escritura', ()
 test('las consultas del módulo son de solo lectura', () => {
   exigirSoloLectura(CONSULTA_CRUCE)
   exigirSoloLectura(CONSULTA_CONTEOS)
+  exigirSoloLectura(CONSULTA_CARTERA)
 })
 
 test('exigirSoloLectura rechaza cualquier escritura o truco', () => {

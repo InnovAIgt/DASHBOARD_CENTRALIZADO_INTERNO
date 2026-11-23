@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Campañas, parte 1: «Por campaña» y «Por comercial» lado a lado
+
+- Consulta nueva de SOLO LECTURA a Cumplimiento, aprobada por Keily: clientes por ejecutivo y país (solo conteos y el
+  nombre del ejecutivo). Resultado: 668 clientes (303 GT, 365 SV) en 17 ejecutivos con cartera. Misma copia de 30
+  minutos y mismos candados; la prueba de solo lectura la incluye.
+- Sub-pestaña Campañas: dos gráficas con el mismo estilo de tarjetas y un solo selector de métrica. «Por campaña»
+  (totales de Brevo, no se separan por país; título «#id · NOMBRE» y el asunto pequeño, sin emojis) y «Por comercial»
+  (detalle por persona cruzado con Cumplimiento, solo coincidencia exacta; «Sin identificar» al final en gris;
+  «Cartera de N clientes», país y enviados). Cada una con su conclusión y su fuente.
+- Acordeón: el detalle se abre debajo de la tarjeta, unido con borde dorado; uno abierto por gráfica (el contenido
+  completo llega en las partes 2 y 3).
+
 ## 2026-11-23 · Mailing: filtro de País solo donde se puede separar
 
 - Revisión (solo conteos): #75 y #76 se mandaron a GT y SV juntos (≈ un tercio GT, dos tercios SV); la #74 es casi

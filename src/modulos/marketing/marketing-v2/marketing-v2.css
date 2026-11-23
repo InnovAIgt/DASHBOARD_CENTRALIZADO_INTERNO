@@ -589,6 +589,32 @@
 .mkv2 .mkv2-rank-valor { display: grid; text-align: right; }
 .mkv2 .mkv2-rank-valor b { font-family: var(--fv2-mono); font-size: 20px; font-weight: 800; color: color-mix(in srgb, var(--a) 70%, #fff); white-space: nowrap; }
 .mkv2 .mkv2-rank-valor small { font-size: 11px; color: var(--fv2-tenue); }
+/* Dos gráficas lado a lado («Por campaña» y «Por comercial»), una debajo de la otra en pantalla angosta */
+.mkv2 .mkv2-dos-graficas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.mkv2 .mkv2-grafica { display: grid; gap: 10px; min-width: 0; align-content: start; }
+.mkv2 .mkv2-grafica-cabeza { display: grid; gap: 3px; padding: 10px 12px; border-radius: 10px; background: var(--fv2-panel); border: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-grafica-cabeza h3 { margin: 0; font-size: 13.5px; font-weight: 800; line-height: 1.35; color: #fff; }
+.mkv2 .mkv2-grafica-cabeza p { margin: 0; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-grafica-cabeza b { color: var(--mkv2-suave); font-weight: 700; }
+.mkv2 .mkv2-grafica-nota { margin: -2px 0 0; }
+.mkv2 .mkv2-grafica .mkv2-interruptor-pill { justify-self: start; }
+/* Tarjeta compacta: lugar · (título, línea, etiquetas y barra) · % */
+.mkv2 .mkv2-rank.is-compacta { grid-template-columns: 36px minmax(0, 1fr) 86px; gap: 12px; padding: 10px 12px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-pos { width: 32px; height: 32px; font-size: 13px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-nombre { gap: 5px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-tc.is-grande .mkv2-tc-titulo { font-size: 13px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-tc.is-grande .mkv2-tc-linea { font-size: 11px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-pista { height: 9px; margin-top: 2px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-valor b { font-size: 17px; }
+/* Acordeón: el detalle se abre debajo de su tarjeta, unido con el mismo borde dorado */
+.mkv2 .mkv2-rank-item { display: grid; }
+.mkv2 .mkv2-rank-item.is-abierta .mkv2-rank { border-color: var(--mkv2-amarillo); border-left-color: var(--a); border-radius: 12px 12px 0 0; transform: none; }
+.mkv2 .mkv2-acordeon {
+  margin-top: -1px; padding: 14px 16px; border: 1px solid var(--mkv2-amarillo); border-top: 1px dashed rgba(217, 165, 32, .35);
+  border-radius: 0 0 12px 12px; background: var(--fv2-tarjeta); animation: mkv2-sube .2s ease both;
+}
+.mkv2 .mkv2-acordeon-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 1100px) { .mkv2 .mkv2-dos-graficas { grid-template-columns: 1fr; } }
 .mkv2 .mkv2-ver-mas { display: flex; justify-content: center; margin-top: 12px; }
 .mkv2 .mkv2-pie { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
 .mkv2 .mkv2-cuadritos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }

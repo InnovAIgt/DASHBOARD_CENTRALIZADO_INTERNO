@@ -159,3 +159,17 @@ test('responderDetalle: una respuesta vacía no se guarda', async () => {
   await responderDetalle({ method: 'GET', env: {}, leer: vacia.fn, ahora: 1000 })
   assert.equal(vacia.llamadas.length, 2, 'la segunda consulta vuelve a leer')
 })
+
+test('responderDetalle: agrega la cartera por ejecutivo (solo conteos); si falla, carteras = null', async () => {
+  vaciarCacheDetalle()
+  const { indexarContactos } = await import('../clientes/cruce.js')
+  const indiceFalso = indexarContactos([{ pais: 'GT', codigo: '1', cliente: 'Empresa Inventada', ejecutivo: 'Ejecutiva A', usuario_ejecutivo: 'ea', cargo: 'gg', email: 'persona1@example.com' }])
+  const carteraFalsa = [{ ejecutivo: 'Ejecutiva A', pais: 'GT', clientes: 12 }]
+  const d = JSON.parse((await responderDetalle({ method: 'GET', env: {}, leer: leerFalso().fn, indice: async () => indiceFalso, cartera: async () => carteraFalsa })).body)
+  assert.deepEqual(d.carteras, carteraFalsa)
+  vaciarCacheDetalle()
+  const e = JSON.parse((await responderDetalle({ method: 'GET', env: {}, leer: leerFalso().fn, indice: async () => indiceFalso, cartera: async () => { throw new Error('Cumplimiento: tiempo agotado') } })).body)
+  assert.equal(e.carteras, null)
+  assert.equal(e.cruce, 'ok', 'el cruce sigue aunque la cartera falle')
+  vaciarCacheDetalle()
+})
