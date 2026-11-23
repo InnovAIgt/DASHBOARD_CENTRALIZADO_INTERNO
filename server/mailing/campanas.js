@@ -7,11 +7,13 @@
  * se sigue con el cargo sugerido por el nombre y se avisa.
  *
  * No devuelve datos personales: solo nombre, asunto, fechas y cifras de cada campaña (nunca remitente, respuesta,
- * contenido HTML ni correos de prueba). Las reglas salen de server/mailing/reglas.js.
+ * contenido HTML ni correos de prueba). Del contenido HTML solo se usa, aquí en el servidor, el OBJETIVO que coincide
+ * con las reglas (datos/objetivo.js); el contenido nunca sale del servidor. Las reglas salen de server/mailing/reglas.js.
  * Caché en memoria del servidor (10 min) y en Vercel (5 min). Si Brevo falla y hay una copia anterior, se usa esa.
  * Documentación: docs/marketing/v2/MAILING.md, secciones 6, 7 y 10.
  */
 import { leerCargosManuales } from '../mktSupabase.js'
+import { objetivoDeTexto, textoDeHtml } from '../../src/modulos/marketing/marketing-v2/datos/objetivo.js'
 import { cargoDesdeNombre, cargoFinal, esCampanaPrueba, semaforoEntrega, tasas, totalesDesdeBrevo } from './reglas.js'
 
 const BREVO = 'https://api.brevo.com/v3'
@@ -54,6 +56,8 @@ export function filaCampana(c, cargosManuales = new Map()) {
     totales,
     tasas: tasas(totales),
     semaforo: semaforoEntrega(totales.entregados, totales.enviados),
+    // Objetivo encontrado en el contenido del correo (solo el nombre del objetivo; el contenido no se envía).
+    objetivoContenido: objetivoDeTexto(textoDeHtml(c.htmlContent)),
   }
 }
 

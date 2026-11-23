@@ -615,6 +615,38 @@
 }
 .mkv2 .mkv2-acordeon-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 1100px) { .mkv2 .mkv2-dos-graficas { grid-template-columns: 1fr; } }
+
+/* ---------- Detalle de una campaña / un ejecutivo (dentro del acordeón) ---------- */
+.mkv2 .mkv2-det { display: grid; gap: 14px; }
+.mkv2 .mkv2-objetivo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.mkv2 .mkv2-objetivo strong { font-size: 13.5px; color: #fff; }
+.mkv2 .mkv2-objetivo small { font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-estado-objetivo { padding: 2px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.mkv2 .mkv2-estado-objetivo.is-sugerido { background: rgba(47, 134, 201, .18); color: #8fc4f0; }
+.mkv2 .mkv2-estado-objetivo.is-revisar { background: rgba(217, 165, 32, .18); color: #f0c15a; }
+.mkv2 .mkv2-estado-objetivo.is-confirmado { background: rgba(24, 147, 95, .2); color: #6fd3a6; }
+.mkv2 .mkv2-det-datos { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 0; }
+.mkv2 .mkv2-det-datos div { min-width: 0; padding: 8px 10px; border-radius: 9px; background: var(--fv2-panel); }
+.mkv2 .mkv2-det-datos dt { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-datos dd { margin: 2px 0 0; font-size: 12.5px; color: var(--fv2-texto); overflow-wrap: anywhere; }
+.mkv2 .mkv2-det-rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.mkv2 .mkv2-det-rejilla section, .mkv2 .mkv2-det-bloque { min-width: 0; }
+.mkv2 .mkv2-det h4 { margin: 0 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mkv2-suave); }
+.mkv2 .mkv2-det h4 small { margin-left: 6px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-embudo { gap: 2px; }
+.mkv2 .mkv2-det-embudo .mkv2-erow { grid-template-columns: 82px minmax(0, 1fr) 108px; gap: 8px; padding: 2px 0; }
+.mkv2 .mkv2-det-embudo .mkv2-epista { height: 8px; }
+.mkv2 .mkv2-det-embudo .mkv2-enum { font-size: 12px; }
+.mkv2 .mkv2-det-lista { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.mkv2 .mkv2-det-lista li { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 6px 10px; border-radius: 8px; background: var(--fv2-panel); font-size: 12px; color: var(--fv2-texto); }
+.mkv2 .mkv2-det-lista li > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-det-lista b { flex-shrink: 0; font-family: var(--fv2-mono); font-size: 12px; white-space: nowrap; }
+.mkv2 .mkv2-det-lista small { color: var(--fv2-tenue); font-weight: 600; }
+.mkv2 .mkv2-det-lista li.is-rojo b { color: #ff8a99; }
+.mkv2 .mkv2-det-lista li.is-gris { color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-motivo { margin: 5px 0 0 10px; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-leads { margin: 0 0 0 auto; align-self: center; }
+@media (max-width: 760px) { .mkv2 .mkv2-det-rejilla, .mkv2 .mkv2-det-datos { grid-template-columns: 1fr; } }
 .mkv2 .mkv2-ver-mas { display: flex; justify-content: center; margin-top: 12px; }
 .mkv2 .mkv2-pie { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
 .mkv2 .mkv2-cuadritos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }

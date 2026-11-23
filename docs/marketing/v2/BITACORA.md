@@ -2,6 +2,15 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Campañas, parte 2: detalle de una campaña con su objetivo
+
+- Objetivo de cada campaña con la lista de 8 de Keily (DECISIONES.md): se sugiere por el asunto, el nombre o el
+  contenido del correo (la API de Brevo sí lo trae; el servidor solo manda el objetivo encontrado) y, si nada
+  coincide, «Promoción general de RED» para revisar. Se muestra el estado y de dónde salió.
+- Acordeón de la campaña: objetivo, asunto/fecha/cargo, recorrido (Brevo), dónde dieron clic (personas por destino),
+  rebotes y por corregir con motivos, comerciales con clientes en esa campaña, «Ver correos de esta campaña», «Ver solo
+  esta en Resumen» y «Leads: próximamente». El detalle de la campaña no se filtra por país.
+
 ## 2026-11-23 · Campañas, parte 1: «Por campaña» y «Por comercial» lado a lado
 
 - Consulta nueva de SOLO LECTURA a Cumplimiento, aprobada por Keily: clientes por ejecutivo y país (solo conteos y el

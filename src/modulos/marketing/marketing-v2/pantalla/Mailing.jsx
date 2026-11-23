@@ -151,7 +151,7 @@ export function Mailing({ sub, onSub }) {
         texto="Estos totales vienen de Brevo y no se pueden separar por cliente. Mira Correos por corregir, Detalle por correo, Relación con clientes o «Por comercial» en Campañas." />}
       {datos.detalle?.cruce && datos.detalle.cruce !== 'ok' && vistaPorCorreo && <Aviso titulo="Cliente, País y Ejecutivo no disponibles" texto={datos.detalle.avisoCruce} />}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
-        detalle={detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}
+        detalle={detalle} detalleTodo={datos.detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}
         foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} reintentar={datos.reintentar} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">
         Datos de Brevo de las {new Date(datos.actualizado).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit' })} · se actualizan cada 10 minutos.

@@ -154,3 +154,10 @@ test('leerCargosManuales: solo campana_id y cargo, con la llave en el encabezado
   assert.equal(llamadas[0].opciones.headers.apikey, 'llave-inventada')
   await assert.rejects(leerCargosManuales({ env, fetchFn: async () => new Response('', { status: 401 }) }), /HTTP 401/)
 })
+
+test('filaCampana: del contenido HTML solo sale el objetivo encontrado, nunca el contenido', () => {
+  const f = filaCampana({ id: 9, name: 'CAMPAÑA INVENTADA', subject: 'Hola', status: 'sent', htmlContent: '<p>Nuestras radios PTT para su flota</p>', statistics: { globalStats: {} } })
+  assert.equal(f.objetivoContenido, 'Comunicación con radios PTT')
+  assert.ok(!JSON.stringify(f).includes('radios PTT para su flota'))
+  assert.equal(filaCampana({ id: 10, name: 'X', subject: 'Y', status: 'sent', statistics: { globalStats: {} } }).objetivoContenido, null)
+})
