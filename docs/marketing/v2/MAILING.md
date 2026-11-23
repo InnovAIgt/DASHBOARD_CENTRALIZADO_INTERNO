@@ -407,6 +407,35 @@ del destinatario.
 **Permisos:** `/v3/smtp/statistics/events` responde 403 porque la llave no cubre los correos transaccionales. Es lo
 esperado: el dashboard no los usa.
 
+### 10.3 Carga inicial del historial (CSV de Brevo)
+
+Para las campañas enviadas **antes** del webhook, el detalle por persona sale de los CSV que se exportan desde Brevo
+(uno por campaña, columnas `Email_ID`, `Send_Date`, `Delivered_Date`, `Open_Date`, `Total Opens`,
+`Total Apple MPP Opens`, `Hard_Bounce_Date` / `Reason`, `Soft_Bounce_Date` / `Reason`, `Clicked_Links_Count`,
+`Unsubscribe_Date`, `Complaint_date`). Las fechas vienen como día-mes-año en hora de Guatemala.
+
+- Se importan **una sola vez** con un script temporal **fuera del repo**; los CSV **nunca** entran al repo.
+- Columnas nuevas (`sql/002_historial_importado.sql`): `origen` (`webhook` / `historial`), `cantidad` (aperturas o
+  aperturas Apple MPP) y `fecha_aproximada`.
+- Cada persona se convierte en eventos con `origen = 'historial'`: `delivered`, `soft_bounce` y `hard_bounce` (con su
+  **motivo**), `opened` (con fecha y total de aperturas), **`apple_mpp`** (aperturas automáticas de Apple por persona),
+  `click` (el CSV no trae la fecha del clic: se usa la de apertura o la de envío, con `fecha_aproximada = true`),
+  `unsubscribe` y `spam`. No se guardan IP, URL ni nombre de campaña.
+- **Sin duplicados:** la misma huella del webhook (evento + campaña + correo + fecha). Correr la carga dos veces no
+  agrega nada; lo que llegue después por el webhook se cuenta por persona.
+- **Apertura automática** por persona (sección 5): con `apple_mpp` y sin `opened`.
+- Se deshace con un solo borrado de `origen = 'historial'` de las campañas cargadas.
+- **Hueco conocido:** aperturas y clics entre la exportación del CSV y la activación del webhook no están en ninguna
+  fuente (no cambia el estado final ni CORREGIR).
+
+**Cargadas (23/11/2026):** campañas 74, 75 y 76 (1 076 eventos). El estado final coincide exacto con `globalStats`
+(74: 157 / 12 / 0 · 75: 308 / 37 / 26 · 76: 254 / 33 / 27) y dan **101 correos por corregir** (6 + 49 + 46). Las
+aperturas y clics del CSV son menores que los de Brevo hoy porque el CSV se exportó el 16/11.
+
+**Cómo exportar las demás:** en Brevo, abrir cada campaña **enviada**, ir a su informe y exportar los destinatarios con
+todos sus datos (CSV), igual que se hizo con 74, 75 y 76; guardar el archivo en `Descargas\datos-marketing\brevo\`
+sin cambiar la parte `campaign-[ID]` del nombre. Lista de campañas en PENDIENTES.
+
 ## 11. Leads
 
 - Un lead es **calificado** si el bot de WhatsApp le da **75 puntos o más**, y **no calificado** si le da **menos de 75**.

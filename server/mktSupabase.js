@@ -45,15 +45,17 @@ export async function leerCargosManuales({ env = process.env, fetchFn = fetch, e
 }
 
 export const EVENTOS_POR_PAGINA = 1000
+/** Las lecturas del resumen esperan más que el webhook: el proyecto Free puede tardar en «despertar». */
+export const LECTURA_ESPERA_MS = 20_000
 const MAX_PAGINAS_EVENTOS = 200
 
 /**
  * Eventos del webhook (tabla mkt_brevo_eventos), página por página. Solo los campos que necesita el resumen.
  * Los correos se usan SOLO dentro del servidor para agrupar por destinatario; nunca salen en una respuesta.
  * @param {{campanas?: number[]|null, env?: object, fetchFn?: Function, esperaMs?: number, porPagina?: number}} [opciones]
- * @returns {Promise<Array<{campana_id: number, evento: string, correo: string, fecha_evento: string, motivo: string|null}>>}
+ * @returns {Promise<Array<{campana_id: number, evento: string, correo: string, fecha_evento: string, motivo: string|null, origen: string, cantidad: number|null}>>}
  */
-export async function leerEventos({ campanas = null, env = process.env, fetchFn = fetch, esperaMs = MKT_ESPERA_MS, porPagina = EVENTOS_POR_PAGINA } = {}) {
+export async function leerEventos({ campanas = null, env = process.env, fetchFn = fetch, esperaMs = LECTURA_ESPERA_MS, porPagina = EVENTOS_POR_PAGINA } = {}) {
   const { url, llave } = configuracionMkt(env)
   const filtro = campanas?.length ? `&campana_id=in.(${campanas.map(Number).join(',')})` : ''
   const filas = []
@@ -61,7 +63,7 @@ export async function leerEventos({ campanas = null, env = process.env, fetchFn 
     const control = new AbortController()
     const reloj = setTimeout(() => control.abort(), esperaMs)
     try {
-      const r = await fetchFn(`${url}/rest/v1/mkt_brevo_eventos?select=campana_id,evento,correo,fecha_evento,motivo${filtro}&order=id.asc&limit=${porPagina}&offset=${pagina * porPagina}`, {
+      const r = await fetchFn(`${url}/rest/v1/mkt_brevo_eventos?select=campana_id,evento,correo,fecha_evento,motivo,origen,cantidad${filtro}&order=id.asc&limit=${porPagina}&offset=${pagina * porPagina}`, {
         headers: { apikey: llave, Accept: 'application/json' },
         signal: control.signal,
       })

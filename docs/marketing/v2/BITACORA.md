@@ -2,6 +2,21 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Carga inicial del historial: campañas 74, 75 y 76
+
+- Keily corrió `sql/002_historial_importado.sql`: columnas `origen`, `cantidad` y `fecha_aproximada`.
+- Los 3 CSV de Brevo (fuera del repo) traen motivo de rebote y aperturas Apple MPP por persona; fechas en hora de
+  Guatemala. No traen la fecha del clic (se importa con fecha aproximada, decisión de Keily).
+- Prueba en seco y carga real con un script temporal fuera del repo (ya borrado; los CSV nunca entraron al repo):
+  **1 076 eventos** guardados con `origen = 'historial'`; la segunda corrida agregó **0**.
+- Revisión (solo conteos): estado final igual a Brevo (74: 157 / 12 / 0 · 75: 308 / 37 / 26 · 76: 254 / 33 / 27);
+  CORREGIR 6 + 49 + 46 = **101**; apertura registrada 28 / 62 / 57 y automática (Apple) 10 / 17 / 16. La ruta de
+  resumen responde sin `@`. Hubo además **1 evento real del webhook** (apertura de la campaña 79).
+- Código: la ruta de resumen cuenta la apertura automática (`apple_mpp` sin `opened`) y el origen de los eventos;
+  lecturas de Supabase con 20 s de espera (la primera consulta, con el proyecto «dormido», pasó de 8 s).
+  Textos de la pantalla: «historial importado o webhook». 78 pruebas, lint y build OK.
+- Campañas 77, 78 y 79 siguen como prueba hasta que Ismael confirme si fueron a clientes reales (PENDIENTES).
+
 ## 2026-11-23 · Datos reales de Mailing · Paso 4: filtros y Resultados generales
 
 - Consulta de solo lectura: en `origin/main` ningún código lee `BREVO_API_KEY`; solo aparece como nombre

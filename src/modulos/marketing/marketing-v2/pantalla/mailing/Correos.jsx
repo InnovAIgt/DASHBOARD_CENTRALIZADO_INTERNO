@@ -43,7 +43,7 @@ export function CorreosPorCorregir({ campanas, resumen, errorResumen, foco, limp
       <Mini nombre="Correos por corregir" valor={v(s, s.corregir)} nota="Direcciones con CORREGIR CORREO" color={COLORES.rosa} />
       <Mini nombre="% de los enviados" valor={s.hayDatos ? pct(porcentaje(s.corregir, s.enviados)) : '—'} nota="Sobre los enviados con detalle" color={COLORES.amarillo} />
       <Mini nombre="Rebotes que se mantienen" valor={v(s, s.estados.rebote_temporal + s.estados.rebote_permanente - s.corregir)} nota="Rebote sin error de dirección (MANTENER)" color={COLORES.azulClaro} />
-      <Mini nombre="Campañas con detalle" valor={numero(s.campanasConDetalle)} nota="Enviadas después de activar el webhook" />
+      <Mini nombre="Campañas con detalle" valor={numero(s.campanasConDetalle)} nota={`${numero(s.conHistorial)} con historial importado · ${numero(s.conWebhook)} con webhook`} />
     </div>
     <div className="mkv2-duo">
       <Motivos titulo="Motivos técnicos · CORREGIR" sub="Por qué se pide revisar la dirección" motivos={s.motivosCorregir} color={COLORES.rosa} hayDatos={s.hayDatos} />
@@ -82,7 +82,7 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, foco, limpia
         <Mini nombre="Según los totales de Brevo" valor={numero(brevo)} color={COLOR_ESTADO[e.id]}
           extra={e.id !== 'todos' && t.enviados ? <small>{pct(porcentaje(brevo, ['apertura', 'clic'].includes(e.id) ? t.entregados : t.enviados))}</small> : null}
           nota={`${e.notaBrevo ? `${e.notaBrevo} · ` : ''}todas las campañas filtradas`} />
-        <Mini nombre="Con detalle por persona" valor={v(s, e.webhook(s))} color={COLOR_ESTADO[e.id]} nota={s.hayDatos ? `${numero(s.campanasConDetalle)} campañas con webhook` : TEXTO_WEBHOOK} />
+        <Mini nombre="Con detalle por persona" valor={v(s, e.webhook(s))} color={COLOR_ESTADO[e.id]} nota={s.hayDatos ? `${numero(s.campanasConDetalle)} campañas con detalle (historial o webhook)` : TEXTO_WEBHOOK} />
         <Mini nombre="Correos visibles" valor="—" nota="Requiere el inicio de sesión real del portal" />
         <Mini nombre="Campañas filtradas" valor={numero(t.campanas)} nota="Cambian con los filtros de arriba" />
       </div>

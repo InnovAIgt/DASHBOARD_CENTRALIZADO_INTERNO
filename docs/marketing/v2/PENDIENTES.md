@@ -43,7 +43,11 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Vaciar .env.example en main con un PR aparte y pequeño | Keily (con OK de Eduardo) | — | Pendiente |
 | Borrar el código de bypass de Vercel al terminar la prueba del webhook | Keily | — | Pendiente |
 | Confirmar con Eduardo si las rutas de totales de Mailing pueden quedar abiertas en producción hasta tener inicio de sesión real | Eduardo | Antes de publicar | Pendiente |
-| Carga inicial única del historial: exportar desde Brevo los CSV de las campañas reales anteriores e importarlos a mkt_brevo_eventos (paso aparte, después de las pantallas) | Keily | — | Pendiente |
+| Carga inicial única del historial: exportar desde Brevo los CSV de las campañas reales anteriores e importarlos a mkt_brevo_eventos (paso aparte, después de las pantallas) | Keily | 2026-11-23 | En curso: 74, 75 y 76 cargadas (1 076 eventos, MAILING.md 10.3); siguen 1, 2, 3, 68 y 71 y después las demás reales |
+| Correr `docs/marketing/v2/sql/002_historial_importado.sql` (columnas origen, cantidad y fecha_aproximada) | Keily | 2026-11-23 | Resuelto: las 3 columnas creadas |
+| Preguntar a Ismael si las campañas 77, 78 y 79 («2da Campaña Validación – GG/GF/GO – Nov19») se enviaron a clientes reales; si sí, sacarlas del filtro de prueba e incluirlas en el historial | Keily / Ismael | Por confirmar | Pendiente |
+| Exportar desde Brevo los CSV de las otras campañas reales: primero 1, 2, 3, 68 y 71; después 70, 42, 41, 40, 39, 38, 37, 36, 35, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 y 20 | Keily | — | Pendiente |
+| Hueco del historial: aperturas y clics entre la exportación del CSV (16/11) y la activación del webhook (23/11) no están en ninguna fuente (no cambia estado final ni CORREGIR) | Keily | — | Informativo |
 
 Las 4 variables viejas (solo nombres): `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`,
 `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE`.

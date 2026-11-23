@@ -80,6 +80,7 @@ export const ESTADOS_DETALLE = [
   { id: 'todos', label: 'Todos los destinatarios', brevo: (t) => t.enviados, webhook: (s) => s.destinatarios },
   { id: 'entregado', label: 'Entregado', brevo: (t) => t.entregados, webhook: (s) => s.estados.entregado },
   { id: 'apertura', label: 'Apertura', brevo: (t) => t.aperturas, webhook: (s) => s.aperturaRegistrada, notaBrevo: 'incluye automáticas' },
+  { id: 'apertura_automatica', label: 'Apertura automática (Apple)', brevo: (t) => t.aperturasApple, webhook: (s) => s.aperturaAutomatica, notaBrevo: 'personas con Apple MPP' },
   { id: 'clic', label: 'Clic', brevo: (t) => t.clics, webhook: (s) => s.clic },
   { id: 'rebotes', label: 'Con rebote (temporal o permanente)', brevo: (t) => t.reboteTemporal + t.rebotePermanente, webhook: (s) => s.estados.rebote_temporal + s.estados.rebote_permanente },
   { id: 'rebote_temporal', label: 'Rebote temporal', brevo: (t) => t.reboteTemporal, webhook: (s) => s.estados.rebote_temporal },
@@ -131,8 +132,8 @@ export function sumarResumen(campanas = [], resumen = null) {
   const s = {
     campanasConDetalle: 0, enviados: 0, destinatarios: 0,
     estados: { entregado: 0, rebote_temporal: 0, rebote_permanente: 0, sin_confirmacion: 0 },
-    corregir: 0, mantener: 0, aperturaRegistrada: 0, proxyOpen: 0, clic: 0, spam: 0, bajas: 0,
-    motivosCorregir: {}, motivosMantener: {},
+    corregir: 0, mantener: 0, aperturaRegistrada: 0, aperturaAutomatica: 0, proxyOpen: 0, clic: 0, spam: 0, bajas: 0,
+    motivosCorregir: {}, motivosMantener: {}, conHistorial: 0, conWebhook: 0,
   }
   for (const c of campanas) {
     const r = porId[c.id]
@@ -143,7 +144,9 @@ export function sumarResumen(campanas = [], resumen = null) {
     for (const k of Object.keys(s.estados)) s.estados[k] += r.estados?.[k] ?? 0
     s.corregir += r.status?.CORREGIR ?? 0
     s.mantener += r.status?.MANTENER ?? 0
-    for (const k of ['aperturaRegistrada', 'proxyOpen', 'clic', 'spam', 'bajas']) s[k] += r[k] ?? 0
+    for (const k of ['aperturaRegistrada', 'aperturaAutomatica', 'proxyOpen', 'clic', 'spam', 'bajas']) s[k] += r[k] ?? 0
+    if (r.origen?.historial) s.conHistorial += 1
+    if (r.origen?.webhook) s.conWebhook += 1
     for (const [m, n] of Object.entries(r.motivosCorregir ?? {})) s.motivosCorregir[m] = (s.motivosCorregir[m] ?? 0) + n
     for (const [m, n] of Object.entries(r.motivosMantener ?? {})) s.motivosMantener[m] = (s.motivosMantener[m] ?? 0) + n
   }

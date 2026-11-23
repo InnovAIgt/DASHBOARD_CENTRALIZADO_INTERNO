@@ -21,7 +21,8 @@ export const RESUMEN_CACHE_MS = 2 * 60 * 1000
 export const RESUMEN_CACHE_HTTP = 'public, max-age=30, s-maxage=120'
 export const MAX_CAMPANAS_CONSULTA = 200
 const MAX_COPIAS = 50
-const EVENTOS_CONOCIDOS = new Set(['delivered', 'soft_bounce', 'hard_bounce', 'opened', 'click', 'spam', 'unsubscribe', 'proxy_open'])
+// apple_mpp: aperturas automáticas de Apple por persona, solo del historial importado (CSV de Brevo).
+const EVENTOS_CONOCIDOS = new Set(['delivered', 'soft_bounce', 'hard_bounce', 'opened', 'click', 'spam', 'unsubscribe', 'proxy_open', 'apple_mpp'])
 
 class ErrorRuta extends Error {
   constructor(status, mensaje) { super(mensaje); this.status = status }
@@ -60,11 +61,13 @@ export function resumirCampana(eventos) {
     motivosCorregir: {},
     motivosMantener: {},
     aperturaRegistrada: 0,
+    aperturaAutomatica: 0,
     proxyOpen: 0,
     clic: 0,
     spam: 0,
     bajas: 0,
     otrosEventos: {},
+    origen: { historial: 0, webhook: 0 },
     primerEvento: null,
     ultimoEvento: null,
   }
@@ -77,7 +80,9 @@ export function resumirCampana(eventos) {
     r.status[s.status] += 1
     if (s.motivoTecnico) sumar(s.status === 'CORREGIR' ? r.motivosCorregir : r.motivosMantener, s.motivoTecnico)
     const tipos = new Set(lista.map((e) => e.evento))
+    // Sección 5: con fecha de apertura gana REGISTRADA; sin ella pero con Apple MPP, AUTOMÁTICA.
     if (tipos.has('opened')) r.aperturaRegistrada += 1
+    else if (tipos.has('apple_mpp')) r.aperturaAutomatica += 1
     if (tipos.has('proxy_open')) r.proxyOpen += 1
     if (tipos.has('click')) r.clic += 1
     if (tipos.has('spam')) r.spam += 1
@@ -85,6 +90,7 @@ export function resumirCampana(eventos) {
   }
   for (const e of eventos) {
     if (!EVENTOS_CONOCIDOS.has(e.evento)) sumar(r.otrosEventos, e.evento)
+    r.origen[e.origen === 'historial' ? 'historial' : 'webhook'] += 1
     const t = Date.parse(e.fecha_evento)
     if (Number.isNaN(t)) continue
     if (!r.primerEvento || t < Date.parse(r.primerEvento)) r.primerEvento = new Date(t).toISOString()

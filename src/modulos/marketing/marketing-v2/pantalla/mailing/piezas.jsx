@@ -6,7 +6,7 @@ import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx
 import { NOMBRE_CARGO, numero, pct, SIN_CLASIFICAR } from '../../datos/calculos.js'
 
 export const COLOR_SEMAFORO = { verde: COLORES.verdeClaro, amarillo: COLORES.amarillo, rojo: COLORES.rojo }
-export const TEXTO_WEBHOOK = 'Disponible para campañas enviadas después de activar el webhook.'
+export const TEXTO_WEBHOOK = 'Disponible para campañas con historial importado o enviadas después de activar el webhook.'
 
 /** Un dato que no se puede calcular («—») siempre va en gris, nunca en color de alerta. */
 const colorDe = (valor, color) => (valor === '—' ? COLORES.tenue : color)
