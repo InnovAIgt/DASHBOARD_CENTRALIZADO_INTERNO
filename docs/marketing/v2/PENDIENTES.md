@@ -25,6 +25,8 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Inicio de sesión real del portal (hasta entonces, las rutas con correos devuelven solo totales) | Keily | 2026-11-23 | Cambió: por decisión de Keily se muestran correos sin inicio de sesión (DECISIONES.md); el inicio de sesión queda para después |
 | Opción B (sesión para Marketing): pendiente, decidir después | Keily | Por definir | Pendiente |
 | Informar a Eduardo que los correos se muestran sin inicio de sesión | Keily | — | Pendiente |
+| Conflicto vite/esbuild en instalación limpia: revisar antes de publicar. Causa: Vercel instala con **bun** (hay `bun.lock` en el repo), que tolera el conflicto; con `npm` limpio falla (vite 8.3.8 pide esbuild 0.27/0.28 y el portal fija 0.25). `bun.lock` ya incluye `pg` (23/11/2026) | Keily | Antes de publicar | Pendiente |
+| Poner CC_DB_PASSWORD en Vercel Preview (solo rama feature/marketing-v2) | Keily | Antes de probar en Preview | Pendiente |
 | Confirmar si se ocultan las campañas de prueba | Ismael | Por confirmar | Pendiente |
 | Comparar en la pantalla de Brevo la campaña 74 (157 entregados, 44 aperturas, 3 clics) para decidir entre `globalStats` y `campaignStats` (por ahora se usa `globalStats`) | Keily | 2026-11-23 | Resuelto: se usa `globalStats`; `uniqueViews` = «Aperturas (incluye automáticas)», Apple MPP aparte (MAILING.md, sección 6) |
 | Poner `BREVO_API_KEY` en Vercel (Preview para probar la ruta de campañas; Production al publicar) | Keily | 2026-11-23 | Hecho: la llave nueva (dashboard-marketing-lectura) está solo para la rama `feature/marketing-v2` en Preview |
