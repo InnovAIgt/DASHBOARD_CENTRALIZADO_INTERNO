@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Datos reales de Mailing · Paso 3: ruta de resumen de los eventos del webhook
+
+- Ruta `GET /api/marketing/mailing/resumen` (`server/mailing/resumen.js`, `api/marketing/mailing/resumen.js`,
+  `server.ts`), con `?campanas=` opcional. Lee `mkt_brevo_eventos` página por página (`leerEventos` en
+  `server/mktSupabase.js`), agrupa por destinatario dentro del servidor y devuelve **solo conteos**: estados finales,
+  CORREGIR / MANTENER con motivos técnicos, apertura registrada, `proxy_open` aparte, clic, spam, bajas y eventos
+  nuevos. Nunca correos. Caché de 2 min; copia anterior con aviso si Supabase falla.
+- 9 pruebas nuevas con eventos inventados (65 en total en `server/`), lint y build OK.
+- Revisión real (portal local): con la tabla vacía responde 200 «Sin datos del webhook todavía.»; POST 405;
+  parámetro inválido 400.
+- Keily pone `BREVO_API_KEY` en Vercel solo en Preview. Las 4 campañas reales «Sin clasificar» se asignarán a mano.
+
 ## 2026-11-23 · Datos reales de Mailing · Paso 2: ruta de campañas con totales de Brevo
 
 - Ajustes al paso 1 (decisión de Keily): «GERENTE FINACIERO» → GF y «GERENTE OPERACIONES» → GO. Apertura con totales:

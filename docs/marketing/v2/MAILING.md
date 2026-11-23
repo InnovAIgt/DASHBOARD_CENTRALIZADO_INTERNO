@@ -314,6 +314,12 @@ del destinatario.
   si es de prueba, totales, tasas y semáforo. Nunca remitente, respuesta, contenido ni correos. Caché de 10 min en el
   servidor y 5 min en Vercel; si Brevo falla y hay una copia anterior, se usa con aviso. La primera carga tarda unos
   10 s (Brevo calcula los totales), por eso la función tiene 60 s de tiempo máximo en `vercel.json`.
+- **`GET /api/marketing/mailing/resumen`** (`server/mailing/resumen.js`), con `?campanas=12,13` opcional: con los
+  eventos del webhook, **solo conteos** por campaña: destinatarios, estados finales (y empates), CORREGIR / MANTENER,
+  motivos técnicos, apertura registrada (evento `opened`), `proxy_open` aparte (por confirmar qué es), clic, spam,
+  bajas, eventos con nombre nuevo y primera / última fecha. Los correos se usan solo dentro del servidor para agrupar;
+  **nunca salen**. Con la tabla vacía responde `hayDatos: false` y «Sin datos del webhook todavía.». Caché de 2 min.
+  Los destinatarios sin ningún evento no están en la tabla: la pantalla los calcula con los enviados de Brevo.
 - Nunca se guardan correos ni datos de clientes en el repo, las pruebas ni las capturas.
 
 ### 10.1 Qué trae y qué no trae la API (prueba del 20/11/2026)

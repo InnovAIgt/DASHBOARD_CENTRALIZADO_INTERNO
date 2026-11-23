@@ -6,6 +6,7 @@ import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { reenviarSac } from './server/sacProxy.js';
 import { procesarWebhookBrevo } from './server/brevoWebhook.js';
 import { responderCampanas } from './server/mailing/campanas.js';
+import { responderResumen } from './server/mailing/resumen.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -56,6 +57,14 @@ app.all('/api/marketing/brevo-webhook', async (req, res) => {
 // En Vercel: api/marketing/mailing/campanas.js.
 app.all('/api/marketing/mailing/campanas', async (req, res) => {
   const resultado = await responderCampanas({ method: req.method });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: conteos de los eventos del webhook (nunca correos). En Vercel: api/marketing/mailing/resumen.js.
+app.all('/api/marketing/mailing/resumen', async (req, res) => {
+  const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
+  const resultado = await responderResumen({ method: req.method, query: { campanas } });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });

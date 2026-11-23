@@ -44,6 +44,42 @@ export async function leerCargosManuales({ env = process.env, fetchFn = fetch, e
   }
 }
 
+export const EVENTOS_POR_PAGINA = 1000
+const MAX_PAGINAS_EVENTOS = 200
+
+/**
+ * Eventos del webhook (tabla mkt_brevo_eventos), página por página. Solo los campos que necesita el resumen.
+ * Los correos se usan SOLO dentro del servidor para agrupar por destinatario; nunca salen en una respuesta.
+ * @param {{campanas?: number[]|null, env?: object, fetchFn?: Function, esperaMs?: number, porPagina?: number}} [opciones]
+ * @returns {Promise<Array<{campana_id: number, evento: string, correo: string, fecha_evento: string, motivo: string|null}>>}
+ */
+export async function leerEventos({ campanas = null, env = process.env, fetchFn = fetch, esperaMs = MKT_ESPERA_MS, porPagina = EVENTOS_POR_PAGINA } = {}) {
+  const { url, llave } = configuracionMkt(env)
+  const filtro = campanas?.length ? `&campana_id=in.(${campanas.map(Number).join(',')})` : ''
+  const filas = []
+  for (let pagina = 0; pagina < MAX_PAGINAS_EVENTOS; pagina++) {
+    const control = new AbortController()
+    const reloj = setTimeout(() => control.abort(), esperaMs)
+    try {
+      const r = await fetchFn(`${url}/rest/v1/mkt_brevo_eventos?select=campana_id,evento,correo,fecha_evento,motivo${filtro}&order=id.asc&limit=${porPagina}&offset=${pagina * porPagina}`, {
+        headers: { apikey: llave, Accept: 'application/json' },
+        signal: control.signal,
+      })
+      if (!r.ok) throw new Error(`Supabase respondió HTTP ${r.status}`)
+      const lote = await r.json()
+      if (!Array.isArray(lote)) throw new Error('Supabase devolvió un formato inesperado')
+      filas.push(...lote)
+      if (lote.length < porPagina) return filas
+    } catch (err) {
+      if (err?.name === 'AbortError') throw new Error(`Supabase no respondió en ${esperaMs / 1000} s`)
+      throw err
+    } finally {
+      clearTimeout(reloj)
+    }
+  }
+  throw new Error('Demasiados eventos para leer de una vez')
+}
+
 /**
  * Guarda los eventos en mkt_brevo_eventos. Si una huella ya existe, esa fila se ignora sin error
  * (Brevo puede reintentar el mismo aviso).
