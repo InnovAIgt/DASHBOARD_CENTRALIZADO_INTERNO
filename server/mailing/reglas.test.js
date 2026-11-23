@@ -199,7 +199,9 @@ test('porcentaje: un decimal y null si se divide entre 0', () => {
 })
 
 test('totales desde globalStats (números inventados) y tasas', () => {
-  const t = totalesDesdeBrevo({ sent: 200, delivered: 180, softBounces: 12, hardBounces: 3, uniqueViews: 50, appleMppOpens: 9, clickers: 4, uniqueClicks: 6 })
+  const t = totalesDesdeBrevo({ sent: 200, delivered: 180, softBounces: 12, hardBounces: 3, uniqueViews: 50, appleMppOpens: 9, clickers: 4, uniqueClicks: 6, unsubscriptions: 2, complaints: 1 })
+  assert.equal(t.bajas, 2)
+  assert.equal(t.quejas, 1)
   assert.equal(t.sinConfirmacion, 5)
   assert.equal(t.sinConfirmacionAjustado, false)
   assert.equal(t.aperturas, 50) // incluye automáticas

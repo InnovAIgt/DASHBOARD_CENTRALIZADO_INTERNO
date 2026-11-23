@@ -3,7 +3,9 @@
 > Dashboard de **Marketing** (Mailing, Redes sociales y Otros). **Flujo de ventas** es otro dashboard y su
 > documentación está en [`docs/marketing/README.md`](../README.md).
 
-Estado: **en construcción** en la rama `feature/marketing-v2` (sin publicar). Parte 2: estructura lista, sin datos.
+Estado: **en construcción** en la rama `feature/marketing-v2` (sin publicar). Mailing: las 6 sub-pestañas se abren;
+Resultados generales, Comparar campañas y Asignar cargo con datos reales de Brevo; Correos por corregir y Detalle por
+correo con conteos del webhook (sin datos todavía); Relación con clientes espera el cruce con clientes.
 
 ## Qué es
 
@@ -32,7 +34,10 @@ Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
 | Archivo | Para qué |
 |---|---|
 | `src/modulos/marketing/marketing-v2/MarketingV2.jsx` | Pantalla principal: encabezado y pestañas Mailing · Redes sociales · Otros |
-| `src/modulos/marketing/marketing-v2/pantalla/Mailing.jsx` | Filtros globales y las 6 sub-pestañas de Mailing |
+| `src/modulos/marketing/marketing-v2/pantalla/Mailing.jsx` | Arma la pestaña Mailing: barra de sub-pestañas, filtros y la sub-pestaña elegida |
+| `src/modulos/marketing/marketing-v2/pantalla/mailing/` | Una pieza por sub-pestaña (`Generales`, `Comparar`, `Correos`, `Clientes`, `Cargos`), los `Filtros` y las `piezas` visuales comunes |
+| `src/modulos/marketing/marketing-v2/datos/useMailingDatos.js` | Pide los datos a nuestras rutas (`/api/marketing/mailing/campanas` y `/resumen`) |
+| `src/modulos/marketing/marketing-v2/datos/calculos.js` | Filtros y sumas de la pantalla (usa `server/mailing/reglas.js`); pruebas en `calculos.test.js` |
 | `src/modulos/marketing/marketing-v2/pantalla/comunes.jsx` | Avisos de pendiente y de inicio de sesión, paneles y tablas vacías |
 | `src/modulos/marketing/marketing-v2/marketing-v2.css` | Estilos propios (prefijo `mkv2-`) |
 | `src/components/layout/PortalLayout.tsx` | Entrada del menú (id `marketing-v2`) |

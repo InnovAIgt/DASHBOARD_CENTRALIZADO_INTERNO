@@ -2,6 +2,50 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Datos reales de Mailing · Paso 4: filtros y Resultados generales
+
+- Consulta de solo lectura: en `origin/main` ningún código lee `BREVO_API_KEY`; solo aparece como nombre
+  (`.env.example`, `Dockerfile`, `docker-compose.yml`, documentación vieja y un texto de `SecretsModal.tsx`). En Vercel
+  hay una `BREVO_API_KEY` vieja (Production y Preview) que no puso Keily; la nueva está solo para la rama
+  `feature/marketing-v2` (PENDIENTES).
+- Pantalla (`pantalla/Mailing.jsx`): filtros que funcionan (Campaña, Cargo, Asunto, Desde/Hasta en hora de Guatemala y
+  «Mostrar campañas de prueba», apagado por defecto); País y Cliente apagados hasta el cruce con clientes.
+- «Resultados generales» con datos reales: franja de 6 indicadores, recorrido, incidencias (4 estados), tasa de
+  entrega con semáforo, correos por corregir (solo con datos del webhook), análisis por cargo, tabla por campaña y
+  aviso «disponible para campañas enviadas después de activar el webhook». Aperturas «incluye automáticas» con Apple
+  MPP aparte.
+- Datos: `datos/useMailingDatos.js` (pide a nuestras rutas) y `datos/calculos.js` (filtros y sumas; usa las reglas de
+  `server/mailing/reglas.js`, una sola fuente). Estilo: piezas de Flujo de ventas solo importadas (franja, paneles,
+  tablas, insignias, dona, barras) + clases `mkv2-` nuevas en `marketing-v2.css`, solo con variables `--fv2-*`.
+- 8 pruebas nuevas de los cálculos con campañas inventadas (73 en total), lint y build OK.
+- **Rediseño pedido por Keily (antes del commit; adelanta los pasos 5 y 6):**
+  - Forma visual tomada de la plantilla de Mailing de Marketing (solo como referencia de tarjetas, títulos y
+    gráficos; la plantilla **no** se copió al repo porque trae datos de clientes), con los colores del portal.
+  - Indicadores como tarjetas separadas (número grande, nombre corto, nota), cuadrícula 6 / 3 / 2 según el ancho.
+    Indicadores secundarios: Sin confirmación, Correos por corregir, Bajas y Marcados como spam (`unsubscriptions` y
+    `complaints` de Brevo, agregados a `totalesDesdeBrevo`).
+  - Las 6 sub-pestañas se abren y muestran contenido: Comparar campañas (barras por métrica y tabla ordenable con
+    datos reales), Asignar cargo (lista real con cargo sugerido; Guardar deshabilitado), Correos por corregir y
+    Detalle por correo (estructura completa con conteos del webhook, nunca correos; «—» mientras no haya datos) y
+    Relación con clientes (estructura con el aviso del cruce pendiente). Ningún número inventado.
+  - Código en `pantalla/mailing/` (piezas, Filtros, Generales, Comparar, Correos, Clientes, Cargos); `Mailing.jsx`
+    solo arma la pantalla. Revisado fuera del portal con capturas (sin iniciar sesión).
+  - 75 pruebas en total (server y cálculos de la pantalla), lint y build OK.
+- **Segundo ajuste (dinámico como la plantilla):**
+  - Tarjetas como las de la plantilla: título en mayúsculas, número grande, porcentaje con su base, línea que explica
+    qué es y enlace «Ver destinatarios» / «Ver rebotes» / «Ver lista». Bloques con título («Entregas, rebotes y
+    calidad de contactos», «Recorrido e incidencias», «Cargos y campañas»).
+  - Todo clicable: cada tarjeta, etapa del recorrido, estado de incidencias y la dona abren la sub-pestaña que
+    corresponde ya enfocada (franja «Detalle del indicador · …» con «Ver todos» y «Volver a resultados»). Clic en un
+    cargo o una campaña de las tablas filtra todo el dashboard. «Detalle por correo» muestra el total de Brevo del
+    estado elegido y el conteo del webhook; nunca correos.
+  - Los filtros cambian todas las tarjetas, gráficos y tablas al momento, en todas las sub-pestañas.
+  - «Entregados» en color fijo (el semáforo solo en la tasa de entrega); «—» siempre en gris; número y «%» sin
+    separarse; «Sin confirmación» avisa cuando con los totales de Brevo no se puede calcular exacto.
+  - Prueba de clics automática y temporal sobre la pantalla real con datos reales (archivos de prueba borrados, sin
+    iniciar sesión): todos los clics llevan a donde deben, el filtro Cargo = GG cambia las tarjetas (335 enviados),
+    sin `@` en pantalla y sin «—» en rojo. 77 pruebas, lint y build OK.
+
 ## 2026-11-23 · Datos reales de Mailing · Paso 3: ruta de resumen de los eventos del webhook
 
 - Ruta `GET /api/marketing/mailing/resumen` (`server/mailing/resumen.js`, `api/marketing/mailing/resumen.js`,

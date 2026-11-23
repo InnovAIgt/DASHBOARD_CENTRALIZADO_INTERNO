@@ -1,0 +1,115 @@
+// Pruebas de los cálculos de la pantalla de Mailing con campañas INVENTADAS.
+// Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { detalleWebhook, diaGuatemala, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+
+const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
+const CAMPANAS = [
+  { id: 1, nombre: 'GERENTE GENERAL INVENTADA', asunto: 'Asunto A', cargo: 'GG', esPrueba: false, estado: 'enviada', fecha: '2026-11-05T12:00:00.000-06:00', totales: tot(100, 100, { aperturas: 30, aperturasApple: 5, clics: 2 }) },
+  { id: 2, nombre: 'GERENTE FINANCIERO INVENTADA', asunto: 'Asunto B', cargo: 'GF', esPrueba: false, estado: 'enviada', fecha: '2026-11-11T23:30:00.000-06:00', totales: tot(200, 170, { reboteTemporal: 20, rebotePermanente: 10, aperturas: 40, clics: 4 }) },
+  { id: 3, nombre: '[PRUEBA] inventada', asunto: 'Asunto A', cargo: 'GG', esPrueba: true, estado: 'enviada', fecha: '2026-11-20T10:00:00.000-06:00', totales: tot(5, 5) },
+  { id: 4, nombre: 'NOMBRE LIBRE', asunto: 'Asunto C', cargo: 'Sin clasificar', esPrueba: false, estado: 'programada', fecha: '2026-12-01T09:00:00.000-06:00', totales: tot(0, 0) },
+]
+
+test('diaGuatemala: usa la hora de Guatemala', () => {
+  assert.equal(diaGuatemala('2026-11-12T05:30:00.000Z'), '2026-11-11') // 23:30 del 11 en Guatemala
+  assert.equal(diaGuatemala(null), null)
+})
+
+test('filtrar: las de prueba se ocultan por defecto y se ven con la opción', () => {
+  assert.deepEqual(filtrarCampanas(CAMPANAS).map((c) => c.id), [1, 2, 4])
+  assert.deepEqual(filtrarCampanas(CAMPANAS, { ...FILTROS_INICIALES, mostrarPrueba: true }).map((c) => c.id), [1, 2, 3, 4])
+})
+
+test('filtrar: campaña, cargo, asunto y fechas (en hora de Guatemala)', () => {
+  const f = (extra) => filtrarCampanas(CAMPANAS, { ...FILTROS_INICIALES, ...extra }).map((c) => c.id)
+  assert.deepEqual(f({ campana: '2' }), [2])
+  assert.deepEqual(f({ cargo: 'GG' }), [1])
+  assert.deepEqual(f({ cargo: 'GG', mostrarPrueba: true }), [1, 3])
+  assert.deepEqual(f({ asunto: 'Asunto A', mostrarPrueba: true }), [1, 3])
+  assert.deepEqual(f({ desde: '2026-11-11', hasta: '2026-11-11' }), [2])
+  assert.deepEqual(f({ desde: '2026-11-06' }), [2, 4])
+  assert.deepEqual(f({ hasta: '2026-11-05' }), [1])
+})
+
+test('opciones de los menús sin las de prueba (salvo que se pidan)', () => {
+  assert.deepEqual(opcionesFiltros(CAMPANAS).asuntos, ['Asunto A', 'Asunto B', 'Asunto C'])
+  assert.equal(opcionesFiltros(CAMPANAS).campanas.length, 3)
+  assert.equal(opcionesFiltros(CAMPANAS, true).campanas.length, 4)
+})
+
+test('sumarTotales: solo enviadas; tasas y semáforo con las sumas', () => {
+  const s = sumarTotales(filtrarCampanas(CAMPANAS))
+  assert.equal(s.campanas, 2)
+  assert.equal(s.enviados, 300)
+  assert.equal(s.entregados, 270)
+  assert.equal(s.aperturas, 70)
+  assert.equal(s.aperturasApple, 5)
+  assert.equal(s.tasas.entrega, 90)
+  assert.equal(s.semaforo, 'amarillo')
+  const vacio = sumarTotales([])
+  assert.equal(vacio.tasas.entrega, null)
+  assert.equal(vacio.semaforo, null)
+})
+
+test('porCargo: una fila por cargo con campañas enviadas', () => {
+  const filas = porCargo(filtrarCampanas(CAMPANAS))
+  assert.deepEqual(filas.map((f) => [f.cargo, f.campanas, f.enviados]), [['GG', 1, 100], ['GF', 1, 200]])
+  assert.equal(filas[0].semaforo, 'verde')
+})
+
+test('detalle del webhook: sin datos y con datos', () => {
+  assert.deepEqual(detalleWebhook(CAMPANAS, { campanas: {} }), { hayDatos: false, campanasConDetalle: 0, corregir: 0, porcentajeCorregir: null, motivos: [] })
+  const resumen = { campanas: { 2: { status: { CORREGIR: 6, MANTENER: 194 }, motivosCorregir: { 'Usuario desconocido': 4, 'Dominio sin registros MX': 2 } } } }
+  const d = detalleWebhook(CAMPANAS, resumen)
+  assert.equal(d.campanasConDetalle, 1)
+  assert.equal(d.corregir, 6)
+  assert.equal(d.porcentajeCorregir, 3)
+  assert.deepEqual(d.motivos, [['Usuario desconocido', 4], ['Dominio sin registros MX', 2]])
+  assert.equal(porCorregirCampana(CAMPANAS[1], resumen), 3)
+  assert.equal(porCorregirCampana(CAMPANAS[0], resumen), null)
+})
+
+test('sumarResumen: suma conteos del webhook solo de las campañas filtradas', () => {
+  assert.equal(sumarResumen(CAMPANAS, null).hayDatos, false)
+  const resumen = { campanas: {
+    1: { destinatarios: 10, estados: { entregado: 8, rebote_temporal: 1, rebote_permanente: 1, sin_confirmacion: 0 }, status: { CORREGIR: 1, MANTENER: 9 }, aperturaRegistrada: 4, proxyOpen: 1, clic: 2, spam: 0, bajas: 1, motivosCorregir: { 'Usuario desconocido': 1 }, motivosMantener: { 'Buzón lleno': 1 } },
+    3: { destinatarios: 5, estados: { entregado: 5, rebote_temporal: 0, rebote_permanente: 0, sin_confirmacion: 0 }, status: { CORREGIR: 0, MANTENER: 5 }, aperturaRegistrada: 5, clic: 5 },
+  } }
+  const s = sumarResumen(filtrarCampanas(CAMPANAS), resumen) // la 3 es de prueba: queda fuera
+  assert.equal(s.hayDatos, true)
+  assert.equal(s.campanasConDetalle, 1)
+  assert.equal(s.destinatarios, 10)
+  assert.deepEqual(s.estados, { entregado: 8, rebote_temporal: 1, rebote_permanente: 1, sin_confirmacion: 0 })
+  assert.equal(s.corregir, 1)
+  assert.deepEqual(s.motivosCorregir, [['Usuario desconocido', 1]])
+  assert.equal(s.aperturaRegistrada, 4)
+})
+
+test('ordenarPor: números y textos, con vacíos al final', () => {
+  const filas = [{ v: 2 }, { v: null }, { v: 10 }, { v: 1 }]
+  assert.deepEqual(ordenarPor(filas, (f) => f.v).map((f) => f.v), [10, 2, 1, null])
+  assert.deepEqual(ordenarPor(filas, (f) => f.v, 'asc').map((f) => f.v), [1, 2, 10, null])
+  assert.deepEqual(ordenarPor([{ v: 'b' }, { v: 'a' }], (f) => f.v, 'asc').map((f) => f.v), ['a', 'b'])
+})
+
+test('pct: un decimal o «—»; el número y el % no se separan de línea', () => {
+  assert.equal(pct(null), '—')
+  assert.match(pct(92.9), /^92[.,]9 %$/)
+})
+
+test('sumarTotales avisa si «Sin confirmación» no es exacto (resta negativa en alguna campaña)', () => {
+  const rara = { ...CAMPANAS[0], id: 9, totales: { ...CAMPANAS[0].totales, sinConfirmacionAjustado: true } }
+  assert.equal(sumarTotales(filtrarCampanas(CAMPANAS)).sinConfirmacionAjustado, false)
+  assert.equal(sumarTotales([rara]).sinConfirmacionAjustado, true)
+})
+
+test('ESTADOS_DETALLE: cifras de Brevo y del webhook para cada estado', () => {
+  const t = sumarTotales(filtrarCampanas(CAMPANAS))
+  assert.equal(estadoDetalle('rebotes').brevo(t), 30)
+  assert.equal(estadoDetalle('rebote_permanente').brevo(t), 10)
+  assert.equal(estadoDetalle('no-existe').id, 'todos')
+  const s = sumarResumen([], null)
+  for (const e of ESTADOS_DETALLE) assert.equal(typeof e.webhook(s), 'number', e.id)
+})

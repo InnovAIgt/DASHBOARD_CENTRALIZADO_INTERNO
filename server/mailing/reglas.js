@@ -179,6 +179,8 @@ export function totalesDesdeBrevo(g = {}) {
     aperturasApple: n(g.appleMppOpens), // «Apple MPP», aparte
 
     clics: n(g.clickers),
+    bajas: n(g.unsubscriptions),
+    quejas: n(g.complaints), // marcado como spam por el destinatario
   }
 }
 
