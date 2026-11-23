@@ -111,7 +111,7 @@
 .mkv2 .mkv2-globo {
   position: fixed; z-index: 80; max-width: 290px; padding: 7px 10px; pointer-events: none;
   background: #05070b; border: 1px solid rgba(255, 255, 255, .16); border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
-  font-size: 11.5px; font-weight: 600; line-height: 1.45; color: var(--fv2-texto);
+  font-size: 11.5px; font-weight: 600; line-height: 1.45; color: var(--fv2-texto); white-space: pre-line;
 }
 
 /* Cifra de tabla que se puede abrir */
@@ -485,6 +485,78 @@
 .mkv2 .mkv2-ficha-indicacion small { font-size: 9.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--fv2-tenue); }
 .mkv2 .mkv2-ficha-indicacion span { font-size: 12px; line-height: 1.5; color: var(--fv2-texto); }
 .mkv2 .mkv2-ficha-auditoria { margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--fv2-panel); font-size: 11.5px; line-height: 1.55; color: var(--mkv2-suave); }
+
+/* ---------- Nombre de campaña en toda la pestaña: ASUNTO arriba, «#id · nombre real · fecha» abajo ---------- */
+.mkv2 .mkv2-tc { display: grid; gap: 2px; min-width: 0; max-width: 100%; }
+.mkv2 .mkv2-tc-titulo { display: block; overflow: hidden; font-size: 12.5px; font-weight: 700; line-height: 1.35; color: var(--fv2-texto); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-tc-linea { display: block; overflow: hidden; font-size: 10.5px; font-weight: 600; color: var(--fv2-tenue); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-tc.is-grande .mkv2-tc-titulo { font-size: 14.5px; color: #fff; }
+.mkv2 .mkv2-tc.is-grande .mkv2-tc-linea { font-size: 11.5px; }
+.mkv2 .mkv2-celda-campana { min-width: 200px; max-width: 320px; }
+.mkv2 .mkv2-tc-lista { display: grid; gap: 6px; }
+.mkv2 .mkv2-campana-con-marcas { display: grid; gap: 3px; min-width: 0; }
+.mkv2 .mkv2-marca-campana { font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #f0c15a; }
+.mkv2 .mkv2-ficha-campana { margin-top: 6px; }
+.mkv2 .mkv2-ficha-campana .mkv2-tc-titulo { white-space: normal; }
+
+/* ---------- Comparar campañas como la maqueta: tarjetas por campaña ---------- */
+.mkv2 .mkv2-comparando b { color: var(--fv2-texto); }
+.mkv2 .mkv2-segmento { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--fv2-panel); border: 1px solid var(--fv2-borde); border-radius: 10px; }
+.mkv2 .mkv2-segmento button { padding: 6px 12px; border: 0; border-radius: 7px; background: none; color: var(--fv2-tenue); font: 600 12.5px inherit; font-family: inherit; cursor: pointer; transition: background .15s, color .15s; }
+.mkv2 .mkv2-segmento button:hover { color: var(--fv2-texto); }
+.mkv2 .mkv2-segmento button.is-activo { background: var(--fv2-elevado); color: #fff; }
+.mkv2 .mkv2-rank-herramientas { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0 0 10px; }
+.mkv2 .mkv2-rank-herramientas .mkv2-leyenda-semaforo { margin: 0 0 0 auto; }
+.mkv2 .mkv2-interruptor-pill { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--mkv2-suave); font: inherit; font-size: 12.5px; cursor: pointer; }
+.mkv2 .mkv2-interruptor-pill i { position: relative; width: 32px; height: 18px; border-radius: 99px; background: var(--fv2-elevado); border: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-interruptor-pill i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--fv2-tenue); transition: left .15s, background .15s; }
+.mkv2 .mkv2-interruptor-pill.is-on i { background: rgba(24, 147, 95, .35); }
+.mkv2 .mkv2-interruptor-pill.is-on i::after { left: 16px; background: #6fd3a6; }
+.mkv2 .mkv2-rank-lista { display: grid; gap: 10px; }
+.mkv2 .mkv2-rank {
+  --a: var(--mkv2-enviados);
+  display: grid; grid-template-columns: 44px minmax(240px, 1.3fr) minmax(120px, 1.6fr) 110px; gap: 16px; align-items: center;
+  width: 100%; padding: 14px 16px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--a) 10%, var(--fv2-panel)), var(--fv2-panel) 45%);
+  border: 1px solid var(--fv2-borde); border-left: 4px solid var(--a); border-radius: 12px;
+  transition: transform .15s, border-color .15s; animation: mkv2-sube .4s ease both;
+}
+.mkv2 .mkv2-rank:hover { transform: translateX(3px); border-color: color-mix(in srgb, var(--a) 45%, transparent); border-left-color: var(--a); }
+.mkv2 .mkv2-rank:focus-visible { outline: 2px solid var(--fv2-azul-claro); outline-offset: 2px; }
+.mkv2 .mkv2-rank-pos { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: var(--fv2-elevado); color: var(--mkv2-suave); font-size: 14px; font-weight: 800; }
+.mkv2 .mkv2-rank-pos.is-m1 { background: linear-gradient(135deg, #f5c84c, #d8962a); color: #2a1a00; }
+.mkv2 .mkv2-rank-pos.is-m2 { background: linear-gradient(135deg, #e3e7ee, #9aa3b2); color: #1b1f27; }
+.mkv2 .mkv2-rank-pos.is-m3 { background: linear-gradient(135deg, #e0a27a, #a8643b); color: #2a1406; }
+.mkv2 .mkv2-rank-nombre { display: grid; gap: 7px; min-width: 0; }
+.mkv2 .mkv2-rank-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mkv2 .mkv2-chip { padding: 1px 8px; border-radius: 99px; background: rgba(255, 255, 255, .07); color: var(--mkv2-suave); font-size: 10.5px; font-weight: 700; }
+.mkv2 .mkv2-chip.is-cargo { background: rgba(47, 134, 201, .16); color: #8fc4f0; }
+.mkv2 .mkv2-chip.is-pocos { color: var(--fv2-tenue); }
+.mkv2 .mkv2-rank-pista { position: relative; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, .06); }
+.mkv2 .mkv2-rank-pista i {
+  display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--a) 75%, #000), color-mix(in srgb, var(--a) 80%, #fff));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--a) 45%, transparent); animation: mkv2-crece .9s cubic-bezier(.2, .8, .2, 1) both; transition: width .7s var(--fv2-curva);
+}
+.mkv2 .mkv2-rank-pista .mkv2-meta { top: -6px; bottom: -6px; border-left-color: rgba(255, 255, 255, .35); }
+.mkv2 .mkv2-rank-valor { display: grid; text-align: right; }
+.mkv2 .mkv2-rank-valor b { font-family: var(--fv2-mono); font-size: 20px; font-weight: 800; color: color-mix(in srgb, var(--a) 70%, #fff); white-space: nowrap; }
+.mkv2 .mkv2-rank-valor small { font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-ver-mas { display: flex; justify-content: center; margin-top: 12px; }
+.mkv2 .mkv2-pie { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-cuadritos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.mkv2 .mkv2-cuadrito {
+  display: grid; gap: 4px; min-width: 0; padding: 12px 14px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--fv2-panel); border: 1px solid var(--fv2-borde); border-left: 4px solid var(--c); border-radius: 11px; transition: transform .15s;
+}
+.mkv2 .mkv2-cuadrito:hover:not(:disabled) { transform: translateY(-2px); }
+.mkv2 .mkv2-cuadrito:disabled { cursor: default; }
+.mkv2 .mkv2-cuadrito > small { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-cuadrito-num { font-family: var(--fv2-mono); font-size: 20px; font-weight: 800; color: var(--c2); }
+@media (max-width: 800px) {
+  .mkv2 .mkv2-rank { grid-template-columns: 28px minmax(0, 1fr) 70px; }
+  .mkv2 .mkv2-rank-pista { grid-column: 2 / 4; }
+  .mkv2 .mkv2-cuadritos { grid-template-columns: 1fr; }
+}
 
 /* ---------- Ancho de pantalla ---------- */
 @media (max-width: 900px) { .mkv2 .mkv2-ejecutivos3 { grid-template-columns: 1fr; } }

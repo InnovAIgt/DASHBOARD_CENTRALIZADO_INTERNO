@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { contadoresMailing, fechaHora, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { campanasComparables, contadoresMailing, fechaHora, MINIMO_ENVIOS, pocosDatos, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -201,4 +201,15 @@ test('contadoresMailing: direcciones únicas a corregir, casos y filas de client
 test('fechaHora: fecha y hora de Guatemala, o «—»', () => {
   assert.equal(fechaHora('2026-11-11T21:44:12.000Z'), '11/11/2026 · 15:44')
   assert.equal(fechaHora(null), '—')
+})
+
+test('campanasComparables: solo enviadas con 20+ envíos salvo que se incluyan las pequeñas; pocos datos', () => {
+  const c = (id, enviados, entregados, estado = 'enviada') => ({ id, estado, totales: { enviados, entregados } })
+  const campanas = [c(1, 120, 110), c(2, 19, 19), c(3, 5, 3), c(4, 300, 0, 'programada')]
+  assert.equal(MINIMO_ENVIOS, 20)
+  assert.deepEqual(campanasComparables(campanas).lista.map((x) => x.id), [1])
+  assert.equal(campanasComparables(campanas).pequenas, 2)
+  assert.deepEqual(campanasComparables(campanas, true).lista.map((x) => x.id), [1, 2, 3])
+  assert.equal(pocosDatos(c(3, 5, 3)), true)
+  assert.equal(pocosDatos(c(1, 120, 110)), false)
 })

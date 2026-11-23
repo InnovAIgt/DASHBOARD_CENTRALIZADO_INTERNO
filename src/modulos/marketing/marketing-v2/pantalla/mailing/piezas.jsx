@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, ArrowUpRight, Info, Lock, RefreshCw, X } from 'lucide-react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { NOMBRE_CARGO, numero, pct, SIN_CLASIFICAR } from '../../datos/calculos.js'
+import { textosCampana } from '../../datos/campana.js'
 
 /** true si la persona pidió «reducir movimiento» en su equipo (o si no hay navegador). */
 export const menosMovimiento = () => typeof window === 'undefined' || !window.matchMedia
@@ -90,6 +91,18 @@ export function useGlobo() {
   }
   const nodo = globo ? <div className="mkv2-globo" role="tooltip" style={{ left: globo.x, top: globo.y }}>{globo.texto}</div> : null
   return { manejadores: { onMouseMove: mover, onMouseLeave: () => setGlobo(null) }, nodo }
+}
+
+/**
+ * Nombre de una campaña en toda la pestaña: ASUNTO arriba (cortado con «…») y debajo «#74 · NOMBRE REAL · fecha»
+ * (más el cargo si se pide). El globo muestra los dos textos completos. campana puede faltar (solo id).
+ */
+export function TituloCampana({ campana, id = campana?.id, fecha = true, cargo = false, grande = false, className = '' }) {
+  const t = textosCampana(campana, id, { fecha, cargo })
+  return <span className={`mkv2-tc ${grande ? 'is-grande' : ''} ${className}`} data-tip={t.tip}>
+    <strong className="mkv2-tc-titulo">{t.titulo}</strong>
+    {t.linea && <small className="mkv2-tc-linea">{t.linea}</small>}
+  </span>
 }
 
 /** Cifra de una tabla que se puede abrir (no activa el clic de la fila). */

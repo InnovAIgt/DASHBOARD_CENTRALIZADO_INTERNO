@@ -10,7 +10,7 @@ import { descargarCsv } from '../../datos/csv.js'
 import {
   correoValido, csvGrupo, csvResumen, emlCorreo, enlaceMailto, gruposEjecutivos, htmlCorreo, iniciales, PLAZO, SIN_IDENTIFICAR, textoCorreo,
 } from '../../datos/correoEjecutivo.js'
-import { Aviso, Tarjeta } from './piezas.jsx'
+import { Aviso, Tarjeta, TituloCampana } from './piezas.jsx'
 
 // Correos de ejecutivos que la persona escribió (solo en este navegador). Si no hay, se usa el de correos_usuarios.
 const CLAVE_LIBRETA = 'mkv2-correos-ejecutivos'
@@ -157,7 +157,7 @@ function VentanaEjecutivo({ grupo, correoInicial, onGuardarCorreo, onCerrar }) {
           <tbody>{grupo.unicos.map((x) => <tr key={x.correo}>
             <td className="mkv2-celda-correo"><strong className="mkv2-texto-fuerte">{x.correo}</strong></td>
             <td className="mkv2-celda-media">{x.clientes.join(' / ') || SIN_IDENTIFICAR}</td>
-            <td><span className="fv2-sin-salto" title={x.nombresCampana.join(' · ')}>{x.campanas.join(', ')}</span></td>
+            <td className="mkv2-celda-campana"><span className="mkv2-tc-lista">{x.campanasInfo.map((c) => <TituloCampana key={c.id} campana={c.nombre || c.asunto ? c : null} id={c.id} fecha={false} />)}</span></td>
             <td className="mkv2-celda-media">{x.motivos.join(' / ')}</td>
           </tr>)}</tbody>
         </table>
@@ -186,8 +186,8 @@ function TarjetaEjecutivo({ grupo, onAbrir }) {
  * Bloque completo. filas = correo + campaña marcadas CORREGIR (con los filtros de arriba).
  * cruce: 'ok' | 'error' | 'sin_configurar' (si no hay cruce, todo queda en «Sin identificar» y se avisa).
  */
-export function PorEjecutivo({ filas, nombreCampana, cruce }) {
-  const grupos = useMemo(() => gruposEjecutivos(filas, nombreCampana), [filas, nombreCampana])
+export function PorEjecutivo({ filas, campanaDe, cruce }) {
+  const grupos = useMemo(() => gruposEjecutivos(filas, campanaDe), [filas, campanaDe])
   const [libreta, setLibreta] = useState(leerLibreta)
   const [abierto, setAbierto] = useState(null)
   const cerrar = useCallback(() => setAbierto(null), [])

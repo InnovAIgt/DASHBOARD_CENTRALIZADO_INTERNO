@@ -4,11 +4,12 @@
 // valor exacto. Totales reales de Brevo; lo que necesita detalle por persona viene del webhook. Nunca correos.
 import { Fragment, useMemo } from 'react'
 import { AlertTriangle, Check, Download, Eye, MousePointerClick, Send, X } from 'lucide-react'
+import { columnasCampana, textosCampana } from '../../datos/campana.js'
 import { aCsv, descargarCsv } from '../../datos/csv.js'
 import { detalleWebhook, diaGuatemala, fechaCorta, NOMBRE_CARGO, numero, pct, porCargo, porCorregirCampana, porcentaje, sumarTotales } from '../../datos/calculos.js'
 import {
   Aviso, Bloque, Cifra, COLOR_MAILING, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Kpi, LeyendaSemaforo, Mini, MiniBarra,
-  Numero, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TEXTO_WEBHOOK,
+  Numero, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TEXTO_WEBHOOK, TituloCampana,
 } from './piezas.jsx'
 
 /** Abre «Detalle por correo» enfocado en un estado. */
@@ -148,13 +149,15 @@ function PorCargo({ campanas, abrir, filtrar }) {
 function PorCampana({ campanas, resumen, abrir, filtrar }) {
   const filas = [...campanas].sort((a, b) => (Date.parse(b.fecha) || 0) - (Date.parse(a.fecha) || 0))
   const enviada = (c) => c.estado === 'enviada'
-  const abrirCifra = (c, x) => () => { filtrar({ campana: String(c.id) }); abrir({ vista: 'detalle', estado: x.estado, titulo: `${x.label} · #${c.id} ${c.nombre}` }) }
+  const abrirCifra = (c, x) => () => { filtrar({ campana: String(c.id) }); abrir({ vista: 'detalle', estado: x.estado, titulo: `${x.label} · ${textosCampana(c).corto}` }) }
   const cifra = (c, x) => (enviada(c)
-    ? <Cifra n={c.totales[x.id]} onClick={abrirCifra(c, x)} tip={`${x.label} · #${c.id} ${c.nombre}: ${numero(c.totales[x.id])} — clic para ver los destinatarios`} />
+    ? <Cifra n={c.totales[x.id]} onClick={abrirCifra(c, x)} tip={`${x.label} · ${textosCampana(c).unaLinea}: ${numero(c.totales[x.id])} — clic para ver los destinatarios`} />
     : <Gris texto="—" />)
   const columnas = [
-    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-larga', celda: (c) => <span className="mkv2-campana-celda"><strong>{c.nombre}</strong><small>#{c.id} · {fechaCorta(c.fecha)}{c.esPrueba ? ' · prueba' : ''}{!enviada(c) ? ' · programada' : ''}</small></span> },
-    { id: 'asunto', label: 'Asunto', clase: 'mkv2-celda-larga', celda: (c) => c.asunto || '—' },
+    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-campana', celda: (c) => <span className="mkv2-campana-con-marcas">
+      <TituloCampana campana={c} />
+      {(c.esPrueba || !enviada(c)) && <small className="mkv2-marca-campana">{c.esPrueba ? 'prueba' : ''}{c.esPrueba && !enviada(c) ? ' · ' : ''}{!enviada(c) ? 'programada' : ''}</small>}
+    </span> },
     { id: 'cargo', label: 'Cargo', celda: (c) => <InsigniaCargo cargo={c.cargo} title={c.cargoManual ? 'Elegido a mano' : c.cargoSugerido ? 'Sugerido por el nombre' : 'Sin clasificar'} /> },
     ...CIFRAS.filter((x) => x.id !== 'aperturas').slice(0, 2).map((x) => ({ id: x.id, label: x.label, num: true, celda: (c) => cifra(c, x) })),
     { id: 'aperturas', label: 'Aperturas', num: true, celda: (c) => (enviada(c)
@@ -165,10 +168,8 @@ function PorCampana({ campanas, resumen, abrir, filtrar }) {
     { id: 'entrega', label: '% Entrega', num: true, celda: (c) => (enviada(c) ? <PildoraEntrega tasa={c.tasas.entrega} semaforo={c.semaforo} /> : <Gris texto="—" />) },
   ]
   const csv = () => descargarCsv(`resumen-mailing_${diaGuatemala(new Date().toISOString())}`, aCsv([
-    { label: 'Id', valor: (c) => c.id },
-    { label: 'Campaña', valor: (c) => c.nombre },
-    { label: 'Fecha', valor: (c) => fechaCorta(c.fecha) },
-    { label: 'Asunto', valor: (c) => c.asunto },
+    ...columnasCampana((c) => [c]),
+    { label: 'Fecha de envío', valor: (c) => fechaCorta(c.fecha) },
     { label: 'Cargo', valor: (c) => c.cargo },
     { label: 'Estado', valor: (c) => (enviada(c) ? 'enviada' : 'programada') },
     ...CIFRAS.map((x) => ({ label: x.label, valor: (c) => (enviada(c) ? c.totales[x.id] : null) })),
@@ -181,7 +182,7 @@ function PorCampana({ campanas, resumen, abrir, filtrar }) {
   return <Tarjeta titulo="Resultado por campaña" sub="Clic en una campaña para ver solo esa en todo el dashboard · clic en una cifra para ver sus destinatarios · «Por corregir» solo con detalle del webhook"
     acciones={<button type="button" className="fv2-pildora" onClick={csv} disabled={!filas.length}><Download size={13} aria-hidden="true" />Descargar resumen CSV</button>}>
     <TablaOrdenable columnas={columnas} filas={filas} clave={(c) => c.id} vacio="Sin campañas con los filtros actuales."
-      onFila={(c) => filtrar({ campana: String(c.id) })} tituloFila={(c) => `Ver solo «#${c.id} ${c.nombre}»`} />
+      onFila={(c) => filtrar({ campana: String(c.id) })} tituloFila={(c) => `Ver solo «${textosCampana(c).corto}»`} />
   </Tarjeta>
 }
 

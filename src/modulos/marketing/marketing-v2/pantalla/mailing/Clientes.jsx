@@ -6,10 +6,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { CLASIFICACIONES, conteoClasificaciones, filtrarDetalle, FILTROS_DETALLE, numero, paginar, relacionClientes } from '../../datos/calculos.js'
 import { exportarExcel } from '../../datos/excel.js'
-import { AvisoDetalle, BotonExcel, Buscador, filasDelCorreo, nombreCampana, Paginacion, Tabla, TONO_ESTADO } from './Correos.jsx'
+import { AvisoDetalle, BotonExcel, Buscador, columnasExportar, filasDelCorreo, nombreCampana, Paginacion, Tabla, TONO_ESTADO } from './Correos.jsx'
 import { Ficha } from './Ficha.jsx'
 import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
-import { Aviso, Enfoque, InsigniaCargo, Mini, Tarjeta } from './piezas.jsx'
+import { Aviso, Enfoque, InsigniaCargo, Mini, Tarjeta, TituloCampana } from './piezas.jsx'
 
 const TARJETAS = [
   { id: 'varias', sub: 'El correo aparece en más de un código de cliente', color: COLORES.amarillo, tono: 'amarillo' },
@@ -40,8 +40,8 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
 
   const columnas = [
     { label: 'Correo', clase: 'mkv2-celda-correo', celda: (x) => <strong className="mkv2-texto-fuerte">{x.correo}</strong>, valor: (x) => x.correo, ancho: 34 },
-    { label: 'Campaña y cargo objetivo', clase: 'mkv2-celda-larga', celda: (x) => <span className="mkv2-campana-celda"><strong>{nombreCampana(nombres, x.campana_id)}</strong><small><InsigniaCargo cargo={cargoDe[x.campana_id] ?? 'Sin clasificar'} /></small></span>,
-      valor: (x) => `${nombreCampana(nombres, x.campana_id)} · ${cargoDe[x.campana_id] ?? 'Sin clasificar'}`, ancho: 40 },
+    { label: 'Campaña', clase: 'mkv2-celda-campana', celda: (x) => <TituloCampana campana={nombres[x.campana_id]} id={x.campana_id} />, valor: (x) => nombreCampana(nombres, x.campana_id), ancho: 40 },
+    { label: 'Cargo objetivo', celda: (x) => <InsigniaCargo cargo={cargoDe[x.campana_id] ?? 'Sin clasificar'} />, valor: (x) => cargoDe[x.campana_id] ?? 'Sin clasificar', ancho: 16 },
     { label: 'Clasificación', clase: 'mkv2-celda-media', celda: (x) => (x.clasificacion ? <Insignia tono={TARJETAS.find((t) => t.id === x.clasificacion)?.tono}>{CLASIFICACIONES[x.clasificacion]}</Insignia> : <span className="fv2-tenue">Pendiente del cruce</span>),
       valor: (x) => (x.clasificacion ? CLASIFICACIONES[x.clasificacion] : 'Pendiente del cruce'), ancho: 32 },
     { label: 'Cliente(s)', clase: 'mkv2-celda-media', celda: (x) => <CeldaEmpresas fila={x} campo="cliente" />, valor: (x) => textoEmpresas(x, 'cliente'), ancho: 34 },
@@ -54,7 +54,7 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
   const exportar = () => exportarExcel({
     nombreBase: `relacion-con-clientes_${new Date().toISOString().slice(0, 10)}`,
     titulo: 'RELACIÓN CON CLIENTES · MAILING', subtitulo: `${numero(lista.length)} filas (correo y campaña)${categoria ? ` · ${CLASIFICACIONES[categoria]}` : ''}`,
-    columnas, filas: lista,
+    columnas: columnasExportar(columnas, nombres), filas: lista,
     filtros: [['Campañas (filtros de arriba)', `${campanas.length}`], ['Clasificación', categoria ? CLASIFICACIONES[categoria] : 'Todas'], ['Búsqueda', texto || 'Ninguna']],
   })
 

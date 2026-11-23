@@ -63,6 +63,15 @@ test('enlaceMailto y csvGrupo', () => {
   assert.ok(m.enlace.startsWith('mailto:ana%40red.example.com?subject='))
   assert.equal(m.corto, false)
   const csv = csvGrupo(g.exacta[0]).slice(1).split('\r\n')
-  assert.equal(csv[0], 'Ejecutivo,Grupo,Correo por corregir,Cliente(s),Campaña(s),Incidencia(s),Estado(s)')
-  assert.equal(csv[1], 'Ana Ejemplo,Coincidencia exacta,uno@empresa-a.example.com,Empresa A,"#74, #75",Cuenta inexistente,Rebote permanente')
+  assert.equal(csv[0], 'Ejecutivo,Grupo,Correo por corregir,Cliente(s),Campaña (#),Asunto,Nombre de campaña,Incidencia(s),Estado(s)')
+  assert.equal(csv[1], 'Ana Ejemplo,Coincidencia exacta,uno@empresa-a.example.com,Empresa A,#74 / #75,— / —,— / —,Cuenta inexistente,Rebote permanente')
+})
+
+test('campaña en el correo: «asunto (#id)» con el asunto real de cada campaña', () => {
+  const campanas = { 74: { id: 74, asunto: 'Asunto inventado A', nombre: 'NOMBRE A' }, 75: { id: 75, asunto: 'Asunto inventado B', nombre: 'NOMBRE B' } }
+  const g = gruposEjecutivos(FILAS, (id) => campanas[id] ?? null)
+  assert.deepEqual(g.exacta[0].unicos[0].nombresCampana, ['Asunto inventado A (#74)', 'Asunto inventado B (#75)'])
+  assert.match(htmlCorreo(g.exacta[0]), /Campaña Asunto inventado A \(#74\), Asunto inventado B \(#75\)/)
+  assert.match(textoCorreo(g.exacta[0]).cuerpo, /Campaña\(s\): Asunto inventado A \(#74\), Asunto inventado B \(#75\)/)
+  assert.equal(csvGrupo(g.exacta[0]).slice(1).split('\r\n')[1], 'Ana Ejemplo,Coincidencia exacta,uno@empresa-a.example.com,Empresa A,#74 / #75,Asunto inventado A / Asunto inventado B,NOMBRE A / NOMBRE B,Cuenta inexistente,Rebote permanente')
 })

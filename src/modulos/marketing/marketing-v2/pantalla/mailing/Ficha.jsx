@@ -4,7 +4,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ExternalLink, X } from 'lucide-react'
 import { Bandera, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
-import { CLASIFICACIONES, clasificarCruce, empresasDe, NOMBRE_CARGO } from '../../datos/calculos.js'
+import { CLASIFICACIONES, clasificarCruce, empresasDe } from '../../datos/calculos.js'
+import { textosCampana } from '../../datos/campana.js'
+import { TituloCampana } from './piezas.jsx'
 
 const TONO_ESTADO = { entregado: 'verde', rebote_temporal: 'amarillo', rebote_permanente: 'rojo', sin_confirmacion: 'neutro' }
 const ETIQUETA_EVENTO = {
@@ -69,14 +71,14 @@ export function Ficha({ filas, nombres, onCerrar }) {
       <div className="mkv2-modal-cabeza">
         <div>
           <h3 id="mkv2-ficha-titulo">{fila.correo}</h3>
-          <p title={campana.nombre}>Campaña #{fila.campana_id}{campana.asunto ? ` · ${campana.asunto}` : ''} · {cargo === 'Sin clasificar' ? cargo : NOMBRE_CARGO[cargo]}</p>
+          <TituloCampana campana={nombres[fila.campana_id]} id={fila.campana_id} fecha={false} cargo className="mkv2-ficha-campana" />
         </div>
         <button type="button" className="fv2-pildora" onClick={onCerrar}><X size={14} />Cerrar</button>
       </div>
 
       {filas.length > 1 && <div className="mkv2-ficha-campanas" role="tablist" aria-label="Campañas de este correo">
         {filas.map((f, i) => <button key={f.campana_id} type="button" role="tab" aria-selected={i === indice}
-          className={`mkv2-subpestana ${i === indice ? 'is-activa' : ''}`} onClick={() => setIndice(i)}>{nombres[f.campana_id]?.nombre ?? `Campaña ${f.campana_id}`}</button>)}
+          className={`mkv2-subpestana ${i === indice ? 'is-activa' : ''}`} onClick={() => setIndice(i)} data-tip={textosCampana(nombres[f.campana_id], f.campana_id).tip}>{textosCampana(nombres[f.campana_id], f.campana_id).corto}</button>)}
       </div>}
 
       <div className="mkv2-ficha-etiquetas">

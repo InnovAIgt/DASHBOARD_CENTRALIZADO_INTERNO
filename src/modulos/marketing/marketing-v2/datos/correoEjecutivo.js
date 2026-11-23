@@ -5,6 +5,7 @@
 // Grupos: coincidencia exacta, POSIBLE por dominio (el correo dice «confirmar antes de corregir») y sin identificar.
 import { aCsv } from './csv.js'
 import { empresasDe } from './calculos.js'
+import { campanaEnCorreo, columnasCampana } from './campana.js'
 
 export const ENLACE_CORREGIR = 'https://cumplimientoclientes-88n2.onrender.com'
 export const SIN_IDENTIFICAR = 'Sin identificar'
@@ -23,7 +24,7 @@ export function iniciales(nombre) {
 }
 
 /** Direcciones únicas de un grupo: cada correo una vez, con sus campañas, clientes, motivos y estados. */
-export function direccionesUnicas(filas, nombreCampana = (id) => `#${id}`) {
+export function direccionesUnicas(filas, campanaDe = () => null) {
   const porCorreo = new Map()
   for (const f of filas) {
     const clave = String(f.correo || '').trim().toLowerCase()
@@ -36,7 +37,9 @@ export function direccionesUnicas(filas, nombreCampana = (id) => `#${id}`) {
     correo,
     filas: items,
     campanas: unicos(items.map((x) => x.campana_id)).sort((a, b) => a - b).map((id) => `#${id}`),
-    nombresCampana: unicos(items.map((x) => x.campana_id)).sort((a, b) => a - b).map(nombreCampana),
+    campanasInfo: unicos(items.map((x) => x.campana_id)).sort((a, b) => a - b).map((id) => campanaDe(id) ?? { id }),
+    // «asunto (#74)» para el correo y los textos (regla: asunto arriba, #id).
+    nombresCampana: unicos(items.map((x) => x.campana_id)).sort((a, b) => a - b).map((id) => campanaEnCorreo(campanaDe(id), id)),
     clientes: unicos(items.flatMap((x) => empresasDe(x).empresas.map((e) => e.cliente))).sort(porNombre),
     motivos: unicos(items.map(motivoBreve)),
     estados: unicos(items.map((x) => x.estadoTexto)),
@@ -48,7 +51,7 @@ export function direccionesUnicas(filas, nombreCampana = (id) => `#${id}`) {
  * distintos aparece en el grupo de cada uno. tipo: 'exacta' | 'posible' | 'sin'.
  * correoEjecutivo: el de correos_usuarios (Cumplimiento), si existe.
  */
-export function gruposEjecutivos(filas = [], nombreCampana) {
+export function gruposEjecutivos(filas = [], campanaDe) {
   const mapas = { exacta: new Map(), posible: new Map() }
   const sin = []
   for (const f of filas) {
@@ -64,9 +67,9 @@ export function gruposEjecutivos(filas = [], nombreCampana) {
   }
   const armar = (tipo) => [...mapas[tipo]].map(([ejecutivo, g]) => {
     const lista = [...g.filas]
-    return { clave: `${tipo}|${ejecutivo}`, tipo, ejecutivo, correoEjecutivo: g.correoEjecutivo, filas: lista, unicos: direccionesUnicas(lista, nombreCampana) }
+    return { clave: `${tipo}|${ejecutivo}`, tipo, ejecutivo, correoEjecutivo: g.correoEjecutivo, filas: lista, unicos: direccionesUnicas(lista, campanaDe) }
   }).sort((a, b) => b.unicos.length - a.unicos.length || porNombre(a.ejecutivo, b.ejecutivo))
-  const sinGrupo = sin.length ? [{ clave: 'sin', tipo: 'sin', ejecutivo: SIN_IDENTIFICAR, correoEjecutivo: '', filas: sin, unicos: direccionesUnicas(sin, nombreCampana) }] : []
+  const sinGrupo = sin.length ? [{ clave: 'sin', tipo: 'sin', ejecutivo: SIN_IDENTIFICAR, correoEjecutivo: '', filas: sin, unicos: direccionesUnicas(sin, campanaDe) }] : []
   return { exacta: armar('exacta'), posible: armar('posible'), sin: sinGrupo }
 }
 
@@ -82,7 +85,7 @@ export function textoCorreo(grupo, { corto = false } = {}) {
     : `CORREOS POR CORREGIR | ${plural(n, 'caso', 'casos')} | Plazo máximo: ${PLAZO}`
   const lista = corto
     ? grupo.unicos.map((x, i) => `${i + 1}. ${x.correo} | ${x.campanas.join('/')} | ${x.motivos.join('/')}`).join('\n')
-    : grupo.unicos.map((x, i) => `${i + 1}. ${x.correo}\n   Cliente: ${x.clientes.join(' / ') || 'Cliente no identificado en la base'}\n   Campaña(s): ${x.campanas.join(', ')}\n   Incidencia: ${x.motivos.join(' / ')}`).join('\n\n')
+    : grupo.unicos.map((x, i) => `${i + 1}. ${x.correo}\n   Cliente: ${x.clientes.join(' / ') || 'Cliente no identificado en la base'}\n   Campaña(s): ${x.nombresCampana.join(', ')}\n   Incidencia: ${x.motivos.join(' / ')}`).join('\n\n')
   const aviso = posible
     ? 'IMPORTANTE: estas direcciones no están registradas en la base; su dominio coincide con clientes de su cartera (posible cliente por dominio). Confirmar antes de corregir.\n\n'
     : ''
@@ -111,7 +114,7 @@ export function htmlCorreo(grupo) {
     const fondo = i % 2 ? '#fbfcfd' : '#ffffff'
     return `<tr><td style="padding:12px 14px;border-bottom:1px solid #eef1f5;background:${fondo};vertical-align:top">
    <div style="font-size:13px;font-weight:700;color:#1d2735;word-break:break-all">${esc(x.correo)}</div>
-   <div style="font-size:12px;color:#6a7686;margin-top:2px">${esc(x.clientes.join(' / ') || 'Cliente sin identificar')} · Campaña ${esc(x.campanas.join(', ') || '—')}</div></td>
+   <div style="font-size:12px;color:#6a7686;margin-top:2px">${esc(x.clientes.join(' / ') || 'Cliente sin identificar')} · Campaña ${esc(x.nombresCampana.join(', ') || '—')}</div></td>
    <td style="padding:12px 14px;border-bottom:1px solid #eef1f5;background:${fondo};vertical-align:top;text-align:right">
    <span style="display:inline-block;background:${mx ? '#eef3ff' : '#fdecee'};color:${mx ? '#2b5bb5' : '#b3263a'};border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700">${esc(x.motivos.join(' / ') || 'Verificar dirección')}</span></td></tr>`
   }).join('')
@@ -174,7 +177,7 @@ export const csvGrupo = (grupo) => aCsv([
   { label: 'Grupo', valor: () => ({ exacta: 'Coincidencia exacta', posible: 'Posible (por dominio)', sin: SIN_IDENTIFICAR }[grupo.tipo]) },
   { label: 'Correo por corregir', valor: (x) => x.correo },
   { label: 'Cliente(s)', valor: (x) => x.clientes.join(' / ') || SIN_IDENTIFICAR },
-  { label: 'Campaña(s)', valor: (x) => x.campanas.join(', ') },
+  ...columnasCampana((x) => x.campanasInfo),
   { label: 'Incidencia(s)', valor: (x) => x.motivos.join(' / ') },
   { label: 'Estado(s)', valor: (x) => x.estados.join(' / ') },
 ], grupo.unicos)

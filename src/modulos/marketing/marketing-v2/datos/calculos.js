@@ -49,11 +49,24 @@ export function filtrarCampanas(campanas = [], f = FILTROS_INICIALES) {
   })
 }
 
+/** Comparar campañas: por defecto solo las de 20 envíos o más (único lugar donde se define el 20). */
+export const MINIMO_ENVIOS = 20
+/** Menos de 5 entregados = «pocos datos»: nunca gana ni lleva medalla. */
+export const MINIMO_ENTREGADOS = 5
+export const pocosDatos = (c) => (Number(c?.totales?.entregados) || 0) < MINIMO_ENTREGADOS
+
+/** Campañas enviadas que entran a la comparación; pequenas = cuántas quedan fuera por tener menos de 20 envíos. */
+export function campanasComparables(campanas = [], incluirPequenas = false) {
+  const enviadas = campanas.filter((c) => c.estado === 'enviada')
+  const grande = (c) => (Number(c.totales?.enviados) || 0) >= MINIMO_ENVIOS
+  return { lista: incluirPequenas ? enviadas : enviadas.filter(grande), pequenas: enviadas.filter((c) => !grande(c)).length }
+}
+
 /** Opciones de los menús Campaña y Asunto (según la opción de ver o no las de prueba). */
 export function opcionesFiltros(campanas = [], mostrarPrueba = false) {
   const visibles = campanas.filter((c) => mostrarPrueba || !c.esPrueba)
   return {
-    campanas: visibles.map((c) => ({ id: c.id, nombre: c.nombre })),
+    campanas: visibles.map((c) => ({ id: c.id, nombre: c.nombre, asunto: c.asunto, fecha: c.fecha })),
     asuntos: [...new Set(visibles.map((c) => c.asunto).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es')),
   }
 }

@@ -13,9 +13,10 @@ import {
   CLASIFICACIONES, clasificarCruce, empresasDe, ESTADOS_DETALLE, estadoDetalle, fechaCorta, fechaHora, filtrarDetalle, FILTROS_DETALLE, numero,
   paginar, sumarResumen, sumarTotales,
 } from '../../datos/calculos.js'
+import { columnasCampana, textosCampana } from '../../datos/campana.js'
 import { aCsv, descargarCsv } from '../../datos/csv.js'
 import { exportarExcel } from '../../datos/excel.js'
-import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Mini, Tarjeta, TEXTO_WEBHOOK } from './piezas.jsx'
+import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Mini, Tarjeta, TEXTO_WEBHOOK, TituloCampana } from './piezas.jsx'
 
 const v = (s, n) => (s.hayDatos ? numero(n) : '—')
 const detalleFiltro = (campanas) => `${numero(campanas.length)} campañas según los filtros de arriba`
@@ -101,14 +102,22 @@ function usarDetalle(campanas, detalle) {
   }, [campanas, detalle])
 }
 
-export const nombreCampana = (nombres, id) => nombres[id]?.nombre ?? `Campaña ${id}`
+/** Campaña en una línea («Asunto — #74 NOMBRE»): búsquedas y textos. En pantalla se usa <TituloCampana>. */
+export const nombreCampana = (nombres, id) => textosCampana(nombres[id], id).unaLinea
+
+/** Para exportar: la columna «Campaña» se vuelve «Campaña (#)», «Asunto» y «Nombre de campaña». */
+export function columnasExportar(columnas, nombres) {
+  return columnas.filter((c) => c.valor).flatMap((c) => (c.label === 'Campaña'
+    ? columnasCampana((x) => [nombres[x.campana_id] ?? { id: x.campana_id }]).map((k) => ({ ...k, ancho: k.label === 'Campaña (#)' ? 12 : 36 }))
+    : [c]))
+}
 
 /** Filas del MISMO correo (una por campaña) para la ficha; la campaña elegida primero, luego la más reciente. */
 export function filasDelCorreo(filas, correo, campanaPrimero = null) {
   return filas.filter((x) => x.correo === correo)
     .sort((a, b) => (b.campana_id === campanaPrimero) - (a.campana_id === campanaPrimero) || b.campana_id - a.campana_id)
 }
-const filtrosTexto = (campanas, extra) => [['Campañas (filtros de arriba)', `${campanas.length}: ${campanas.map((c) => c.nombre).join(' · ')}`], ...extra]
+const filtrosTexto = (campanas, extra) => [['Campañas (filtros de arriba)', `${campanas.length}: ${campanas.map((c) => textosCampana(c).corto).join(' · ')}`], ...extra]
 
 // ---------------- Correos por corregir ----------------
 // Misma estructura que la referencia visual: franja con el total y «Exportar lista CSV», «Correos pendientes por
@@ -149,7 +158,7 @@ export function CorreosPorCorregir({ campanas, errorResumen, detalle, errorDetal
   const [tamano, setTamano] = useState(25)
   const [ficha, setFicha] = useState(null)
   const cerrarFicha = useCallback(() => setFicha(null), [])
-  const nombreDe = useCallback((id) => nombreCampana(nombres, id), [nombres])
+  const campanaDe = useCallback((id) => nombres[id] ?? null, [nombres])
   const cargoDe = (id) => nombres[id]?.cargo ?? 'Sin clasificar'
   // Una fila por correo + campaña marcada CORREGIR; la más reciente primero.
   const corregir = useMemo(() => filas.filter((x) => x.status === 'CORREGIR')
@@ -157,8 +166,8 @@ export function CorreosPorCorregir({ campanas, errorResumen, detalle, errorDetal
   const lista = useMemo(() => {
     const q = normalizar(texto)
     if (!q) return corregir
-    return corregir.filter((x) => normalizar(`${x.correo} ${textoEmpresas(x, 'ejecutivo')} ${textoEmpresas(x, 'cliente')} #${x.campana_id}`).includes(q))
-  }, [corregir, texto])
+    return corregir.filter((x) => normalizar(`${x.correo} ${textoEmpresas(x, 'ejecutivo')} ${textoEmpresas(x, 'cliente')} ${nombreCampana(nombres, x.campana_id)}`).includes(q))
+  }, [corregir, texto, nombres])
   const unicas = new Set(corregir.map((x) => x.correo.toLowerCase())).size
   const p = paginar(lista, pagina, tamano)
 
@@ -170,13 +179,12 @@ export function CorreosPorCorregir({ campanas, errorResumen, detalle, errorDetal
     { label: 'Status de correo', celda: () => <Insignia tono="rojo">CORREGIR CORREO</Insignia>, valor: () => 'CORREGIR CORREO' },
     { label: 'Motivo técnico', clase: 'mkv2-celda-media', celda: (x) => x.motivoTecnico ?? 'Pendiente de verificar', valor: (x) => x.motivoTecnico ?? 'Pendiente de verificar' },
     { label: 'Resultado final', celda: (x) => <Insignia tono={TONO_ESTADO[x.estado]}>{x.estadoTexto}</Insignia>, valor: (x) => x.estadoTexto },
-    { label: 'Campaña', celda: (x) => <Insignia tono="azul" title={nombreDe(x.campana_id)}>#{x.campana_id}</Insignia>, valor: (x) => `#${x.campana_id}` },
-    { label: 'Asunto', clase: 'mkv2-celda-asunto', celda: (x) => <span className="mkv2-recorte" data-tip={nombres[x.campana_id]?.asunto || undefined}>{nombres[x.campana_id]?.asunto || '—'}</span>, valor: (x) => nombres[x.campana_id]?.asunto ?? '' },
+    { label: 'Campaña', clase: 'mkv2-celda-campana', celda: (x) => <TituloCampana campana={nombres[x.campana_id]} id={x.campana_id} />, valor: (x) => nombreCampana(nombres, x.campana_id) },
     { label: 'Fecha rebote', celda: (x) => <span className="fv2-sin-salto">{fechaHora(x.fechaRebote)}</span>, valor: (x) => fechaHora(x.fechaRebote) },
     { label: 'Detalle', celda: (x) => <button type="button" className="fv2-pildora mkv2-ver-eventos" onClick={() => setFicha({ correo: x.correo, campana: x.campana_id })}>Ver eventos</button>, valor: null },
   ]
   const exportar = () => descargarCsv(`correos-por-corregir_${new Date().toISOString().slice(0, 10)}`, aCsv([
-    ...columnas.filter((c) => c.valor).map((c) => ({ label: c.label, valor: c.valor })),
+    ...columnasExportar(columnas, nombres),
     { label: 'Indicación', valor: (x) => x.indicacion },
   ], lista))
 
@@ -191,7 +199,7 @@ export function CorreosPorCorregir({ campanas, errorResumen, detalle, errorDetal
       </div>
       <button type="button" className="fv2-pildora" onClick={exportar} disabled={!lista.length}><Download size={13} />Exportar lista CSV</button>
     </div>
-    <PorEjecutivo filas={lista} nombreCampana={nombreDe} cruce={detalle?.cruce} />
+    <PorEjecutivo filas={lista} campanaDe={campanaDe} cruce={detalle?.cruce} />
     <Tarjeta titulo="Listado de correos por corregir" sub="Detalle completo por campaña, disponible también para exportar."
       acciones={<>
         <Buscador valor={texto} onCambio={(v) => { setTexto(v); setPagina(1) }} placeholder="Buscar dirección, dominio o ejecutivo" />
@@ -228,7 +236,7 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
     { label: 'Cliente', clase: 'mkv2-celda-media', celda: (x) => <CeldaEmpresas fila={x} campo="cliente" />, valor: (x) => textoEmpresas(x, 'cliente'), ancho: 34 },
     { label: 'País', celda: (x) => <CeldaEmpresas fila={x} campo="pais" />, valor: (x) => textoEmpresas(x, 'pais'), ancho: 16 },
     { label: 'Ejecutivo', clase: 'mkv2-celda-media', celda: (x) => <CeldaEmpresas fila={x} campo="ejecutivo" />, valor: (x) => textoEmpresas(x, 'ejecutivo'), ancho: 26 },
-    { label: 'Campaña', clase: 'mkv2-celda-larga', celda: (x) => nombreCampana(nombres, x.campana_id), valor: (x) => nombreCampana(nombres, x.campana_id), ancho: 36 },
+    { label: 'Campaña', clase: 'mkv2-celda-campana', celda: (x) => <TituloCampana campana={nombres[x.campana_id]} id={x.campana_id} />, valor: (x) => nombreCampana(nombres, x.campana_id), ancho: 36 },
     { label: 'Cargo', celda: (x) => <InsigniaCargo cargo={nombres[x.campana_id]?.cargo ?? 'Sin clasificar'} />, valor: (x) => nombres[x.campana_id]?.cargo ?? 'Sin clasificar', ancho: 14 },
     { label: 'Estado final', celda: (x) => <Insignia tono={TONO_ESTADO[x.estado]}>{x.estadoTexto}</Insignia>, valor: (x) => x.estadoTexto, ancho: 18 },
     { label: 'Status', celda: (x) => <Insignia tono={x.status === 'CORREGIR' ? 'rojo' : 'neutro'}>{x.status}</Insignia>, valor: (x) => `${x.status} CORREO`, ancho: 18 },
@@ -242,7 +250,7 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
   const exportar = () => exportarExcel({
     nombreBase: `detalle-por-correo_${new Date().toISOString().slice(0, 10)}`,
     titulo: 'DETALLE POR CORREO · MAILING', subtitulo: `${numero(lista.length)} filas (correo y campaña) · estado: ${e.label}`,
-    columnas, filas: lista,
+    columnas: columnasExportar(columnas, nombres), filas: lista,
     filtros: filtrosTexto(campanas, [['Estado', e.label], ['Status', f.status || 'Todos'], ['Apertura', f.apertura || 'Todas'], ['Clic', f.clic || 'Todos'],
       ['Origen', ORIGEN[f.origen] ?? 'Todos'], ['Búsqueda', f.texto || 'Ninguna']]),
   })

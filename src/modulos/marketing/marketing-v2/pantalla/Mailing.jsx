@@ -9,6 +9,7 @@
 import { useMemo, useState } from 'react'
 import { AlertTriangle, RefreshCw, X } from 'lucide-react'
 import { contadoresMailing, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, NOMBRE_CARGO, numero, opcionesFiltros } from '../datos/calculos.js'
+import { textosCampana } from '../datos/campana.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
 import { AsignarCargo } from './mailing/Cargos.jsx'
@@ -68,7 +69,7 @@ export function Mailing({ sub, onSub }) {
   // Etiquetas «Filtrado por: …» (campaña y cargo, se pongan con un clic o desde los filtros); ✕ quita ese filtro.
   const campanaElegida = filtros.campana ? datos.campanas.find((c) => String(c.id) === String(filtros.campana)) : null
   const etiquetas = [
-    filtros.campana && { clave: 'campana', texto: campanaElegida ? `#${campanaElegida.id} ${campanaElegida.nombre}` : `Campaña #${filtros.campana}` },
+    filtros.campana && { clave: 'campana', texto: textosCampana(campanaElegida, filtros.campana).corto, tip: textosCampana(campanaElegida, filtros.campana).tip },
     filtros.cargo && { clave: 'cargo', texto: NOMBRE_CARGO[filtros.cargo] && filtros.cargo !== NOMBRE_CARGO[filtros.cargo] ? `${filtros.cargo} · ${NOMBRE_CARGO[filtros.cargo]}` : filtros.cargo },
   ].filter(Boolean)
 
@@ -86,7 +87,8 @@ export function Mailing({ sub, onSub }) {
     {etiquetas.length > 0 && <div className="mkv2-filtrado" role="status">
       <span>Filtrado por:</span>
       {etiquetas.map((e) => <button type="button" key={e.clave} className="mkv2-filtrado-etiqueta" onClick={() => filtrar({ [e.clave]: '' })}
-        title="Quitar este filtro" aria-label={`Quitar el filtro ${e.texto}`}>{e.texto}<X size={13} aria-hidden="true" /></button>)}
+        data-tip={e.tip ? `${e.tip}
+Clic para quitar este filtro` : 'Clic para quitar este filtro'} aria-label={`Quitar el filtro ${e.texto}`}>{e.texto}<X size={13} aria-hidden="true" /></button>)}
     </div>}
 
     {datos.cargando && <div className="fv2-vacio"><strong>Cargando campañas de Brevo…</strong><span>La primera vez puede tardar unos 10 segundos.</span></div>}

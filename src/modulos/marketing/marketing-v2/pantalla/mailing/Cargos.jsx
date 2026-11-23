@@ -4,7 +4,8 @@
 import { useState } from 'react'
 import { COLORES } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { diaGuatemala, fechaCorta, NOMBRE_CARGO, numero, OPCIONES_CARGO, ordenarPor, SIN_CLASIFICAR } from '../../datos/calculos.js'
-import { Aviso, InsigniaCargo, Mini, Tarjeta, TablaOrdenable } from './piezas.jsx'
+import { textosCampana } from '../../datos/campana.js'
+import { Aviso, InsigniaCargo, Mini, Tarjeta, TablaOrdenable, TituloCampana } from './piezas.jsx'
 
 const ORIGEN = (c) => (c.cargoManual ? 'Elegido a mano' : c.cargoSugerido ? 'Sugerido por el nombre' : 'Sin sugerencia')
 
@@ -12,11 +13,10 @@ export function AsignarCargo({ campanas }) {
   const [orden, setOrden] = useState({ col: 'fecha', dir: 'desc' })
   const sinClasificar = campanas.filter((c) => c.cargo === SIN_CLASIFICAR).length
   const columnas = [
-    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-larga', valor: (c) => c.nombre, celda: (c) => <strong className="mkv2-texto-fuerte">{c.nombre}</strong> },
-    { id: 'asunto', label: 'Asunto', clase: 'mkv2-celda-larga', valor: (c) => c.asunto, celda: (c) => c.asunto || '—' },
+    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-campana', valor: (c) => textosCampana(c).titulo, celda: (c) => <TituloCampana campana={c} fecha={false} /> },
     { id: 'fecha', label: 'Fecha', valor: (c) => diaGuatemala(c.fecha), celda: (c) => <span className="fv2-sin-salto">{fechaCorta(c.fecha)}</span> },
     { id: 'sugerido', label: 'Cargo sugerido', valor: (c) => c.cargoSugerido ?? '', celda: (c) => (c.cargoSugerido ? <InsigniaCargo cargo={c.cargoSugerido} /> : <span className="fv2-tenue">Sin sugerencia</span>) },
-    { id: 'cargo', label: 'Cargo', valor: (c) => c.cargo, celda: (c) => <select className="mkv2-control mkv2-control-chico" disabled value={c.cargo} aria-label={`Cargo de ${c.nombre}`} title={ORIGEN(c)}>
+    { id: 'cargo', label: 'Cargo', valor: (c) => c.cargo, celda: (c) => <select className="mkv2-control mkv2-control-chico" disabled value={c.cargo} aria-label={`Cargo de ${textosCampana(c).corto}`} title={ORIGEN(c)}>
       {OPCIONES_CARGO.map((o) => <option key={o} value={o}>{o === SIN_CLASIFICAR ? o : `${o} · ${NOMBRE_CARGO[o]}`}</option>)}
     </select> },
     { id: 'guardar', label: 'Guardar', celda: () => <button type="button" className="fv2-pildora" disabled title="Se habilita con el inicio de sesión real">Guardar</button> },

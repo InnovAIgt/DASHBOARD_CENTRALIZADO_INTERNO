@@ -3,6 +3,7 @@
 // de Clientes y aplican a las vistas por correo.
 import { X } from 'lucide-react'
 import { FILTROS_INICIALES, NOMBRE_CARGO, OPCIONES_CARGO, SIN_CLASIFICAR } from '../../datos/calculos.js'
+import { textosCampana } from '../../datos/campana.js'
 
 export function Filtros({ filtros, cambiar, opciones, ocultas }) {
   const poner = (clave) => (e) => cambiar({ ...filtros, [clave]: e.target.value })
@@ -14,7 +15,7 @@ export function Filtros({ filtros, cambiar, opciones, ocultas }) {
         <span>Campaña</span>
         <select className="mkv2-control" value={filtros.campana} onChange={poner('campana')}>
           <option value="">Todas las campañas</option>
-          {opciones.campanas.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          {opciones.campanas.map((c) => <option key={c.id} value={c.id}>{textosCampana(c).unaLinea}</option>)}
         </select>
       </label>
       <label className="mkv2-campo-v">

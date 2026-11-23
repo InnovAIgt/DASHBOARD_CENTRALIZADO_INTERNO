@@ -2,6 +2,18 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Mailing: asunto arriba y nombre real abajo; Comparar como la maqueta
+
+- Regla de Keily para toda la pestaña: cada campaña se muestra con su ASUNTO como título y debajo «#id · NOMBRE REAL de
+  Brevo · fecha» (con el cargo en la ficha). Una sola pieza (`TituloCampana` + `datos/campana.js`) en Resultado por
+  campaña, Comparar, Correos por corregir (listado con una sola columna «Campaña» y ventana del ejecutivo), Detalle,
+  ficha, Relación con clientes, Asignar cargo, filtro Campaña, «Filtrado por», globos, correo al ejecutivo («asunto
+  (#74)») y CSV/Excel («Campaña (#)», «Asunto», «Nombre de campaña»). Sin asunto: el nombre es el título.
+- Comparar campañas como la maqueta: título con la ganadora, botones de métrica, una tarjeta por campaña con medalla en
+  las 3 primeras, meta 90 % en entrega, solo campañas de 20+ envíos por defecto (`MINIMO_ENVIOS`, interruptor «Incluir
+  campañas pequeñas»), 10 a la vista y «Ver todas», «pocos datos» con menos de 5 entregados (nunca gana) y 3 cuadritos.
+- La campaña #9 que Keily vio en una captura vieja no existe en Brevo (consulta de solo lectura: 404).
+
 ## 2026-11-23 · Rediseño de Mailing: Correos por corregir y Comparar iguales a la referencia
 
 - Regla de Keily: misma estructura, columnas, textos y botones que la referencia visual, con nuestro tema negro.
