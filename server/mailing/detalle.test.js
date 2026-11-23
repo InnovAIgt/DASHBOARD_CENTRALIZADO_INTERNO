@@ -61,6 +61,18 @@ test('armarDetalle: una fila por correo y campaña, con estado, CORREGIR, apertu
   assert.deepEqual([conBaja.baja, conBaja.spam, conBaja.estado], [true, true, 'entregado'])
 })
 
+test('armarDetalle: secuencia de eventos ordenada y destino del clic', () => {
+  const f = armarDetalle([
+    ev(20, 'persona1@example.com', 'click', '2026-11-05T19:00:00Z', { url: 'https://example.com/promo', fecha_aproximada: true, cantidad: 2 }),
+    ev(20, 'persona1@example.com', 'delivered', '2026-11-05T18:00:05Z'),
+    ev(20, 'persona1@example.com', 'opened', '2026-11-24T10:00:00Z', { origen: 'webhook' }),
+  ])[0]
+  assert.deepEqual(f.eventos.map((e) => e.evento), ['delivered', 'click', 'opened'])
+  assert.deepEqual([f.eventos[1].url, f.eventos[1].fechaAproximada, f.eventos[1].cantidad, f.eventos[2].origen], ['https://example.com/promo', true, 2, 'webhook'])
+  assert.equal(f.urlClic, 'https://example.com/promo')
+  assert.equal(f.eventos[0].url, null, 'solo los clics llevan url')
+})
+
 test('armarDetalle: nunca devuelve el texto original del motivo (puede traer correos)', () => {
   const texto = JSON.stringify(armarDetalle(EVENTOS))
   assert.ok(!texto.includes('does not exist'))

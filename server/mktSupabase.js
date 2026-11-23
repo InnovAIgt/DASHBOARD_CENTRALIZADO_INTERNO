@@ -63,7 +63,7 @@ export async function leerEventos({ campanas = null, env = process.env, fetchFn 
     const control = new AbortController()
     const reloj = setTimeout(() => control.abort(), esperaMs)
     try {
-      const r = await fetchFn(`${url}/rest/v1/mkt_brevo_eventos?select=campana_id,evento,correo,fecha_evento,motivo,origen,cantidad${filtro}&order=id.asc&limit=${porPagina}&offset=${pagina * porPagina}`, {
+      const r = await fetchFn(`${url}/rest/v1/mkt_brevo_eventos?select=campana_id,evento,correo,fecha_evento,fecha_envio,motivo,origen,cantidad,fecha_aproximada,url${filtro}&order=id.asc&limit=${porPagina}&offset=${pagina * porPagina}`, {
         headers: { apikey: llave, Accept: 'application/json' },
         signal: control.signal,
       })

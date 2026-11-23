@@ -57,6 +57,17 @@ test('sin coincidencia: listas vacías', () => {
   assert.deepEqual(buscarCorreo('nadie@desconocido.test', INDICE), { clientes: [], posibles: [] })
 })
 
+test('contacto en base solo en la coincidencia exacta, y correo del ejecutivo', () => {
+  const indice = indexarContactos([
+    { ...fila('GT', '900', 'Empresa Nueve Inventada', 'Ejecutiva Z', 'gf', 'gf@nueve-inventada.test'), contacto: 'Contacto Inventado', correo_ejecutivo: ' Ejecutiva.Z@RED-inventada.test ' },
+  ])
+  const exacta = buscarCorreo('gf@nueve-inventada.test', indice).clientes[0]
+  assert.deepEqual(exacta.contactos, [{ cargo: 'GF', nombre: 'Contacto Inventado' }])
+  assert.equal(exacta.correoEjecutivo, 'ejecutiva.z@red-inventada.test')
+  const posible = buscarCorreo('otra@nueve-inventada.test', indice).posibles[0]
+  assert.deepEqual(posible.contactos, [], 'por dominio no se muestra el nombre de otra persona')
+})
+
 test('cruzarFilas agrega clientes y posibles a cada fila', () => {
   const filas = cruzarFilas([{ correo: 'finanzas@uno-inventada.test', campana_id: 1 }, { correo: 'x@uno-inventada.test', campana_id: 1 }, { correo: 'z@nada.test', campana_id: 2 }], INDICE)
   assert.deepEqual(filas.map((f) => [f.clientes.length, f.posibles.length]), [[1, 0], [0, 2], [0, 0]])

@@ -63,11 +63,37 @@ export function huellaDe({ evento, campana_id, correo, fecha_evento }) {
   return createHash('sha256').update(`${evento}|${campana_id}|${correo}|${fecha_evento}`).digest('hex')
 }
 
+/** Marca que se guarda en lugar de un enlace de baja (su token podría dar de baja a otra persona). */
+export const ENLACE_DE_BAJA = 'ENLACE_DE_BAJA'
+
+/** ¿Es un enlace para darse de baja? (Brevo y textos comunes en español e inglés) */
+export function esEnlaceBaja(url) {
+  return /unsubscri|unsub\b|\/unsub\/|optout|opt-out|desuscri|darse-de-baja|darse_de_baja|\/baja\b|cancelar-suscripcion|preferences?\/?$/i.test(String(url ?? ''))
+}
+
+/**
+ * Destino del clic, limpio: solo dominio + ruta, SIN lo que va después de «?» ni de «#» (ahí suelen ir datos de la
+ * persona o códigos de seguimiento). Los enlaces de baja se guardan como ENLACE_DE_BAJA. Si no es una URL, null.
+ */
+export function limpiarUrl(url) {
+  const texto = String(url ?? '').trim()
+  if (!texto) return null
+  if (esEnlaceBaja(texto)) return ENLACE_DE_BAJA
+  try {
+    const u = new URL(texto)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null
+    return `${u.protocol}//${u.host}${u.pathname === '/' ? '' : u.pathname}`
+  } catch {
+    return null
+  }
+}
+
 /**
  * Convierte un evento de Brevo en una fila de mkt_brevo_eventos, o null si no es de una campaña
  * (sin campaña, sin correo o sin fecha; por ejemplo contact_updated o list_addition).
  * El nombre del evento NO se limita: si Brevo manda uno nuevo, se guarda igual y se filtra después.
- * No se guardan la URL del clic, la IP de envío, segmentos ni listas.
+ * En los clics se guarda el destino LIMPIO (limpiarUrl; decisión de Keily, 23/11/2026, columna url del SQL 003).
+ * No se guardan la IP de envío, segmentos ni listas.
  */
 export function filaDeEvento(e) {
   if (!e || typeof e !== 'object' || Array.isArray(e)) return null
@@ -84,7 +110,8 @@ export function filaDeEvento(e) {
     fecha_envio: fechaIso(e.ts_sent),
     motivo: typeof e.reason === 'string' && e.reason.trim() ? e.reason.trim() : null,
   }
-  return { huella: huellaDe(fila), ...fila }
+  // La huella no incluye la URL: un reintento del mismo clic sigue siendo el mismo evento.
+  return { huella: huellaDe(fila), ...fila, url: evento === 'click' ? limpiarUrl(e.URL ?? e.url ?? e.link) : null }
 }
 
 function respuesta(status, datos, extra = {}) {

@@ -2,7 +2,7 @@
 // No se llama a Brevo ni a Supabase: el guardado y fetch son simulados. Correos de example.com (dominio reservado).
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { claveCorrecta, claveRecibida, filaDeEvento, huellaDe, procesarWebhookBrevo, WEBHOOK_MAX_BYTES } from './brevoWebhook.js'
+import { claveCorrecta, claveRecibida, ENLACE_DE_BAJA, esEnlaceBaja, filaDeEvento, huellaDe, limpiarUrl, procesarWebhookBrevo, WEBHOOK_MAX_BYTES } from './brevoWebhook.js'
 import { configuracionMkt, guardarEventos } from './mktSupabase.js'
 
 const CLAVE = 'clave-inventada-para-pruebas-0123456789'
@@ -138,9 +138,27 @@ test('normaliza el correo y las fechas, y guarda el motivo del rebote', () => {
   assert.equal(filaDeEvento(evento({ ts_event: 1795680005000 })).fecha_evento, fila.fecha_evento)
 })
 
-test('no guarda la URL del clic, la IP de envío, segmentos ni listas', () => {
-  const fila = filaDeEvento(evento({ event: 'click', URL: 'https://example.com/enlace' }))
-  assert.deepEqual(Object.keys(fila).sort(), ['campana_id', 'correo', 'evento', 'fecha_envio', 'fecha_evento', 'huella', 'motivo'])
+test('guarda el destino del clic LIMPIO; nunca IP, segmentos ni listas', () => {
+  const fila = filaDeEvento(evento({ event: 'click', URL: 'https://example.com/promo/radios?utm_source=brevo&email=persona1@example.com#arriba' }))
+  assert.deepEqual(Object.keys(fila).sort(), ['campana_id', 'correo', 'evento', 'fecha_envio', 'fecha_evento', 'huella', 'motivo', 'url'])
+  assert.equal(fila.url, 'https://example.com/promo/radios', 'sin lo que va después de ? ni #')
+  assert.equal(filaDeEvento(evento({ event: 'opened' })).url, null, 'solo los clics llevan url')
+  assert.equal(filaDeEvento(evento({ event: 'click' })).url, null, 'clic sin URL')
+})
+
+test('limpiarUrl y enlaces de baja', () => {
+  assert.equal(limpiarUrl('https://www.example.com/'), 'https://www.example.com')
+  assert.equal(limpiarUrl('http://example.com/a/b?x=1'), 'http://example.com/a/b')
+  for (const u of ['https://example.com/unsubscribe?token=abc', 'https://r.example.com/optout/123', 'https://example.com/darse-de-baja', 'https://example.com/es/baja'])
+    assert.equal(limpiarUrl(u), ENLACE_DE_BAJA, u)
+  assert.equal(esEnlaceBaja('https://example.com/bajada-de-precios'), false)
+  for (const malo of ['', null, 'no es url', 'javascript:alert(1)', 'mailto:persona1@example.com']) assert.equal(limpiarUrl(malo), null, String(malo))
+})
+
+test('la URL del clic no cambia la huella (un reintento sigue siendo el mismo evento)', () => {
+  const a = filaDeEvento(evento({ event: 'click', URL: 'https://example.com/a' }))
+  const b = filaDeEvento(evento({ event: 'click', URL: 'https://example.com/a?otra=cosa' }))
+  assert.equal(a.huella, b.huella)
 })
 
 test('si Supabase falla: 429 y la respuesta no trae correos', async () => {

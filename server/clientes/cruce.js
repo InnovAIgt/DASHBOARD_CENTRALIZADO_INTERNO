@@ -38,28 +38,35 @@ export function indexarContactos(filas = []) {
   const porCorreo = new Map()
   const porDominio = new Map()
   const empresaDe = (f) => ({
-    pais: f.pais, codigo: String(f.codigo ?? ''), cliente: f.cliente ?? '', ejecutivo: f.ejecutivo ?? '', usuarioEjecutivo: f.usuario_ejecutivo ?? '', cargos: new Set(),
+    pais: f.pais, codigo: String(f.codigo ?? ''), cliente: f.cliente ?? '', ejecutivo: f.ejecutivo ?? '', usuarioEjecutivo: f.usuario_ejecutivo ?? '',
+    correoEjecutivo: String(f.correo_ejecutivo ?? '').trim().toLowerCase(), cargos: new Set(), contactos: [],
   })
-  const agregar = (mapa, clave, f) => {
+  const agregar = (mapa, clave, f, conContacto) => {
     const empresas = mapa.get(clave) ?? new Map()
     const k = `${f.pais}|${f.codigo}`
     const e = empresas.get(k) ?? empresaDe(f)
-    e.cargos.add(String(f.cargo ?? '').toUpperCase())
+    const cargo = String(f.cargo ?? '').toUpperCase()
+    e.cargos.add(cargo)
+    // El nombre del contacto solo se guarda en la coincidencia exacta (por dominio sería otra persona).
+    if (conContacto && String(f.contacto ?? '').trim()) e.contactos.push({ cargo, nombre: String(f.contacto).trim() })
     empresas.set(k, e)
     mapa.set(clave, empresas)
   }
   for (const f of filas) {
     for (const correo of separarCorreos(f.email)) {
-      agregar(porCorreo, correo, f)
+      agregar(porCorreo, correo, f, true)
       const dominio = dominioDe(correo)
-      if (dominio && !esDominioPersonal(dominio)) agregar(porDominio, dominio, f)
+      if (dominio && !esDominioPersonal(dominio)) agregar(porDominio, dominio, f, false)
     }
   }
   return { porCorreo, porDominio }
 }
 
 /** Empresa lista para enviar al navegador (sin Sets). */
-const publica = (e) => ({ pais: e.pais, codigo: e.codigo, cliente: e.cliente, ejecutivo: e.ejecutivo, usuarioEjecutivo: e.usuarioEjecutivo, cargos: [...e.cargos].sort() })
+const publica = (e) => ({
+  pais: e.pais, codigo: e.codigo, cliente: e.cliente, ejecutivo: e.ejecutivo, usuarioEjecutivo: e.usuarioEjecutivo,
+  correoEjecutivo: e.correoEjecutivo || null, cargos: [...e.cargos].sort(), contactos: e.contactos,
+})
 const ordenar = (lista) => lista.sort((a, b) => a.pais.localeCompare(b.pais) || a.cliente.localeCompare(b.cliente, 'es'))
 
 /** Busca un correo: coincidencias exactas y, si no hay, posibles por dominio. */

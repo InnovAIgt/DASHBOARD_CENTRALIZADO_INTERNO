@@ -17,7 +17,8 @@
  * Nunca se usa SUPABASE_ACCESS_TOKEN ni llaves de servicio. Los correos se usan solo dentro del servidor.
  *
  * Tablas (repo InnovAIgt/CumplimientoClientes, supabase/schema.sql): clientes (id, codigo, pais, nombre,
- * ejecutivo_id), ejecutivos (id, nombre, usuario) y contactos (cliente_id, cargo gg/gf/go, email).
+ * ejecutivo_id), ejecutivos (id, nombre, usuario), contactos (cliente_id, cargo gg/gf/go, nombre, email) y
+ * correos_usuarios (ejecutivo_id, correo: correo de cada ejecutivo, para prellenar el aviso).
  */
 import pg from 'pg'
 
@@ -29,13 +30,17 @@ export const CC_POOLER_PUERTO = 6543
 export const CC_ESPERA_MS = 10_000
 export const CC_CACHE_MS = 30 * 60 * 1000
 
-/** Única consulta que usa el cruce: un renglón por contacto con correo, con su cliente y su ejecutivo. */
+/**
+ * Única consulta que usa el cruce: un renglón por contacto con correo, con su cliente, su ejecutivo, el nombre del
+ * contacto en la base y el correo del ejecutivo (correos_usuarios, para prellenar el aviso; puede no existir).
+ */
 export const CONSULTA_CRUCE = `
   select c.pais, c.codigo, c.nombre as cliente, e.nombre as ejecutivo, e.usuario as usuario_ejecutivo,
-         k.cargo, k.email
+         k.cargo, k.email, k.nombre as contacto, cu.correo as correo_ejecutivo
     from public.clientes c
     join public.ejecutivos e on e.id = c.ejecutivo_id
     join public.contactos k on k.cliente_id = c.id
+    left join public.correos_usuarios cu on cu.ejecutivo_id = e.id
    where k.email <> ''`
 
 /** Conteos (sin datos personales) para la primera revisión. */

@@ -75,7 +75,24 @@ export function filaDetalle(eventos) {
     fechaEnvio: envio.length ? ISO(Math.min(...envio)) : null,
     fechaRebote: rebote ? ISO(Math.max(...tiempos((e) => e.evento === rebote))) : null,
     ultimoEvento: ISO(Math.max(...tiempos(() => true))),
+    urlClic: eventos.find((e) => e.evento === 'click' && e.url)?.url ?? null,
+    // «Secuencia registrada» de la ficha: cada evento con su fecha (sin el texto original del motivo).
+    eventos: secuencia(eventos),
   }
+}
+
+/** Eventos de UN correo en UNA campaña, ordenados por fecha, para la ficha. */
+export function secuencia(eventos = []) {
+  return eventos
+    .map((e) => ({
+      evento: e.evento,
+      fecha: Number.isFinite(Date.parse(e.fecha_evento)) ? new Date(Date.parse(e.fecha_evento)).toISOString() : null,
+      origen: e.origen === 'historial' ? 'historial' : 'webhook',
+      cantidad: Number.isFinite(Number(e.cantidad)) && e.cantidad !== null ? Number(e.cantidad) : null,
+      fechaAproximada: !!e.fecha_aproximada,
+      url: e.evento === 'click' ? e.url ?? null : null,
+    }))
+    .sort((a, b) => String(a.fecha ?? '').localeCompare(String(b.fecha ?? '')))
 }
 
 /** Todas las filas del detalle (una por correo y campaña), ordenadas por campaña y correo. */

@@ -165,7 +165,7 @@ test('leerEventos: pide página por página, filtra por campaña y no pide colum
   assert.equal(r.length, 5)
   assert.equal(urls.length, 3)
   const u = new URL(urls[0])
-  assert.equal(u.searchParams.get('select'), 'campana_id,evento,correo,fecha_evento,motivo,origen,cantidad')
+  assert.equal(u.searchParams.get('select'), 'campana_id,evento,correo,fecha_evento,fecha_envio,motivo,origen,cantidad,fecha_aproximada,url')
   assert.equal(u.searchParams.get('campana_id'), 'in.(10,11)')
   await assert.rejects(leerEventos({ env, fetchFn: async () => new Response('', { status: 500 }) }), /HTTP 500/)
   await assert.rejects(leerEventos({ env: {} }), /faltan las variables/)
