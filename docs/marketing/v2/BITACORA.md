@@ -2,6 +2,19 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Detalle por correo con correos (sin inicio de sesión)
+
+- Decisión de Keily: se muestran correos sin inicio de sesión en todos los ambientes (DECISIONES.md). Interruptor
+  `MKT_MOSTRAR_CORREOS`, por defecto «si».
+- Parte 1: ruta `GET /api/marketing/mailing/detalle` (una fila por correo y campaña con estado, CORREGIR / MANTENER,
+  motivo técnico, indicación, apertura, clic, baja, spam y origen; nunca el texto original del motivo).
+- Parte 2: «Correos por corregir» (una fila por dirección única) y «Detalle por correo» con tabla real, buscador,
+  filtros, páginas y Exportar a Excel. Cliente y Ejecutivo: «Pendiente del cruce».
+- Revisión real (solo conteos): 861 filas; en 74, 75 y 76 hay 101 filas CORREGIR y 91 direcciones únicas por corregir
+  (algunas fallaron en más de una campaña). Campaña [PRUEBA] 80: entregados 2, soft 1 (Buzón lleno), hard 1 (Cuenta
+  destinataria inexistente → CORREGIR), aperturas de 2 personas, clics de 1 persona (Brevo cuenta 2), sin proxy_open.
+- 88 pruebas, lint y build OK.
+
 ## 2026-11-23 · Campaña [PRUEBA] Webhook dashboard (id 80): primera revisión
 
 - Keily envió la campaña autorizada por Ismael a 4 destinatarios internos (1 dirección inexistente a propósito) y

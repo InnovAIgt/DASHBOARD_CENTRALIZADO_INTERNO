@@ -306,8 +306,9 @@ del destinatario.
   (renovarla antes; ver PENDIENTES). En Brevo está desactivado el bloqueo de IP para claves API porque Vercel cambia
   de IP.
 - Las pestañas **Correos por corregir**, **Detalle por correo** y **Relación con clientes** muestran correos de
-  personas: sus rutas del servidor **deben pedir el inicio de sesión del portal**. No pueden quedar públicas como la
-  ruta vieja `mailing-detalle`.
+  personas. **Decisión de Keily (23/11/2026, [DECISIONES.md](DECISIONES.md)):** se muestran **sin inicio de sesión**
+  en todos los ambientes, con el interruptor de servidor `MKT_MOSTRAR_CORREOS` (por defecto «si»; con «no» solo
+  conteos).
 - Las rutas de totales (sin correos) no devuelven ningún dato personal.
 - **`GET /api/marketing/mailing/campanas`** (`server/mailing/campanas.js`): campañas enviadas y programadas con id,
   nombre, asunto limpio (`{{ contact.NOMBRE }}` → `[NOMBRE]`), fecha, código, sector, cargo sugerido / manual / final,
@@ -320,6 +321,25 @@ del destinatario.
   bajas, eventos con nombre nuevo y primera / última fecha. Los correos se usan solo dentro del servidor para agrupar;
   **nunca salen**. Con la tabla vacía responde `hayDatos: false` y «Sin datos del webhook todavía.». Caché de 2 min.
   Los destinatarios sin ningún evento no están en la tabla: la pantalla los calcula con los enviados de Brevo.
+- **`GET /api/marketing/mailing/detalle`** (`server/mailing/detalle.js`), con `?campanas=` opcional: una fila por
+  correo y campaña (historial importado y webhook) con estado final, CORREGIR / MANTENER, motivo técnico, **indicación**,
+  apertura, clic, baja, spam, origen y fechas. Nunca el texto original del motivo (puede traer correos). `no-store` y
+  `noindex`; caché de 2 min en el servidor. Alimenta «Correos por corregir» (una fila por dirección única) y «Detalle
+  por correo», con buscador, filtros, páginas y **Exportar a Excel** (hoja de datos + «Filtros aplicados»).
+
+  | Caso | Indicación |
+  |---|---|
+  | CORREGIR · Dominio sin registros MX | Verificar el dominio y confirmar la dirección |
+  | CORREGIR · cualquier otro motivo | Pedir o confirmar la dirección correcta (es revisión, no prueba de que no exista) |
+  | MANTENER · Tiempo de espera agotado | Reintentar después |
+  | MANTENER · Buzón lleno | Pedir que libere espacio y reintentar |
+  | MANTENER · Autenticación / Relay no autorizado | Revisar autenticación y permisos SMTP |
+  | MANTENER · Bloqueo, antispam, acceso denegado | Revisar reputación, autenticación y filtros del destinatario |
+  | MANTENER · Rechazo por política o ruta | Revisar la política o ruta del servidor de destino |
+  | MANTENER · Fallo sin causa / diagnóstico pendiente | Revisar en el próximo envío |
+  | Entregado / Sin confirmación | Sin acción |
+
+  Cliente y Ejecutivo dicen «Pendiente del cruce» hasta conectar Cumplimiento de Clientes (sección 8).
 - Nunca se guardan correos ni datos de clientes en el repo, las pruebas ni las capturas.
 
 ### 10.1 Qué trae y qué no trae la API (prueba del 20/11/2026)
