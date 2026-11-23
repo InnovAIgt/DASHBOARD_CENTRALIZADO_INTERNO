@@ -2,6 +2,13 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Palabras del cargo fuera del nombre de la campaña
+
+- En el NOMBRE de la campaña también se ignoran las palabras del cargo (gerente, general, financiero, finaciero,
+  finanzas, operaciones, operativo, G.G, G.F, G.O, GG, GF, GO, base completa); en el asunto siguen contando. De 31
+  campañas reales solo cambió la #21: de «Mejorar la productividad» (por el nombre) a «Promover el dashboard de
+  rondas» (por el contenido del correo).
+
 ## 2026-11-23 · SQL 004 corrido y «con costo» / «sin costo» fuera del nombre
 
 - Keily corrió el SQL 004: «objetivo» (texto libre) y «objetivo_asignado_en» creados y el cargo ya es opcional. El

@@ -23,6 +23,9 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
 - **«Con costo» / «sin costo» en el nombre se ignoran** (decisión de Keily, 23/11/2026): hablan del precio de la
   oferta, no de reducir costos. Esas campañas pasan al contenido del correo (y, si tampoco coincide, a «Revisar»). En
   el asunto, «costo» sigue contando.
+- **Las palabras del cargo en el nombre también se ignoran** (decisión de Keily, 23/11/2026): son el destinatario, no
+  el tema: gerente, general, financiero, finaciero, finanzas, operaciones, operativo, G.G, G.F, G.O, GG, GF, GO y
+  «base completa». En el asunto siguen contando normal.
 - El objetivo elegido a mano se guarda como texto libre (Marketing puede escribir otros). Seguimiento: revisar la
   lista con Ismael (PENDIENTES). Lógica en `src/modulos/marketing/marketing-v2/datos/objetivo.js`.
 

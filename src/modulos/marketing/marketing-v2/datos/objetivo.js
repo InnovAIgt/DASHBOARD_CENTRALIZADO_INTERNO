@@ -39,10 +39,20 @@ export function objetivoDeTexto(texto) {
 }
 
 /**
- * Nombre de la campaña sin «con costo» / «sin costo»: hablan del precio de la oferta, no de reducir costos
- * (decisión de Keily, 23/11/2026). Solo se quita del NOMBRE; en el asunto «costo» sigue contando.
+ * Frases que se ignoran en el NOMBRE de la campaña (decisiones de Keily, 23/11/2026); en el ASUNTO siguen contando:
+ *  - «con costo» / «sin costo»: hablan del precio de la oferta, no de reducir costos;
+ *  - las palabras del CARGO: son el destinatario, no el tema.
  */
-export const nombreSinPrecio = (nombre) => normalizar(nombre).replace(/(^|[^a-z0-9])(con|sin) costo(?=$|[^a-z0-9])/g, '$1 ')
+export const IGNORAR_EN_NOMBRE = ['con costo', 'sin costo', 'base completa', 'gerente', 'general', 'financiero', 'finaciero',
+  'finanzas', 'operaciones', 'operativo', 'g.g', 'g.f', 'g.o', 'gg', 'gf', 'go']
+const RE_IGNORAR = new RegExp(`(^|[^a-z0-9])(${IGNORAR_EN_NOMBRE.map((k) => escapar(k)).join('|')})(?=$|[^a-z0-9])`, 'g')
+
+/** Nombre de la campaña sin las frases de IGNORAR_EN_NOMBRE (se repite para quitar las que quedan pegadas). */
+export function nombreSinRuido(nombre) {
+  let t = normalizar(nombre)
+  for (let antes = ''; antes !== t;) { antes = t; t = t.replace(RE_IGNORAR, '$1 ') }
+  return t.replace(/\s+/g, ' ').trim()
+}
 
 /** Texto visible de un HTML (para el contenido del correo; solo lo usa el servidor). */
 export const textoDeHtml = (html) => String(html ?? '')
@@ -56,7 +66,7 @@ export const textoDeHtml = (html) => String(html ?? '')
 export function objetivoDeCampana(c) {
   const manual = String(c?.objetivoManual ?? '').trim()
   if (manual) return { objetivo: manual, estado: 'confirmado', fuente: 'manual', textoFuente: FUENTE_OBJETIVO.manual }
-  for (const [fuente, texto] of [['asunto', c?.asunto], ['nombre', nombreSinPrecio(c?.nombre)]]) {
+  for (const [fuente, texto] of [['asunto', c?.asunto], ['nombre', nombreSinRuido(c?.nombre)]]) {
     const o = objetivoDeTexto(texto)
     if (o) return { objetivo: o, estado: 'sugerido', fuente, textoFuente: FUENTE_OBJETIVO[fuente] }
   }

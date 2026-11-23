@@ -35,8 +35,8 @@ test('textoDeHtml: solo el texto visible', () => {
 })
 
 test('nombre: «con costo» / «sin costo» se ignoran (precio de la oferta), y se pasa al contenido o a Revisar', async () => {
-  const { nombreSinPrecio } = await import('./objetivo.js')
-  assert.equal(nombreSinPrecio('GERENTE GENERAL CON COSTO; SIN APERTURA').includes('costo'), false)
+  const { nombreSinRuido } = await import('./objetivo.js')
+  assert.equal(nombreSinRuido('GERENTE GENERAL CON COSTO; SIN APERTURA').includes('costo'), false)
   const sinNada = objetivoDeCampana({ asunto: 'Apreciable cliente, información importante.', nombre: 'GERENTE DE FINANZAS CON COSTO' })
   assert.deepEqual([sinNada.objetivo, sinNada.estado, sinNada.fuente], [OBJETIVO_GENERAL, 'revisar', 'general'])
   const conContenido = objetivoDeCampana({ asunto: 'Apreciable cliente', nombre: 'GERENTE GENERAL SIN COSTO', objetivoContenido: 'Control de turnos y personal' })
@@ -44,4 +44,17 @@ test('nombre: «con costo» / «sin costo» se ignoran (precio de la oferta), y 
   assert.equal(objetivoDeCampana({ asunto: 'Hola', nombre: 'GERENTE GENERAL SIN COSTO DASHBOARD' }).objetivo, 'Promover el dashboard de rondas', 'el resto del nombre sigue contando')
   assert.equal(objetivoDeCampana({ asunto: 'Reduzca el costo de sus rondas', nombre: 'X' }).fuente, 'asunto', 'en el asunto «costo» sigue contando')
   assert.equal(objetivoDeCampana({ asunto: 'Hola', nombre: 'COSTOS DE OPERACION' }).objetivo, 'Reducir costos operativos', 'solo se quitan «con costo» y «sin costo»')
+})
+
+test('nombre: las palabras del cargo se ignoran (son el destinatario); en el asunto siguen contando', async () => {
+  const { nombreSinRuido } = await import('./objetivo.js')
+  assert.equal(nombreSinRuido('BASE COMPLETA - G.O - OCTUBRE 23 - 2026'), '- - octubre 23 - 2026')
+  assert.equal(nombreSinRuido('GERENTE DE OPERACIONES CON COSTO'), 'de')
+  assert.equal(nombreSinRuido('GERENTE FINACIERO NOVIEMBRE 9 GF'), 'noviembre 9')
+  const c21 = objetivoDeCampana({ asunto: 'Apreciable cliente RED, información importante.', nombre: 'GERENTE DE OPERACIONES CON COSTO', objetivoContenido: 'Promover el dashboard de rondas' })
+  assert.deepEqual([c21.objetivo, c21.fuente], ['Promover el dashboard de rondas', 'contenido'])
+  assert.equal(objetivoDeCampana({ asunto: 'Hola', nombre: 'GERENTE OPERATIVO NOVIEMBRE 11' }).estado, 'revisar', '«operativo» del nombre ya no cuenta')
+  assert.equal(objetivoDeCampana({ asunto: 'Mejore su operación', nombre: 'GERENTE GENERAL' }).objetivo, 'Mejorar la productividad', 'en el asunto, «operación» sigue contando')
+  assert.equal(objetivoDeCampana({ asunto: 'Hola', nombre: 'GOOGLE GOBIERNO' }).estado, 'revisar', '«go» solo como palabra completa')
+  assert.equal(nombreSinRuido('LOGISTICA GO'), 'logistica')
 })
