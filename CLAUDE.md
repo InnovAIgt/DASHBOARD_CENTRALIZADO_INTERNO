@@ -26,6 +26,7 @@ otros). Estas reglas son permanentes y valen para cualquier tarea.
 ## Supabase
 - **No** consultar ni modificar **ningún** proyecto de Supabase sin permiso de Keily (ni lecturas, ni funciones, ni
   permisos, ni datos).
+- Cumplimiento de Clientes: SOLO LECTURA. Nunca escribir, cambiar ni borrar nada en ese proyecto.
 
 ## Llaves y datos privados
 - **Nunca** poner llaves, tokens ni contraseñas en el código, en los documentos ni en la conversación. Solo se
