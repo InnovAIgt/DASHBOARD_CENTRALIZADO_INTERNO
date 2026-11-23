@@ -2,11 +2,12 @@
 // Cada correo de las campañas (fila correo + campaña) con su clasificación del cruce con Cumplimiento de Clientes
 // (SOLO LECTURA): varias empresas › cargo objetivo › otro cargo › POSIBLE por dominio › sin coincidencia.
 // Las tarjetas filtran la tabla. Muestra correos sin inicio de sesión (decisión de Keily, DECISIONES.md).
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { CLASIFICACIONES, conteoClasificaciones, filtrarDetalle, FILTROS_DETALLE, numero, paginar, relacionClientes } from '../../datos/calculos.js'
 import { exportarExcel } from '../../datos/excel.js'
-import { AvisoDetalle, BotonExcel, Buscador, nombreCampana, Paginacion, Tabla, TONO_ESTADO } from './Correos.jsx'
+import { AvisoDetalle, BotonExcel, Buscador, filasDelCorreo, nombreCampana, Paginacion, Tabla, TONO_ESTADO } from './Correos.jsx'
+import { Ficha } from './Ficha.jsx'
 import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
 import { Aviso, Enfoque, InsigniaCargo, Mini, Tarjeta } from './piezas.jsx'
 
@@ -23,6 +24,8 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
   const [texto, setTexto] = useState('')
   const [pagina, setPagina] = useState(1)
   const [tamano, setTamano] = useState(25)
+  const [ficha, setFicha] = useState(null)
+  const cerrarFicha = useCallback(() => setFicha(null), [])
   const nombres = useMemo(() => Object.fromEntries(campanas.map((c) => [c.id, c])), [campanas])
   const cargoDe = useMemo(() => Object.fromEntries(campanas.map((c) => [c.id, c.cargo])), [campanas])
   const filas = useMemo(() => {
@@ -83,9 +86,10 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
         <Buscador valor={texto} onCambio={(v) => { setTexto(v); setPagina(1) }} placeholder="Buscar correo, cliente, código, ejecutivo o campaña" />
         {categoria && <button type="button" className="fv2-pildora" onClick={() => setCategoria('')}>Quitar «{CLASIFICACIONES[categoria]}»</button>}
       </div>
-      <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`}
+      <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`} onFila={(x) => setFicha({ correo: x.correo, campana: x.campana_id })}
         vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : filas.length ? 'Sin resultados con esta búsqueda o filtros.' : 'Sin detalle por correo para estas campañas.'} />
       <Paginacion p={p} onPagina={setPagina} tamano={tamano} onTamano={(n) => { setTamano(n); setPagina(1) }} />
     </Tarjeta>
+    {ficha && <Ficha filas={filasDelCorreo(filas, ficha.correo, ficha.campana)} nombres={nombres} onCerrar={cerrarFicha} />}
   </>
 }

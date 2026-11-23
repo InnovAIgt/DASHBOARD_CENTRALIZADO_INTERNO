@@ -3,10 +3,11 @@
 // MUESTRAN CORREOS sin inicio de sesión, por decisión de Keily (docs/marketing/v2/DECISIONES.md); el servidor los
 // puede ocultar con MKT_MOSTRAR_CORREOS = no. Los datos vienen de /api/marketing/mailing/detalle (historial importado
 // y webhook). Cliente y Ejecutivo dicen «Pendiente del cruce» hasta tener Cumplimiento de Clientes.
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
+import { Ficha } from './Ficha.jsx'
 import {
   direccionesCorregir, gruposPorEjecutivo, ESTADOS_DETALLE, estadoDetalle, fechaCorta, filtrarDetalle, FILTROS_DETALLE, numero, opcionesDe,
   paginar, pct, porcentaje, sumarResumen, sumarTotales,
@@ -64,13 +65,17 @@ export function BotonExcel({ onClick, total }) {
   </button>
 }
 
-/** Tabla simple con filas ya paginadas. */
-export function Tabla({ columnas, filas, vacio, clave }) {
+/** Tabla simple con filas ya paginadas. Con onFila, cada fila abre la ficha (clic o Enter). */
+export function Tabla({ columnas, filas, vacio, clave, onFila }) {
   return <div className="fv2-tabla-caja">
     <table className="fv2-tabla mkv2-tabla">
       <thead><tr>{columnas.map((c) => <th key={c.label} scope="col">{c.label}</th>)}</tr></thead>
       <tbody>
-        {filas.map((f) => <tr key={clave(f)}>{columnas.map((c) => <td key={c.label} className={c.clase ?? ''}>{c.celda(f)}</td>)}</tr>)}
+        {filas.map((f) => <tr key={clave(f)} className={onFila ? 'mkv2-fila-clic' : undefined} tabIndex={onFila ? 0 : undefined}
+          title={onFila ? 'Ver la ficha de este correo' : undefined} onClick={onFila ? () => onFila(f) : undefined}
+          onKeyDown={onFila ? (e) => { if (e.key === 'Enter') onFila(f) } : undefined}>
+          {columnas.map((c) => <td key={c.label} className={c.clase ?? ''}>{c.celda(f)}</td>)}
+        </tr>)}
         {!filas.length && <tr><td colSpan={columnas.length} className="fv2-tabla-vacia mkv2-vacio-fila">{vacio}</td></tr>}
       </tbody>
     </table>
@@ -95,6 +100,12 @@ function usarDetalle(campanas, detalle) {
 }
 
 export const nombreCampana = (nombres, id) => nombres[id]?.nombre ?? `Campaña ${id}`
+
+/** Filas del MISMO correo (una por campaña) para la ficha; la campaña elegida primero, luego la más reciente. */
+export function filasDelCorreo(filas, correo, campanaPrimero = null) {
+  return filas.filter((x) => x.correo === correo)
+    .sort((a, b) => (b.campana_id === campanaPrimero) - (a.campana_id === campanaPrimero) || b.campana_id - a.campana_id)
+}
 const filtrosTexto = (campanas, extra) => [['Campañas (filtros de arriba)', `${campanas.length}: ${campanas.map((c) => c.nombre).join(' · ')}`], ...extra]
 
 // ---------------- Correos por corregir ----------------
@@ -146,6 +157,8 @@ export function CorreosPorCorregir({ campanas, resumen, errorResumen, detalle, e
   const [pagina, setPagina] = useState(1)
   const [tamano, setTamano] = useState(25)
   const corregir = useMemo(() => filas.filter((x) => x.status === 'CORREGIR'), [filas])
+  const [ficha, setFicha] = useState(null)
+  const cerrarFicha = useCallback(() => setFicha(null), [])
   const lista = useMemo(() => {
     const base = filtrarDetalle(corregir, { ...FILTROS_DETALLE, texto: f.texto, motivo: f.motivo }, { nombres })
     return direccionesCorregir(base).filter((d) => !f.origen || d.origenes.includes(f.origen))
@@ -199,10 +212,11 @@ export function CorreosPorCorregir({ campanas, resumen, errorResumen, detalle, e
         <Selector etiqueta="Motivo técnico" valor={f.motivo} onCambio={poner('motivo')} opciones={opcionesDe(corregir, 'motivoTecnico')} />
         <Selector etiqueta="Origen" valor={f.origen} onCambio={poner('origen')} opciones={Object.entries(ORIGEN).slice(0, 2)} />
       </div>
-      <Tabla columnas={columnas} filas={p.filas} clave={(d) => d.correo}
+      <Tabla columnas={columnas} filas={p.filas} clave={(d) => d.correo} onFila={(d) => setFicha({ correo: d.correo })}
         vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : corregir.length ? 'Sin resultados con esta búsqueda o filtros.' : TEXTO_WEBHOOK} />
       <Paginacion p={p} onPagina={setPagina} tamano={tamano} onTamano={(t) => { setTamano(t); setPagina(1) }} />
     </Tarjeta>
+    {ficha && <Ficha filas={filasDelCorreo(filas, ficha.correo)} nombres={nombres} onCerrar={cerrarFicha} />}
   </>
 }
 
@@ -216,6 +230,8 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
   const s = useMemo(() => sumarResumen(campanas, resumen), [campanas, resumen])
   const { nombres, filas } = usarDetalle(campanas, detalle)
   const lista = useMemo(() => filtrarDetalle(filas, f, { nombres }), [filas, f, nombres])
+  const [ficha, setFicha] = useState(null)
+  const cerrarFicha = useCallback(() => setFicha(null), [])
   const p = paginar(lista, pagina, tamano)
   const e = estadoDetalle(f.estado)
   const poner = (k) => (val) => { setF((x) => ({ ...x, [k]: val })); setPagina(1) }
@@ -266,9 +282,10 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
         <Selector etiqueta="Clic" valor={f.clic} onCambio={poner('clic')} opciones={['CLIC REGISTRADO', 'SIN CLIC REGISTRADO']} />
         <Selector etiqueta="Origen" valor={f.origen} onCambio={poner('origen')} opciones={Object.entries(ORIGEN)} />
       </div>
-      <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`}
+      <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`} onFila={(x) => setFicha({ correo: x.correo, campana: x.campana_id })}
         vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : filas.length ? 'Sin resultados con esta búsqueda o filtros.' : TEXTO_WEBHOOK} />
       <Paginacion p={p} onPagina={setPagina} tamano={tamano} onTamano={(n) => { setTamano(n); setPagina(1) }} />
     </Tarjeta>
+    {ficha && <Ficha filas={filasDelCorreo(filas, ficha.correo, ficha.campana)} nombres={nombres} onCerrar={cerrarFicha} />}
   </>
 }
