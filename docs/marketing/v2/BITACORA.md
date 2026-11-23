@@ -2,6 +2,19 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Webhook de marketing creado en Brevo y primera revisión
+
+- Keily creó el webhook en Brevo: nombre «Dashboard Canales de marketing», tipo Marketing email, activo. Dirección:
+  la versión de prueba de la rama en `dashboard.centralizado.interno`, **sin claves en la dirección**. Autenticación
+  Básica (usuario «brevo», contraseña = `BREVO_WEBHOOK_SECRET`) y encabezado `x-vercel-protection-bypass` con el
+  código de bypass. Eventos: entregadas, abierto, clicado, soft bounce, hard bounce, queja, suscripción cancelada y
+  cargado por proxy (sin los de contactos). Avisó a Ismael.
+- Revisión de solo lectura (~15 min después, solo conteos): llegó **1 evento real** por el webhook, una apertura de la
+  campaña 79 (2da Campaña Validación - GO), guardada con `origen = 'webhook'`. Todavía no llegó ningún `proxy_open`.
+  El resto de la tabla es el historial importado de 74, 75 y 76.
+- Siguiente: campaña [PRUEBA] Webhook dashboard – 2026-11-23 (autorizada por Ismael) para ver entregas, rebotes con
+  motivo, aperturas, clics y qué es `proxy_open`.
+
 ## 2026-11-23 · Carga inicial del historial: campañas 74, 75 y 76
 
 - Keily corrió `sql/002_historial_importado.sql`: columnas `origen`, `cantidad` y `fecha_aproximada`.
