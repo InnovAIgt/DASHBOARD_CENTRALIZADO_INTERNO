@@ -238,8 +238,34 @@ Pedida por **Eduardo**, para que **Marketing (Ismael)** asigne el cargo de cada 
 
 ## 8. Territorio por comercial: cruce con Cumplimiento de Clientes
 
-La base viene de la app **CumplimientoClientes** (Supabase). **Pendiente:** el permiso de lectura, que da Keily.
-Mientras no esté, no se conecta a ningún Supabase.
+La base viene de la app **CumplimientoClientes** (Supabase). **SOLO LECTURA** (regla de CLAUDE.md): nunca se
+escribe, cambia ni borra nada en ese proyecto. Decisión de Keily, administradora de la app (23/11/2026).
+
+**Cómo se lee (implementado el 23/11/2026):**
+- La llave anon no sirve: el candado (RLS) de `clientes`, `contactos` y `ejecutivos` solo deja leer a usuarios con
+  sesión de la app. Se usa la **contraseña de la base** (`CC_DB_PASSWORD`, solo servidor), con el pooler de
+  transacciones `aws-0-us-east-1.pooler.supabase.com:6543` y el usuario `postgres.<código del proyecto>`.
+- Candados: la conexión pide `default_transaction_read_only=on`; cada consulta corre en `BEGIN TRANSACTION READ ONLY`
+  con `statement_timeout` y **siempre termina con ROLLBACK**; solo se acepta UNA consulta SELECT / WITH; la prueba
+  `server/clientes/soloLectura.test.js` **falla** si algún archivo de `server/clientes/` contiene una escritura.
+- Tablas (repo InnovAIgt/CumplimientoClientes, `supabase/schema.sql`): `clientes` (`pais`, `codigo`, `nombre`,
+  `ejecutivo_id`), `ejecutivos` (`nombre`, `usuario`) y `contactos` (`cliente_id`, `cargo` gg/gf/go, `email`).
+- Caché de 30 min en el servidor. Al navegador solo llegan los clientes de los correos de las campañas, nunca la base.
+- Código: `server/clientes/cumplimiento.js` (lectura) y `server/clientes/cruce.js` (cruce); la ruta `/detalle` agrega
+  `clientes` y `posibles` a cada fila. Si Cumplimiento falla, el detalle sigue y avisa.
+
+**Posible cliente por dominio (pedido por Keily, 23/11/2026):** solo para los correos **sin** coincidencia exacta. Si
+el dominio del correo (lo que va después de @) coincide con el de algún contacto de Cumplimiento, se muestra
+«Posible cliente: <Empresa> (por dominio)» con su ejecutivo, **en otro color (ámbar, borde punteado)** y nunca igual
+que una coincidencia exacta. Si el dominio está en varias empresas, se muestran todas como posibles. Nunca para
+dominios de correo personal (gmail, hotmail, outlook, yahoo, icloud, live y similares). Es una pista para confirmar,
+no una identificación.
+
+**Resultado del 23/11/2026 (campañas reales con detalle, solo conteos):** 547 correos distintos; **405** con
+coincidencia exacta (SV 245 · GT 160), 18 de ellos en varias empresas; de los **142 sin coincidencia exacta**, **35**
+quedan como posible por dominio y 107 sin identificar (32 de ellos con dominio personal). De los **85 correos por
+corregir sin coincidencia exacta**, **19** quedan como posible por dominio. Muchos correos por corregir no están en la
+base, probablemente porque ya se corrigieron en Cumplimiento.
 
 **Campos que se usan** (los teléfonos y demás campos no hacen falta): País, Código de cliente, Cliente, Ejecutivo,
 y los correos y nombres de **GG**, **GF** y **GO**. «Usuario ejecutivo» es un identificador interno, no un correo.

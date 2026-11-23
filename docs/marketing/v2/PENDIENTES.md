@@ -36,7 +36,8 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Borrar de la tabla los eventos de la campaña [PRUEBA] (id 80) al terminar la prueba | Keily | Al terminar la prueba | Pendiente |
 | Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
-| Permiso de lectura de la base de Cumplimiento de Clientes | Keily | — | Pendiente |
+| Permiso de lectura de la base de Cumplimiento de Clientes | Keily | 2026-11-23 | Resuelto: SOLO LECTURA con la contraseña de la base (`CC_DB_PASSWORD`) y candados (MAILING.md, sección 8) |
+| Aviso por correo a cada ejecutivo con sus correos por corregir (plazo de 48 horas; borrador, sin envío automático) | Keily | Por definir | Pendiente |
 | Regla de nombres de campaña entregada a Marketing | Ismael / Laura | Por confirmar | Pendiente |
 | Enlace «IR A CORREGIR» desactualizado; el correcto es https://cumplimientoclientes-88n2.onrender.com | Ismael | Por confirmar | Pendiente |
 | Definición de «lectura» e indicadores de Redes | Ingeniero | Por confirmar | Pendiente |

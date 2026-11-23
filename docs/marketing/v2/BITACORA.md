@@ -2,6 +2,26 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Cruce con Cumplimiento de Clientes (solo lectura)
+
+- Regla nueva en CLAUDE.md: «Cumplimiento de Clientes: SOLO LECTURA. Nunca escribir, cambiar ni borrar nada en ese
+  proyecto». Repo de la app clonado fuera de este proyecto, solo para leer su código (tablas `clientes`, `contactos`,
+  `ejecutivos`).
+- La llave anon no sirve (estaba incompleta y, además, el candado RLS solo deja leer a usuarios de la app). Conexión
+  con la contraseña de la base (`CC_DB_PASSWORD`), pooler `aws-0-us-east-1` puerto 6543 (encontrado probando solo
+  conexiones, sin consultas), en modo solo lectura (`default_transaction_read_only`, `BEGIN READ ONLY`,
+  `statement_timeout`, siempre ROLLBACK) y prueba automática que falla ante cualquier escritura (comprobado con un
+  archivo trampa temporal).
+- Primera consulta (solo conteos): 668 clientes, 27 ejecutivos, 2 004 contactos, 1 988 con correo.
+- Cruce (solo conteos): de 547 correos de campañas reales, 405 con coincidencia exacta (18 en varias empresas) y 142
+  sin ella; con la mejora de Keily (posible por dominio, sin correos personales) 35 de esos 142 y 19 de los 85 por
+  corregir quedan como posibles.
+- Pantalla: Cliente, País y Ejecutivo en Correos por corregir y Detalle por correo (exacta / posible en ámbar / sin
+  identificar); bloque por ejecutivo separado en coincidencia exacta y posible; Relación con clientes con 5 tarjetas y
+  tabla; filtros País y Cliente activos para las vistas por correo.
+- `pg` instalado; Vercel instala con bun: `bun.lock` actualizado solo con `pg`. Conflicto vite/esbuild con npm
+  anotado en PENDIENTES. 109 pruebas, lint y build OK.
+
 ## 2026-11-23 · Detalle por correo con correos (sin inicio de sesión)
 
 - Decisión de Keily: se muestran correos sin inicio de sesión en todos los ambientes (DECISIONES.md). Interruptor

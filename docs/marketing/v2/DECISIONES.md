@@ -3,6 +3,17 @@
 Decisiones tomadas para el dashboard Canales de marketing, con fecha y quién decidió. Lo más reciente va arriba.
 El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimiento en [PENDIENTES.md](PENDIENTES.md).
 
+## 2026-11-23 · Cumplimiento de Clientes: solo lectura y posible cliente por dominio
+
+- **Decisión de Keily (administradora de la app Cumplimiento de Clientes):** usar su base **solo para leer**, para
+  llenar Cliente, País y Ejecutivo de cada correo. Nunca escribir, cambiar ni borrar nada en ese proyecto (regla en
+  CLAUDE.md). Como Keily no tiene cuenta en ese Supabase, se usa la contraseña de la base (`CC_DB_PASSWORD`) en modo
+  solo lectura; no se creó ningún usuario ni se cambió nada en la base.
+- **Posible cliente por dominio:** para los correos sin coincidencia exacta, si el dominio coincide con un contacto de
+  Cumplimiento se muestra como «Posible cliente (por dominio)», en otro color, nunca igual que una exacta; nunca con
+  dominios de correo personal.
+- Detalle en [MAILING.md](MAILING.md), sección 8.
+
 ## 2026-11-23 · Se muestran correos sin inicio de sesión
 
 - **Decisión:** se muestran correos sin inicio de sesión en todos los ambientes, por decisión de Keily (23/11/2026).
