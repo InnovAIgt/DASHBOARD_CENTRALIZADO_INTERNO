@@ -64,7 +64,7 @@ function clienteFalso(filas = [{ email: 'persona1@example.com' }]) {
 
 test('la lectura corre en transacción READ ONLY y SIEMPRE termina con ROLLBACK', async () => {
   const { Falso, registro } = clienteFalso()
-  const filas = await leerSoloLectura('select 1', { env: { CC_DB_URL: 'postgresql://inventado' }, Cliente: Falso })
+  const filas = await leerSoloLectura('select 1', { env: { CC_DB_PASSWORD: 'clave-inventada' }, Cliente: Falso })
   assert.equal(filas.length, 1)
   assert.equal(registro.config.options, '-c default_transaction_read_only=on')
   assert.ok(registro.config.statement_timeout > 0)
@@ -77,20 +77,20 @@ test('la lectura corre en transacción READ ONLY y SIEMPRE termina con ROLLBACK'
 
 test('una consulta de escritura se rechaza ANTES de conectarse', async () => {
   const { Falso, registro } = clienteFalso()
-  await assert.rejects(leerSoloLectura('delete from public.clientes', { env: { CC_DB_URL: 'postgresql://inventado' }, Cliente: Falso }), /solo se permiten/)
+  await assert.rejects(leerSoloLectura('delete from public.clientes', { env: { CC_DB_PASSWORD: 'clave-inventada' }, Cliente: Falso }), /solo se permiten/)
   assert.equal(registro.conecto, false)
 })
 
-test('sin CC_DB_URL no se conecta', async () => {
+test('sin CC_DB_PASSWORD no se conecta', async () => {
   const { Falso, registro } = clienteFalso()
-  await assert.rejects(leerSoloLectura('select 1', { env: {}, Cliente: Falso }), /CC_DB_URL/)
+  await assert.rejects(leerSoloLectura('select 1', { env: {}, Cliente: Falso }), /CC_DB_PASSWORD/)
   assert.equal(registro.conecto, false)
 })
 
 test('caché de 30 minutos', async () => {
   vaciarCacheCumplimiento()
   const { Falso, registro } = clienteFalso()
-  const env = { CC_DB_URL: 'postgresql://inventado' }
+  const env = { CC_DB_PASSWORD: 'clave-inventada' }
   await contactosCumplimiento({ env, Cliente: Falso, ahora: 0 })
   await contactosCumplimiento({ env, Cliente: Falso, ahora: 60_000 })
   assert.equal(registro.consultas.filter((q) => /public\.contactos/.test(q)).length, 1)

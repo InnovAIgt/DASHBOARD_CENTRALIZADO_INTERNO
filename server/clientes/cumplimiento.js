@@ -10,7 +10,10 @@
  *  4. La prueba server/clientes/soloLectura.test.js FALLA si algún archivo de esta carpeta contiene una operación
  *     de escritura.
  *
- * Variable de servidor (sin VITE_): CC_DB_URL = cadena de conexión del pooler de Supabase (puerto 6543).
+ * Variable de servidor (sin VITE_): CC_DB_PASSWORD = contraseña de la base (Keily no tiene cuenta en ese Supabase).
+ * La conexión se arma aquí con el código del proyecto y el pooler de transacciones (puerto 6543). Se pasan usuario,
+ * contraseña y servidor por separado (no en una URL), así la contraseña no necesita codificarse.
+ * CC_DB_HOST es opcional: cambia el servidor del pooler si algún día cambia de región.
  * Nunca se usa SUPABASE_ACCESS_TOKEN ni llaves de servicio. Los correos se usan solo dentro del servidor.
  *
  * Tablas (repo InnovAIgt/CumplimientoClientes, supabase/schema.sql): clientes (id, codigo, pais, nombre,
@@ -18,6 +21,11 @@
  */
 import pg from 'pg'
 
+/** Código del proyecto Supabase de Cumplimiento de Clientes (no es secreto: aparece en su dirección pública). */
+export const CC_PROYECTO = 'grultaxaxbcruzoeljld'
+/** Servidor del pooler de transacciones (confirmado el 23/11/2026 probando solo la conexión, sin consultas). */
+export const CC_POOLER_HOST = 'aws-0-us-east-1.pooler.supabase.com'
+export const CC_POOLER_PUERTO = 6543
 export const CC_ESPERA_MS = 10_000
 export const CC_CACHE_MS = 30 * 60 * 1000
 
@@ -49,12 +57,23 @@ export function exigirSoloLectura(sql) {
   return limpio
 }
 
+/** Datos de conexión (sin la contraseña a la vista en ningún mensaje). */
+export function datosConexion(env = process.env) {
+  const password = String(env?.CC_DB_PASSWORD ?? '')
+  if (!password.trim()) throw new Error('Cumplimiento: falta la variable CC_DB_PASSWORD.')
+  return {
+    host: String(env?.CC_DB_HOST ?? '').trim() || CC_POOLER_HOST,
+    port: CC_POOLER_PUERTO,
+    user: `postgres.${CC_PROYECTO}`,
+    password,
+    database: 'postgres',
+  }
+}
+
 /** Arma el cliente de Postgres en modo solo lectura (no conecta todavía). */
 export function clienteSoloLectura(env = process.env, Cliente = pg.Client) {
-  const url = String(env?.CC_DB_URL ?? '').trim()
-  if (!url) throw new Error('Cumplimiento: falta la variable CC_DB_URL.')
   return new Cliente({
-    connectionString: url,
+    ...datosConexion(env),
     ssl: { rejectUnauthorized: false },
     options: '-c default_transaction_read_only=on',
     statement_timeout: CC_ESPERA_MS,
