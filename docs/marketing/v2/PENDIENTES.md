@@ -15,7 +15,9 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Tarea diaria para que el proyecto Free no se pause (Vercel cron con `CRON_SECRET`; solo corre en producción) | Keily | Después de probar el webhook | Pendiente |
 | Prueba local real de la ruta del webhook: 2 eventos inventados, revisar que se guarden y borrarlos (con el «sí» de Keily, después de correr el SQL) | Keily | 2026-11-20 | Resuelto: 2 guardados, el reenvío se ignoró (sin duplicados), borrados; tabla en 0 |
 | Poner en Vercel `BREVO_WEBHOOK_SECRET`, `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` (Preview y después Production) | Keily | 2026-11-20 | Preview hecho (como Secret); Production pendiente al publicar |
-| Confirmar en cuál de los 2 proyectos de Vercel (`dashboard.centralizado` o `dashboard.centralizado.interno`) se hace la prueba del webhook y se pusieron las variables | Keily | — | Pendiente |
+| Confirmar en cuál de los 2 proyectos de Vercel (`dashboard.centralizado` o `dashboard.centralizado.interno`) se hace la prueba del webhook y se pusieron las variables | Keily | 2026-11-23 | Resuelto: `dashboard.centralizado.interno` (variables de Preview y código de bypass «prueba-webhook-brevo» ahí) |
+| Preguntar a Eduardo para qué es el proyecto de Vercel `dashboard.centralizado` (también arma versiones de prueba de este repo) | Eduardo | Por confirmar | Pendiente |
+| Versión de prueba: la ruta del webhook pasa la protección y la clave, pero responde 429 al guardar. Revisar en Vercel el mensaje «[Brevo webhook] no se pudo guardar» y las variables `MKT_SUPABASE_URL` / `MKT_SUPABASE_SECRET_KEY` de Preview | Keily | 2026-11-23 | Pendiente |
 | Al crear el webhook en Brevo, ver si la pantalla permite el encabezado `x-webhook-token` o solo usuario:clave en la dirección | Keily | Al crear el webhook | Pendiente |
 | Definir el respaldo de los eventos del webhook | Keily | Por definir | Pendiente |
 | Limpieza mensual de eventos con más de 12 meses | Keily | Más adelante | Pendiente |

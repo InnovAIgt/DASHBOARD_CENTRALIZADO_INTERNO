@@ -2,6 +2,21 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Prueba del webhook en la versión de prueba de Vercel (resultado parcial)
+
+- La prueba se hace en el proyecto de Vercel **`dashboard.centralizado.interno`**: ahí están las 3 variables de Preview
+  y el código de bypass «prueba-webhook-brevo» (guardado por Keily en `.env.local` como `VERCEL_BYPASS_SECRET`; nunca
+  se mostró). El otro proyecto, `dashboard.centralizado`, también arma versiones de este repo: hay que preguntarle a
+  Eduardo para qué es.
+- Resultado (campaña inventada 999999002, correos de example.com):
+  - Sin bypass de Vercel: 302 (inicio de sesión de Vercel). Con bypass: GET 405.
+  - POST sin nuestra clave y con clave incorrecta: **401** ✔.
+  - POST con la clave correcta y 2 eventos: **429** «No se pudo guardar». La clave de Preview coincide, pero el
+    guardado en Supabase falló. En la tabla quedaron 0 filas (se corrió el borrado igual: 204, tabla en 0).
+  - Los valores de `.env.local` están bien escritos (sin comillas ni espacios): la causa más probable está en cómo
+    quedaron `MKT_SUPABASE_URL` o `MKT_SUPABASE_SECRET_KEY` en Preview. Se revisa con el registro de Vercel.
+- Script temporal borrado; no se mostraron correos ni llaves.
+
 ## 2026-11-20 · Rama en GitHub y versión de prueba en Vercel
 
 - Revisiones antes del push: `.env.example` sin valores; `.env.local`, `.claude/`, `.vscode/` y `.kiro/` ignorados;
