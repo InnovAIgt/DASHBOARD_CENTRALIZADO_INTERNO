@@ -38,6 +38,12 @@ export function objetivoDeTexto(texto) {
   return REGLAS.find((r) => r.re.test(t))?.nombre ?? null
 }
 
+/**
+ * Nombre de la campaña sin «con costo» / «sin costo»: hablan del precio de la oferta, no de reducir costos
+ * (decisión de Keily, 23/11/2026). Solo se quita del NOMBRE; en el asunto «costo» sigue contando.
+ */
+export const nombreSinPrecio = (nombre) => normalizar(nombre).replace(/(^|[^a-z0-9])(con|sin) costo(?=$|[^a-z0-9])/g, '$1 ')
+
 /** Texto visible de un HTML (para el contenido del correo; solo lo usa el servidor). */
 export const textoDeHtml = (html) => String(html ?? '')
   .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')
@@ -50,7 +56,7 @@ export const textoDeHtml = (html) => String(html ?? '')
 export function objetivoDeCampana(c) {
   const manual = String(c?.objetivoManual ?? '').trim()
   if (manual) return { objetivo: manual, estado: 'confirmado', fuente: 'manual', textoFuente: FUENTE_OBJETIVO.manual }
-  for (const [fuente, texto] of [['asunto', c?.asunto], ['nombre', c?.nombre]]) {
+  for (const [fuente, texto] of [['asunto', c?.asunto], ['nombre', nombreSinPrecio(c?.nombre)]]) {
     const o = objetivoDeTexto(texto)
     if (o) return { objetivo: o, estado: 'sugerido', fuente, textoFuente: FUENTE_OBJETIVO[fuente] }
   }

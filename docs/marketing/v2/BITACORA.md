@@ -2,6 +2,14 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · SQL 004 corrido y «con costo» / «sin costo» fuera del nombre
+
+- Keily corrió el SQL 004: «objetivo» (texto libre) y «objetivo_asignado_en» creados y el cargo ya es opcional. El
+  servidor lee la columna (consulta con objetivo: HTTP 200); la tabla aún no tiene filas.
+- En el NOMBRE de la campaña se ignoran «con costo» y «sin costo» (precio de la oferta). De las 7 campañas que caían en
+  «Reducir costos operativos»: #32, #31, #26, #25, #24 y #23 pasan al contenido del correo («Promover el dashboard de
+  rondas»); la #21 queda por su nombre («GERENTE DE OPERACIONES» → «Mejorar la productividad»).
+
 ## 2026-11-23 · Campañas, parte 4: «Cargo y objetivo»
 
 - La sub-pestaña «Asignar cargo» pasa a «Cargo y objetivo»: cargo (sugerido por el nombre) y objetivo (los 8 de Keily

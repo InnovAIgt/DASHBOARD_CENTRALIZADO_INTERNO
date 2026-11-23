@@ -33,3 +33,15 @@ test('objetivoDeCampana: manual gana; luego asunto, nombre, contenido y, si nada
 test('textoDeHtml: solo el texto visible', () => {
   assert.equal(textoDeHtml('<style>p{x}</style><p>Hola&nbsp;<b>flota</b></p>'), 'Hola flota')
 })
+
+test('nombre: «con costo» / «sin costo» se ignoran (precio de la oferta), y se pasa al contenido o a Revisar', async () => {
+  const { nombreSinPrecio } = await import('./objetivo.js')
+  assert.equal(nombreSinPrecio('GERENTE GENERAL CON COSTO; SIN APERTURA').includes('costo'), false)
+  const sinNada = objetivoDeCampana({ asunto: 'Apreciable cliente, información importante.', nombre: 'GERENTE DE FINANZAS CON COSTO' })
+  assert.deepEqual([sinNada.objetivo, sinNada.estado, sinNada.fuente], [OBJETIVO_GENERAL, 'revisar', 'general'])
+  const conContenido = objetivoDeCampana({ asunto: 'Apreciable cliente', nombre: 'GERENTE GENERAL SIN COSTO', objetivoContenido: 'Control de turnos y personal' })
+  assert.deepEqual([conContenido.objetivo, conContenido.fuente], ['Control de turnos y personal', 'contenido'])
+  assert.equal(objetivoDeCampana({ asunto: 'Hola', nombre: 'GERENTE GENERAL SIN COSTO DASHBOARD' }).objetivo, 'Promover el dashboard de rondas', 'el resto del nombre sigue contando')
+  assert.equal(objetivoDeCampana({ asunto: 'Reduzca el costo de sus rondas', nombre: 'X' }).fuente, 'asunto', 'en el asunto «costo» sigue contando')
+  assert.equal(objetivoDeCampana({ asunto: 'Hola', nombre: 'COSTOS DE OPERACION' }).objetivo, 'Reducir costos operativos', 'solo se quitan «con costo» y «sin costo»')
+})

@@ -20,6 +20,9 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
   de RED» con estado «Revisar». Se muestra de dónde salió. Lo elegido a mano gana y queda «Confirmado».
 - **Palabra completa:** se compara por palabra completa (con su plural) para que «entrega» no encuentre
   «entregabilidad» ni «entregamos».
+- **«Con costo» / «sin costo» en el nombre se ignoran** (decisión de Keily, 23/11/2026): hablan del precio de la
+  oferta, no de reducir costos. Esas campañas pasan al contenido del correo (y, si tampoco coincide, a «Revisar»). En
+  el asunto, «costo» sigue contando.
 - El objetivo elegido a mano se guarda como texto libre (Marketing puede escribir otros). Seguimiento: revisar la
   lista con Ismael (PENDIENTES). Lógica en `src/modulos/marketing/marketing-v2/datos/objetivo.js`.
 
