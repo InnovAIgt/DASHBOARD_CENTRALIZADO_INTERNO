@@ -2,6 +2,19 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Rediseño de Mailing, paso 1 de 5 (tema negro y tarjetas)
+
+- Keily pidió que la pestaña Mailing se vea y funcione como la referencia visual negra (solo se lee; no entra al repo
+  porque trae correos de clientes). Plan en 5 pasos, aprobado con 4 decisiones: cruce real con Cumplimiento («Sin
+  identificar» solo para no encontrados; «Pendiente del cruce» solo si Cumplimiento no responde), grupo aparte
+  «Posible (por dominio)» en ámbar, enlace https://cumplimientoclientes-88n2.onrender.com y se quedan el título y las
+  pestañas generales.
+- Paso 1: tema negro solo dentro de Mailing; sub-pestaña activa en rojo; contadores en «Correos por corregir»
+  (direcciones únicas) y «Relación con clientes» (filas correo + campaña); sin recuadros de presentación; 6 tarjetas
+  con ícono, color por significado, barrita y «Ver destinatarios ↗»; bloque de calidad con tasa de entrega en
+  semáforo y correos por corregir en rojo (direcciones únicas + casos). Animaciones suaves que respetan «reducir
+  movimiento».
+
 ## 2026-11-23 · Destino y fecha real de los clics
 
 - SQL 003 (corrido por Keily): columna `url` en `mkt_brevo_eventos`. El webhook guarda el destino del clic limpio

@@ -60,13 +60,6 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
 
   return <>
     {foco && <Enfoque titulo={foco.titulo ?? 'Relación con clientes'} detalle={`${numero(campanas.length)} campañas según los filtros de arriba`} onTodos={limpiarFoco} onVolver={volver} />}
-    <div className="mkv2-hero">
-      <div>
-        <div className="mkv2-hero-eyebrow">Base de clientes · verificación de correspondencias</div>
-        <h2>Relación con clientes</h2>
-        <p>Cruce exacto de cada correo con los contactos GG, GF y GO de Cumplimiento de Clientes (solo lectura). Si no hay coincidencia exacta, se muestra un <strong>posible cliente por dominio</strong>, marcado aparte. El ejecutivo sale de la cuenta del cliente (País + Código).</p>
-      </div>
-    </div>
     <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} />
     {sinCruce && <Aviso titulo="No se pudo leer Cumplimiento de Clientes" texto={detalle.avisoCruce} />}
     <div className="mkv2-minis mkv2-minis5">

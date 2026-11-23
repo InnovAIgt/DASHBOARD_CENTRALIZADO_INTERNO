@@ -84,13 +84,6 @@ export function CompararCampanas({ campanas, resumen, foco, limpiarFoco, volver,
   const verCampana = (c) => { filtrar({ campana: String(c.id) }); volver() }
   return <>
     {foco && <Enfoque titulo={foco.titulo ?? 'Comparar campañas'} detalle={`${numero(campanas.length)} campañas según los filtros de arriba`} onTodos={limpiarFoco} onVolver={volver} />}
-    <div className="mkv2-hero">
-      <div>
-        <div className="mkv2-hero-eyebrow">Comparativo</div>
-        <h2>Comparativo de campañas y asuntos</h2>
-        <p>Compara campañas, cargos y asuntos sin mezclar bases. La comparación por asunto es descriptiva: no prueba que el asunto sea la causa, porque las audiencias cambian.</p>
-      </div>
-    </div>
     <Rendimiento key={foco?.metrica ?? 'entrega'} campanas={campanas} resumen={resumen} metricaInicial={foco?.metrica} verCampana={verCampana} />
     <PorCargo campanas={campanas} filtrar={filtrar} />
     <Detallada campanas={campanas} resumen={resumen} verCampana={verCampana} />

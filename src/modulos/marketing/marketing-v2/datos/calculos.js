@@ -231,6 +231,20 @@ export function direccionesCorregir(filas = []) {
     .sort((a, b) => String(b.fechaRebote ?? '').localeCompare(String(a.fechaRebote ?? '')) || a.correo.localeCompare(b.correo))
 }
 
+/**
+ * Contadores de las sub-pestañas, con las filas por correo de las campañas filtradas.
+ * corregir = DIRECCIONES únicas a corregir (un correo cuenta una vez aunque esté en varias campañas);
+ * casosCorregir = casos (correo + campaña); clientes = filas de Relación con clientes (correo + campaña).
+ * null si no hay detalle por correo (no se inventa un número).
+ */
+export function contadoresMailing(filas, campanas = []) {
+  if (!Array.isArray(filas)) return { corregir: null, casosCorregir: null, clientes: null }
+  const ids = new Set(campanas.map((c) => c.id))
+  const propias = filas.filter((x) => ids.has(x.campana_id))
+  const casos = propias.filter((x) => x.status === 'CORREGIR')
+  return { corregir: new Set(casos.map((x) => x.correo)).size, casosCorregir: casos.length, clientes: propias.length }
+}
+
 /** Valores distintos de un campo (para los menús de filtro). */
 export const opcionesDe = (filas, campo) => [...new Set(filas.map((x) => x[campo]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'es'))
 

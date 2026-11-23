@@ -8,7 +8,7 @@
 // Los datos los pide datos/useMailingDatos.js a NUESTRO servidor. Nunca se muestran correos.
 import { useMemo, useState } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, numero, opcionesFiltros, sumarResumen } from '../datos/calculos.js'
+import { contadoresMailing, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, numero, opcionesFiltros } from '../datos/calculos.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
 import { AsignarCargo } from './mailing/Cargos.jsx'
@@ -45,12 +45,17 @@ export function Mailing({ sub, onSub }) {
   const opciones = useMemo(() => opcionesFiltros(datos.campanas, filtros.mostrarPrueba), [datos.campanas, filtros.mostrarPrueba])
   const filtradas = useMemo(() => filtrarCampanas(datos.campanas, filtros), [datos.campanas, filtros])
   const ocultas = useMemo(() => datos.campanas.filter((c) => c.esPrueba).length, [datos.campanas])
-  const webhook = useMemo(() => sumarResumen(filtradas, datos.resumen), [filtradas, datos.resumen])
-  const cuenta = { comparar: filtradas.filter((c) => c.estado === 'enviada').length, corregir: webhook.hayDatos ? webhook.corregir : null, cargos: filtradas.length }
   // País y Cliente (cruce con Cumplimiento) solo aplican a las filas por correo; los totales de Brevo no se separan.
   const detalle = useMemo(() => (datos.detalle?.mostrarCorreos
     ? { ...datos.detalle, filas: filtrarPorCliente(datos.detalle.filas, { pais: filtros.pais, cliente: filtros.cliente }) }
     : datos.detalle), [datos.detalle, filtros.pais, filtros.cliente])
+  // Contadores: «Correos por corregir» = direcciones únicas; «Relación con clientes» = filas (correo + campaña).
+  const cuentas = useMemo(() => contadoresMailing(detalle?.mostrarCorreos ? detalle.filas : null, filtradas), [detalle, filtradas])
+  const cuenta = { corregir: cuentas.corregir, clientes: cuentas.clientes }
+  const tituloCuenta = {
+    corregir: cuentas.corregir != null ? `${numero(cuentas.corregir)} direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña)` : undefined,
+    clientes: cuentas.clientes != null ? `${numero(cuentas.clientes)} filas (correo + campaña)` : undefined,
+  }
   const porCliente = !!(filtros.pais || filtros.cliente)
   const vistaPorCorreo = ['corregir', 'detalle', 'clientes'].includes(actual)
 
@@ -65,7 +70,7 @@ export function Mailing({ sub, onSub }) {
       {SUBPESTANAS_MAILING.map((p) => <button type="button" key={p.key} role="tab" aria-selected={actual === p.key}
         className={`mkv2-subpestana ${actual === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>
         <span aria-hidden="true">{p.icono}</span>{p.label}
-        {!datos.cargando && cuenta[p.key] != null && <span className="mkv2-subpestana-cuenta">{numero(cuenta[p.key])}</span>}
+        {!datos.cargando && cuenta[p.key] != null && <span className="mkv2-subpestana-cuenta" title={tituloCuenta[p.key]}>{numero(cuenta[p.key])}</span>}
       </button>)}
     </nav>
 
@@ -89,7 +94,7 @@ export function Mailing({ sub, onSub }) {
         texto="Estos totales vienen de Brevo y no se pueden separar por país ni por cliente. Mira Correos por corregir, Detalle por correo o Relación con clientes." />}
       {datos.detalle?.cruce && datos.detalle.cruce !== 'ok' && vistaPorCorreo && <Aviso titulo="Cliente, País y Ejecutivo no disponibles" texto={datos.detalle.avisoCruce} />}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
-        detalle={detalle} errorDetalle={datos.errorDetalle}
+        detalle={detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}
         foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">
         Datos de Brevo de las {new Date(datos.actualizado).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit' })} · se actualizan cada 10 minutos.

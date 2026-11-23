@@ -3,50 +3,51 @@
 // incidencias abre la sub-pestaña que corresponde ya enfocada (abrir). Totales reales de Brevo; lo que necesita
 // detalle por persona viene del webhook. Nunca correos.
 import { useMemo } from 'react'
+import { AlertTriangle, Check, Eye, MousePointerClick, Send, X } from 'lucide-react'
 import { COLORES } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { detalleWebhook, fechaCorta, NOMBRE_CARGO, numero, pct, porCargo, porCorregirCampana, porcentaje, sumarTotales } from '../../datos/calculos.js'
-import { Aviso, Bloque, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Intro, Kpi, Mini, PildoraEntrega, Tarjeta, TablaOrdenable, TEXTO_WEBHOOK } from './piezas.jsx'
+import { Aviso, Bloque, COLOR_MAILING, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Kpi, Mini, PildoraEntrega, Tarjeta, TablaOrdenable, TEXTO_WEBHOOK } from './piezas.jsx'
 
 /** Abre «Detalle por correo» enfocado en un estado. */
 const verDetalle = (abrir, estado, titulo) => () => abrir({ vista: 'detalle', estado, titulo })
 
+/** Las 6 tarjetas, con color por significado (azul, verde, celeste, morado, naranja, rojo). Totales de Brevo. */
 function Indicadores({ t, abrir }) {
+  const kpi = (titulo, icono, valor, tasa, base, nota, color, estado, extra = {}) => <Kpi key={titulo} titulo={titulo} icono={icono}
+    valor={numero(valor)} porcentaje={pct(tasa)} base={base} medidor={tasa ?? null} nota={nota} enlace="Ver destinatarios" color={color}
+    onClick={verDetalle(abrir, estado, titulo)} {...extra} />
   return <div className="mkv2-kpis6">
-    <Kpi titulo="Enviados" valor={numero(t.enviados)} porcentaje={t.enviados ? pct(100) : '—'} base="de la selección" nota={`Todos los destinatarios · ${numero(t.campanas)} campañas`}
-      enlace="Ver destinatarios" color={COLORES.azul} onClick={verDetalle(abrir, 'todos', 'Enviados')} />
-    <Kpi titulo="Entregados" valor={numero(t.entregados)} porcentaje={pct(t.tasas.entrega)} base="de los envíos" nota="Sin rebote posterior"
-      enlace="Ver destinatarios" color={COLORES.verdeClaro} onClick={verDetalle(abrir, 'entregado', 'Entregados')} />
-    <Kpi titulo="Aperturas" valor={numero(t.aperturas)} porcentaje={pct(t.tasas.apertura)} base="de entregados" nota={`Incluye automáticas · Apple MPP ${numero(t.aperturasApple)}`}
-      enlace="Ver destinatarios" color={COLORES.azulClaro} onClick={verDetalle(abrir, 'apertura', 'Aperturas')}
-      title="Aperturas de Brevo con las automáticas incluidas. Apple MPP se muestra aparte: no se resta." />
-    <Kpi titulo="Clics" valor={numero(t.clics)} porcentaje={pct(t.tasas.clic)} base="de entregados" nota="Origen humano no confirmado"
-      enlace="Ver destinatarios" color={COLORES.verde} onClick={verDetalle(abrir, 'clic', 'Clics')} />
-    <Kpi titulo="Rebote temporal" valor={numero(t.reboteTemporal)} porcentaje={pct(t.tasas.reboteTemporal)} base="de los envíos" nota="Problema temporal de entrega"
-      enlace="Ver rebotes" color={COLORES.amarillo} onClick={verDetalle(abrir, 'rebote_temporal', 'Rebote temporal')} />
-    <Kpi titulo="Rebote permanente" valor={numero(t.rebotePermanente)} porcentaje={pct(t.tasas.rebotePermanente)} base="de los envíos" nota="Rechazo permanente"
-      enlace="Ver rebotes" color={COLORES.rosa} onClick={verDetalle(abrir, 'rebote_permanente', 'Rebote permanente')} />
+    {kpi('Enviados', Send, t.enviados, t.enviados ? 100 : null, 'de la selección', `Todos los destinatarios · ${numero(t.campanas)} campañas`, COLOR_MAILING.enviados, 'todos')}
+    {kpi('Entregados', Check, t.entregados, t.tasas.entrega, 'de los envíos', 'Sin rebote posterior', COLOR_MAILING.entregados, 'entregado')}
+    {kpi('Apertura registrada', Eye, t.aperturas, t.tasas.apertura, 'de entregados', `Incluye automáticas · Apple MPP ${numero(t.aperturasApple)}`, COLOR_MAILING.apertura, 'apertura',
+      { title: 'Aperturas de Brevo con las automáticas incluidas. Apple MPP se muestra aparte: no se resta.' })}
+    {kpi('Clic registrado', MousePointerClick, t.clics, t.tasas.clic, 'de entregados', 'Origen humano no confirmado', COLOR_MAILING.clic, 'clic')}
+    {kpi('Rebote temporal', AlertTriangle, t.reboteTemporal, t.tasas.reboteTemporal, 'de los envíos', 'Problema temporal de entrega', COLOR_MAILING.temporal, 'rebote_temporal')}
+    {kpi('Rebote duro', X, t.rebotePermanente, t.tasas.rebotePermanente, 'de los envíos', 'Rechazo permanente', COLOR_MAILING.duro, 'rebote_permanente',
+      { title: 'Rebote duro = rebote permanente' })}
   </div>
 }
 
-function Calidad({ t, det, abrir }) {
+/** Tasa de entrega (semáforo) y Correos por corregir (direcciones únicas, rojo), más los otros indicadores de calidad. */
+function Calidad({ t, det, cuentas, abrir }) {
   const sinConf = t.sinConfirmacionAjustado
     ? 'Con los totales de Brevo no se puede calcular exacto (la resta dio negativo y se muestra 0)'
     : 'Enviados sin entrega ni rebote informados'
+  const hayCorregir = cuentas?.corregir != null && det.hayDatos
   return <>
     <Bloque titulo="Entregas, rebotes y calidad de contactos" />
     <div className="mkv2-minis mkv2-minis5">
-      <Mini nombre="Tasa de entrega" valor={<PildoraEntrega tasa={t.tasas.entrega} semaforo={t.semaforo} />}
-        nota="Semáforo: 100 % verde · 90 % a menos de 100 % amarillo · menos de 90 % rojo" enlace="Comparar campañas"
+      <Mini nombre="Tasa de entrega" valor={pct(t.tasas.entrega)} color={COLOR_SEMAFORO[t.semaforo] ?? COLOR_MAILING.gris}
+        nota="Semáforo: 100 % verde · 90 % a 99,9 % amarillo · menos de 90 % rojo" enlace="Comparar campañas"
         onClick={() => abrir({ vista: 'comparar', metrica: 'entrega', titulo: 'Tasa de entrega por campaña' })} />
-      <Mini nombre="Correos por corregir" valor={det.hayDatos ? numero(det.corregir) : '—'} color={COLORES.rosa}
-        extra={det.hayDatos ? <small>{pct(det.porcentajeCorregir)}</small> : null}
-        nota={det.hayDatos ? 'De los enviados con detalle del webhook' : TEXTO_WEBHOOK} enlace="Ver lista"
-        onClick={() => abrir({ vista: 'corregir', titulo: 'Correos por corregir' })} />
-      <Mini nombre="Sin confirmación" valor={numero(t.sinConfirmacion)} color={COLORES.tenue} nota={sinConf} enlace="Ver destinatarios"
+      <Mini nombre="Correos por corregir" valor={hayCorregir ? numero(cuentas.corregir) : '—'} color={COLOR_MAILING.duro}
+        nota={hayCorregir ? `Direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña) · revisar antes del próximo envío` : TEXTO_WEBHOOK}
+        enlace="Ver lista" onClick={() => abrir({ vista: 'corregir', titulo: 'Correos por corregir' })} />
+      <Mini nombre="Sin confirmación" valor={numero(t.sinConfirmacion)} color={COLOR_MAILING.gris} nota={sinConf} enlace="Ver destinatarios"
         onClick={verDetalle(abrir, 'sin_confirmacion', 'Sin confirmación')} />
-      <Mini nombre="Bajas" valor={numero(t.bajas)} color={COLORES.amarillo} nota="Se dieron de baja de la lista" enlace="Ver destinatarios"
+      <Mini nombre="Bajas" valor={numero(t.bajas)} color={COLOR_MAILING.temporal} nota="Se dieron de baja de la lista" enlace="Ver destinatarios"
         onClick={verDetalle(abrir, 'baja', 'Bajas')} />
-      <Mini nombre="Marcados como spam" valor={numero(t.quejas)} color={COLORES.rosa} nota="Quejas de los destinatarios" enlace="Ver destinatarios"
+      <Mini nombre="Marcados como spam" valor={numero(t.quejas)} color={COLOR_MAILING.duro} nota="Quejas de los destinatarios" enlace="Ver destinatarios"
         onClick={verDetalle(abrir, 'spam', 'Marcados como spam')} />
     </div>
   </>
@@ -131,19 +132,16 @@ function PorCampana({ campanas, resumen, filtrar }) {
   </Tarjeta>
 }
 
-export function ResultadosGenerales({ campanas, resumen, errorResumen, abrir, filtrar }) {
+export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, abrir, filtrar }) {
   const t = useMemo(() => sumarTotales(campanas), [campanas])
   const det = useMemo(() => detalleWebhook(campanas, resumen), [campanas, resumen])
   return <>
-    <Intro titulo="Resumen de resultados"
-      texto="Totales de Brevo de las campañas filtradas: cambian al momento con los filtros. Haz clic en cualquier tarjeta, etapa o estado para ver su detalle."
-      etiqueta="Datos de Brevo" />
     {errorResumen
       ? <Aviso titulo="No se pudo leer el detalle del webhook" texto={`${errorResumen} Se muestran solo los totales de Brevo.`} />
       : !det.hayDatos && <Aviso icono="info" titulo="Detalle por correo"
         texto={`Motivo del rebote, CORREGIR / MANTENER y apertura sin automáticas: ${TEXTO_WEBHOOK.toLowerCase()} Las campañas anteriores se muestran solo con los totales de Brevo.`} />}
     <Indicadores t={t} abrir={abrir} />
-    <Calidad t={t} det={det} abrir={abrir} />
+    <Calidad t={t} det={det} cuentas={cuentas} abrir={abrir} />
     <Bloque titulo="Recorrido e incidencias" />
     <div className="mkv2-duo">
       <Recorrido t={t} abrir={abrir} />

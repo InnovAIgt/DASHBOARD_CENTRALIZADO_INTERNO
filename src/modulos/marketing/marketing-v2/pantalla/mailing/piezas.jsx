@@ -1,15 +1,21 @@
-// Canales de marketing · Mailing: piezas visuales (forma de tarjetas, títulos y gráficos de la plantilla de Mailing,
-// con los colores del portal --fv2-*). Clases en marketing-v2.css con prefijo mkv2-.
+// Canales de marketing · Mailing: piezas visuales (forma de tarjetas, títulos y gráficos de la referencia visual de
+// Mailing: tema negro y color por significado). Clases y colores en marketing-v2.css con prefijo mkv2-.
 // Todo lo que se puede abrir es un botón: lleva a la sub-pestaña que corresponde (ver Mailing.jsx, «abrir»).
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, ArrowUpRight, Info, Lock, X } from 'lucide-react'
 import { COLORES, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { NOMBRE_CARGO, numero, pct, SIN_CLASIFICAR } from '../../datos/calculos.js'
 
-export const COLOR_SEMAFORO = { verde: COLORES.verdeClaro, amarillo: COLORES.amarillo, rojo: COLORES.rojo }
+/** Color por significado (los mismos que --mkv2-* de marketing-v2.css). */
+export const COLOR_MAILING = {
+  enviados: '#2f5d8a', entregados: '#18935f', apertura: '#2f86c9', clic: '#6650c8', temporal: '#d98b1f', duro: '#c9364b',
+  amarillo: '#d9a520', gris: '#8c93a3',
+}
+/** Semáforo de entrega: 100 % verde · 90 % a 99,9 % amarillo · menos de 90 % rojo (la regla está en server/mailing/reglas.js). */
+export const COLOR_SEMAFORO = { verde: COLOR_MAILING.entregados, amarillo: COLOR_MAILING.amarillo, rojo: COLOR_MAILING.duro }
 export const TEXTO_WEBHOOK = 'Disponible para campañas con historial importado o enviadas después de activar el webhook.'
 
 /** Un dato que no se puede calcular («—») siempre va en gris, nunca en color de alerta. */
-const colorDe = (valor, color) => (valor === '—' ? COLORES.tenue : color)
+const colorDe = (valor, color) => (valor === '—' ? COLOR_MAILING.gris : color)
 
 /** Texto de una celda: «—» va en gris. */
 export function Gris({ texto }) {
@@ -37,28 +43,25 @@ export function Tarjeta({ titulo, sub, acciones, children, className = '' }) {
   </section>
 }
 
-/** Caja de introducción con etiqueta a la derecha. */
-export function Intro({ titulo, texto, etiqueta, tono = 'verde' }) {
-  return <div className="mkv2-intro">
-    <div><strong>{titulo}</strong><div className="mkv2-intro-texto">{texto}</div></div>
-    {etiqueta && <Insignia tono={tono}>{etiqueta}</Insignia>}
-  </div>
-}
-
 /** Título de bloque en mayúsculas («ENTREGAS, REBOTES Y CALIDAD DE CONTACTOS»). */
 export function Bloque({ titulo }) {
   return <div className="mkv2-seccion">{titulo}</div>
 }
 
 /**
- * Tarjeta de indicador como la de la plantilla: título en mayúsculas, número grande, porcentaje con su base,
- * una línea que explica qué es y un enlace abajo («Ver destinatarios ↗»).
+ * Tarjeta de indicador como la de la referencia: ícono y título, número grande en su color, porcentaje con su base,
+ * barrita del porcentaje (medidor: 0 a 100; null = sin barrita), texto corto y enlace abajo («Ver destinatarios ↗»).
  */
-export function Kpi({ titulo, valor, porcentaje, base, nota, enlace, color = COLORES.azulClaro, onClick, title }) {
+export function Kpi({ titulo, icono: Icono, valor, porcentaje, base, medidor = null, nota, enlace, color = COLOR_MAILING.enviados, onClick, title }) {
+  const ancho = Number.isFinite(medidor) ? Math.max(0, Math.min(100, medidor)) : null
   return <Caja onClick={onClick} className="mkv2-kpi-t" title={title} style={{ '--mkv2-acento': colorDe(valor, color) }}>
-    <span className="mkv2-kpi-titulo">{titulo}</span>
+    <span className="mkv2-kpi-cabeza">
+      {Icono && <span className="mkv2-kpi-icono" aria-hidden="true"><Icono size={15} strokeWidth={2.6} /></span>}
+      <span className="mkv2-kpi-titulo">{titulo}</span>
+    </span>
     <span className="mkv2-kpi-num">{valor}</span>
     {base && <span className="mkv2-kpi-base">{porcentaje && <b>{porcentaje}</b>} {base}</span>}
+    {ancho !== null && <span className="mkv2-kpi-medidor" aria-hidden="true"><i style={{ '--mkv2-medida': `${ancho}%` }} /></span>}
     <span className="mkv2-kpi-sep" aria-hidden="true" />
     {nota && <span className="mkv2-kpi-nota">{nota}</span>}
     {onClick && enlace && <span className="mkv2-enlace">{enlace}<ArrowUpRight size={12} aria-hidden="true" /></span>}
@@ -67,9 +70,9 @@ export function Kpi({ titulo, valor, porcentaje, base, nota, enlace, color = COL
 
 /** Indicador secundario (más chico), clicable si tiene acción. */
 export function Mini({ nombre, valor, nota, color = COLORES.texto, onClick, enlace, activo = false, title, extra }) {
-  return <Caja onClick={onClick} className={`mkv2-mini ${activo ? 'is-activo' : ''}`} title={title}>
+  return <Caja onClick={onClick} className={`mkv2-mini ${activo ? 'is-activo' : ''}`} title={title} style={{ '--mkv2-color': colorDe(valor, color) }}>
     <span className="mkv2-mini-nombre">{nombre}</span>
-    <span className="mkv2-mini-num" style={{ color: colorDe(valor, color) }}>{valor}{extra}</span>
+    <span className="mkv2-mini-num">{valor}{extra}</span>
     {nota && <span className="mkv2-mini-nota">{nota}</span>}
     {onClick && enlace && <span className="mkv2-enlace">{enlace}<ArrowUpRight size={12} aria-hidden="true" /></span>}
   </Caja>

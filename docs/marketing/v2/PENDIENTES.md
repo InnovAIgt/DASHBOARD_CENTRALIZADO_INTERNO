@@ -37,12 +37,13 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
 | Permiso de lectura de la base de Cumplimiento de Clientes | Keily | 2026-11-23 | Resuelto: SOLO LECTURA con la contraseña de la base (`CC_DB_PASSWORD`) y candados (MAILING.md, sección 8) |
-| Aviso por correo a cada ejecutivo con sus correos por corregir (plazo de 48 horas; borrador, sin envío automático) | Keily | Por definir | Pendiente |
+| Aviso por correo a cada ejecutivo con sus correos por corregir (plazo de 48 horas; borrador, sin envío automático) | Keily | Por definir | En curso: va en el paso 4 del rediseño de Mailing (ventana emergente y correo con diseño) |
 | Regla de nombres de campaña entregada a Marketing | Ismael / Laura | Por confirmar | Pendiente |
-| Enlace «IR A CORREGIR» desactualizado; el correcto es https://cumplimientoclientes-88n2.onrender.com | Ismael | Por confirmar | Pendiente |
+| Enlace «IR A CORREGIR» desactualizado; el correcto es https://cumplimientoclientes-88n2.onrender.com | Ismael | Por confirmar | Resuelto (2026-11-23): Keily confirmó el enlace; se usa en el botón y en el texto del correo |
 | Definición de «lectura» e indicadores de Redes | Ingeniero | Por confirmar | Pendiente |
 | Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
 | Explicar a Marketing las diferencias de clasificación con la plantilla (MAILING.md, sección 9) | Ismael / Laura | Por confirmar | Pendiente |
+| Rediseño de la pestaña Mailing como la referencia visual negra (5 pasos: estilos y tarjetas, gráficas, comparar, correos por corregir con ventana y correo con diseño, detalle y clientes) | Keily | 2026-11-23 | En curso: paso 1 listo, esperando la revisión de Keily |
 | Decidir dónde se guarda el cargo elegido por campaña (Supabase u otro) | Keily | — | Pendiente |
 | Confirmar con Ismael quién puede editar los cargos | Ismael | Por confirmar | Pendiente |
 | Preguntar a Eduardo si el estado «Sin confirmación» se quita del dashboard o se deja (en la reunión dijo que no debería existir) | Eduardo | Por confirmar | Pendiente |

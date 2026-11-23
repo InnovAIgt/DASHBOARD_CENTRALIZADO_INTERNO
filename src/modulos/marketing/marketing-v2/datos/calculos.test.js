@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { contadoresMailing, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -183,4 +183,17 @@ test('ESTADOS_DETALLE: cifras de Brevo y del webhook para cada estado', () => {
   assert.equal(estadoDetalle('no-existe').id, 'todos')
   const s = sumarResumen([], null)
   for (const e of ESTADOS_DETALLE) assert.equal(typeof e.webhook(s), 'number', e.id)
+})
+
+test('contadoresMailing: direcciones únicas a corregir, casos y filas de clientes (solo campañas filtradas)', () => {
+  const filas = [
+    { correo: 'uno@example.com', campana_id: 1, status: 'CORREGIR' },
+    { correo: 'uno@example.com', campana_id: 2, status: 'CORREGIR' },
+    { correo: 'dos@example.com', campana_id: 1, status: 'CORREGIR' },
+    { correo: 'tres@example.com', campana_id: 1, status: 'MANTENER' },
+    { correo: 'cuatro@example.com', campana_id: 9, status: 'CORREGIR' },
+  ]
+  assert.deepEqual(contadoresMailing(filas, [{ id: 1 }, { id: 2 }]), { corregir: 2, casosCorregir: 3, clientes: 4 })
+  assert.deepEqual(contadoresMailing(filas, [{ id: 2 }]), { corregir: 1, casosCorregir: 1, clientes: 1 })
+  assert.deepEqual(contadoresMailing(null, [{ id: 1 }]), { corregir: null, casosCorregir: null, clientes: null })
 })
