@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-  cargoDesdeNombre, cargoFinal, esCampanaPrueba, estadoApertura, estadoClic, estadoFinal, normalizar,
+  cargoDesdeNombre, cargoFinal, CLASIFICACIONES, clasificarCruce, esCampanaPrueba, estadoApertura, estadoClic, estadoFinal, normalizar,
   porcentaje, semaforoEntrega, SIN_CLASIFICAR, statusCorreo, tasas, totalesDesdeBrevo,
 } from './reglas.js'
 
@@ -187,6 +187,20 @@ test('apertura: fecha gana; sin fecha y con automáticas → AUTOMÁTICA; nada �
   assert.equal(estadoApertura({}), 'NO REGISTRADA')
   assert.equal(estadoClic(2), 'CLIC REGISTRADO')
   assert.equal(estadoClic(0), 'SIN CLIC REGISTRADO')
+})
+
+// --- Sección 8: clasificación del cruce ---
+
+test('clasificarCruce: varias empresas › cargo objetivo › otro cargo › posible por dominio › sin coincidencia', () => {
+  const emp = (cargos) => ({ cargos })
+  assert.equal(clasificarCruce({ clientes: [emp(['GG']), emp(['GF'])] }, 'GG'), 'varias')
+  assert.equal(clasificarCruce({ clientes: [emp(['GG', 'GF'])] }, 'GF'), 'objetivo')
+  assert.equal(clasificarCruce({ clientes: [emp(['GO'])] }, 'GG'), 'otro')
+  assert.equal(clasificarCruce({ clientes: [emp(['GO'])] }, 'Sin clasificar'), 'otro')
+  assert.equal(clasificarCruce({ clientes: [], posibles: [emp(['GG'])] }, 'GG'), 'posible')
+  assert.equal(clasificarCruce({ clientes: [emp(['GG'])], posibles: [emp(['GG'])] }, 'GG'), 'objetivo', 'la exacta gana sobre la posible')
+  assert.equal(clasificarCruce({}, 'GG'), 'sin')
+  assert.deepEqual(Object.keys(CLASIFICACIONES), ['varias', 'objetivo', 'otro', 'posible', 'sin'])
 })
 
 // --- Sección 6: indicadores y semáforo ---

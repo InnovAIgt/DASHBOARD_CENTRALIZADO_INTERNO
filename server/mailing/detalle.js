@@ -12,6 +12,7 @@
  * Nunca devuelve el texto original del motivo (puede traer correos), ni IP, ni enlaces. Nunca se guarda en la caché
  * de Vercel (no-store) y pide no indexarse.
  */
+import { cruzarFilas, indiceCumplimiento } from '../clientes/cruce.js'
 import { leerEventos } from '../mktSupabase.js'
 import { estadoApertura, estadoClic, estadoFinal, ESTADOS, statusCorreo } from './reglas.js'
 import { leerParametroCampanas } from './resumen.js'
@@ -106,7 +107,7 @@ function respuesta(status, datos, extra = {}) {
  * Atiende GET /api/marketing/mailing/detalle (?campanas=12,13 opcional).
  * @param {{method: string, query?: {campanas?: string}, env?: object, fetchFn?: Function, leer?: Function, ahora?: number}} p
  */
-export async function responderDetalle({ method, query = {}, env = process.env, fetchFn = fetch, leer = leerEventos, ahora = Date.now() }) {
+export async function responderDetalle({ method, query = {}, env = process.env, fetchFn = fetch, leer = leerEventos, indice = indiceCumplimiento, ahora = Date.now() }) {
   if (method !== 'GET') return respuesta(405, { error: 'Método no permitido. Usa GET.' }, { Allow: 'GET' })
   let campanas
   try {
@@ -133,5 +134,19 @@ export async function responderDetalle({ method, query = {}, env = process.env, 
   }
   const base = { actualizado: new Date(ahora).toISOString(), campanasConsultadas: campanas, total: filas.length }
   if (!mostrarCorreos(env)) return respuesta(200, { ...base, mostrarCorreos: false, filas: [], aviso: 'Los correos están ocultos (MKT_MOSTRAR_CORREOS = no).' })
-  return respuesta(200, { ...base, mostrarCorreos: true, filas })
+
+  // Cruce con Cumplimiento de Clientes (SOLO LECTURA). Si falla, el detalle sigue sin Cliente/Ejecutivo y avisa.
+  let cruce = 'ok'
+  let avisoCruce = null
+  try {
+    filas = cruzarFilas(filas, await indice({ env }))
+  } catch (err) {
+    const mensaje = String(err?.message || '')
+    const sinConfigurar = /CC_DB_PASSWORD/.test(mensaje)
+    cruce = sinConfigurar ? 'sin_configurar' : 'error'
+    avisoCruce = sinConfigurar ? 'Falta configurar CC_DB_PASSWORD en el servidor.' : 'No se pudo leer Cumplimiento de Clientes; Cliente y Ejecutivo quedan sin llenar.'
+    console.warn('[Mailing] cruce con Cumplimiento:', avisoCruce)
+    filas = filas.map((f) => ({ ...f, clientes: null, posibles: null }))
+  }
+  return respuesta(200, { ...base, mostrarCorreos: true, cruce, avisoCruce, filas })
 }

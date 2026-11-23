@@ -150,6 +150,29 @@ export function estadoClic(clics = 0) {
   return Number(clics) > 0 ? 'CLIC REGISTRADO' : 'SIN CLIC REGISTRADO'
 }
 
+// --- Sección 8: clasificación del cruce con Cumplimiento de Clientes ---
+
+export const CLASIFICACIONES = {
+  varias: 'Contacto relacionado con varias empresas',
+  objetivo: 'Identificado en cargo objetivo',
+  otro: 'Identificado en otro cargo',
+  posible: 'Posible cliente (por dominio)',
+  sin: 'Sin coincidencia en base de clientes',
+}
+
+/**
+ * Una sola clasificación por correo, por prioridad: varias empresas › cargo objetivo › otro cargo. Si no hay
+ * coincidencia exacta pero sí por dominio, «posible» (nunca se mezcla con una exacta). Si nada, «sin».
+ * @param {{clientes?: Array<{cargos: string[]}>, posibles?: any[]}} cruce  resultado del cruce de UN correo
+ * @param {string} cargoObjetivo  cargo de la campaña (GG / GF / GO / Sin clasificar)
+ */
+export function clasificarCruce({ clientes = [], posibles = [] } = {}, cargoObjetivo) {
+  if (clientes.length > 1) return 'varias'
+  if (clientes.length === 1) return clientes[0].cargos?.includes(cargoObjetivo) ? 'objetivo' : 'otro'
+  if (posibles.length) return 'posible'
+  return 'sin'
+}
+
 // --- Sección 6: indicadores y semáforo ---
 
 /** Porcentaje con un decimal; null si el divisor es 0 (no se inventa un 0 %). */

@@ -95,6 +95,36 @@ test('responderDetalle: con MKT_MOSTRAR_CORREOS = no, solo el número de filas y
   assert.ok(!r.body.includes('@'))
 })
 
+test('responderDetalle: agrega el cruce con Cumplimiento (exacto y posible por dominio)', async () => {
+  vaciarCacheDetalle()
+  const { indexarContactos } = await import('../clientes/cruce.js')
+  const indiceFalso = indexarContactos([
+    { pais: 'GT', codigo: '100', cliente: 'Empresa Inventada', ejecutivo: 'Ejecutiva A', usuario_ejecutivo: 'ea', cargo: 'gg', email: 'persona1@example.com' },
+    { pais: 'SV', codigo: '200', cliente: 'Otra Inventada', ejecutivo: 'Ejecutivo B', usuario_ejecutivo: 'eb', cargo: 'gf', email: 'alguien@otra-inventada.test' },
+  ])
+  const r = await responderDetalle({ method: 'GET', env: {}, leer: leerFalso().fn, indice: async () => indiceFalso })
+  const d = JSON.parse(r.body)
+  assert.equal(d.cruce, 'ok')
+  const p1 = d.filas.find((f) => f.correo === 'persona1@example.com')
+  assert.deepEqual([p1.clientes.length, p1.clientes[0].cliente, p1.clientes[0].cargos, p1.posibles.length], [1, 'Empresa Inventada', ['GG'], 0])
+  // example.com está en la base por persona1 → los demás de example.com son posibles por dominio
+  const p2 = d.filas.find((f) => f.correo === 'persona2@example.com')
+  assert.deepEqual([p2.clientes.length, p2.posibles.length], [0, 1])
+})
+
+test('responderDetalle: si Cumplimiento falla, el detalle sigue y avisa', async () => {
+  vaciarCacheDetalle()
+  const r = await responderDetalle({ method: 'GET', env: {}, leer: leerFalso().fn, indice: async () => { throw new Error('Cumplimiento: tiempo agotado') } })
+  const d = JSON.parse(r.body)
+  assert.equal(r.status, 200)
+  assert.equal(d.cruce, 'error')
+  assert.match(d.avisoCruce, /No se pudo leer Cumplimiento/)
+  assert.equal(d.filas[0].clientes, null)
+  vaciarCacheDetalle()
+  const s = JSON.parse((await responderDetalle({ method: 'GET', env: {}, leer: leerFalso().fn })).body)
+  assert.equal(s.cruce, 'sin_configurar', 'sin CC_DB_PASSWORD no intenta conectarse')
+})
+
 test('responderDetalle: filtro por campañas, caché, solo GET y errores', async () => {
   vaciarCacheDetalle()
   const l = leerFalso()
