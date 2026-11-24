@@ -9,6 +9,7 @@ import '../flujo-ventas-v2/flujo-ventas-v2.css'
 import './marketing-v2.css'
 import { AvisoPendiente } from './pantalla/comunes.jsx'
 import { Mailing, SUBPESTANAS_MAILING } from './pantalla/Mailing.jsx'
+import { Redes } from './pantalla/Redes.jsx'
 
 const PESTANAS = [
   { key: 'mailing', label: 'Mailing' },
@@ -51,8 +52,7 @@ export function MarketingV2() {
       </nav>
 
       {pestana === 'mailing' && <Mailing sub={subMailing} onSub={setSubMailing} />}
-      {pestana === 'redes' && <AvisoPendiente titulo="Pendiente de conexión con Meta"
-        texto="Publicaciones hechas y programadas por marca y país, con sus leads." />}
+      {pestana === 'redes' && <Redes />}
       {pestana === 'otros' && <AvisoPendiente titulo="Próximamente (PBX, web, etc.)" proximamente />}
     </div>
   </div>

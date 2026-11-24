@@ -728,3 +728,12 @@
   .mkv2 .mkv2-dona-area { grid-template-columns: 1fr; }
   .mkv2 .mkv2-paso { margin-left: 104px; }
 }
+
+/* ======================================================================================================
+   Redes sociales (pestaña propia; mismo tema negro y piezas que Mailing). Solo reglas mkv2-redes-…
+   ====================================================================================================== */
+.mkv2 .mkv2-redes-ejemplo {
+  padding: 9px 14px; border: 1px dashed rgba(217, 165, 32, .55); border-radius: 10px; background: rgba(217, 165, 32, .1);
+  font-size: 12px; color: #f0c15a;
+}
+.mkv2 .mkv2-redes-ejemplo strong { color: #ffd36b; text-transform: uppercase; letter-spacing: .06em; }
