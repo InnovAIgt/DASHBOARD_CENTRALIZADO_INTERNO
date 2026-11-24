@@ -9,6 +9,9 @@ Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
   para la página marketing-v2); no se tocaron los archivos de Flujo de ventas ni los demás dashboards.
 - Las ventanas de Mailing (ejecutivo, correo con diseño, ficha) quedan por encima del menú: antes el menú las
   tapaba por la izquierda. El globo de valores también va encima de las ventanas.
+- Ajuste: en Canales de marketing, al asomarse el menú el dashboard se corre a la derecha (280 px) y se acomoda al
+  espacio que queda; el menú ya no tapa nada. Al alejar el mouse, el menú se esconde y el dashboard vuelve a todo el
+  ancho. Flujo de ventas sigue como estaba.
 
 ## 2026-11-23 · Detalle por correo: aperturas de Apple
 

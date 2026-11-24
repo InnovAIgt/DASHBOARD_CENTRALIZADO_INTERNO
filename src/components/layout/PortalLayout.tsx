@@ -52,7 +52,8 @@ export const PortalLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [bankSubView, setBankSubView] = useState<string>('overview');
   // Flujo de ventas v2 y Canales de marketing: el menú lateral se esconde y se asoma al acercar el mouse al borde
-  // izquierdo, y el dashboard usa todo el ancho. Solo en esas páginas; los demás no cambian (estilos en flujo-ventas-v2.css).
+  // izquierdo, y el dashboard usa todo el ancho. En Canales de marketing, al asomarse el menú el dashboard se corre
+  // (mkv2-menu-empuja, marketing-v2.css) para que el menú no tape nada. Solo en esas páginas; los demás no cambian (estilos en flujo-ventas-v2.css).
   const [menuAsomado, setMenuAsomado] = useState(false);
 
   useEffect(() => {
@@ -347,7 +348,7 @@ export const PortalLayout: React.FC = () => {
   const menuOculto = activePage === 'flujo-ventas-v2' || activePage === 'marketing-v2';
 
   return (
-    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''}`}>
+    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''} ${activePage === 'marketing-v2' ? 'mkv2-menu-empuja' : ''}`}>
       {/* Flujo de ventas v2: franja invisible en el borde izquierdo que hace asomar el menú */}
       {menuOculto && (
         <div

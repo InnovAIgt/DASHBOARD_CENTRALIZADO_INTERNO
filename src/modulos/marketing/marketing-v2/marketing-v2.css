@@ -735,6 +735,14 @@
   .mkv2 .mkv2-paso { margin-left: 104px; }
 }
 
+/* ---------- Menú lateral del portal en Canales de marketing ----------
+   Escondido como en Flujo de ventas, pero al asomarse EMPUJA el dashboard (no lo tapa). PortalLayout.tsx pone la
+   clase .mkv2-menu-empuja solo en esta página; Flujo de ventas y los demás dashboards no cambian. */
+@media (min-width: 901px) {
+  .portal-app.mkv2-menu-empuja.fv2-menu-oculto.is-menu-asomado .portal-main { margin-left: 280px; }
+  .portal-app.mkv2-menu-empuja.fv2-menu-oculto.is-menu-asomado .portal-sidebar { box-shadow: none; }
+}
+
 /* ======================================================================================================
    Redes sociales (pestaña propia; mismo tema negro y piezas que Mailing). Solo reglas mkv2-redes-…
    ====================================================================================================== */
