@@ -9,6 +9,7 @@ import { ESTADOS, FILTROS_REDES, FORMATOS, MARCAS, REDES } from '../datos/redes.
 import { useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 import { BarraRedes } from './redes/BarraRedes.jsx'
+import { ResumenRedes } from './redes/Resumen.jsx'
 
 export const SUBPESTANAS_REDES = [
   { key: 'resumen', label: 'Resumen' },
@@ -16,7 +17,7 @@ export const SUBPESTANAS_REDES = [
   { key: 'anuncios', label: 'Anuncios' },
 ]
 
-/** Sub-pestaña que todavía no está armada (partes 3, 4 y 5). */
+/** Sub-pestaña que todavía no está armada (partes 4 y 5). */
 function Pendiente({ parte }) {
   return <Aviso icono="info" titulo="En construcción" texto={`Esta sub-pestaña se arma en la parte ${parte} del plan de Redes.`} />
 }
@@ -53,7 +54,7 @@ export function Redes() {
     {datos.cargando && <div className="fv2-vacio"><strong>Cargando datos de Meta…</strong></div>}
     {!datos.cargando && datos.error && <Aviso titulo="No se pudieron leer los datos de Meta" texto={datos.error} onReintentar={datos.reintentar} />}
     {!datos.cargando && !datos.error && <>
-      {sub === 'resumen' && <Pendiente parte={3} />}
+      {sub === 'resumen' && <ResumenRedes datos={datos} filtros={filtros} filtrar={filtrar} irA={irA} />}
       {sub === 'publicaciones' && <Pendiente parte={4} />}
       {sub === 'anuncios' && <Pendiente parte={5} />}
     </>}
