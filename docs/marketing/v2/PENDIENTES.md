@@ -26,7 +26,7 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Opción B (sesión para Marketing): pendiente, decidir después | Keily | Por definir | Pendiente |
 | Informar a Eduardo que los correos se muestran sin inicio de sesión | Keily | — | Pendiente |
 | Conflicto vite/esbuild en instalación limpia: revisar antes de publicar. Causa: Vercel instala con **bun** (hay `bun.lock` en el repo), que tolera el conflicto; con `npm` limpio falla (vite 8.3.8 pide esbuild 0.27/0.28 y el portal fija 0.25). `bun.lock` ya incluye `pg` (23/11/2026) | Keily | Antes de publicar | Pendiente |
-| Poner CC_DB_PASSWORD en Vercel Preview (solo rama feature/marketing-v2) | Keily | Antes de probar en Preview | Pendiente |
+| Poner CC_DB_PASSWORD en Vercel Preview (solo rama feature/marketing-v2) | Keily | Antes de probar en Preview | Hecho (2026-11-23): guardada como Secret en Vercel; el cruce con Cumplimiento sigue usando la contraseña principal |
 | Confirmar si se ocultan las campañas de prueba | Ismael | Por confirmar | Pendiente |
 | Comparar en la pantalla de Brevo la campaña 74 (157 entregados, 44 aperturas, 3 clics) para decidir entre `globalStats` y `campaignStats` (por ahora se usa `globalStats`) | Keily | 2026-11-23 | Resuelto: se usa `globalStats`; `uniqueViews` = «Aperturas (incluye automáticas)», Apple MPP aparte (MAILING.md, sección 6) |
 | Poner `BREVO_API_KEY` en Vercel (Preview para probar la ruta de campañas; Production al publicar) | Keily | 2026-11-23 | Hecho: la llave nueva (dashboard-marketing-lectura) está solo para la rama `feature/marketing-v2` en Preview |
@@ -37,6 +37,7 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
 | Permiso de lectura de la base de Cumplimiento de Clientes | Keily | 2026-11-23 | Resuelto: SOLO LECTURA con la contraseña de la base (`CC_DB_PASSWORD`) y candados (MAILING.md, sección 8) |
+| Crear usuario de solo lectura en la base de Cumplimiento de Clientes para el dashboard y cambiar la contraseña principal (estaba en un documento) | Keily / Eduardo | — | Pendiente |
 | Aviso por correo a cada ejecutivo con sus correos por corregir (plazo de 48 horas; borrador, sin envío automático) | Keily | Por definir | En curso: ventana por ejecutivo y correo con diseño listos (borrador .eml, copiar con formato y correo simple; sin envío automático); esperando la revisión de Keily |
 | Regla de nombres de campaña entregada a Marketing | Ismael / Laura | Por confirmar | Pendiente |
 | Enlace «IR A CORREGIR» desactualizado; el correcto es https://cumplimientoclientes-88n2.onrender.com | Ismael | Por confirmar | Resuelto (2026-11-23): Keily confirmó el enlace; se usa en el botón y en el texto del correo |
