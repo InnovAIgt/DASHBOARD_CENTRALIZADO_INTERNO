@@ -11,6 +11,7 @@ import {
   Aviso, Bloque, Cifra, COLOR_MAILING, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Kpi, LeyendaSemaforo, MiniBarra,
   Numero, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TarjetaBajita, TEXTO_WEBHOOK, TituloCampana,
 } from './piezas.jsx'
+import { TarjetaLeads } from './Leads.jsx'
 
 /** Abre «Detalle por correo» enfocado en un estado. */
 const verDetalle = (abrir, estado, titulo) => () => abrir({ vista: 'detalle', estado, titulo })
@@ -212,7 +213,7 @@ function Programadas({ campanas, filtrar }) {
   </Tarjeta>
 }
 
-export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, abrir, filtrar, reintentar }) {
+export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, leads, abrir, filtrar, reintentar }) {
   const t = useMemo(() => sumarTotales(campanas), [campanas])
   const det = useMemo(() => detalleWebhook(campanas, resumen), [campanas, resumen])
   return <>
@@ -233,8 +234,6 @@ export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, 
     <PorCampana campanas={campanas} resumen={resumen} abrir={abrir} filtrar={filtrar} />
     <Bloque titulo="Campañas programadas" />
     <Programadas campanas={campanas} filtrar={filtrar} />
-    <Tarjeta titulo="Leads" sub="Bot de WhatsApp → CRM">
-      <Aviso icono="info" titulo="Pendiente: acceso al CRM o al bot de leads" texto="Se mostrarán los leads calificados (75 puntos o más) y no calificados de cada campaña." />
-    </Tarjeta>
+    {leads && <TarjetaLeads leads={leads} filas={leads.filas ?? []} total={leads.total ?? 0} abrir={abrir} reintentar={reintentar} />}
   </>
 }
