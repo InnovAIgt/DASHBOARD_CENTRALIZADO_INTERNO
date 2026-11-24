@@ -10,6 +10,12 @@
       "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/marketing/mantener-supabase",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
