@@ -9,7 +9,7 @@ import { exportarExcel } from '../../datos/excel.js'
 import { AvisoDetalle, BotonExcel, Buscador, columnasExportar, filasDelCorreo, nombreCampana, Paginacion, Tabla, TONO_ESTADO } from './Correos.jsx'
 import { Ficha } from './Ficha.jsx'
 import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
-import { Aviso, Enfoque, InsigniaCargo, Mini, Tarjeta, TituloCampana } from './piezas.jsx'
+import { Aviso, Enfoque, InsigniaCargo, Tarjeta, TarjetaBajita, TituloCampana } from './piezas.jsx'
 
 const TARJETAS = [
   { id: 'varias', sub: 'El correo aparece en más de un código de cliente', color: COLORES.amarillo, tono: 'amarillo' },
@@ -62,9 +62,11 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
     {foco && <Enfoque titulo={foco.titulo ?? 'Relación con clientes'} detalle={`${numero(campanas.length)} campañas según los filtros de arriba`} onTodos={limpiarFoco} onVolver={volver} />}
     <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
     {sinCruce && <Aviso titulo="No se pudo leer Cumplimiento de Clientes" texto={detalle.avisoCruce} />}
-    <div className="mkv2-minis mkv2-minis5">
-      {TARJETAS.map((t) => <Mini key={t.id} nombre={CLASIFICACIONES[t.id]} valor={sinCruce ? '—' : numero(conteo[t.id])} color={t.color} nota={t.sub}
-        activo={categoria === t.id} onClick={sinCruce ? undefined : elegir(t.id)} enlace={categoria === t.id ? 'Quitar filtro' : 'Ver'} />)}
+    <div className="mkv2-bajitas">
+      {TARJETAS.map((t) => <TarjetaBajita key={t.id} titulo={CLASIFICACIONES[t.id]} valor={sinCruce ? '—' : numero(conteo[t.id])} color={t.color}
+        sub={categoria === t.id ? 'filtro puesto' : undefined} activo={categoria === t.id} onClick={sinCruce ? undefined : elegir(t.id)}
+        tip={`${CLASIFICACIONES[t.id]}: ${t.sub}
+${categoria === t.id ? 'Clic para quitar el filtro' : 'Clic para ver solo estos en la tabla'}`} />)}
     </div>
     <div className="mkv2-logica">
       <strong>Cómo leer las categorías:</strong> cada correo tiene una sola, la de mayor prioridad (en el orden de las

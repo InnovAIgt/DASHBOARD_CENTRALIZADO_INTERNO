@@ -14,7 +14,7 @@ import { textosCampana } from '../../datos/campana.js'
 import { entrar, guardarCargoObjetivo, permisoActual, volverASugerido } from '../../datos/edicion.js'
 import { objetivoDeCampana, OPCIONES_OBJETIVO } from '../../datos/objetivo.js'
 import { CLASE_ESTADO_OBJETIVO } from './DetalleCampana.jsx'
-import { Aviso, COLOR_MAILING, InsigniaCargo, Mini, Tarjeta, TablaOrdenable, TituloCampana } from './piezas.jsx'
+import { Aviso, COLOR_MAILING, InsigniaCargo, Tarjeta, TablaOrdenable, TarjetaBajita, TituloCampana } from './piezas.jsx'
 
 const ESTADO_CARGO = (c) => (c.cargoManual ? 'confirmado' : c.cargoSugerido ? 'sugerido' : 'revisar')
 const TEXTO_ESTADO = { sugerido: 'Sugerido', revisar: 'Revisar', confirmado: 'Confirmado' }
@@ -137,12 +137,12 @@ export function AsignarCargo({ campanas, edicionHabilitada = false, actualizarCa
       ? <Aviso icono="candado" titulo={p ? `Editando como ${p.nombre}` : 'Guardar pide la clave de Marketing'}
         texto="La primera vez que guardes se pide la clave de Marketing y tu nombre; los valida el servidor y esta pestaña los recuerda mientras esté abierta. Lo elegido a mano gana sobre lo sugerido, queda «Confirmado» y se ve en todo el dashboard." />
       : <Aviso icono="candado" titulo="Guardar no está habilitado" texto={SIN_EDICION} />}
-    <div className="mkv2-minis mkv2-minis5">
-      <Mini nombre="Campañas" valor={numero(campanas.length)} nota="Con los filtros actuales" />
-      <Mini nombre="Cargo sin clasificar" valor={numero(sinClasificar)} nota="Hay que asignarles el cargo a mano" color={COLOR_MAILING.amarillo} />
-      <Mini nombre="Objetivo sugerido" valor={numero(porEstado('sugerido'))} nota="Por el asunto, el nombre o el contenido" color={COLOR_MAILING.apertura} />
-      <Mini nombre="Objetivo por revisar" valor={numero(porEstado('revisar'))} nota="Ninguna regla coincidió: «Promoción general de RED»" color={COLOR_MAILING.amarillo} />
-      <Mini nombre="Objetivo confirmado" valor={numero(porEstado('confirmado'))} nota="Elegido a mano por Marketing" color={COLOR_MAILING.entregados} />
+    <div className="mkv2-bajitas">
+      <TarjetaBajita titulo="Campañas" valor={numero(campanas.length)} sub="con los filtros" color={COLOR_MAILING.enviados} tip="Campañas de Brevo con los filtros de arriba" />
+      <TarjetaBajita titulo="Cargo sin clasificar" valor={numero(sinClasificar)} sub="asignar a mano" color={COLOR_MAILING.amarillo} tip="Campañas cuyo nombre no dice el cargo: hay que asignárselo a mano" />
+      <TarjetaBajita titulo="Objetivo sugerido" valor={numero(porEstado('sugerido'))} sub="por regla" color={COLOR_MAILING.apertura} tip="Objetivo sugerido por el asunto, el nombre o el contenido del correo" />
+      <TarjetaBajita titulo="Objetivo por revisar" valor={numero(porEstado('revisar'))} sub="sin regla" color={COLOR_MAILING.amarillo} tip="Ninguna regla coincidió: queda «Promoción general de RED» para revisar" />
+      <TarjetaBajita titulo="Objetivo confirmado" valor={numero(porEstado('confirmado'))} sub="por Marketing" color={COLOR_MAILING.entregados} tip="Elegido a mano por Marketing (gana sobre lo sugerido)" />
     </div>
     <datalist id={ID_LISTA}>{OPCIONES_OBJETIVO.map((o) => <option key={o} value={o} />)}</datalist>
     <Tarjeta titulo="Cargo y objetivo de cada campaña" sub="El cargo se sugiere por el nombre (regla código-cargo-sector-asunto); el objetivo, por el asunto, el nombre o el contenido del correo. Lo elegido alimenta el filtro Cargo, el Análisis por cargo y el detalle de cada campaña.">

@@ -16,7 +16,7 @@ import {
 import { columnasCampana, textosCampana } from '../../datos/campana.js'
 import { aCsv, descargarCsv } from '../../datos/csv.js'
 import { exportarExcel } from '../../datos/excel.js'
-import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Mini, Tarjeta, TEXTO_WEBHOOK, TituloCampana } from './piezas.jsx'
+import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Tarjeta, TarjetaBajita, TEXTO_WEBHOOK, TituloCampana } from './piezas.jsx'
 
 const v = (s, n) => (s.hayDatos ? numero(n) : '—')
 const detalleFiltro = (campanas) => `${numero(campanas.length)} campañas según los filtros de arriba`
@@ -260,9 +260,12 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
     <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
     {errorResumen && <Aviso titulo="No se pudo leer el resumen de eventos" texto={errorResumen} onReintentar={reintentar} />}
 
-    <div className="mkv2-minis mkv2-minis5">
-      {ESTADOS_DETALLE.filter((x) => x.id !== 'todos').map((x) => <Mini key={x.id} nombre={x.label} valor={numero(x.brevo(t))} color={COLOR_ESTADO[x.id]}
-        nota={s.hayDatos ? `Brevo · con detalle: ${numero(x.webhook(s))}` : 'Total de Brevo'} activo={f.estado === x.id} onClick={elegir(x.id)} enlace="Ver" />)}
+    <div className="mkv2-bajitas">
+      {ESTADOS_DETALLE.filter((x) => x.id !== 'todos').map((x) => <TarjetaBajita key={x.id} titulo={x.label} valor={numero(x.brevo(t))} color={COLOR_ESTADO[x.id]}
+        sub={s.hayDatos ? `con detalle: ${numero(x.webhook(s))}` : 'total de Brevo'} activo={f.estado === x.id} onClick={elegir(f.estado === x.id ? 'todos' : x.id)}
+        tip={`${x.label}: ${numero(x.brevo(t))} según Brevo${x.notaBrevo ? ` (${x.notaBrevo})` : ''}${s.hayDatos ? `
+Con detalle por persona: ${numero(x.webhook(s))}` : ''}
+${f.estado === x.id ? 'Clic para ver todos' : 'Clic para ver solo estos en la tabla'}`} />)}
     </div>
 
     <Tarjeta titulo="Detalle por destinatario" sub={`Una fila por correo y campaña · ${e.label}: ${numero(e.brevo(t))} según Brevo; con detalle por persona: ${numero(lista.length)} filas`}

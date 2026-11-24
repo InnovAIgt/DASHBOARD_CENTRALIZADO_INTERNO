@@ -221,6 +221,7 @@
 .mkv2 .mkv2-bajita-titulo { min-width: 0; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; line-height: 1.3; text-transform: uppercase; color: var(--mkv2-suave); }
 .mkv2 .mkv2-bajita-titulo small { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--fv2-tenue); }
 .mkv2 .mkv2-bajita .mkv2-ayuda { position: absolute; top: 8px; right: 8px; }
+.mkv2 .mkv2-bajita.is-activo { border-color: color-mix(in srgb, var(--mkv2-color) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--mkv2-color) 70%, transparent) inset; }
 
 /* Todo lo clicable (tarjetas, etapas, estados, dona): botón sin aspecto de botón + realce al pasar */
 .mkv2 button.is-clic { width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }

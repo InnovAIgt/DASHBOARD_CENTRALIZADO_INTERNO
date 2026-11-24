@@ -151,9 +151,12 @@ export function Kpi({ titulo, icono: Icono, valor, porcentaje, base, medidor = n
   </Caja>
 }
 
-/** Tarjeta bajita de calidad (maqueta): número + título (y un dato chico); la explicación va en el «?» (globo). */
-export function TarjetaBajita({ valor, titulo, sub, color = COLOR_MAILING.gris, onClick, tip }) {
-  return <Caja onClick={onClick} className="mkv2-bajita" tip={tip} style={{ '--mkv2-color': colorDe(valor, color) }}>
+/**
+ * Tarjeta bajita (maqueta de tarjetas): número + título (y un dato chico); la explicación va en el «?» (globo).
+ * activo = filtro puesto con esta tarjeta (se marca el borde).
+ */
+export function TarjetaBajita({ valor, titulo, sub, color = COLOR_MAILING.gris, onClick, tip, activo = false }) {
+  return <Caja onClick={onClick} className={`mkv2-bajita ${activo ? 'is-activo' : ''}`} tip={tip} aria-pressed={onClick ? activo : undefined} style={{ '--mkv2-color': colorDe(valor, color) }}>
     <span className="mkv2-bajita-num">{valor}</span>
     <span className="mkv2-bajita-titulo">{titulo}{sub && <small>{sub}</small>}</span>
     <span className="mkv2-ayuda" aria-hidden="true">?</span>
