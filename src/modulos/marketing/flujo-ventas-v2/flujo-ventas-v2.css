@@ -86,6 +86,8 @@
   }
   .fv2-estado.is-error { color: var(--fv2-rosa); background: rgba(196, 60, 80, .1); border-color: rgba(196, 60, 80, .35); }
   .fv2-estado.is-error::before { background: var(--fv2-rojo); }
+  .fv2-estado.is-demo { color: var(--fv2-amarillo); background: rgba(197, 150, 0, .1); border-color: rgba(197, 150, 0, .35); }
+  .fv2-estado.is-demo::before { background: var(--fv2-amarillo); }
 
   /* ---------- Filtros ---------- */
   .fv2-filtros-caja {
@@ -243,7 +245,7 @@
 
 
 
-  /* "Recorrido de los leads" (D16): 6 etapas como rastreo de pedido. Colores D12, sin rojo. */
+  /* "Recorrido de los leads": los tramos conservan D12 y las píldoras SLA siguen D19. */
   .fv2-rec { display: grid; gap: 16px; }
   .fv2-rec-cabeza { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .fv2-rec-titulo { margin: 0; font-size: 16px; font-weight: 800; color: #fff; }
@@ -253,6 +255,16 @@
   .fv2-rec-chip b { font-family: var(--fv2-mono); font-size: 16px; font-weight: 800; color: #fff; }
   .fv2-rec-chip.is-azul { background: rgba(79, 143, 216, .12); border-color: rgba(79, 143, 216, .3); color: #9cc3f2; }
   .fv2-rec-chip.is-verde { background: rgba(47, 143, 118, .14); border-color: rgba(47, 143, 118, .35); color: #7fd3b9; }
+  .fv2-rec-sla-resumen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+  .fv2-rec-sla-metrica { display: grid; gap: 3px; min-width: 0; padding: 10px 12px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: rgba(255,255,255,.025); }
+  .fv2-rec-sla-metrica > span { color: var(--fv2-tenue); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+  .fv2-rec-sla-metrica > strong { color: #fff; font-family: var(--fv2-mono); font-size: 22px; line-height: 1; }
+  .fv2-rec-sla-metrica > small { color: var(--fv2-tenue); font-size: 10px; }
+  .fv2-rec-sla-metrica.is-vencida { border-color: rgba(197, 150, 0, .35); }
+  .fv2-rec-sla-metrica.is-rojo > strong { color: var(--fv2-rosa); }
+  .fv2-rec-sla-metrica.is-amarillo > strong { color: #e0b52e; }
+  .fv2-rec-sla-metrica.is-verde > strong { color: var(--fv2-verde-claro); }
+  .fv2-rec-sla-nota { grid-column: 1 / -1; margin: 0; color: var(--fv2-tenue); font-size: 10.5px; }
 
   .fv2-rec-pista { --rec-arriba: 34px; --rec-hueco: 14px; position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--rec-hueco); }
   .fv2-rec-paso { position: relative; display: grid; min-width: 0; }
@@ -302,6 +314,16 @@
   .fv2-rec-pastilla { max-width: 100%; padding: 3px 9px; border-radius: 99px; background: rgba(255, 255, 255, .06); font-size: 11px; font-weight: 700; line-height: 1.35; color: var(--fv2-tenue); }
   .fv2-rec-pastilla.is-azul { background: rgba(79, 143, 216, .16); color: #9cc3f2; }
   .fv2-rec-pastilla.is-verde { background: rgba(47, 143, 118, .18); color: #7fd3b9; }
+  .fv2-rec-plazo { display: grid; gap: 2px; color: var(--fv2-texto); font-size: 10px; line-height: 1.3; }
+  .fv2-rec-plazo b { font-size: 10px; font-weight: 800; }
+  .fv2-rec-plazo small { color: var(--fv2-tenue); font-size: 9.5px; }
+  .fv2-rec-semaforos { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .fv2-rec-semaforos > span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 5px; border: 1px solid var(--fv2-borde); border-radius: 99px; font-family: var(--fv2-mono); font-size: 9px; font-weight: 800; }
+  .fv2-rec-semaforos i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .fv2-rec-semaforos .is-rojo { color: var(--fv2-rosa); }
+  .fv2-rec-semaforos .is-amarillo { color: #e0b52e; }
+  .fv2-rec-semaforos .is-verde { color: var(--fv2-verde-claro); }
+  .fv2-rec-sin-fecha { color: var(--fv2-tenue); font-size: 9px; }
   .fv2-rec-mejor {
     max-width: 100%; overflow: hidden; padding: 3px 8px; border: 1px solid rgba(226, 194, 90, .25); border-radius: 6px; background: rgba(226, 194, 90, .1);
     font-size: 10.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; color: #e2c25a;
@@ -317,13 +339,7 @@
   .fv2-rec-leyenda i.is-verde { background: #2f8f76; }
   .fv2-rec-leyenda i.is-amarillo { background: #c59600; }
   .fv2-rec-leyenda i.is-pocos { height: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .35) 0 4px, transparent 4px 7px); }
-  .fv2-rec-aviso { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 14px; padding: 12px 14px; border: 1px solid rgba(197, 150, 0, .3); border-radius: 12px; background: rgba(197, 150, 0, .08); }
-  .fv2-rec-aviso.is-neutro { border-color: var(--fv2-borde); background: rgba(255, 255, 255, .03); }
-  .fv2-rec-aviso > p { flex: 1 1 320px; margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--fv2-texto); }
-  .fv2-rec-aviso b { color: #fff; }
-  .fv2-rec-aviso b.fv2-texto-amarillo { color: #f0d27a; }
-  .fv2-rec-aviso-icono { flex-shrink: 0; margin-top: 2px; color: #f0d27a; }
-  .fv2-rec-aviso-clic { max-width: 240px; font-size: 11.5px; color: var(--fv2-tenue); }
+  .fv2-rec-sla-leyenda { margin: -7px 0 0; color: var(--fv2-tenue); font-size: 11px; line-height: 1.45; }
 
   /* Círculo de etapa: solo lo usa ya la cabecera de la ventana de detalle de etapa. */
   .fv2-etapa-circulo {
@@ -337,7 +353,7 @@
   .fv2-etapa-circulo.is-grande { flex-shrink: 0; width: 42px; height: 42px; box-shadow: none; font-size: 16px; }
 
   /* Ventana de etapa */
-  .fv2-etapa-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .fv2-etapa-datos { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
   .fv2-etapa-dato { display: grid; gap: 3px; min-width: 0; padding: 12px 14px; background: rgba(26, 29, 39, .75); border: 1px solid var(--fv2-borde); border-radius: 12px; }
   .fv2-etapa-dato > span { font-size: 11px; font-weight: 700; color: var(--fv2-tenue); }
   .fv2-etapa-dato > strong { overflow: hidden; font-family: var(--fv2-mono); font-size: 22px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
@@ -348,6 +364,8 @@
   .fv2-etapa-dato.is-mejor { background: rgba(79, 143, 216, .1); border-color: rgba(79, 143, 216, .3); }
   .fv2-etapa-dato.is-mejor > span { color: var(--fv2-azul-claro); }
   .fv2-etapa-dato.is-mejor > strong { font-family: inherit; font-size: 16px; }
+  .fv2-etapa-dato.is-sla-rojo > strong { color: var(--fv2-rosa); }
+  .fv2-etapa-dato.is-sla-amarillo > strong { color: #e0b52e; }
   .fv2-ventana-pestanas { display: flex; gap: 4px; border-bottom: 1px solid var(--fv2-borde); }
   .fv2-ventana-pestanas button { margin-bottom: -1px; padding: 10px 16px; border: none; border-bottom: 2px solid transparent; background: none; font-size: 13px; font-weight: 600; color: var(--fv2-tenue); }
   .fv2-ventana-pestanas button:hover { color: #fff; }
@@ -408,6 +426,9 @@
   .fv2-aviso-error strong { color: #fff; }
   .fv2-aviso-error p { margin: 2px 0; font-size: 12px; color: var(--fv2-texto); word-break: break-word; }
   .fv2-aviso-error small { font-size: 11px; color: var(--fv2-tenue); }
+  .fv2-aviso-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 16px; background: rgba(197, 150, 0, .09); border: 1px solid rgba(197, 150, 0, .35); border-radius: 12px; color: var(--fv2-amarillo); font-size: 12px; }
+  .fv2-aviso-demo strong { color: #fff; }
+  .fv2-aviso-demo span { flex: 1; min-width: 220px; color: var(--fv2-texto); }
   .fv2-nota { margin: 8px 0 0; font-size: 11px; color: var(--fv2-tenue); }
 
   /* ---------- Ventanas (modal de Activaciones) ---------- */
@@ -553,6 +574,13 @@
   .fv2-semaforo.is-vencida { background: rgba(196, 60, 80, .16); border-color: rgba(196, 60, 80, .4); color: var(--fv2-rosa); }
   .fv2-semaforo.is-hoy { background: rgba(197, 150, 0, .16); border-color: rgba(197, 150, 0, .4); color: #e0b52e; }
   .fv2-semaforo.is-a_tiempo { background: rgba(47, 143, 118, .16); border-color: rgba(47, 143, 118, .4); color: var(--fv2-verde-claro); }
+  .fv2-sla-celda { display: grid; justify-items: start; gap: 3px; }
+  .fv2-sla-celda > small { color: var(--fv2-tenue); font-size: 9px; }
+  .fv2-sla-pildora { display: inline-flex; width: max-content; max-width: 100%; padding: 3px 7px; border: 1px solid var(--fv2-borde); border-radius: 99px; background: rgba(255,255,255,.04); font-size: 10px; font-weight: 800; line-height: 1.3; white-space: nowrap; }
+  .fv2-sla-pildora.is-rojo { border-color: rgba(196,60,80,.4); background: rgba(196,60,80,.13); color: var(--fv2-rosa); }
+  .fv2-sla-pildora.is-amarillo { border-color: rgba(197,150,0,.4); background: rgba(197,150,0,.13); color: #e0b52e; }
+  .fv2-sla-pildora.is-verde { border-color: rgba(47,143,118,.4); background: rgba(47,143,118,.13); color: var(--fv2-verde-claro); }
+  .fv2-sla-pildora.is-cerrado, .fv2-sla-pildora.is-sin-fecha { color: var(--fv2-tenue); }
   .fv2-informe-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 11.5px; color: var(--fv2-tenue); }
   .fv2-paginacion { display: inline-flex; align-items: center; gap: 8px; }
   .fv2-semaforo-leyenda { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
@@ -560,6 +588,9 @@
   .fv2-semaforo-leyenda i.is-vencida { background: var(--fv2-rosa); }
   .fv2-semaforo-leyenda i.is-hoy { background: var(--fv2-amarillo); }
   .fv2-semaforo-leyenda i.is-a_tiempo { background: var(--fv2-verde); }
+  .fv2-semaforo-leyenda i.is-sla-rojo { background: var(--fv2-rosa); }
+  .fv2-semaforo-leyenda i.is-sla-amarillo { background: var(--fv2-amarillo); }
+  .fv2-semaforo-leyenda i.is-sla-verde { background: var(--fv2-verde); }
 
   /* ---------- Desplazamiento interno y zona fija (4.0b) ----------
      El portal tiene overflow: hidden en su contenedor, así que "sticky" no funciona contra la
@@ -597,11 +628,46 @@
   .fv2-coach-estado.is-apoyo { border-color: rgba(197, 150, 0, .42); background: rgba(197, 150, 0, .12); color: #e0b52e; }
   .fv2-coach-estado.is-bien { border-color: rgba(47, 143, 118, .42); background: rgba(47, 143, 118, .12); color: var(--fv2-verde-claro); }
   .fv2-coach-estado.is-pocos { border-color: var(--fv2-borde-fuerte); background: rgba(255,255,255,.04); color: var(--fv2-tenue); }
-  .fv2-coach-indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .fv2-coach-indicadores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
   .fv2-coach-indicadores > div { display: grid; gap: 2px; min-width: 0; padding-left: 10px; border-left: 1px solid var(--fv2-borde); }
   .fv2-coach-indicadores strong { color: #fff; font-family: var(--fv2-mono); font-size: 17px; font-weight: 850; line-height: 1.1; }
   .fv2-coach-indicadores span { color: var(--fv2-tenue); font-size: 10px; line-height: 1.25; }
   .fv2-coach-indicadores .is-vencido strong { color: var(--fv2-rosa); }
+  .fv2-coach-pipeline { display: grid; gap: 12px; min-width: 0; padding: 13px; border: 1px solid var(--fv2-borde); border-radius: 12px; background: rgba(15, 17, 23, .42); }
+  .fv2-coach-pipeline-cabeza { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .fv2-coach-pipeline-cabeza h4 { margin: 0; color: #fff; font-size: 13px; font-weight: 800; }
+  .fv2-coach-pipeline-cabeza h4 small { color: var(--fv2-tenue); font-size: 10px; font-weight: 500; }
+  .fv2-coach-pipeline-cabeza > span { color: var(--fv2-tenue); font-size: 10px; }
+  .fv2-coach-filtros { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 12px; border: 1px solid var(--fv2-borde); border-radius: 11px; background: rgba(255,255,255,.025); }
+  .fv2-coach-filtros > label { display: grid; gap: 5px; min-width: 180px; color: var(--fv2-tenue); font-size: 10px; font-weight: 700; }
+  .fv2-coach-filtros select { min-height: 34px; padding: 7px 10px; border: 1px solid var(--fv2-borde-fuerte); border-radius: 7px; background: var(--fv2-elevado); color: var(--fv2-texto); font: inherit; font-size: 11px; }
+  .fv2-coach-filtros select:focus-visible { outline: 2px solid var(--fv2-azul); outline-offset: 1px; }
+  .fv2-coach-panel-equipo { margin-top: 12px; }
+  .fv2-coach-panel-equipo > h3 { margin: 0 0 12px; color: #fff; font-size: 14px; }
+  .fv2-coach-panel-equipo > h3 small { color: var(--fv2-tenue); font-size: 10px; font-weight: 500; }
+  .fv2-coach-alertas { display: grid; gap: 12px; margin-top: 12px; padding: 14px; border: 1px solid rgba(196,60,80,.3); border-radius: 12px; background: rgba(196,60,80,.035); }
+  .fv2-coach-alertas > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .fv2-coach-alertas h3 { margin: 0 0 3px; color: #fff; font-size: 14px; }
+  .fv2-coach-alertas header p { margin: 0; color: var(--fv2-tenue); font-size: 10.5px; }
+  .fv2-coach-alertas > header > strong { padding: 5px 9px; border: 1px solid rgba(196,60,80,.4); border-radius: 99px; color: var(--fv2-rosa); font-family: var(--fv2-mono); font-size: 12px; }
+  .fv2-coach-alertas-lista { display: grid; gap: 10px; }
+  .fv2-coach-alerta { display: grid; gap: 7px; min-width: 0; padding: 10px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: rgba(15,17,23,.6); }
+  .fv2-coach-alerta-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+  .fv2-coach-alerta-cabeza > span { display: inline-flex; align-items: center; gap: 7px; color: #fff; font-size: 12px; font-weight: 800; }
+  .fv2-coach-alerta-cabeza .fv2-bandera { width: 16px; height: 11px; }
+  .fv2-coach-alerta-cabeza > b { color: var(--fv2-rosa); font-family: var(--fv2-mono); font-size: 10px; }
+  .fv2-coach-alertas-vacio { margin: 0; padding: 14px; border: 1px dashed var(--fv2-borde-fuerte); border-radius: 9px; color: var(--fv2-tenue); font-size: 11px; text-align: center; }
+  .fv2-coach-pipeline-equipo { margin-top: 12px; }
+  .fv2-coach-pipeline-equipo > summary { padding: 11px 13px; border: 1px solid var(--fv2-borde); border-radius: 9px; background: rgba(255,255,255,.03); color: var(--fv2-texto); font-size: 12px; font-weight: 800; cursor: pointer; }
+  .fv2-coach-pipeline-equipo > summary span { margin-left: 8px; color: var(--fv2-tenue); font-size: 10px; font-weight: 500; }
+  .fv2-coach-pipeline-etapas { display: grid; gap: 12px; margin-top: 12px; }
+  .fv2-coach-pipeline-etapas > section { display: grid; gap: 7px; min-width: 0; padding: 11px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: rgba(15,17,23,.45); }
+  .fv2-coach-pipeline-etapas h4 { margin: 0; color: #fff; font-size: 12px; }
+  .fv2-coach-pipeline-etapas h4 small { margin-left: 6px; color: var(--fv2-tenue); font-size: 10px; font-weight: 500; }
+  .fv2-coach-detalles { display: grid; gap: 12px; margin-top: 14px; }
+  .fv2-coach-detalles > summary { padding: 11px 13px; border: 1px solid var(--fv2-borde); border-radius: 9px; background: rgba(255,255,255,.03); color: var(--fv2-texto); font-size: 12px; font-weight: 800; cursor: pointer; }
+  .fv2-coach-detalles > summary span { margin-left: 8px; color: var(--fv2-tenue); font-size: 10px; font-weight: 500; }
+  .fv2-coach-detalles[open] > summary { margin-bottom: 12px; }
   .fv2-coach-ranking { display: grid; grid-template-columns: auto auto; align-items: center; justify-content: center; column-gap: 4px; min-width: 74px; padding: 7px 10px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: rgba(255,255,255,.035); }
   .fv2-coach-ranking > span { color: #e0b52e; font-size: 14px; }
   .fv2-coach-ranking strong { color: #fff; font-family: var(--fv2-mono); font-size: 18px; }
@@ -717,7 +783,6 @@
     .fv2-rec-tramo.is-vertical.is-pocos .fv2-rec-linea { left: 25px; top: 58px; width: 2px; height: auto; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .2) 0 6px, transparent 6px 11px); }
     .fv2-rec-tramo.is-vertical .fv2-rec-etiqueta { position: static; display: inline-block; transform: none; }
     .fv2-rec-chips { margin-left: 0; }
-    .fv2-rec-aviso-clic { max-width: none; }
   }
   @media (max-width: 700px) {
     .fv2-pagina { padding: 16px; }
@@ -725,6 +790,11 @@
     .fv2-coach-card { padding: 12px; }
     .fv2-coach-cabeza { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; }
     .fv2-coach-indicadores { grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fv2-rec-sla-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fv2-coach-filtros { align-items: stretch; }
+    .fv2-coach-filtros > label { flex: 1 1 140px; min-width: 0; }
+    .fv2-coach-detalles > summary span { display: block; margin: 4px 0 0; }
+    .fv2-coach-pipeline-equipo > summary span { display: block; margin: 4px 0 0; }
     .fv2-coach-paso { grid-template-columns: minmax(74px, .8fr) minmax(28px, .5fr) minmax(90px, 1.3fr); gap: 5px; padding: 5px 3px; }
     .fv2-kpis, .fv2-pais-datos, .fv2-metricas.is-5, .fv2-metricas.is-6, .fv2-etapas-cuadros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fv2-xf-grid { grid-template-columns: 1fr; }
@@ -764,6 +834,19 @@
   .fv2-res-franja-texto strong { font-size: 12px; font-weight: 800; color: var(--fv2-texto); }
   .fv2-res-franja-texto small { font-size: 10px; line-height: 1.3; color: var(--fv2-tenue); }
 
+  /* Comparación regional */
+  .fv2-res-regional-metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .fv2-res-regional-metrica { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 12px; border: 1px solid var(--fv2-borde); border-radius: 12px; background: rgba(15, 17, 23, .42); }
+  .fv2-res-regional-metrica h4 { margin: 0; color: var(--fv2-tenue); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+  .fv2-res-regional-paises { display: grid; gap: 5px; }
+  .fv2-res-regional-fila { display: grid; grid-template-columns: 38px minmax(30px, 1fr) auto; align-items: center; gap: 8px; min-width: 0; padding: 5px 4px; border: 1px solid transparent; border-radius: 7px; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+  .fv2-res-regional-fila:hover, .fv2-res-regional-fila:focus-visible { background: rgba(255, 255, 255, .04); border-color: var(--fv2-borde); outline: none; }
+  .fv2-res-regional-pais { display: inline-flex; align-items: center; gap: 5px; color: var(--fv2-tenue); font-size: 10px; }
+  .fv2-res-regional-pais .fv2-bandera { width: 16px; height: 12px; }
+  .fv2-res-regional-pista { display: block; height: 7px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, .07); }
+  .fv2-res-regional-pista i { display: block; height: 100%; min-width: 0; border-radius: inherit; transition: width .2s ease; }
+  .fv2-res-regional-fila strong { min-width: 42px; color: var(--fv2-texto); font-family: var(--fv2-mono); font-size: 11px; text-align: right; }
+
   /* Botón de opciones (Gráfica / Embudo / Tabla, Barras / Tabla, GT / SV) */
   .fv2-res-segmento { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--fv2-caja); border: 1px solid var(--fv2-borde-fuerte); border-radius: 10px; }
   .fv2-res-segmento button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--fv2-tenue); font-size: 12px; font-weight: 700; transition: background .15s, color .15s; }
@@ -773,19 +856,23 @@
   .fv2-res-meses .fv2-leyenda { margin-bottom: 8px; }
 
   /* Embudo por mes */
+  .fv2-res-embudo-mensual { min-width: 0; }
   .fv2-res-embudos { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; margin-bottom: 12px; }
-  .fv2-res-embudo-tarjeta { display: grid; gap: 10px; padding: 14px; background: rgba(15, 17, 23, .5); border: 1px solid var(--fv2-borde); border-radius: 14px; }
+  .fv2-res-embudo-tarjeta { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 14px; background: rgba(15, 17, 23, .5); border: 1px solid var(--fv2-borde); border-radius: 14px; }
   .fv2-res-embudo-tarjeta.is-todos { background: rgba(79, 143, 216, .07); border-color: rgba(79, 143, 216, .45); }
   .fv2-res-embudo-tarjeta header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .fv2-res-embudo-tarjeta h4 { margin: 0; font-size: 14px; font-weight: 800; color: #fff; }
   .fv2-res-embudo-tarjeta header span { font-size: 11px; color: var(--fv2-tenue); }
   .fv2-res-embudo { display: grid; justify-items: center; gap: 3px; }
   .fv2-res-piso {
-    display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 6px 10px; border: 0;
-    clip-path: polygon(0 0, 100% 0, 92% 100%, 8% 100%); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; transition: filter .15s;
+    display: grid; justify-items: center; gap: 5px; width: 100%; padding: 5px 8px; border: 0; border-radius: 7px;
+    background: none; color: #fff; text-align: left; font: inherit; cursor: pointer; transition: filter .15s;
   }
-  .fv2-res-piso b { font-family: var(--fv2-mono); font-size: 14px; }
-  .fv2-res-piso:hover, .fv2-res-piso:focus-visible { filter: brightness(1.15); outline: none; }
+  .fv2-res-piso-cabeza { display: flex; justify-content: space-between; gap: 10px; width: 100%; color: var(--fv2-texto); font-size: 11px; font-weight: 700; }
+  .fv2-res-piso-cabeza b { font-family: var(--fv2-mono); font-size: 12px; }
+  .fv2-res-piso-pista { display: flex; justify-content: center; width: 100%; height: 12px; }
+  .fv2-res-piso-pista i { display: block; min-width: 0; height: 100%; border-radius: 3px; clip-path: polygon(0 0, 100% 0, 92% 100%, 8% 100%); transition: width .2s ease; }
+  .fv2-res-piso:hover, .fv2-res-piso:focus-visible { background: rgba(255, 255, 255, .04); outline: none; }
   .fv2-res-entre { margin: 0; font-size: 10.5px; font-weight: 700; color: var(--fv2-tenue); }
   .fv2-res-embudo-datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .fv2-res-embudo-datos button { display: grid; justify-items: center; gap: 1px; padding: 6px 4px; border: 1px solid var(--fv2-borde); border-radius: 9px; background: rgba(255, 255, 255, .03); font: inherit; cursor: pointer; }
@@ -1001,4 +1088,285 @@
 @media (max-width: 900px) {
   /* En pantallas angostas el portal ya esconde el menú y lo abre con su botón ☰; no cambia. */
   .portal-app.fv2-menu-oculto .fv2-zona-menu { display: none; }
+}
+
+/* Panel completo: orden visual del dashboard de Leads, con la paleta propia de Flujo de ventas. */
+.fv2 #fv2-panel-seguimiento { scroll-margin-top: 180px; }
+.fv2 .fv2-pais-dato { padding: 10px 12px; }
+.fv2 .fv2-pais-datos span { font-size: 11px; }
+.fv2 .fv2-pais-datos b { font-size: 21px; }
+.fv2 .fv2-ver-detalle { font-size: 11px; }
+.fv2 .fv2-res-franja {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.fv2 .fv2-res-franja-dato {
+  min-height: 82px;
+  border-bottom: 1px solid var(--fv2-borde);
+}
+.fv2 .fv2-res-franja-dato:nth-child(2n) { border-right: 0; }
+.fv2 .fv2-res-franja-dato:last-child:nth-child(odd) { border-right: 0; }
+.fv2 .fv2-res-franja-dato > b { font-size: 26px; }
+.fv2 .fv2-res-franja-icono { font-size: 19px; }
+.fv2 .fv2-res-franja-texto strong { font-size: 13px; }
+.fv2 .fv2-res-franja-texto small { font-size: 11px; }
+
+.fv2 .fv2-sla-panorama {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.fv2 .fv2-sla-panorama-dato {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--fv2-tarjeta);
+  border: 1px solid var(--fv2-borde);
+  border-left: 4px solid var(--fv2-azul);
+  border-radius: 12px;
+}
+.fv2 .fv2-sla-panorama-dato > span { color: var(--fv2-tenue); font-size: 12px; font-weight: 700; }
+.fv2 .fv2-sla-panorama-dato > strong { color: #fff; font-family: var(--fv2-mono); font-size: 25px; line-height: 1.1; }
+.fv2 .fv2-sla-panorama-dato > small { color: var(--fv2-tenue); font-size: 11px; }
+.fv2 .fv2-sla-panorama-dato.is-vencida,
+.fv2 .fv2-sla-panorama-dato.is-rojo { border-left-color: var(--fv2-rojo); }
+.fv2 .fv2-sla-panorama-dato.is-vencida > strong,
+.fv2 .fv2-sla-panorama-dato.is-rojo > strong { color: var(--fv2-rosa); }
+.fv2 .fv2-sla-panorama-dato.is-amarillo { border-left-color: var(--fv2-amarillo); }
+.fv2 .fv2-sla-panorama-dato.is-amarillo > strong { color: #e0b52e; }
+.fv2 .fv2-sla-panorama-dato.is-verde { border-left-color: var(--fv2-verde); }
+.fv2 .fv2-sla-panorama-dato.is-verde > strong { color: var(--fv2-verde-claro); }
+
+.fv2 .fv2-coach-filtros { align-items: end; gap: 12px; padding: 14px; }
+.fv2 .fv2-coach-filtros > label { min-width: 190px; font-size: 11px; }
+.fv2 .fv2-coach-filtros select { min-height: 40px; font-size: 12px; }
+.fv2 .fv2-coach-alertas { padding: 16px; }
+.fv2 .fv2-coach-alertas > header { align-items: flex-start; }
+.fv2 .fv2-coach-alertas h3 { font-size: 16px; }
+.fv2 .fv2-coach-alertas header p { font-size: 12px; }
+.fv2 .fv2-coach-alertas-totales,
+.fv2 .fv2-coach-alerta-cifras { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fv2 .fv2-coach-alertas-totales strong,
+.fv2 .fv2-coach-alerta-cifras b {
+  padding: 5px 9px;
+  border: 1px solid rgba(196,60,80,.4);
+  border-radius: 99px;
+  color: var(--fv2-rosa);
+  font-family: var(--fv2-mono);
+  font-size: 11px;
+}
+.fv2 .fv2-coach-alertas-totales strong.is-seguimiento,
+.fv2 .fv2-coach-alerta-cifras b.is-seguimiento {
+  border-color: rgba(197,150,0,.4);
+  color: #e0b52e;
+}
+.fv2 .fv2-coach-alerta-cifras b.is-rojo { color: var(--fv2-rosa); }
+.fv2 .fv2-coach-alerta { padding: 12px; }
+.fv2 .fv2-coach-alerta-cabeza > span { font-size: 13px; }
+.fv2 .fv2-coach-alertas-vacio { font-size: 12px; }
+.fv2 .fv2-coach-panel-equipo > h3 { font-size: 16px; }
+.fv2 .fv2-rec-nombre { font-size: 12px; }
+.fv2 .fv2-rec-numero { font-size: 24px; }
+.fv2 .fv2-rec-tarjeta small { font-size: 11px; }
+.fv2 .fv2-coach-alerta.is-sin-rojos { gap: 5px; padding: 8px 12px; }
+.fv2 .fv2-coach-alerta.is-sin-rojos .fv2-coach-alertas-vacio {
+  padding: 2px 0;
+  border: 0;
+  text-align: left;
+}
+.fv2 .fv2-coach-alerta-seguimientos { min-width: 0; }
+.fv2 .fv2-coach-alerta-seguimientos > summary {
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid rgba(197,150,0,.35);
+  border-radius: 8px;
+  background: rgba(197,150,0,.08);
+  color: #e0b52e;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.fv2 .fv2-coach-alerta-seguimientos[open] > summary { margin-bottom: 8px; }
+
+.fv2 .fv2-coach-pipeline-equipo { display: grid; gap: 10px; margin-top: 16px; }
+.fv2 .fv2-coach-pipeline-equipo > header h3 { margin: 0; color: #fff; font-size: 16px; }
+.fv2 .fv2-coach-pipeline-equipo > header h3 small { margin-left: 8px; color: var(--fv2-tenue); font-size: 11px; font-weight: 500; }
+.fv2 .fv2-coach-pipeline-equipo > header p { margin: 3px 0 0; color: var(--fv2-tenue); font-size: 12px; }
+.fv2 .fv2-coach-pipeline-forecast > summary {
+  width: fit-content;
+  padding: 8px 11px;
+  border: 1px solid var(--fv2-borde-fuerte);
+  border-radius: 8px;
+  background: rgba(255,255,255,.03);
+  color: var(--fv2-azul-claro);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.fv2 .fv2-coach-pipeline-forecast[open] > summary { margin-bottom: 8px; }
+.fv2 .fv2-coach-pipeline-etapas { gap: 8px; margin-top: 0; }
+.fv2 .fv2-coach-pipeline-etapa {
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--fv2-borde);
+  border-radius: 10px;
+  background: rgba(15,17,23,.45);
+}
+.fv2 .fv2-coach-pipeline-etapa > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  min-height: 44px;
+  color: var(--fv2-tenue);
+  font-size: 11px;
+  cursor: pointer;
+}
+.fv2 .fv2-coach-pipeline-etapa > summary strong { flex: 1 1 170px; color: #fff; font-size: 12px; }
+.fv2 .fv2-coach-pipeline-etapa > summary .is-rojo { color: var(--fv2-rosa); }
+.fv2 .fv2-coach-pipeline-etapa > summary .is-amarillo { color: #e0b52e; }
+.fv2 .fv2-coach-pipeline-etapa > summary .is-verde { color: var(--fv2-verde-claro); }
+.fv2 .fv2-coach-pipeline-etapa[open] > summary { border-bottom: 1px solid var(--fv2-borde); margin-bottom: 10px; }
+
+.fv2 .fv2-coach-prioridad {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(196,60,80,.28);
+  border-radius: 12px;
+  background: rgba(196,60,80,.035);
+}
+.fv2 .fv2-coach-prioridad > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fv2 .fv2-coach-prioridad h4 { margin: 0; color: #fff; font-size: 15px; }
+.fv2 .fv2-coach-prioridad p { margin: 3px 0 0; color: var(--fv2-tenue); font-size: 12px; }
+.fv2 .fv2-coach-prioridad > header > strong { color: var(--fv2-texto); font-family: var(--fv2-mono); font-size: 12px; }
+
+.fv2 .fv2-coach-coaching-equipo { display: grid; gap: 12px; margin-top: 18px; }
+.fv2 .fv2-coach-coaching-equipo > header h3 { margin: 0; color: #fff; font-size: 16px; }
+.fv2 .fv2-coach-coaching-equipo > header p { margin: 3px 0 0; color: var(--fv2-tenue); font-size: 12px; }
+.fv2 .fv2-coach-card.is-compacta { padding: 14px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-cabeza { grid-template-columns: auto minmax(140px, .7fr) minmax(320px, 2fr) auto; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-paneles { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-indicadores span,
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-panel > h4 { font-size: 13px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-ranking small { font-size: 10px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-resultado-cabeza { font-size: 12px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-resultado-cabeza strong { font-size: 12px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-resultado-pie,
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-leyenda { font-size: 11px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-paso-nombre { font-size: 12px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-paso-nombre small { font-size: 10px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-paso-valores { font-size: 10px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-paso-valores b { font-size: 10px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-accion-texto strong { font-size: 12px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-coach-accion-texto small { font-size: 10px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-seg-barra-titulo { font-size: 13px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-seg-resumen { font-size: 11px; }
+.fv2 .fv2-coach-card.is-compacta .fv2-seg-barra-accion { font-size: 12px; }
+.fv2 .fv2-coach-sin-leads { margin: 0; color: var(--fv2-tenue); font-size: 11px; }
+.fv2 .fv2-coach-sin-leads strong { color: var(--fv2-texto); }
+
+/* Jerarquía y espaciado comunes para que panel, detalle y forecast se lean como una misma app. */
+.fv2 .fv2-pagina { max-width: 1840px; margin-inline: auto; gap: 20px; }
+.fv2 .fv2-fijo { gap: 10px; }
+.fv2 .fv2-filtros-barra { gap: 10px; }
+.fv2 .fv2-pestanas { gap: 8px; }
+.fv2 .fv2-pestana { min-height: 40px; padding: 9px 18px; }
+.fv2 .fv2-vista { gap: 18px; }
+.fv2 .fv2-panel { gap: 12px; }
+.fv2 .fv2-panel-titulo { font-size: 15px; }
+.fv2 .fv2-panel-sub { font-size: 12px; }
+.fv2 .fv2-tabla { font-size: 12px; }
+.fv2 .fv2-tabla th { font-size: 10.5px; }
+
+.fv2 .fv2-forecast { gap: 16px; }
+.fv2 .fv2-forecast-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.fv2 .fv2-forecast-cabeza h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+}
+.fv2 .fv2-forecast-cabeza h2 svg { color: var(--fv2-verde-claro); }
+.fv2 .fv2-forecast-cabeza p { max-width: 780px; margin: 5px 0 0; color: var(--fv2-tenue); font-size: 12px; }
+.fv2 .fv2-forecast-cabeza .fv2-seg-horizonte { margin-left: auto; }
+.fv2 .fv2-forecast-resumen {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.fv2 .fv2-forecast-resumen > article {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 84px;
+  padding: 12px 15px;
+  border: 1px solid rgba(47, 143, 118, .32);
+  border-left: 4px solid var(--fv2-verde);
+  border-radius: 11px;
+  background: rgba(47, 143, 118, .07);
+}
+.fv2 .fv2-forecast-resumen > article span { color: var(--fv2-tenue); font-size: 12px; font-weight: 700; }
+.fv2 .fv2-forecast-resumen > article strong { color: #fff; font-family: var(--fv2-mono); font-size: 24px; line-height: 1.1; }
+.fv2 .fv2-forecast-criterios {
+  grid-column: 1 / -1;
+  padding: 14px 16px;
+  border: 1px solid var(--fv2-borde);
+  border-radius: 11px;
+  background: rgba(255,255,255,.025);
+}
+.fv2 .fv2-forecast-criterios > strong { color: var(--fv2-texto); font-size: 12px; }
+.fv2 .fv2-forecast-criterios ul { display: grid; gap: 3px; margin: 8px 0 10px; padding-left: 18px; color: var(--fv2-tenue); font-size: 11px; }
+.fv2 .fv2-forecast-criterios > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.fv2 .fv2-forecast-criterios > div span,
+.fv2 .fv2-forecast-senal {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid rgba(47, 143, 118, .35);
+  border-radius: 99px;
+  background: rgba(47, 143, 118, .1);
+  color: var(--fv2-verde-claro);
+  font-size: 10px;
+  font-weight: 800;
+}
+.fv2 .fv2-forecast-pipeline { display: grid; gap: 10px; }
+.fv2 .fv2-forecast-pipeline > header h3 { margin: 0; color: #fff; font-size: 16px; }
+.fv2 .fv2-forecast-pipeline > header p { margin: 3px 0 0; color: var(--fv2-tenue); font-size: 12px; }
+.fv2 .fv2-forecast-etapas { display: grid; gap: 8px; }
+
+@media (max-width: 1100px) {
+  .fv2 .fv2-coach-card.is-compacta .fv2-coach-cabeza { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .fv2 .fv2-coach-card.is-compacta .fv2-coach-paneles { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .fv2 .fv2-sla-panorama { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .fv2 .fv2-res-franja { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fv2 .fv2-coach-filtros > label { flex: 1 1 180px; }
+  .fv2 .fv2-forecast-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fv2 .fv2-forecast-criterios { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .fv2 .fv2-res-franja { grid-template-columns: 1fr; }
+  .fv2 .fv2-res-franja-dato { border-right: 0; }
+  .fv2 .fv2-sla-panorama-dato { padding: 11px; }
+  .fv2 .fv2-sla-panorama-dato > strong { font-size: 21px; }
+  .fv2 .fv2-coach-alertas-totales { width: 100%; }
+  .fv2 .fv2-coach-pipeline-etapa > summary { gap: 5px 10px; padding: 8px 0; }
+  .fv2 .fv2-forecast { padding: 14px; }
+  .fv2 .fv2-forecast-resumen { grid-template-columns: 1fr; }
+  .fv2 .fv2-forecast-cabeza .fv2-seg-horizonte { margin-left: 0; }
 }

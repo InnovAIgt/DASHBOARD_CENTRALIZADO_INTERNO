@@ -208,6 +208,51 @@ export function TarjetasPais({ paises, calificado, tono, onAbrir }) {
   </section>
 }
 
+const METRICAS_REGIONALES = [
+  { key: 'total', label: 'Leads', indicador: 'total', color: COLORES.azulClaro, formato: formatNumber },
+  { key: 'qualified', label: 'Calificados', indicador: 'calificados', color: COLORES.azul, formato: formatNumber },
+  { key: 'won', label: 'Ganados', indicador: 'ganados', color: COLORES.verdeClaro, formato: formatNumber },
+  { key: 'units', label: 'Unidades', indicador: 'unidades', color: COLORES.amarillo, formato: formatNumber },
+  { key: 'conversion', label: 'Conversión', indicador: 'conversionTotal', color: COLORES.verde, formato: formatearRatio, maximo: 1 },
+]
+
+/** Comparación regional con las mismas métricas de los leads filtrados del panel. */
+export function ComparativaRegional({ paises, onAbrir, calificado, paisFiltro }) {
+  const paisesVisibles = paisFiltro ? paises.filter((pais) => pais.country === paisFiltro) : paises
+  return <section className="fv2-panel fv2-res-regional" aria-label="Comparativa regional">
+    <header className="fv2-panel-cabeza">
+      <div>
+        <div className="fv2-panel-titulo">{paisFiltro ? 'Resultados regionales' : 'Comparativa regional'}</div>
+        <div className="fv2-panel-sub">{paisFiltro ? `${paisFiltro} · resultados del período y filtros seleccionados.` : 'Guatemala vs. El Salvador · resultados del período y filtros seleccionados.'}</div>
+      </div>
+      <span className="fv2-res-nota">{calificado ? 'Solo leads calificados' : 'Todos los tipos de lead'}</span>
+    </header>
+    <div className="fv2-res-regional-metricas">
+      {METRICAS_REGIONALES.map((metrica) => {
+        const max = metrica.maximo ?? Math.max(1, ...paisesVisibles.map((pais) => pais[metrica.key]))
+        return <article className="fv2-res-regional-metrica" key={metrica.key}>
+          <h4>{metrica.label}</h4>
+          <div className="fv2-res-regional-paises">
+            {paisesVisibles.map((pais) => {
+              const valor = pais[metrica.key]
+              const ancho = max ? Math.min(100, (valor / max) * 100) : 0
+              return <button type="button" className="fv2-res-regional-fila" key={pais.country}
+                onClick={() => onAbrir(metrica.indicador, pais.country)}
+                title={`Ver ${metrica.label.toLowerCase()} de ${pais.country}: ${metrica.formato(valor)}`}
+                aria-label={`Ver ${metrica.label.toLowerCase()} de ${pais.country}: ${metrica.formato(valor)}`}>
+                <span className="fv2-res-regional-pais"><Bandera pais={pais.country} /><b>{CODIGO_PAIS[pais.country]}</b></span>
+                <span className="fv2-res-regional-pista" aria-hidden="true"><i style={{ width: `${ancho}%`, background: metrica.color }} /></span>
+                <strong>{metrica.formato(valor)}</strong>
+              </button>
+            })}
+          </div>
+        </article>
+      })}
+    </div>
+    <p className="fv2-res-nota">Cada barra se escala dentro de su indicador; selecciona una cifra para abrir el detalle de ese país.</p>
+  </section>
+}
+
 // Verde claro: ganados de no calificados (barritas de ventas por mes).
 export const VERDE_CLARO = '#8fd3bf'
 

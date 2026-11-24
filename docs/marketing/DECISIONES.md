@@ -260,3 +260,73 @@ en el repositorio como respaldo; no se borra en este cambio.
 **Estado:** cambio preparado en una rama basada en `main` para que se integre por PR. Al momento de
 prepararlo, el endpoint de producción respondió que `RED_API_KEY` no está configurada; por eso la
 v2 puede abrir sin cargar leads hasta que la variable esté disponible y se redepliegue.
+
+## D19 · 24/11/2026 · SLA y vistas de seguimiento por equipo
+
+**Decisión:** cada lead abierto muestra el tiempo hábil en su etapa actual y un semáforo: SLA común
+de 2 días hábiles; verde dentro del SLA, amarillo hasta 2 días hábiles de atraso y rojo con más de
+2 días hábiles de atraso. Amarillo + rojo forman el total de etapas vencidas. El cumplimiento del
+ejecutivo es etapas verdes ÷ etapas abiertas con una fecha disponible; no depende de que la venta
+se cierre.
+
+**Fechas:** usar el hito existente de la etapa (reunión, demo, envío de propuesta, seguimiento o
+cierre). Si falta, usar la fecha de creación y marcar el resultado como aproximado. Mientras no
+exista calendario de feriados por país, se cuentan días de lunes a viernes sin descontar feriados;
+si no hay hito ni fecha de creación, mostrar "Sin fecha" y excluirlo del porcentaje. Los leads
+cerrados no se cuentan como etapas activas vencidas.
+
+**Vistas:** como el portal aún no tiene inicio de sesión real, la pestaña Ejecutivos incluye
+selectores temporales de jefatura/equipo o vendedor, y de Guatemala, El Salvador o ambos. La
+jefatura ve primero los rojos agrupados por vendedor, con vendedores ordenados por cantidad de
+rojos, y puede desplegar las oportunidades de cada etapa y el coaching detallado. El vendedor ve
+sus oportunidades ordenadas rojo → amarillo → verde. El SLA de etapa es independiente del
+vencimiento de la próxima gestión; ambos se conservan.
+
+**Filtros:** resumen, conteos, cumplimiento, listas y forecast respetan los filtros generales y el
+equipo temporal seleccionado. Se conserva la barra de filtros actual sin cambios.
+
+## D20 · 24/11/2026 · Panel comercial unificado
+
+**Decisión:** la entrada predeterminada muestra un único **Panel completo** con los indicadores
+generales del dashboard de Leads y, debajo, el seguimiento operativo del equipo: SLA, alertas,
+recorrido por las seis etapas, forecast y coaching. El informe detallado permanece disponible como
+consulta secundaria; no se separa el seguimiento en una pestaña aparte.
+
+**Orden de lectura:** indicadores generales → SLA del equipo → rojos y seguimientos vencidos por
+vendedor → recorrido con el mejor ejecutivo por etapa → forecast agrupado por etapa → coaching del
+vendedor seleccionado → tendencia mensual y ranking. En el forecast, cada etapa presenta su total,
+promedio de días y conteos por semáforo; sus leads se despliegan bajo demanda para mantener el panel
+legible. La selección de jefatura/vendedor y país sigue siendo temporal mientras no exista login.
+
+**Diseño:** conservar los colores y la barra de filtros existentes. Reorganizar tarjetas, títulos,
+secciones y controles según la jerarquía más clara del dashboard de Leads. Los rojos SLA y los
+seguimientos vencidos se distinguen porque representan reglas diferentes.
+
+## D21 · 24/11/2026 · Forecast como vista independiente
+
+**Decisión:** conservar el coaching, las alertas SLA y el recorrido por etapas en **Panel completo**.
+Agregar una pestaña **Forecast** al mismo nivel que **Panel completo** y **Detalle de leads**, sin
+duplicar allí el bloque de pipeline/forecast del equipo.
+
+**Filtros y validación:** Forecast recibe los leads ya filtrados por País, Período, Ejecutivo y Tipo
+de lead desde la barra superior. Mantiene los horizontes de 7, 15, 30 y 60 días y la validación
+existente: lead abierto en Seguimiento, no excluido, señal de cierre en comentario y próxima gestión
+entre hoy y el horizonte. Presenta resumen por casos, ejecutivos y unidades, la tabla de casos y el
+desglose de oportunidades abiertas por etapa con tiempo promedio y SLA. El horizonte seleccionado
+se comparte con el resumen de seguimiento del coaching.
+
+## D22 · 24/11/2026 · Tendencia mensual y comparación regional
+
+**Decisión:** en el Panel completo, presentar primero los indicadores y el análisis mensual; después,
+la comparación regional y el ranking; al final, el seguimiento SLA y coaching. El embudo mensual se
+muestra directamente bajo la gráfica, sin ocultarlo tras un selector interno.
+
+**Datos y filtros:** la gráfica, el embudo y la comparación Guatemala/El Salvador reciben la misma
+lista de leads filtrados por País, Período, Ejecutivo y Tipo de lead. El embudo genera automáticamente
+el total y un grupo por cada mes con datos; la comparativa regional muestra leads, calificados,
+ganados, unidades y conversión, con acceso al detalle por país. No se agrega el filtro "Month to day".
+
+## D23 · 24/11/2026 · Quitar el aviso del recorrido
+
+**Decisión:** retirar la tarjeta de alerta que describía dónde se frena el recorrido. Se conserva el
+resaltado amarillo del tramo y las leyendas de conversión y SLA; el resto del recorrido no cambia.

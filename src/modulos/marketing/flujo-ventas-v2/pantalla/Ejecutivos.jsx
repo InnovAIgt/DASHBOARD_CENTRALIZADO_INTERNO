@@ -1,11 +1,14 @@
-// Flujo de ventas v2 · pestaña "Ejecutivos": fichas de coaching (DECISIONES D17).
+// Flujo de ventas v2 · seguimiento del equipo y coaching (DECISIONES D17).
 import { useMemo, useState } from 'react'
-import { formatNumber } from '../utils/analytics.js'
+import { classifyFollowUps, formatNumber, isOpen } from '../utils/analytics.js'
+import { evaluarSlaEtapa, prioridadSla, resumirSlaEtapas } from '../utils/sla.js'
 import { Bandera, Vacio } from './comunes.jsx'
-import { fichaCoaching, pctEntero } from './datos.js'
-import { DetalleAsesor, DetalleLead } from './Ventanas.jsx'
-import { HORIZONTES_FORECAST, PerdidasEquipo, SeguimientoEjecutivo } from './SeguimientoEjecutivo.jsx'
+import { embudoEtapas, fichaCoaching, pctEntero, recorridoLeads } from './datos.js'
+import { DetalleAsesor, DetalleEtapa, DetalleLead } from './Ventanas.jsx'
+import { PerdidasEquipo, SeguimientoEjecutivo } from './SeguimientoEjecutivo.jsx'
 import { CalendarClock, Check, Eye, Phone, TrendingUp, TriangleAlert } from 'lucide-react'
+import { RecorridoLeads } from './RecorridoLeads.jsx'
+import { TablaLeads } from './Tablas.jsx'
 
 const TONOS = {
   apoyo: { etiqueta: 'Necesita apoyo', clase: 'is-apoyo' },
@@ -14,6 +17,7 @@ const TONOS = {
 }
 
 const ICONOS_ACCION = {
+  sla: TriangleAlert,
   vencidos: TriangleAlert,
   mover: CalendarClock,
   reforzar: TrendingUp,
@@ -57,6 +61,23 @@ function Resultado({ etiqueta, resultado }) {
   </div>
 }
 
+function IndicadoresSla({ resumen }) {
+  const cumplimiento = resumen.cumplimiento == null ? '—' : `${pctEntero(resumen.cumplimiento)}%`
+  const indicadores = [
+    { etiqueta: 'Etapas vencidas', valor: resumen.vencidas, nota: 'amarillas + rojas', tono: 'is-vencida' },
+    { etiqueta: 'Prioridad alta', valor: resumen.rojos, nota: 'más de 2 días tarde', tono: 'is-rojo' },
+    { etiqueta: 'Recién vencidas', valor: resumen.amarillos, nota: 'hasta 2 días tarde', tono: 'is-amarillo' },
+    { etiqueta: 'A tiempo', valor: resumen.verdes, nota: `${cumplimiento} de las etapas con fecha`, tono: 'is-verde' },
+  ]
+  return <section className="fv2-sla-panorama" aria-label="Indicadores de cumplimiento SLA">
+    {indicadores.map((indicador) => <article className={`fv2-sla-panorama-dato ${indicador.tono}`} key={indicador.etiqueta}>
+      <span>{indicador.etiqueta}</span>
+      <strong>{formatNumber(indicador.valor)}</strong>
+      <small>{indicador.nota}</small>
+    </article>)}
+  </section>
+}
+
 function Paso({ paso, onFiltro }) {
   const comparacion = paso.pocos || paso.pts == null ? 'pocos' : paso.pts < 0 ? 'bajo' : 'bien'
   const titulo = paso.pocos ? 'Pocos datos' : paso.pts == null ? 'Sin datos del equipo' : `${paso.pts > 0 ? '+' : ''}${paso.pts} pts vs. equipo`
@@ -97,9 +118,13 @@ function Accion({ accion, onFiltro }) {
     : <div className={`fv2-coach-accion is-${accion.tono}`}>{contenido}</div>
 }
 
-function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead }) {
+function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead, compacta = false }) {
   const estado = TONOS[ficha.estado]
-  return <article className={`fv2-coach-card ${estado.clase}`}>
+  const oportunidades = ficha.leads.filter(isOpen)
+    .map((lead) => ({ lead, sla: evaluarSlaEtapa(lead) }))
+    .sort((a, b) => prioridadSla(a.sla) - prioridadSla(b.sla)
+      || (b.sla?.diasEnEtapa ?? -1) - (a.sla?.diasEnEtapa ?? -1))
+  return <article className={`fv2-coach-card ${estado.clase} ${compacta ? 'is-compacta' : ''}`}>
     <header className="fv2-coach-cabeza">
       <span className="fv2-coach-avatar">{ficha.iniciales}</span>
       <div className="fv2-coach-identidad">
@@ -114,6 +139,7 @@ function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead }) {
         <div><strong>{formatNumber(ficha.enCamino)}</strong><span>en camino</span></div>
         <div><strong>{porcentaje(ficha.conversion.ratio)}</strong><span>conversión</span></div>
         <div className={ficha.vencidos ? 'is-vencido' : ''}><strong>{formatNumber(ficha.vencidos)}</strong><span>seguimientos vencidos</span></div>
+        <div className={ficha.sla.rojos ? 'is-vencido' : ''}><strong>{porcentaje(ficha.sla.cumplimiento)}</strong><span>etapas cumplidas a tiempo</span></div>
       </div>
       <div className="fv2-coach-ranking">
         <span>{ficha.ranking.estrella ? '★' : '#'}</span>
@@ -121,6 +147,20 @@ function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead }) {
         <small>de {ficha.ranking.m} en ventas</small>
       </div>
     </header>
+
+    {!compacta && <section className="fv2-coach-prioridad">
+      <header>
+        <div><h4>Mis oportunidades por prioridad</h4><p>Primero rojas, después amarillas y al final las que siguen a tiempo.</p></div>
+        <strong>{formatNumber(oportunidades.length)} abiertas</strong>
+      </header>
+      <TablaLeads
+        className="fv2-tabla-ventana"
+        leads={oportunidades.map(({ lead }) => lead)}
+        columnas={['lead', 'etapa', 'diasEtapa', 'slaEtapa', 'detalle']}
+        vacio="No hay oportunidades abiertas en esta selección."
+        onLead={onLead}
+      />
+    </section>}
 
     <div className="fv2-coach-paneles">
       <section className="fv2-coach-panel">
@@ -146,6 +186,13 @@ function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead }) {
       </section>
     </div>
 
+    {!compacta && <section className="fv2-coach-pipeline">
+      <div className="fv2-coach-pipeline-cabeza">
+        <h4>Recorrido del ejecutivo por etapa <small>tiempo, SLA y avance</small></h4>
+      </div>
+      <RecorridoLeads recorrido={recorridoLeads(ficha.embudo)} mostrarMejor={false} mostrarLeyendas={false} mostrarResumenSla={false} />
+    </section>}
+
     <SeguimientoEjecutivo leads={ficha.leads} horizonte={horizonte} onLead={onLead} />
 
     <footer className="fv2-coach-pie">
@@ -155,61 +202,174 @@ function Ficha({ ficha, horizonte, onDetalle, onFiltro, onLead }) {
   </article>
 }
 
-export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos }) {
-  const [asesorSel, setAsesorSel] = useState(null)
-  const [leadSel, setLeadSel] = useState(null)
-  const [horizonte, setHorizonte] = useState(30)
-  const { fichas, sinLeads, equipo } = useMemo(
-    () => fichaCoaching(leads, leadsEquipo, baseEjecutivos),
-    [leads, leadsEquipo, baseEjecutivos],
-  )
+function AlertasSlaEquipo({ leads, vendedores, onLead }) {
+  const grupos = new Map()
+  for (const vendedor of vendedores) {
+    const clave = `${vendedor.country}\u0000${vendedor.name}`
+    grupos.set(clave, { pais: vendedor.country, asesor: vendedor.name, leads: [], seguimientos: [], abiertos: 0 })
+  }
+  for (const lead of leads) {
+    if (!isOpen(lead)) continue
+    const asesor = lead.asesor || 'Sin ejecutivo asignado'
+    const clave = `${lead.pais}\u0000${asesor}`
+    const grupo = grupos.get(clave) ?? { pais: lead.pais, asesor, leads: [], seguimientos: [], abiertos: 0 }
+    grupo.abiertos++
+    const sla = evaluarSlaEtapa(lead)
+    if (sla?.estado === 'rojo') grupo.leads.push(lead)
+    grupos.set(clave, grupo)
+  }
+  for (const lead of classifyFollowUps(leads).overdue) {
+    const asesor = lead.asesor || 'Sin ejecutivo asignado'
+    const clave = `${lead.pais}\u0000${asesor}`
+    const grupo = grupos.get(clave) ?? { pais: lead.pais, asesor, leads: [], seguimientos: [], abiertos: 0 }
+    grupo.seguimientos.push(lead)
+    grupos.set(clave, grupo)
+  }
+  const filas = [...grupos.values()].sort((a, b) => b.leads.length - a.leads.length
+    || b.seguimientos.length - a.seguimientos.length || a.asesor.localeCompare(b.asesor))
+  const totalSeguimientos = filas.reduce((total, fila) => total + fila.seguimientos.length, 0)
 
-  return <div className="fv2-vista"><section className="fv2-panel">
+  return <section className="fv2-coach-alertas">
+    <header>
+      <div><h3>Prioridad del equipo</h3><p>Ordenado por etapas rojas; los seguimientos vencidos se identifican por separado.</p></div>
+      <div className="fv2-coach-alertas-totales">
+        <strong>{formatNumber(filas.reduce((total, fila) => total + fila.leads.length, 0))} etapas rojas</strong>
+        <strong className="is-seguimiento">{formatNumber(totalSeguimientos)} {totalSeguimientos === 1 ? 'seguimiento vencido' : 'seguimientos vencidos'}</strong>
+      </div>
+    </header>
+    {filas.length
+      ? <div className="fv2-coach-alertas-lista">
+        {filas.map((fila) => <article className={`fv2-coach-alerta ${fila.leads.length ? '' : 'is-sin-rojos'}`} key={`${fila.pais}-${fila.asesor}`}>
+          <div className="fv2-coach-alerta-cabeza">
+            <span><Bandera pais={fila.pais} />{fila.asesor}</span>
+            <div className="fv2-coach-alerta-cifras">
+              <b className="is-rojo">{formatNumber(fila.leads.length)} {fila.leads.length === 1 ? 'etapa roja' : 'etapas rojas'}</b>
+              <b className={fila.seguimientos.length ? 'is-seguimiento' : ''}>
+                {formatNumber(fila.seguimientos.length)} {fila.seguimientos.length === 1 ? 'seguimiento vencido' : 'seguimientos vencidos'}
+              </b>
+            </div>
+          </div>
+          {fila.leads.length
+            ? <TablaLeads
+              className="fv2-tabla-ventana"
+              leads={fila.leads}
+              columnas={['lead', 'etapa', 'diasEtapa', 'slaEtapa', 'detalle']}
+              onLead={onLead}
+            />
+            : <p className="fv2-coach-alertas-vacio">{fila.abiertos ? `${formatNumber(fila.abiertos)} leads abiertos · sin etapas rojas.` : 'Sin leads abiertos en los filtros actuales.'}</p>}
+          {fila.seguimientos.length > 0 && <details className="fv2-coach-alerta-seguimientos">
+            <summary>Ver los {formatNumber(fila.seguimientos.length)} seguimientos vencidos</summary>
+            <TablaLeads className="fv2-tabla-ventana" leads={fila.seguimientos}
+              columnas={['lead', 'etapa', 'fecha', 'comentario', 'detalle']} onLead={onLead} />
+          </details>}
+        </article>)}
+      </div>
+      : <p className="fv2-coach-alertas-vacio">No hay vendedores para la selección actual.</p>}
+  </section>
+}
+
+export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos, horizonte }) {
+  const [ejecutivoSel, setEjecutivoSel] = useState(null)
+  const [asesorDetalle, setAsesorDetalle] = useState(null)
+  const [leadSel, setLeadSel] = useState(null)
+  const [etapaSel, setEtapaSel] = useState(null)
+  const [modoVista, setModoVista] = useState('jefatura')
+  const [equipoSel, setEquipoSel] = useState('Todos')
+  const [coachingSel, setCoachingSel] = useState(null)
+  const { fichas, sinLeads, equipo } = useMemo(
+    () => {
+      const filtrarEquipo = (items) => equipoSel === 'Todos' ? items : items.filter((lead) => lead.pais === equipoSel)
+      const base = equipoSel === 'Todos' ? baseEjecutivos : baseEjecutivos.filter((ejecutivo) => ejecutivo.country === equipoSel)
+      return fichaCoaching(filtrarEquipo(leads), filtrarEquipo(leadsEquipo), base)
+    },
+    [leads, leadsEquipo, baseEjecutivos, equipoSel],
+  )
+  const fichasPrioridad = [...fichas].sort((a, b) => b.sla.rojos - a.sla.rojos
+    || b.sla.amarillos - a.sla.amarillos || a.name.localeCompare(b.name))
+  const opcionesEjecutivo = [...fichas, ...sinLeads].sort((a, b) => a.name.localeCompare(b.name))
+  const claveEjecutivo = (ejecutivo) => JSON.stringify([ejecutivo.country, ejecutivo.name])
+  const ejecutivoActivo = opcionesEjecutivo.some((item) => claveEjecutivo(item) === ejecutivoSel)
+    ? ejecutivoSel
+    : opcionesEjecutivo[0] ? claveEjecutivo(opcionesEjecutivo[0]) : null
+  const fichaActiva = fichas.find((ficha) => claveEjecutivo(ficha) === ejecutivoActivo)
+  const coachingActivo = fichasPrioridad.find((ficha) => claveEjecutivo(ficha) === coachingSel) ?? fichasPrioridad[0]
+  const leadsVista = equipoSel === 'Todos' ? leads : leads.filter((lead) => lead.pais === equipoSel)
+  const leadsSla = modoVista === 'ejecutivo' && fichaActiva ? fichaActiva.leads : leadsVista
+  const resumenSla = useMemo(() => resumirSlaEtapas(leadsSla), [leadsSla])
+  const leadsPerdidas = modoVista === 'ejecutivo' && ejecutivoActivo
+    ? leadsVista.filter((lead) => claveEjecutivo({ country: lead.pais, name: lead.asesor }) === ejecutivoActivo)
+    : leadsVista
+  const embudoEquipo = useMemo(() => embudoEtapas(leadsVista), [leadsVista])
+  const recorridoEquipo = useMemo(() => recorridoLeads(embudoEquipo), [embudoEquipo])
+  const embudoVentana = useMemo(() => ({ ...embudoEquipo, mayorCaida: recorridoEquipo.frenado?.hasta ?? null }), [embudoEquipo, recorridoEquipo])
+  const abrirFicha = (ficha, filtroInicial = null) => setAsesorDetalle({
+    name: ficha.name, country: ficha.country, ranking: ficha.ranking, filtroInicial,
+  })
+
+  return <div className="fv2-vista" id="fv2-panel-seguimiento"><section className="fv2-panel">
     <header className="fv2-panel-cabeza">
       <div>
-        <div className="fv2-panel-titulo">Coaching por ejecutivo</div>
-        <div className="fv2-panel-sub">Qué resultados obtiene cada vendedor, por qué pierde sus leads y dónde enfocar el seguimiento</div>
-      </div>
-      <div className="fv2-seg-horizonte">
-        <span>Horizonte del forecast</span>
-        <div className="fv2-res-segmento" role="group" aria-label="Horizonte del forecast">
-          {HORIZONTES_FORECAST.map((d) => <button key={d} type="button" aria-pressed={horizonte === d}
-            className={horizonte === d ? 'is-activo' : ''} onClick={() => setHorizonte(d)}>{d} días</button>)}
-        </div>
+        <div className="fv2-panel-titulo">Seguimiento de ventas y coaching</div>
+        <div className="fv2-panel-sub">Prioridad de vencidos, avance por etapa y resultados por ejecutivo</div>
       </div>
     </header>
 
-    <p className="fv2-seg-criterio">
-      <b>Forecast</b> = leads abiertos en etapa <b>Seguimiento</b>, con fecha de seguimiento dentro del horizonte y un comentario
-      con señal de cierre (papelería, intención de cierre, firma/contrato o aprobación). Misma regla que el dashboard de leads.
-    </p>
+    <div className="fv2-coach-filtros">
+      <label><span>Vista</span><select value={modoVista} onChange={(e) => setModoVista(e.target.value)}>
+        <option value="jefatura">Jefatura / equipo</option>
+        <option value="ejecutivo">Ejecutivo</option>
+      </select></label>
+      <label><span>Equipo temporal · sin inicio de sesión</span><select value={equipoSel} onChange={(e) => setEquipoSel(e.target.value)}>
+        <option value="Todos">Guatemala + El Salvador</option>
+        <option value="Guatemala">Guatemala</option>
+        <option value="El Salvador">El Salvador</option>
+      </select></label>
+      {modoVista === 'ejecutivo' && <label><span>Ejecutivo</span><select value={ejecutivoActivo ?? ''} onChange={(e) => setEjecutivoSel(e.target.value)}>
+        {opcionesEjecutivo.map((ejecutivo) => <option key={claveEjecutivo(ejecutivo)} value={claveEjecutivo(ejecutivo)}>{ejecutivo.name} · {ejecutivo.country}</option>)}
+      </select></label>}
+      {modoVista === 'jefatura' && fichasPrioridad.length > 0 && <label><span>Coaching del ejecutivo</span><select
+        value={coachingActivo ? claveEjecutivo(coachingActivo) : ''}
+        onChange={(e) => setCoachingSel(e.target.value)}>
+        {fichasPrioridad.map((ficha) => <option key={claveEjecutivo(ficha)} value={claveEjecutivo(ficha)}>{ficha.name} · {ficha.country}</option>)}
+      </select></label>}
+    </div>
 
-    {fichas.length
-      ? <div className="fv2-coach-lista">
-        {fichas.map((ficha) => <Ficha key={ficha.name} ficha={ficha} horizonte={horizonte} onLead={setLeadSel}
-          onDetalle={() => setAsesorSel({
-            name: ficha.name, country: ficha.country,
-            ranking: ficha.ranking,
-          })}
-          onFiltro={(filtroInicial) => setAsesorSel({
-            name: ficha.name, country: ficha.country,
-            ranking: ficha.ranking, filtroInicial,
-          })} />)}
-      </div>
-      : <Vacio titulo="Sin ejecutivos con los filtros actuales" />}
+    <IndicadoresSla resumen={resumenSla} />
 
-    {sinLeads.length > 0 && <div className="fv2-coach-sin-leads">
-      <strong>Sin leads en este período</strong>
-      <span>{sinLeads.map((ejecutivo) => `${ejecutivo.name} (${ejecutivo.country})`).join(' · ')}</span>
-    </div>}
+    {modoVista === 'jefatura'
+      ? <>
+        <AlertasSlaEquipo leads={leadsVista} vendedores={[...fichas, ...sinLeads]} onLead={setLeadSel} />
+        <section className="fv2-coach-panel fv2-coach-panel-equipo">
+          <h3>Recorrido de los leads <small>tiempo, SLA y mejor ejecutivo en cada etapa</small></h3>
+          <RecorridoLeads recorrido={recorridoEquipo} mostrarResumenSla={false} onClickEtapa={setEtapaSel} />
+        </section>
+        <section className="fv2-coach-coaching-equipo">
+          <header><div><h3>Coaching del ejecutivo</h3><p>Compara sus resultados, avance por etapa y acciones de esta semana.</p></div></header>
+          {coachingActivo
+            ? <Ficha ficha={coachingActivo} horizonte={horizonte} compacta onLead={setLeadSel}
+              onDetalle={() => abrirFicha(coachingActivo)}
+              onFiltro={(filtroInicial) => abrirFicha(coachingActivo, filtroInicial)} />
+            : <Vacio titulo="Sin ejecutivos con los filtros actuales" />}
+          {sinLeads.length > 0 && <p className="fv2-coach-sin-leads">
+            <strong>Sin leads en este período:</strong> {sinLeads.map((ejecutivo) => `${ejecutivo.name} (${ejecutivo.country})`).join(' · ')}
+          </p>}
+        </section>
+      </>
+      : fichaActiva
+        ? <Ficha ficha={fichaActiva} horizonte={horizonte} onLead={setLeadSel}
+          onDetalle={() => abrirFicha(fichaActiva)}
+          onFiltro={(filtroInicial) => abrirFicha(fichaActiva, filtroInicial)} />
+        : <Vacio titulo={ejecutivoActivo ? 'Este ejecutivo no tiene leads en los filtros actuales' : 'No hay ejecutivos para esta selección'} />}
 
-    {asesorSel && <DetalleAsesor {...asesorSel} leads={leads} month={null}
+    {asesorDetalle && <DetalleAsesor {...asesorDetalle} leads={leadsVista} month={null}
       equipo={{ ratio: equipo.conversion.ratio, embudo: equipo.embudo }}
-      onClose={() => setAsesorSel(null)} />}
+      onClose={() => setAsesorDetalle(null)} />}
+    {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leadsVista} embudo={embudoVentana}
+      contexto={equipoSel === 'Todos' ? 'filtros activos' : equipoSel} onClose={() => setEtapaSel(null)} />}
   </section>
 
     {/* Igual que "¿Por qué se pierden los leads?" de la Vista 2 del dashboard de leads, para todo el equipo. */}
-    <PerdidasEquipo leads={leads} onLead={setLeadSel} />
+    <PerdidasEquipo leads={leadsPerdidas} onLead={setLeadSel} />
 
     {leadSel && <DetalleLead lead={leadSel} onClose={() => setLeadSel(null)} />}
   </div>

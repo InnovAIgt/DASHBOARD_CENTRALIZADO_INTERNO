@@ -3,7 +3,9 @@ import { Eye } from 'lucide-react'
 import { daysFromToday, followUpDate, formatNumber, isWon, leadComments, leadUnits, PIPELINE_STAGES } from '../utils/analytics.js'
 import { formatDate } from '../utils/dates.js'
 import { leadDisplayId } from '../utils/leads.js'
+import { evaluarSlaEtapa } from '../utils/sla.js'
 import { Calificacion, EstadoLead, PaisChip } from './comunes.jsx'
+import { SemaforoEtapa } from './Semaforo.jsx'
 
 export function Tabla({ columnas, vacio, children, className = '' }) {
   return <div className={`fv2-tabla-caja ${className}`}>
@@ -40,6 +42,12 @@ const COLUMNAS_LEADS = (onLead) => ({
   lead: { label: 'Cliente', render: (lead) => (onLead ? <button type="button" className="fv2-enlace-lead" onClick={() => onLead(lead)}><NombreLead lead={lead} /></button> : <NombreLead lead={lead} />) },
   asesor: { label: 'Ejecutivo', render: (lead) => <span className="fv2-en-linea"><PaisChip pais={lead.pais} />{lead.asesor}</span> },
   etapa: { label: 'Etapa', render: (lead) => PIPELINE_STAGES[lead.apiStage - 1] ?? '—' },
+  diasEtapa: { label: 'Días en etapa', render: (lead) => {
+    const sla = evaluarSlaEtapa(lead)
+    if (sla?.diasEnEtapa == null) return <span className="fv2-tenue">—</span>
+    return <span className="fv2-doble"><span>{formatNumber(sla.diasEnEtapa)} días</span>{sla.aproximada && <small>aproximado</small>}</span>
+  } },
+  slaEtapa: { label: 'SLA de etapa', render: (lead) => <SemaforoEtapa lead={lead} /> },
   estado: { label: 'Estado', render: (lead) => <EstadoLead estado={lead.estado} /> },
   calificacion: { label: 'Calificación', render: (lead) => <Calificacion tipo={lead.tipoLead} /> },
   fechaCierre: { label: 'Fecha de cierre', render: (lead) => (isWon(lead) ? formatDate(lead.fechaCierreExitoso) : '—') },

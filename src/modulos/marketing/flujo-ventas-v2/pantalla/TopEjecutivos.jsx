@@ -89,7 +89,7 @@ export function TopEjecutivos({ leads, calificado, onAsesor, onDato, onIrEjecuti
         <div className="fv2-panel-titulo">Top 5 ejecutivos: leads recibidos vs. ganados</div>
         <div className="fv2-panel-sub">
           Clic en un ejecutivo abre su ventana de detalle ·{' '}
-          <button type="button" className="fv2-res-enlace" onClick={onIrEjecutivos}>Ver todos en la pestaña Ejecutivos ›</button>
+          <button type="button" className="fv2-res-enlace" onClick={onIrEjecutivos}>Ir al seguimiento del equipo ›</button>
         </div>
       </div>
       <div className="fv2-res-acciones">

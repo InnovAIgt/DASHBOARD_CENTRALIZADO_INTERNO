@@ -11,6 +11,7 @@ import {
 } from '../utils/analytics.js'
 import { buildStageFunnel, leadReferenceDate, leadReferenceMonth } from '../utils/leads.js'
 import { isOverdue, toDate } from '../utils/dates.js'
+import { evaluarSlaEtapa, resumirSlaEtapas } from '../utils/sla.js'
 
 /**
  * Regla de colores de los datos (DECISIONES D12). Límites PROVISIONALES hasta que el ingeniero
@@ -221,18 +222,19 @@ export function ejecutivosEnEtapa(leads, k, minimo = 5) {
  * La "mayor caída" es la etapa 2 a 6 con el menor % de entrada.
  */
 export function embudoEtapas(leads) {
+  const resumenSla = resumirSlaEtapas(leads)
   const etapas = ETAPAS.map((label, i) => {
     const k = i + 1
     const llegaron = leads.filter((l) => llego(l, k)).length
     const pasaron = leads.filter((l) => llego(l, k) && paso(l, k)).length
     const hoy = leads.filter((l) => estaHoy(l, k))
     const mejor = ejecutivosEnEtapa(leads, k).find((f) => !f.pocos) ?? null
-    return { stage: k, label, llegaron, pasaron, salida: llegaron ? pasaron / llegaron : null, hoy: hoy.length, hoyVencidos: hoy.filter(esVencido).length, mejor }
+    return { stage: k, label, llegaron, pasaron, salida: llegaron ? pasaron / llegaron : null, hoy: hoy.length, hoyVencidos: hoy.filter(esVencido).length, mejor, sla: resumenSla.porEtapa[k - 1] }
   })
   etapas.forEach((e, i) => { e.entrada = i === 0 ? null : etapas[i - 1].llegaron ? e.llegaron / etapas[i - 1].llegaron : null })
   const candidatas = etapas.filter((e) => e.entrada != null)
   const mayorCaida = candidatas.length ? candidatas.reduce((min, e) => (e.entrada < min.entrada ? e : min)).stage : null
-  return { etapas, mayorCaida }
+  return { etapas, mayorCaida, sla: resumenSla }
 }
 
 /**
@@ -270,6 +272,7 @@ export function recorridoLeads(embudo, minimo = 5) {
     etapas,
     tramos,
     frenado,
+    sla: embudo.sla,
     entraron: etapas[0]?.llegaron ?? 0,
     enCamino: etapas.reduce((suma, e) => suma + e.hoy, 0),
     cerrados: etapas[etapas.length - 1]?.pasaron ?? 0,
@@ -352,6 +355,7 @@ export const ETAPAS_CORTAS = ['Asignación', 'Reunión', 'Demo', 'Propuesta', 'S
 /** Leads de un ejecutivo según el filtro de un clic de la ficha (ventana del ejecutivo, D17). */
 export const FILTROS_EJECUTIVO = {
   vencidos: { descripcion: () => 'Seguimientos vencidos', filtro: () => esVencido },
+  slaRojo: { descripcion: () => 'Etapas en rojo por SLA', filtro: () => (l) => evaluarSlaEtapa(l)?.estado === 'rojo' },
   hoyEnEtapa: { descripcion: (k) => `Hoy en ${ETAPAS[k - 1]}`, filtro: (k) => (l) => estaHoy(l, k) },
   noPasaron: { descripcion: (k) => `Llegaron a ${ETAPAS[k - 1]} y no pasaron a ${ETAPAS[k] ?? 'ganado'}`, filtro: (k) => (l) => llego(l, k) && !paso(l, k) },
   llegaron: { descripcion: (k) => `Llegaron a ${ETAPAS[k - 1]}`, filtro: (k) => (l) => llego(l, k) },
@@ -440,8 +444,18 @@ export function fichaCoaching(leadsFicha, leadsEquipo, base = []) {
     const enCamino = embudo.etapas.reduce((s, e) => s + e.hoy, 0)
     const estado = conversion.calificados < MINIMO_LEADS ? 'pocos' : debil && debil.pts <= -UMBRAL_APOYO_PTS ? 'apoyo' : 'bien'
 
-    // Qué hacer esta semana (máximo 3, en este orden).
+    // Qué hacer esta semana: primero SLA rojo y seguimiento vencido, luego coaching.
     const acciones = []
+    if (embudo.sla.rojos > 0) {
+      acciones.push({
+        clave: 'sla',
+        tono: 'rojo',
+        titulo: `Atender ${embudo.sla.rojos} ${embudo.sla.rojos === 1 ? 'etapa en rojo' : 'etapas en rojo'}`,
+        texto: 'Superaron el SLA de etapa; revisar el avance con prioridad',
+        filtro: { tipo: 'slaRojo' },
+        cuantos: embudo.sla.rojos,
+      })
+    }
     if (vencidos > 0) {
       acciones.push({ clave: 'vencidos', tono: 'rojo', titulo: `Contactar ${vencidos} ${vencidos === 1 ? 'seguimiento vencido' : 'seguimientos vencidos'}`, texto: 'Se pasaron de la fecha acordada con el cliente', filtro: { tipo: 'vencidos' }, cuantos: vencidos })
     }
@@ -460,8 +474,8 @@ export function fichaCoaching(leadsFicha, leadsEquipo, base = []) {
     return {
       name, iniciales: iniciales(name), country: paisDe.get(name) ?? own[0]?.pais, leads: own,
       calificados: conversion.calificados, ventas: conversion.ganadosCalificados, conversion,
-      unidades: summarize(own).units, enCamino, vencidos, ranking: ranking(conversion.ganadosCalificados),
-      resultados, pasos, debil, estado, acciones: acciones.slice(0, 3),
+      unidades: summarize(own).units, enCamino, vencidos, sla: embudo.sla, ranking: ranking(conversion.ganadosCalificados),
+      resultados, pasos, debil, estado, embudo, acciones: acciones.slice(0, 4),
     }
   })
 

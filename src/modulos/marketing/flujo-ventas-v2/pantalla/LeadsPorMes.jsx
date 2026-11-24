@@ -1,10 +1,9 @@
-// Flujo de ventas v2 · "Leads por mes" con 3 vistas (DECISIONES D19):
-//   📊 Gráfica (columnas + línea de ganados + unidades) · 🔻 Embudo por mes · ▤ Tabla por país.
+// Flujo de ventas v2 · análisis mensual: gráfica, embudo visible y tabla por país.
 // Cálculos del dashboard de leads (pantalla/datos.js: mesesResumen, embudoPorMes, tablaMensualPais,
 // todos con summarize/byMonth). Todo número se puede cliquear: abre "Detalle de leads"; el mes abre
 // "Detalle del mes". Con filtro "Calificado" se esconde lo de no calificados y el embudo tiene 2 pisos.
 import { useMemo, useState } from 'react'
-import { BarChart3, ChevronRight, Filter, Table2 } from 'lucide-react'
+import { BarChart3, ChevronRight, Table2 } from 'lucide-react'
 import { formatNumber, formatPercent, monthLabel } from '../utils/analytics.js'
 import { Bandera, CODIGO_PAIS, COLORES, formatearRatio, Insignia, Vacio } from './comunes.jsx'
 import { embudoPorMes, mesesResumen, tablaMensualPais, tonoConversionTotal } from './datos.js'
@@ -13,7 +12,6 @@ import { Tabla } from './Tablas.jsx'
 
 const VISTAS = [
   { key: 'grafica', label: 'Gráfica', icono: BarChart3 },
-  { key: 'embudo', label: 'Embudo', icono: Filter },
   { key: 'tabla', label: 'Tabla por país', icono: Table2 },
 ]
 
@@ -39,8 +37,10 @@ export function NumeroClic({ valor, title, onClick, color, className = '' }) {
 
 // ---------- Vista 2: embudo por mes ----------
 function Piso({ etiqueta, valor, ancho, fondo, onClick, title }) {
-  return <button type="button" className="fv2-res-piso" style={{ width: `${ancho}%`, background: fondo }} onClick={onClick} title={title} aria-label={title}>
-    <span>{etiqueta}</span><b>{formatNumber(valor)}</b>
+  const anchoSeguro = Math.max(0, Math.min(100, ancho))
+  return <button type="button" className="fv2-res-piso" onClick={onClick} title={title} aria-label={title}>
+    <span className="fv2-res-piso-cabeza"><span>{etiqueta}</span><b>{formatNumber(valor)}</b></span>
+    <span className="fv2-res-piso-pista" aria-hidden="true"><i style={{ width: `${anchoSeguro}%`, background: fondo }} /></span>
   </button>
 }
 
@@ -51,6 +51,9 @@ function TarjetaEmbudo({ grupo, calificado, onDato, onMes }) {
   const nombre = grupo.key === 'all' ? 'Todos' : monthLabel(grupo.month, 'long')
   const dato = (clave, titulo) => () => onDato(clave, grupo.leads, `${titulo} · ${nombre}`)
   const tono = tonoConversionTotal(s.conversion)
+  const anchoCalificados = calificado ? 100 : (s.total ? (s.qualified / s.total) * 100 : 0)
+  const totalReferencia = calificado ? s.qualified : s.total
+  const anchoGanados = totalReferencia ? (s.won / totalReferencia) * 100 : 0
   return <article className={`fv2-res-embudo-tarjeta ${grupo.key === 'all' ? 'is-todos' : ''}`}>
     <header><h4>{nombre}</h4><span>{formatNumber(s.total)} leads</span></header>
     <div className="fv2-res-embudo">
@@ -58,9 +61,9 @@ function TarjetaEmbudo({ grupo, calificado, onDato, onMes }) {
         <Piso etiqueta="Total leads" valor={s.total} ancho={100} fondo={FONDOS[0]} onClick={dato('total', 'Total leads')} title={`Total leads de ${nombre}: ${formatNumber(s.total)}`} />
         <p className="fv2-res-entre" title={`${formatNumber(s.qualified)} calificados ÷ ${formatNumber(s.total)} leads (% desde total leads)`}>↓ {pct(s.qualified, s.total)} son calificados</p>
       </>}
-      <Piso etiqueta="Calificados" valor={s.qualified} ancho={calificado ? 100 : 80} fondo={FONDOS[1]} onClick={dato('calificados', 'Calificados')} title={`Calificados de ${nombre}: ${formatNumber(s.qualified)}`} />
+      <Piso etiqueta="Calificados" valor={s.qualified} ancho={anchoCalificados} fondo={FONDOS[1]} onClick={dato('calificados', 'Calificados')} title={`Calificados de ${nombre}: ${formatNumber(s.qualified)}`} />
       <p className="fv2-res-entre" title={`${formatNumber(s.won)} ganados ÷ ${formatNumber(s.qualified)} calificados (% desde leads calificados, como en el dashboard de leads)`}>↓ {pct(s.won, s.qualified)} de los calificados se ganó</p>
-      <Piso etiqueta="Ganados" valor={s.won} ancho={calificado ? 72 : 58} fondo={FONDOS[2]} onClick={dato('ganados', 'Ganados')} title={`Ganados de ${nombre}: ${formatNumber(s.won)} (= "Radicados")`} />
+      <Piso etiqueta="Ganados" valor={s.won} ancho={anchoGanados} fondo={FONDOS[2]} onClick={dato('ganados', 'Ganados')} title={`Ganados de ${nombre}: ${formatNumber(s.won)} (= "Radicados")`} />
     </div>
     <div className="fv2-res-embudo-datos">
       <button type="button" className="is-verde" onClick={dato('ganados', 'Ganados')} title={`${formatNumber(s.won)} ganados`} aria-label={`Ver los ${formatNumber(s.won)} ganados de ${nombre}`}><b>{formatNumber(s.won)}</b><small>ganados</small></button>
@@ -101,45 +104,55 @@ export function LeadsPorMes({ leads, calificado, onDato, onMes }) {
   const [vista, setVista] = useState('grafica')
   const [pais, setPais] = useState('Guatemala')
   const meses = useMemo(() => mesesResumen(leads), [leads])
-  const embudo = useMemo(() => (vista === 'embudo' ? embudoPorMes(leads) : []), [leads, vista])
+  const embudo = useMemo(() => embudoPorMes(leads), [leads])
   const tablas = useMemo(() => (vista === 'tabla' ? tablaMensualPais(leads) : []), [leads, vista])
   const grupo = tablas.find((t) => t.country === pais)
   const subtitulos = {
     grafica: `Columnas: ${calificado ? 'leads calificados (filtro)' : 'calificados + no calificados = leads del mes'} · línea: ganados · abajo: unidades vendidas · clic en un mes abre su detalle. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación.`,
-    embudo: `Embudo de cada mes: ${calificado ? 'de los calificados, cuántos se ganaron' : 'de todos los leads, cuántos fueron calificados y cuántos se ganaron'} · clic en un número abre su detalle.`,
     tabla: 'Resumen mensual por país, con las columnas del dashboard de leads · clic en un mes o un número abre su detalle.',
   }
 
-  return <section className="fv2-panel fv2-res-meses">
-    <header className="fv2-panel-cabeza">
-      <div>
-        <div className="fv2-panel-titulo">Leads por mes</div>
-        <div className="fv2-panel-sub">{subtitulos[vista]}</div>
-      </div>
-      <Segmentado opciones={VISTAS} valor={vista} onCambiar={setVista} etiqueta="Vista de leads por mes" />
-    </header>
+  return <>
+    <section className="fv2-panel fv2-res-meses">
+      <header className="fv2-panel-cabeza">
+        <div>
+          <div className="fv2-panel-titulo">Leads y unidades por mes</div>
+          <div className="fv2-panel-sub">{subtitulos[vista]}</div>
+        </div>
+        <Segmentado opciones={VISTAS} valor={vista} onCambiar={setVista} etiqueta="Vista de leads por mes" />
+      </header>
 
-    {!meses.length && <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
+      {!meses.length && <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
 
-    {meses.length > 0 && vista === 'grafica' && <>
-      <Leyenda items={seriesMes(calificado)} />
-      <GraficaMensual filas={meses} calificado={calificado} onMes={(f) => onMes({ month: f.month, leads: f.leads })} />
-    </>}
+      {meses.length > 0 && vista === 'grafica' && <>
+        <Leyenda items={seriesMes(calificado)} />
+        <GraficaMensual filas={meses} calificado={calificado} onMes={(f) => onMes({ month: f.month, leads: f.leads })} />
+      </>}
 
-    {meses.length > 0 && vista === 'embudo' && <>
+      {meses.length > 0 && vista === 'tabla' && grupo && <>
+        <div className="fv2-res-tabla-cabeza">
+          <Segmentado etiqueta="País de la tabla mensual" valor={pais} onCambiar={setPais}
+            opciones={tablas.map((t) => ({ key: t.country, label: `${CODIGO_PAIS[t.country]} · ${t.country}` }))} />
+          <span className="fv2-res-nota"><Bandera pais={pais} /> {grupo.months.length} meses · {formatNumber(grupo.summary.total)} leads · {formatNumber(grupo.summary.won)} ganados · {formatearRatio(grupo.summary.conversion)} conversión</span>
+        </div>
+        <TablaPais grupo={grupo} calificado={calificado} onDato={onDato} onMes={onMes} />
+      </>}
+    </section>
+
+    {meses.length > 0 && <section className="fv2-panel fv2-res-embudo-mensual">
+      <header className="fv2-panel-cabeza">
+        <div>
+          <div className="fv2-panel-titulo">Embudo de conversión por mes</div>
+          <div className="fv2-panel-sub">
+            Total general y {meses.length} {meses.length === 1 ? 'mes' : 'meses'} con leads, actualizados con los filtros activos.
+            {calificado ? ' Se compara de calificados a ganados.' : ' Se compara de leads a calificados y ganados.'}
+          </div>
+        </div>
+      </header>
       <div className="fv2-res-embudos">
-        {embudo.map((g) => <TarjetaEmbudo key={g.key} grupo={g} calificado={calificado} onDato={onDato} onMes={onMes} />)}
+        {embudo.map((grupoMes) => <TarjetaEmbudo key={grupoMes.key} grupo={grupoMes} calificado={calificado} onDato={onDato} onMes={onMes} />)}
       </div>
-      <p className="fv2-res-nota">"Ganados" = todos los ganados del filtro (= "Radicados" en el dashboard de leads). % entre pisos: desde total leads y desde leads calificados, como allá.</p>
-    </>}
-
-    {meses.length > 0 && vista === 'tabla' && grupo && <>
-      <div className="fv2-res-tabla-cabeza">
-        <Segmentado etiqueta="País de la tabla mensual" valor={pais} onCambiar={setPais}
-          opciones={tablas.map((t) => ({ key: t.country, label: `${CODIGO_PAIS[t.country]} · ${t.country}` }))} />
-        <span className="fv2-res-nota"><Bandera pais={pais} /> {grupo.months.length} meses · {formatNumber(grupo.summary.total)} leads · {formatNumber(grupo.summary.won)} ganados · {formatearRatio(grupo.summary.conversion)} conversión</span>
-      </div>
-      <TablaPais grupo={grupo} calificado={calificado} onDato={onDato} onMes={onMes} />
-    </>}
-  </section>
+      <p className="fv2-res-nota">Los meses aparecen solo si tienen leads tras aplicar País, Período, Ejecutivo y Tipo de lead. Clic en una cifra abre su detalle.</p>
+    </section>}
+  </>
 }

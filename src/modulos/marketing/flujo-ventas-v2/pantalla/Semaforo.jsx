@@ -1,7 +1,7 @@
-// Flujo de ventas v2 · píldora de la próxima gestión con semáforo
-// (rojo = vencida, amarillo = hoy, verde = a tiempo; gris si el lead ya está cerrado).
-// La usan el Informe detallado y la ventana de detalle de etapa.
+// Flujo de ventas v2 · semáforos separados para próxima gestión y SLA de etapa.
 import { semaforo, textoCelda } from './informeDatos.js'
+import { evaluarSlaEtapa, SLA_DIAS_HABILES } from '../utils/sla.js'
+import { formatNumber } from '../utils/analytics.js'
 
 const fechaHora = new Intl.DateTimeFormat('es-SV', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 const hora = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
@@ -15,4 +15,20 @@ export function Semaforo({ lead, fecha }) {
     : s === 'hoy' ? `Hoy${tieneHora(fecha) ? ` · ${hora.format(fecha)}` : ''}`
       : tieneHora(fecha) ? fechaHora.format(fecha) : textoCelda({ tipo: 'fecha' }, fecha)
   return <span className={`fv2-semaforo is-${s}`} title={s === 'cerrado' ? 'Lead cerrado' : undefined}>{texto}</span>
+}
+
+export function SemaforoEtapa({ lead }) {
+  const sla = evaluarSlaEtapa(lead)
+  if (!sla) return <span className="fv2-tenue">—</span>
+  if (sla.estado === 'cerrado') return <span className="fv2-sla-celda"><span className="fv2-sla-pildora is-cerrado">Cerrado</span></span>
+  if (sla.estado === 'sin_fecha') return <span className="fv2-sla-celda"><span className="fv2-sla-pildora is-sin-fecha">Sin fecha</span></span>
+
+  const etiqueta = sla.estado === 'rojo' ? 'Rojo' : sla.estado === 'amarillo' ? 'Amarillo' : 'Verde'
+  const atraso = sla.diasAtraso ? ` · ${formatNumber(sla.diasAtraso)} d tarde` : ''
+  return <span className="fv2-sla-celda">
+    <span className={`fv2-sla-pildora is-${sla.estado}`} title={`${sla.nombreEtapa}: ${sla.diasEnEtapa} días hábiles en etapa; SLA ${SLA_DIAS_HABILES} días`}>
+      {etiqueta} · {formatNumber(sla.diasEnEtapa)} d{atraso}
+    </span>
+    {sla.aproximada && <small>aprox.</small>}
+  </span>
 }

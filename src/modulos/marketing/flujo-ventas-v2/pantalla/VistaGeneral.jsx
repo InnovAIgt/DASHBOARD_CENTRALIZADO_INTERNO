@@ -1,22 +1,17 @@
-// Flujo de ventas v2 · pestaña Resumen (DECISIONES D19: "Resumen con la lógica del dashboard de leads").
-// 4 bloques, en este orden:
-//   1. Tarjetas por país + franja de indicadores (summarize / byCountry, como el dashboard de leads).
-//   2. "Leads por mes" con 3 vistas: Gráfica, Embudo y Tabla por país (LeadsPorMes.jsx).
-//   3. "Recorrido de los leads": SIN CAMBIOS (lógica propia, D13/D16).
-//   4. "Top 5 ejecutivos: leads recibidos vs. ganados" (TopEjecutivos.jsx).
+// Panel comercial unificado: análisis general y mensual antes del seguimiento SLA/coaching.
 // Filtro "Calificado" (el de siempre): una sola conversión y sin lo de no calificados. Con "Todos":
 // Conversión (ganados ÷ total) + Conversión de calificados (D10) como dato extra.
 // Todo número abre su detalle con las ventanas que ya existían (DetalleLeads, DetalleMes,
 // DetalleEtapa y DetalleAsesor).
 import { useMemo, useState } from 'react'
 import { formatNumber } from '../utils/analytics.js'
-import { COLORES, formatearRatio, Vacio } from './comunes.jsx'
-import { embudoEtapas, fichaCoaching, INDICADORES, recorridoLeads, resumenLeads, soloCalificados, tonoConversion, tonoConversionTotal } from './datos.js'
-import { COLOR_TONO, TarjetasPais } from './graficas.jsx'
+import { Ejecutivos } from './Ejecutivos.jsx'
+import { COLORES, formatearRatio } from './comunes.jsx'
+import { fichaCoaching, INDICADORES, resumenLeads, soloCalificados, tonoConversion, tonoConversionTotal } from './datos.js'
+import { COLOR_TONO, ComparativaRegional, TarjetasPais } from './graficas.jsx'
 import { LeadsPorMes } from './LeadsPorMes.jsx'
-import { RecorridoLeads } from './RecorridoLeads.jsx'
 import { TopEjecutivos } from './TopEjecutivos.jsx'
-import { DetalleAsesor, DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
+import { DetalleAsesor, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
 function Dato({ icono, etiqueta, valor, nota, color, title, onAbrir }) {
   return <button type="button" className="fv2-res-franja-dato" onClick={onAbrir} title={title} aria-label={`Ver el detalle de ${etiqueta.toLowerCase()}`}>
@@ -54,17 +49,12 @@ function FranjaIndicadores({ resumen, calificado, onAbrir }) {
   </section>
 }
 
-export function VistaGeneral({ leads, filters, contexto, paisFiltro, leadsEquipo, baseEjecutivos, onIrEjecutivos }) {
+export function VistaGeneral({ leads, filters, paisFiltro, leadsEquipo, baseEjecutivos, horizonte }) {
   const [mesSel, setMesSel] = useState(null)
   const [indicadorSel, setIndicadorSel] = useState(null) // { clave, leads, titulo? }
-  const [etapaSel, setEtapaSel] = useState(null)
   const [asesorSel, setAsesorSel] = useState(null)
   const calificado = soloCalificados(filters)
   const resumen = useMemo(() => resumenLeads(leads), [leads])
-  const embudo = useMemo(() => embudoEtapas(leads), [leads])
-  const recorrido = useMemo(() => recorridoLeads(embudo), [embudo])
-  // Decisión A (D16): la ventana de etapa recibe el mismo resaltado amarillo que el recorrido.
-  const embudoVentana = useMemo(() => ({ ...embudo, mayorCaida: recorrido.frenado?.hasta ?? null }), [embudo, recorrido])
   // Ventana del ejecutivo: mismos datos que abre la pestaña Ejecutivos (ranking y equipo, D17).
   const coaching = useMemo(() => (asesorSel ? fichaCoaching(leads, leadsEquipo ?? leads, baseEjecutivos ?? []) : null), [asesorSel, leads, leadsEquipo, baseEjecutivos])
   const abrirDato = (clave, lista, titulo) => setIndicadorSel({ clave, leads: lista, titulo })
@@ -72,26 +62,25 @@ export function VistaGeneral({ leads, filters, contexto, paisFiltro, leadsEquipo
   const abrirMes = ({ month, country, leads: delMes }) => setMesSel({ month, country: country ?? paisFiltro, leads: delMes })
 
   return <div className="fv2-vista">
-    <TarjetasPais paises={resumen.paises} calificado={calificado} tono={tonoConversionTotal} onAbrir={(clave, pais) => abrirDato(
-      clave, leads.filter((lead) => lead.pais === pais), `${INDICADORES[clave].titulo} · ${pais}`,
-    )} />
-
     <FranjaIndicadores resumen={resumen} calificado={calificado} onAbrir={(clave) => abrirDato(clave, leads)} />
 
     <LeadsPorMes leads={leads} calificado={calificado} onDato={abrirDato} onMes={abrirMes} />
 
-    {/* "Recorrido de los leads" (D16): sin cambios. */}
-    <section className="fv2-panel">
-      {leads.length
-        ? <RecorridoLeads recorrido={recorrido} titulo="Recorrido de los leads" subtitulo="Así avanzan los leads calificados por las 6 etapas de venta" onClickEtapa={setEtapaSel} />
-        : <Vacio titulo="Sin leads con los filtros actuales" />}
-    </section>
+    <ComparativaRegional paises={resumen.paises} calificado={calificado} paisFiltro={paisFiltro} onAbrir={(clave, pais) => abrirDato(
+      clave, leads.filter((lead) => lead.pais === pais), `${INDICADORES[clave].titulo} · ${pais}`,
+    )} />
 
-    <TopEjecutivos leads={leads} calificado={calificado} onDato={abrirDato} onIrEjecutivos={onIrEjecutivos}
+    <TarjetasPais paises={resumen.paises} calificado={calificado} tono={tonoConversionTotal} onAbrir={(clave, pais) => abrirDato(
+      clave, leads.filter((lead) => lead.pais === pais), `${INDICADORES[clave].titulo} · ${pais}`,
+    )} />
+
+    <TopEjecutivos leads={leads} calificado={calificado} onDato={abrirDato}
+      onIrEjecutivos={() => document.getElementById('fv2-panel-seguimiento')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
       onAsesor={(name, country) => setAsesorSel({ name, country })} />
 
+    <Ejecutivos leads={leads} leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonte} />
+
     {indicadorSel && <DetalleLeads {...indicadorSel} onClose={() => setIndicadorSel(null)} />}
-    {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leads} embudo={embudoVentana} contexto={contexto} onClose={() => setEtapaSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}
     {asesorSel && coaching && <DetalleAsesor name={asesorSel.name} country={asesorSel.country} leads={leads} month={null}
       ranking={coaching.fichas.find((f) => f.name === asesorSel.name)?.ranking}

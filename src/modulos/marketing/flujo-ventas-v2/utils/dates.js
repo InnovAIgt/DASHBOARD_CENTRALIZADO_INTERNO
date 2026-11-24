@@ -14,6 +14,22 @@ export function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+export function toDateFlexible(value) {
+  if (typeof value === 'string') {
+    const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    if (match) {
+      const [, dayText, monthText, yearText] = match
+      const day = Number(dayText)
+      const month = Number(monthText)
+      const year = Number(yearText)
+      const date = new Date(year, month - 1, day)
+      if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null
+      return date
+    }
+  }
+  return toDate(value)
+}
+
 export function formatDate(value) {
   const date = toDate(value)
   return date

@@ -7,11 +7,11 @@ import { RefreshCw, Users } from 'lucide-react'
 import { FiltersProvider } from './context/FiltersProvider.jsx'
 import { useFilters } from './hooks/useFilters.js'
 import { useLeads } from './hooks/useLeads.js'
-import { qualificationLabel, summarize } from './utils/analytics.js'
+import { summarize } from './utils/analytics.js'
 import { AvisoError, Vacio } from './pantalla/comunes.jsx'
 import { aplicarFiltros, FILTROS_POR_DEFECTO, listaEjecutivos, periodoPorDefecto } from './pantalla/datos.js'
-import { Ejecutivos } from './pantalla/Ejecutivos.jsx'
 import { BarraFiltros } from './pantalla/Filtros.jsx'
+import { Forecast } from './pantalla/Forecast.jsx'
 import { Informe } from './pantalla/Informe.jsx'
 import { cargarHerramientaPdf, construirReporte, MODULOS_PDF, nombreArchivoPdf, textosFiltros } from './pantalla/pdf.js'
 import { VistaGeneral } from './pantalla/VistaGeneral.jsx'
@@ -32,15 +32,13 @@ function useRecordado(clave, inicial) {
 const ID_BOTON_PDF = 'fv2BtnPdf'
 
 const PESTANAS = [
-  { key: 'resumen', label: 'Resumen' },
-  { key: 'ejecutivos', label: 'Ejecutivos' },
-  { key: 'informe', label: 'Informe detallado' },
+  { key: 'panel', label: 'Panel completo' },
+  { key: 'informe', label: 'Detalle de leads' },
+  { key: 'forecast', label: 'Forecast' },
 ]
-// La pestaña elegida se recuerda mientras la página esté abierta (sessionStorage), aunque se
-// cambie a otro dashboard del menú y se vuelva.
-const CLAVE_PESTANA = 'fv2-pestana'
+const CLAVE_PESTANA = 'fv2-pestana-panel-completo'
 const leerPestana = () => {
-  try { const v = sessionStorage.getItem(CLAVE_PESTANA); return PESTANAS.some((p) => p.key === v) ? v : 'resumen' } catch { return 'resumen' }
+  try { const v = sessionStorage.getItem(CLAVE_PESTANA); return PESTANAS.some((p) => p.key === v) ? v : 'panel' } catch { return 'panel' }
 }
 
 const horaFormato = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: '2-digit' })
@@ -50,7 +48,7 @@ const horaFormato = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: 
  * estandar.css, la de SIMs): "Consultando la API…" con spinner y, si tarda más de 2.5 s,
  * "Consultando la API… puede tardar hasta un minuto". Al terminar: "Actualizado: HH:MM" o el error.
  */
-function EstadoConsulta({ cargando, error, actualizado }) {
+function EstadoConsulta({ cargando, error, actualizado, isDemo }) {
   const [lento, setLento] = useState(false)
   useEffect(() => {
     if (!cargando) { setLento(false); return undefined }
@@ -63,17 +61,19 @@ function EstadoConsulta({ cargando, error, actualizado }) {
       {lento ? 'Consultando la API… puede tardar hasta un minuto' : 'Consultando la API…'}
     </p>
   }
+  if (isDemo) return <div className="fv2-estado is-demo" role="status">Modo demostración · datos ficticios</div>
   if (error) return <div className="fv2-estado is-error" role="status">Sin conexión con Prospekt IA</div>
   return <div className="fv2-estado" role="status">Actualizado: <b>{actualizado ? horaFormato.format(actualizado) : '—'}</b></div>
 }
 
 function FlujoVentasV2Contenido() {
   const api = useLeads()
-  const { leads, loading, error } = api
+  const { leads, loading, error, isDemo } = api
   const filters = useFilters()
   // Por defecto: todos los países, Tipo de lead = Calificado (4.0) y del día 1 del mes actual hasta hoy (R11).
   const [periodo, setPeriodo] = useState(() => periodoPorDefecto())
   const [pestana, setPestanaEstado] = useState(leerPestana)
+  const [horizonteForecast, setHorizonteForecast] = useState(30)
   const setPestana = (p) => {
     setPestanaEstado(p)
     try { sessionStorage.setItem(CLAVE_PESTANA, p) } catch { /* sin almacenamiento: solo en memoria */ }
@@ -92,7 +92,7 @@ function FlujoVentasV2Contenido() {
   // el mismo período y tipo de lead que la selección visible.
   const filtrosEquipo = useMemo(() => ({ ...filters, filterPais: null, filterEjecutivo: null }), [filters])
   const leadsEquipo = useMemo(() => aplicarFiltros(leads, filtrosEquipo, periodo), [leads, filtrosEquipo, periodo])
-  // Ejecutivos de la pestaña Ejecutivos: todos los del país elegido, sin importar período ni tipo.
+  // Mantiene disponibles los ejecutivos del país aunque no tengan leads en el período actual.
   const baseEjecutivos = useMemo(() => listaEjecutivos(leads, filters), [leads, filters])
   const paisFiltro = filters.filterPais?.length === 1 ? filters.filterPais[0] : null
   // Vista rápida y búsqueda del Informe: se recuerdan entre pestañas y las usa el PDF (4.2).
@@ -127,20 +127,16 @@ function FlujoVentasV2Contenido() {
       document.querySelectorAll('.dashboard-pdf-picker').forEach((el) => { if (!antes.has(el)) el.remove() })
     }
   }, [hayDatos])
-  const aDMA = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
-  const contexto = [
-    filters.filterTipoLead == null ? 'Todos los tipos' : filters.filterTipoLead.map(qualificationLabel).join(', '),
-    periodo.desde || periodo.hasta ? `${aDMA(periodo.desde) || 'inicio'} – ${aDMA(periodo.hasta) || 'hoy'}` : 'Todo el historial',
-    filters.filterPais == null ? 'Todos los países' : filters.filterPais.join(', '),
-  ].join(' · ')
-
   return <div className="fv2-pagina">
     <header className="fv2-encabezado">
       <div>
         <div className="fv2-eyebrow">Marketing · Flujo de ventas</div>
-        <h1 className="fv2-titulo">Flujo de ventas</h1>
+        <h1 className="fv2-titulo">
+          Flujo de ventas
+          {isDemo && <span className="fv2-etiqueta-prueba">Datos ficticios</span>}
+        </h1>
         <p className="fv2-subtitulo">Cómo avanzan los leads asignados a cada ejecutivo, de la asignación al cierre · Guatemala y El Salvador.</p>
-        <EstadoConsulta cargando={loading} error={error} actualizado={api.lastUpdated} />
+        <EstadoConsulta cargando={loading} error={error} actualizado={api.lastUpdated} isDemo={isDemo} />
       </div>
       <button type="button" className="fv2-btn-actualizar" onClick={api.reload} disabled={loading} title="Actualizar datos" aria-label="Actualizar datos">
         <RefreshCw size={16} />
@@ -167,12 +163,17 @@ function FlujoVentasV2Contenido() {
       </nav>
     </div>}
 
-    {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
-    {leads.length > 0 && pestana === 'resumen' && <VistaGeneral leads={filtrados} filters={filters} contexto={contexto} paisFiltro={paisFiltro}
-      leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} onIrEjecutivos={() => setPestana('ejecutivos')} />}
-    {leads.length > 0 && pestana === 'ejecutivos' && <Ejecutivos leads={filtrados} leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} />}
+    {isDemo && <div className="fv2-aviso-demo" role="status">
+      <strong>Vista de demostración</strong>
+      <span>Prospekt IA no está disponible. Estos registros son ficticios y solo sirven para revisar el diseño; no representan ventas reales.</span>
+      <button type="button" className="fv2-pildora" onClick={api.reload} disabled={loading}>Reintentar conexión</button>
+    </div>}
+    {error && !isDemo && <AvisoError mensaje={error} onReintentar={api.reload} />}
+    {leads.length > 0 && pestana === 'panel' && <VistaGeneral leads={filtrados} filters={filters} paisFiltro={paisFiltro}
+      leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonteForecast} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo}
       vistaKey={informeVista} setVistaKey={setInformeVista} busqueda={informeBusqueda} setBusqueda={setInformeBusqueda} />}
+    {leads.length > 0 && pestana === 'forecast' && <Forecast leads={filtrados} horizonte={horizonteForecast} onHorizonte={setHorizonteForecast} />}
     {!loading && !error && !leads.length && <div className="fv2-panel"><Users size={22} /><Vacio titulo="Prospekt IA no devolvió leads." texto="Revisa la conexión e inténtalo de nuevo." /></div>}
   </div>
 }

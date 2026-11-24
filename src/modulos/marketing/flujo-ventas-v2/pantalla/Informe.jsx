@@ -5,7 +5,7 @@ import { formatNumber, PIPELINE_STAGES, qualificationLabel } from '../utils/anal
 import { Calificacion, CODIGO_PAIS, EstadoLead, MiniEtapas, PaisChip } from './comunes.jsx'
 import { descargarInforme } from './excel.js'
 import { buscarFilas, COLUMNAS, conteoVistas, filasInforme, GRUPOS, ordenarFilas, textoCelda, VISTAS } from './informeDatos.js'
-import { Semaforo } from './Semaforo.jsx'
+import { Semaforo, SemaforoEtapa } from './Semaforo.jsx'
 import { DetalleLead } from './Ventanas.jsx'
 
 const POR_PAGINA = 50
@@ -24,6 +24,7 @@ function Celda({ col, fila }) {
     case 'estado': return <EstadoLead estado={lead.estado} />
     case 'etapa': return valor ? <span className="fv2-etapa-celda"><MiniEtapas etapa={valor} ganado={lead.estado === 'ganado'} /><small>{valor} · {PIPELINE_STAGES[valor - 1]}</small></span> : '—'
     case 'semaforo': return <Semaforo lead={lead} fecha={valor} />
+    case 'sla': return <SemaforoEtapa lead={lead} />
     case 'fecha': return valor ? <span className="fv2-mono">{textoCelda(col, valor)}</span> : <span className="fv2-tenue">—</span>
     case 'numero': return valor === null || valor === '' ? <span className="fv2-tenue">—</span> : typeof valor === 'number' ? formatNumber(valor) : valor
     case 'largo': return valor ? <span className="fv2-recorte" title={valor}>{valor}</span> : <span className="fv2-tenue">—</span>
@@ -167,7 +168,8 @@ export function Informe({ leads, filters, periodo, vistaKey, setVistaKey, busque
           <span>Página {paginaActual + 1} de {paginas}</span>
           <button type="button" className="fv2-pildora" onClick={() => setPagina(paginaActual + 1)} disabled={paginaActual >= paginas - 1} aria-label="Página siguiente"><ChevronRight size={14} /></button>
         </div>
-        <span className="fv2-semaforo-leyenda"><i className="is-vencida" />Gestión vencida <i className="is-hoy" />Para hoy <i className="is-a_tiempo" />A tiempo</span>
+        <span className="fv2-semaforo-leyenda"><i className="is-vencida" />Próxima gestión vencida <i className="is-hoy" />Gestión para hoy <i className="is-a_tiempo" />Gestión a tiempo</span>
+        <span className="fv2-semaforo-leyenda"><i className="is-sla-rojo" />SLA rojo (&gt;2 d tarde) <i className="is-sla-amarillo" />Amarillo (1–2 d) <i className="is-sla-verde" />Verde (a tiempo)</span>
       </footer>
     </div>
 

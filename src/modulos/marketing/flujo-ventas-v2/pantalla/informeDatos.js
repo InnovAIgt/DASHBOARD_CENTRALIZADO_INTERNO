@@ -5,8 +5,9 @@
 // No cambia ninguna fórmula de ../utils. Nunca usa client_phone (además, el servidor ya lo quita).
 // Inventario de campos y cuáles quedan fuera: docs/marketing/DECISIONES.md (D11).
 import { isOpen, isWon, leadUnits, PIPELINE_STAGES, qualificationLabel } from '../utils/analytics.js'
-import { isOverdue, toDate } from '../utils/dates.js'
+import { isOverdue, toDate, toDateFlexible } from '../utils/dates.js'
 import { leadDisplayId, lossReasonLabel, stateLabel } from '../utils/leads.js'
+import { evaluarSlaEtapa } from '../utils/sla.js'
 
 // ---------- Lectura segura de los campos de la API ----------
 const limpiar = (valor) => {
@@ -33,11 +34,7 @@ const propuestaJson = (raw) => (raw?.propuesta_json && typeof raw.propuesta_json
 
 /** Fecha de un campo: acepta AAAA-MM-DD, fecha y hora ISO o DD/MM/AAAA. */
 export function leerFecha(valor) {
-  if (typeof valor === 'string') {
-    const m = valor.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-    if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]))
-  }
-  return toDate(valor)
+  return toDateFlexible(valor)
 }
 const numeroOTexto = (texto) => (/^\s*\d+(\.\d+)?\s*$/.test(texto) ? Number(texto) : texto)
 
@@ -73,6 +70,7 @@ export const VISTAS = [
   { key: 'ganados', label: 'Ganados', tono: 'verde', filtro: isWon },
   { key: 'perdidos', label: 'Perdidos', tono: 'neutro', filtro: (lead) => lead.estado === 'perdido' },
   { key: 'vencidos', label: 'Seguimientos vencidos', tono: 'rojo', filtro: (lead) => isOpen(lead) && isOverdue(lead.proximaGestion) },
+  { key: 'slaVencido', label: 'Etapas vencidas por SLA', tono: 'rojo', filtro: (lead) => ['rojo', 'amarillo'].includes(evaluarSlaEtapa(lead)?.estado) },
   { key: 'sinMotivo', label: 'Sin motivo de pérdida', tono: 'amarillo', filtro: (lead) => lead.estado === 'perdido' && !lead.motivo },
 ]
 
@@ -92,7 +90,7 @@ export const GRUPOS = [
   { key: 'comentarios', label: 'Comentarios', visible: false },
 ]
 
-// tipo: texto | largo (texto recortado) | numero | fecha | etapa | estado | calificacion | semaforo | cliente
+// tipo: texto | largo (texto recortado) | numero | fecha | etapa | estado | calificacion | semaforo | sla | cliente
 // ancho: ancho de la columna en el Excel. valor(lead): dato para ordenar y exportar.
 const c = (grupo, key, label, tipo, ancho, valor) => ({ grupo, key, label, tipo, ancho, valor })
 
@@ -114,6 +112,11 @@ export const COLUMNAS = [
   c('calificacion', 'llamada', 'Tipo de llamada preferida', 'texto', 20, (l) => limpiar(l.raw?.preferred_tipo_llamada)),
   // Avance
   c('avance', 'etapa', 'Etapa', 'etapa', 24, (l) => (Number.isFinite(l.apiStage) ? l.apiStage : null)),
+  c('avance', 'diasEtapa', 'Días en etapa', 'numero', 12, (l) => evaluarSlaEtapa(l)?.diasEnEtapa ?? null),
+  c('avance', 'slaEtapa', 'SLA de etapa', 'sla', 18, (l) => {
+    const prioridad = { rojo: 0, amarillo: 1, verde: 2, sin_fecha: 3, cerrado: 4 }
+    return prioridad[evaluarSlaEtapa(l)?.estado] ?? null
+  }),
   c('avance', 'estado', 'Estado', 'estado', 13, (l) => stateLabel(l.estado)),
   c('avance', 'dias', 'Días desde creación', 'numero', 12, (l) => diasDesdeCreacion(l)),
   c('avance', 'nivelAvance', 'Nivel de avance', 'texto', 16, (l) => deEtapa(l.raw, 5, 'nivel_avance')),
@@ -170,6 +173,7 @@ export function textoCelda(col, valor) {
     return `${dd}/${mm}/${valor.getFullYear()}`
   }
   if (col.tipo === 'etapa') return `${valor} · ${PIPELINE_STAGES[valor - 1] ?? ''}`.trim()
+  if (col.tipo === 'sla') return ['Rojo', 'Amarillo', 'Verde', 'Sin fecha', 'Cerrado'][valor] ?? ''
   return String(valor)
 }
 

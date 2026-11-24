@@ -7,14 +7,14 @@ import { CalendarClock, CheckCircle2, Eye, MessageSquareText, Search, TrendingUp
 import { formatNumber, formatPercent, isOpen, isWon, leadComments, leadUnits, monthLabel, PIPELINE_STAGES } from '../utils/analytics.js'
 import { formatDate, toDate } from '../utils/dates.js'
 import { leadDisplayId, lossReasonLabel } from '../utils/leads.js'
+import { evaluarSlaEtapa, prioridadSla, SLA_DIAS_HABILES } from '../utils/sla.js'
 import { Calificacion, COLORES, EstadoLead, formatearRatio, Insignia, MiniEtapas, PaisChip } from './comunes.jsx'
 import {
   datosAsesor, datosLead, datosMes, descripcionFiltro, ejecutivosEnEtapa, embudoEtapas, esVencido, estaHoy, ETAPAS, fechaReferencia,
   iniciales, INDICADORES, leadsDelFiltro, leadsDeIndicador, mesesDelPeriodo, mesesEnEtapa, pctEntero, pasosVsEquipo,
   recorridoLeads, tonoPaso, ventasPorMes,
 } from './datos.js'
-import { diasDesdeCreacion } from './informeDatos.js'
-import { Semaforo } from './Semaforo.jsx'
+import { Semaforo, SemaforoEtapa } from './Semaforo.jsx'
 import { BarritasMes } from './graficas.jsx'
 import { RecorridoLeads } from './RecorridoLeads.jsx'
 import { NombreLead, Tabla, TablaLeads } from './Tablas.jsx'
@@ -126,7 +126,9 @@ export function DetalleLeads({ clave, leads, titulo, onClose }) {
 
 // ---------- Ejecutivo (4.0b: mismo contenido, reordenado) ----------
 const PESTANAS_LEADS = [
+  { key: 'prioridad', label: 'Prioridad SLA', filtro: isOpen },
   { key: 'abiertos', label: 'Abiertos', filtro: isOpen },
+  { key: 'slaRojo', label: 'SLA en rojo', filtro: (lead) => evaluarSlaEtapa(lead)?.estado === 'rojo', rojo: true },
   { key: 'ganados', label: 'Ganados', filtro: isWon },
   { key: 'perdidos', label: 'Perdidos', filtro: (l) => l.estado === 'perdido' },
   { key: 'vencidos', label: 'Vencidos', filtro: esVencido, rojo: true },
@@ -135,7 +137,7 @@ const PESTANAS_LEADS = [
 /**
  * @param equipo        { ratio, embudo } del EQUIPO (GT + SV, D17) para "equipo: X %" y el punto débil
  * @param ranking       { n, m, estrella } "#N de M en ventas" (D17); si no viene, se usa `posicion` como antes
- * @param filtroInicial opcional (D17): { tipo: 'vencidos' | 'hoyEnEtapa' | 'noPasaron' | 'llegaron', etapa }.
+ * @param filtroInicial opcional (D17): { tipo: 'vencidos' | 'slaRojo' | 'hoyEnEtapa' | 'noPasaron' | 'llegaron', etapa }.
  *                      Sin él la ventana funciona como antes.
  */
 export function DetalleAsesor({ name, country, leads, month, posicion, ranking, equipo, filtroInicial = null, onClose }) {
@@ -143,7 +145,7 @@ export function DetalleAsesor({ name, country, leads, month, posicion, ranking, 
   const [mesSel, setMesSel] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(month ?? '')
   const [selectedType, setSelectedType] = useState('')
-  const [pestanaLeads, setPestanaLeads] = useState('abiertos')
+  const [pestanaLeads, setPestanaLeads] = useState('prioridad')
   // Filtro de la lista "Leads del ejecutivo": el de la ficha (D17) o el clic en una etapa del Avance.
   const [filtro, setFiltro] = useState(filtroInicial)
   const [verPronostico, setVerPronostico] = useState(false)
@@ -156,7 +158,14 @@ export function DetalleAsesor({ name, country, leads, month, posicion, ranking, 
   const vencidos = own.filter(esVencido).length
   const pestana = PESTANAS_LEADS.find((p) => p.key === pestanaLeads)
   const listaLeads = (filtro ? leadsDelFiltro(own, filtro) : own.filter(pestana.filtro))
-    .sort((a, b) => b.apiStage - a.apiStage)
+    .sort((a, b) => {
+      if (filtro?.tipo === 'slaRojo' || pestana.key === 'slaRojo' || pestana.key === 'prioridad') {
+        const slaA = evaluarSlaEtapa(a)
+        const slaB = evaluarSlaEtapa(b)
+        return prioridadSla(slaA) - prioridadSla(slaB) || (slaB?.diasEnEtapa ?? 0) - (slaA?.diasEnEtapa ?? 0)
+      }
+      return b.apiStage - a.apiStage
+    })
   // El tramo amarillo del Recorrido es el punto débil (D17, cambia D16).
   const recorrido = useMemo(() => {
     const r = recorridoLeads(embudo)
@@ -209,7 +218,7 @@ export function DetalleAsesor({ name, country, leads, month, posicion, ranking, 
             {/* Mismo "Recorrido de los leads" (D16) con los leads de este ejecutivo, sin "Mejor" ni aviso.
                 El tramo resaltado es su punto débil frente al equipo (D17).
                 Clic en una etapa: filtra los leads que llegaron a esa etapa. */}
-            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarAviso={false} onClickEtapa={(k) => setFiltro({ tipo: 'llegaron', etapa: k })} />
+            <RecorridoLeads recorrido={recorrido} mostrarMejor={false} mostrarLeyendas={false} onClickEtapa={(k) => setFiltro({ tipo: 'llegaron', etapa: k })} />
             <p className="fv2-nota">
               {debil
                 ? <>Su punto débil: <b className="fv2-texto-amarillo">{debil.nombre}</b> (pasa {pctEntero(debil.ratio)} %, el equipo {pctEntero(debil.equipo)} %: {debil.pts} pts). </>
@@ -243,13 +252,16 @@ export function DetalleAsesor({ name, country, leads, month, posicion, ranking, 
               </button>)}
             </div>
           </div>
-          <Tabla columnas={['Cliente', 'Etapa', 'Calificación', 'Estado', 'Próxima gestión', 'Último comentario', { label: 'Unid.', num: true }, '']}
+          <Tabla columnas={['Cliente', 'Etapa', { label: 'Días en etapa', num: true }, 'SLA de etapa', 'Calificación', 'Estado', 'Próxima gestión', 'Último comentario', { label: 'Unid.', num: true }, '']}
             vacio={listaLeads.length ? null : filtro ? 'Sin leads con este filtro.' : 'Sin leads en esta pestaña.'} className="fv2-tabla-ventana">
             {listaLeads.map((lead) => {
               const comentario = leadComments(lead)[0]
+              const sla = evaluarSlaEtapa(lead)
               return <tr key={lead.id}>
                 <td><button type="button" className="fv2-enlace-lead" onClick={() => setLeadSel(lead)}><NombreLead lead={lead} /></button></td>
                 <td><span className="fv2-etapa-celda"><MiniEtapas etapa={lead.apiStage} ganado={isWon(lead)} /><small>{PIPELINE_STAGES[lead.apiStage - 1] ?? '—'}</small></span></td>
+                <td className="num">{sla?.diasEnEtapa == null ? '—' : `${formatNumber(sla.diasEnEtapa)}${sla.aproximada ? ' · aprox.' : ''}`}</td>
+                <td><SemaforoEtapa lead={lead} /></td>
                 <td><Calificacion tipo={lead.tipoLead} /></td>
                 <td><EstadoLead estado={lead.estado} /></td>
                 <td><Semaforo lead={lead} fecha={toDate(lead.proximaGestion)} /></td>
@@ -339,6 +351,7 @@ function Dato({ etiqueta, valor }) {
 
 export function DetalleLead({ lead, onClose }) {
   const { comments, stage, product } = datosLead(lead)
+  const sla = evaluarSlaEtapa(lead)
   const nombre = lead.clientName ?? `Lead ${leadDisplayId(lead)}`
   return <Ventana capa={2} etiqueta={`Ficha de ${nombre}`} onCerrar={onClose}>
     <CabezaVentana
@@ -361,6 +374,8 @@ export function DetalleLead({ lead, onClose }) {
           <Dato etiqueta="Ejecutivo" valor={lead.asesor} />
           <Dato etiqueta="País" valor={lead.pais} />
           <Dato etiqueta="Etapa actual" valor={stage} />
+          <Dato etiqueta="Tiempo en etapa" valor={sla?.diasEnEtapa == null ? '—' : `${formatNumber(sla.diasEnEtapa)} días${sla.aproximada ? ' · aproximado' : ''}`} />
+          <Dato etiqueta="SLA de etapa" valor={<SemaforoEtapa lead={lead} />} />
           <Dato etiqueta="Calificación" valor={<Calificacion tipo={lead.tipoLead} />} />
           <Dato etiqueta="Producto / rubro" valor={product} />
         </section>
@@ -409,7 +424,8 @@ export function DetalleEtapa({ etapa, leads, embudo, contexto, onClose }) {
   const meses = useMemo(() => mesesEnEtapa(leads, etapa), [leads, etapa])
   const ejecutivos = useMemo(() => ejecutivosEnEtapa(leads, etapa), [leads, etapa])
   const enEtapa = useMemo(() => leads.filter((l) => estaHoy(l, etapa))
-    .sort((a, b) => (diasDesdeCreacion(b) ?? 0) - (diasDesdeCreacion(a) ?? 0)), [leads, etapa])
+    .sort((a, b) => prioridadSla(evaluarSlaEtapa(a)) - prioridadSla(evaluarSlaEtapa(b))
+      || (evaluarSlaEtapa(b)?.diasEnEtapa ?? 0) - (evaluarSlaEtapa(a)?.diasEnEtapa ?? 0)), [leads, etapa])
   const maxMes = Math.max(1, ...meses.map((m) => m.llegaron))
   const maxEjec = Math.max(1, ...ejecutivos.map((f) => f.llegaron))
   const verbo = siguiente ? 'pasaron' : 'se ganaron'
@@ -452,6 +468,12 @@ export function DetalleEtapa({ etapa, leads, embudo, contexto, onClose }) {
               ? <><strong>{e.mejor.name}</strong><small>{formatearRatio(e.mejor.ratio)} de paso · {formatNumber(e.mejor.llegaron)} leads</small></>
               : <><strong>—</strong><small>Nadie tiene al menos 5 leads en esta etapa</small></>}
           </div>
+          <div className={`fv2-etapa-dato ${e.sla.rojos ? 'is-sla-rojo' : e.sla.amarillos ? 'is-sla-amarillo' : ''}`}>
+            <span>SLA de etapa · {SLA_DIAS_HABILES} días hábiles</span>
+            <strong>{formatNumber(e.sla.vencidas)} vencidas</strong>
+            <small>{formatNumber(e.sla.rojos)} rojas · {formatNumber(e.sla.amarillos)} amarillas · {formatNumber(e.sla.verdes)} a tiempo</small>
+            {e.sla.promedioDias != null && <small>Promedio actual: {formatNumber(e.sla.promedioDias)} días</small>}
+          </div>
         </div>
 
         <div className="fv2-ventana-pestanas" role="tablist">
@@ -488,15 +510,19 @@ export function DetalleEtapa({ etapa, leads, embudo, contexto, onClose }) {
           <p className="fv2-nota">De mejor a peor % de paso. Con menos de 5 leads en esta etapa van al final como "pocos datos" y no compiten por "Mejor".</p>
         </>}
 
-        {pestana === 'leads' && <Tabla columnas={['Cliente', 'Ejecutivo', 'País', { label: 'Días desde creación', num: true }, 'Próxima gestión']}
+        {pestana === 'leads' && <Tabla columnas={['Cliente', 'Ejecutivo', 'País', { label: 'Días en etapa', num: true }, 'SLA de etapa', 'Próxima gestión']}
           vacio={enEtapa.length ? null : 'No hay leads abiertos en esta etapa hoy.'}>
-          {enEtapa.map((lead) => <tr key={lead.id} className="fv2-fila-clic" onClick={() => setLeadSel(lead)} title="Abrir la ficha del lead">
-            <td><NombreLead lead={lead} /></td>
-            <td>{lead.asesor}</td>
-            <td><PaisChip pais={lead.pais} /></td>
-            <td className="num">{formatNumber(diasDesdeCreacion(lead) ?? 0)}</td>
-            <td><Semaforo lead={lead} fecha={toDate(lead.proximaGestion)} /></td>
-          </tr>)}
+          {enEtapa.map((lead) => {
+            const sla = evaluarSlaEtapa(lead)
+            return <tr key={lead.id} className="fv2-fila-clic" onClick={() => setLeadSel(lead)} title="Abrir la ficha del lead">
+              <td><NombreLead lead={lead} /></td>
+              <td>{lead.asesor}</td>
+              <td><PaisChip pais={lead.pais} /></td>
+              <td className="num">{sla?.diasEnEtapa == null ? '—' : `${formatNumber(sla.diasEnEtapa)}${sla.aproximada ? ' · aprox.' : ''}`}</td>
+              <td><SemaforoEtapa lead={lead} /></td>
+              <td><Semaforo lead={lead} fecha={toDate(lead.proximaGestion)} /></td>
+            </tr>
+          })}
         </Tabla>}
       </div>
     </Ventana>

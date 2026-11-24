@@ -1,10 +1,11 @@
 // Flujo de ventas v2 · "Recorrido de los leads" (D16): las 6 etapas como rastreo de pedido.
 // Recibe el resultado de recorridoLeads() (datos.js), que a su vez sale de embudoEtapas(): mismos
 // números que la ventana de detalle de etapa. Los % se muestran redondeados a entero (53.8 % → 54 %).
-// Colores (D12): verde / gris / amarillo según LIMITES_PASO; nada de rojo.
+// La línea de conversión conserva D12; el semáforo de tiempo por etapa sigue D19.
 // Se usa en la pestaña Resumen y en "Avance por etapa" de la ventana del ejecutivo (sin "Mejor").
-import { CalendarDays, Check, ChevronRight, Monitor, Phone, Send, TriangleAlert, UserPlus } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Monitor, Phone, Send, UserPlus } from 'lucide-react'
 import { formatNumber } from '../utils/analytics.js'
+import { GRACIA_AMARILLA_DIAS_HABILES, SLA_DIAS_HABILES } from '../utils/sla.js'
 import { pctEntero } from './datos.js'
 
 const ICONOS = [UserPlus, CalendarDays, Monitor, Send, Phone, Check]
@@ -39,6 +40,7 @@ function Etapa({ e, total, frenado, mostrarMejor, onClick }) {
   const resaltada = frenado?.hasta === e.stage
   const tono = resaltada ? 'amarillo' : e.llegaron === 0 ? 'vacio' : esCierre && ganados > 0 ? 'verde' : 'azul'
   const esperando = e.hoy > 0 ? `${formatNumber(e.hoy)} esperando aquí` : null
+  const sla = e.sla
 
   let pastilla
   if (esCierre) {
@@ -55,6 +57,16 @@ function Etapa({ e, total, frenado, mostrarMejor, onClick }) {
       <strong className="fv2-rec-numero">{formatNumber(e.llegaron)}</strong>
       <small>{e.stage === 1 ? 'leads entraron' : `${pct(total ? e.llegaron / total : 0)} del total`}</small>
       {pastilla}
+      <span className="fv2-rec-plazo">
+        <b>SLA {sla?.slaDias ?? 2} días hábiles</b>
+        <small>{sla?.promedioDias == null ? 'Sin promedio actual' : `Promedio actual: ${formatNumber(sla.promedioDias)} días`}</small>
+      </span>
+      <span className="fv2-rec-semaforos" aria-label={`SLA: ${sla?.rojos ?? 0} rojos, ${sla?.amarillos ?? 0} amarillos, ${sla?.verdes ?? 0} verdes`}>
+        <span className="is-rojo"><i />{formatNumber(sla?.rojos ?? 0)}</span>
+        <span className="is-amarillo"><i />{formatNumber(sla?.amarillos ?? 0)}</span>
+        <span className="is-verde"><i />{formatNumber(sla?.verdes ?? 0)}</span>
+      </span>
+      {sla?.sinFecha > 0 && <small className="fv2-rec-sin-fecha">{formatNumber(sla.sinFecha)} sin fecha</small>}
       {mostrarMejor && (e.mejor
         ? <span className="fv2-rec-mejor" title="Mayor % de paso a la siguiente etapa (mínimo 5 leads); en Cierre, % que se ganó">Mejor: ★ {e.mejor.name} · {pct(e.mejor.ratio)}</span>
         : <span className="fv2-rec-mejor is-pocos">Mejor: pocos datos</span>)}
@@ -71,13 +83,11 @@ function Etapa({ e, total, frenado, mostrarMejor, onClick }) {
  * @param recorrido     resultado de recorridoLeads(embudo)
  * @param titulo        si se pasa, se muestra el encabezado con título y subtítulo
  * @param mostrarMejor  línea "Mejor: ★ …" en cada tarjeta (no en la ventana del ejecutivo)
- * @param mostrarAviso  aviso "el recorrido se frena entre A y B" y leyenda de colores
+ * @param mostrarLeyendas  leyendas de colores y SLA bajo el recorrido
  * @param onClickEtapa  (k) => …; sin él, las etapas no se pueden cliquear
  */
-export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = true, mostrarAviso = true, onClickEtapa }) {
-  const { etapas, tramos, frenado, entraron, enCamino, cerrados } = recorrido
-  const a = frenado ? etapas[frenado.desde - 1] : null
-  const b = frenado ? etapas[frenado.hasta - 1] : null
+export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = true, mostrarLeyendas = true, mostrarResumenSla = true, onClickEtapa }) {
+  const { etapas, tramos, frenado, entraron, enCamino, cerrados, sla } = recorrido
 
   return <div className="fv2-rec">
     <div className="fv2-rec-cabeza">
@@ -92,6 +102,14 @@ export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = tr
       </div>
     </div>
 
+    {sla && mostrarResumenSla && <div className="fv2-rec-sla-resumen" aria-label="Resumen del SLA de etapas">
+      <div className="fv2-rec-sla-metrica is-vencida"><span>Etapas vencidas</span><strong>{formatNumber(sla.vencidas)}</strong><small>amarillas + rojas</small></div>
+      <div className="fv2-rec-sla-metrica is-rojo"><span>Prioridad alta</span><strong>{formatNumber(sla.rojos)}</strong><small>más de {GRACIA_AMARILLA_DIAS_HABILES} días tarde</small></div>
+      <div className="fv2-rec-sla-metrica is-amarillo"><span>Recién vencidas</span><strong>{formatNumber(sla.amarillos)}</strong><small>hasta {GRACIA_AMARILLA_DIAS_HABILES} días tarde</small></div>
+      <div className="fv2-rec-sla-metrica is-verde"><span>A tiempo</span><strong>{formatNumber(sla.verdes)}</strong><small>{sla.cumplimiento == null ? 'sin datos' : `${pct(sla.cumplimiento)} del medible`}</small></div>
+      {sla.sinFecha > 0 && <p className="fv2-rec-sla-nota">{formatNumber(sla.sinFecha)} etapa(s) sin fecha disponible. Los tiempos se cuentan de lunes a viernes y no descuentan feriados.</p>}
+    </div>}
+
     <div className="fv2-rec-pista">
       {/* Tramos en escritorio: capa encima de la fila de círculos (no reciben clics). */}
       <div className="fv2-rec-tramos" aria-hidden="true">
@@ -104,7 +122,7 @@ export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = tr
       </div>)}
     </div>
 
-    {mostrarAviso && <>
+    {mostrarLeyendas && <>
       <p className="fv2-rec-leyenda">
         <span>Colores de la línea (% que pasa a la siguiente etapa):</span>
         <span><i className="is-verde" />Verde ≥ 75 % · bien</span>
@@ -112,14 +130,7 @@ export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = tr
         <span><i className="is-amarillo" />Amarillo &lt; 60 % · atención</span>
         <span><i className="is-pocos" />Punteado = pocos datos (menos de 5 leads)</span>
       </p>
-      <div className={`fv2-rec-aviso ${frenado ? '' : 'is-neutro'}`}>
-        {frenado && <TriangleAlert size={16} className="fv2-rec-aviso-icono" aria-hidden="true" />}
-        <p>
-          {frenado && <><b className="fv2-texto-amarillo">Atención:</b> el recorrido se frena entre <b>{a.label}</b> y <b>{b.label}</b> — de {formatNumber(frenado.llegaron)} leads, {frenado.pasaron === 0 ? 'ninguno siguió' : `solo ${formatNumber(frenado.pasaron)} ${frenado.pasaron === 1 ? 'siguió' : 'siguieron'}`}. </>}
-          <span className="fv2-tenue">"Mejor" = ejecutivo que más leads pasa a la siguiente etapa (mínimo 5 leads). Etapa estimada: los perdidos se ubican en la última etapa con datos del vendedor.</span>
-        </p>
-        {onClickEtapa && <span className="fv2-rec-aviso-clic">Clic en una etapa → ver su detalle</span>}
-      </div>
+      <p className="fv2-rec-sla-leyenda">SLA de etapa: {SLA_DIAS_HABILES} días hábiles. Verde = dentro del plazo · amarillo = hasta {GRACIA_AMARILLA_DIAS_HABILES} días hábiles de atraso · rojo = más de {GRACIA_AMARILLA_DIAS_HABILES} días hábiles de atraso. Si falta el hito de etapa, se estima desde la creación y se marca como aproximado.</p>
     </>}
   </div>
 }

@@ -44,44 +44,58 @@ con F12) y no hace falta un robot ni una base de datos para lo básico.
 | `api/marketing/reuniones.js` | Función de Vercel: el "mesero" que llama a Prospekt IA con la llave escondida |
 | `server/marketingReuniones.js` | La misma lógica, compartida para que también funcione en local (`npm run dev`); quita el teléfono del cliente antes de responder |
 | `src/components/layout/PortalLayout.tsx` | Entrada "Flujo de ventas" del menú (MARKETING), conectada a la v2; el menú lateral se esconde solo en la v2 (se asoma al acercar el mouse al borde izquierdo) |
-| `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` | Pantalla principal: encabezado, filtros fijos y pestañas **Resumen** / **Ejecutivos** / **Informe detallado** |
+| `src/modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx` | Pantalla principal: encabezado, filtros fijos y pestañas **Panel completo**, **Detalle de leads** y **Forecast** |
 | `src/modulos/marketing/flujo-ventas-v2/flujo-ventas-v2.css` | Estilos propios (tema oscuro basado en Activaciones), encerrados en `.fv2` |
 | `src/modulos/marketing/flujo-ventas-v2/utils/`, `types/`, `hooks/`, `context/`, `services/` | **Lógica copiada** de InnovAIgt/DashboardLeads, sin cambios (carga de datos, filtros y cálculos) |
 | `…/pantalla/datos.js` | Cálculos de la pantalla: período, conversión de calificados corregida, agrupaciones |
-| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx` | Pestaña Resumen: tarjetas por país, indicadores, "Leads por mes" y "Recorrido de los leads" |
-| `…/pantalla/RecorridoLeads.jsx` | "Recorrido de los leads": las 6 etapas como rastreo de pedido (Resumen y ventana del ejecutivo) |
-| `…/pantalla/Ejecutivos.jsx` | Pestaña Ejecutivos: fichas de coaching comparadas con el equipo (D17) |
+| `…/pantalla/VistaGeneral.jsx`, `graficas.jsx` | Panel completo: tarjetas por país, indicadores, seguimiento SLA/coaching, "Leads por mes" y ranking |
+| `…/pantalla/RecorridoLeads.jsx` | "Recorrido de los leads": las 6 etapas como rastreo de pedido (panel y ventana del ejecutivo) |
+| `…/pantalla/Ejecutivos.jsx` | Seguimiento integrado: alertas de equipo, recorrido por etapa y coaching comparado (D17) |
+| `…/pantalla/Forecast.jsx` | Vista independiente del forecast elegible y oportunidades abiertas por etapa |
 | `…/pantalla/Tablas.jsx` | Tabla y tabla de leads que usan las ventanas |
-| `…/pantalla/Filtros.jsx` | Barra de filtros (país, período, panel Filtros) |
+| `…/pantalla/Filtros.jsx` | Barra de filtros (país, período y panel Filtros) |
 | `…/pantalla/Ventanas.jsx` | Ventanas de detalle (indicadores, ejecutivo, mes y ficha del lead) |
 | `…/pantalla/comunes.jsx` | Piezas visuales comunes (banderas, insignias, avisos) |
-| `…/pantalla/Informe.jsx` | Pestaña Informe detallado: vistas rápidas, tabla, buscador, orden, páginas |
-| `…/pantalla/Semaforo.jsx` | Píldora de la próxima gestión con semáforo (informe y ventana de etapa) |
+| `…/pantalla/Informe.jsx` | Pestaña Detalle de leads: vistas rápidas, tabla, buscador, orden, páginas |
+| `…/pantalla/Semaforo.jsx` | Píldoras separadas para próxima gestión y SLA de etapa |
 | `…/pantalla/informeDatos.js` | Columnas del informe (campos de la API por grupo), vistas rápidas y semáforo |
+| `…/utils/sla.js` | Tiempo hábil en etapa, semáforo SLA y resumen por etapa |
 | `…/pantalla/excel.js` | Botón "Descargar Excel": misma plantilla y método que el Excel de Activaciones |
 | `…/pantalla/pdf.js` | Botón "PDF": carga la herramienta compartida del portal (`dashboard-pdf.js`) y arma el reporte con la plantilla de Activaciones |
 | `docs/marketing/` | Esta documentación |
 
-## Pestañas
+## Panel completo
 
-Debajo de los filtros: **Resumen** (tarjetas por país, 2 indicadores —Conversión de calificados
-y Unidades vendidas—, "Leads por mes" y "Recorrido de los leads") · **Ejecutivos** (tarjetas por ejecutivo) · **Informe detallado**. La zona de filtros
-y pestañas queda fija arriba: la v2 se desplaza dentro de su propio contenedor (alto de la
-pantalla menos la barra del portal). La pestaña elegida se recuerda mientras la página esté abierta.
+Al abrir, el **Panel completo** reúne en la misma vista los indicadores, tendencia y embudo mensual
+dinámicos, comparativa regional, tarjetas por país, ranking, SLA, prioridades, recorrido y mejor
+ejecutivo por etapa, y coaching por vendedor. **Forecast** y **Detalle de leads** son vistas independientes; las tres pestañas comparten
+la barra fija de filtros y la v2 se desplaza dentro de su propio contenedor (alto de la pantalla
+menos la barra del portal).
 
+- **Orden del panel:** indicadores generales → gráfica y embudo de conversión por mes → comparación
+  Guatemala/El Salvador → resultados por país y ranking → seguimiento SLA, recorrido y coaching.
+- **Tendencia y embudo mensual:** los meses con leads aparecen automáticamente según el período,
+  país, ejecutivo y tipo de lead filtrados. La gráfica compara calificados/no calificados, ganados y
+  unidades; el embudo muestra el total filtrado y cada mes. No se agrega el filtro "Month to day".
 - Clic en cualquier dato de una tarjeta de país (conversión, Total leads, Calificados, Ganados,
   Unidades por cierre) → Detalle de leads de ese dato, solo con los leads de ese país.
 - Clic en un mes de "Leads por mes" → Detalle mensual de ese mes con el filtro de país actual.
-- **Ejecutivos:** fichas de ancho completo ordenadas para coaching. Cada ficha compara citas,
+- **Seguimiento y coaching:** selector temporal de vista **Jefatura / equipo** o **Ejecutivo** y selector de equipo (Guatemala, El Salvador o ambos; no hay inicio de sesión real todavía). Jefatura ve primero los rojos agrupados por vendedor y ordenados por cantidad; los seguimientos con próxima gestión vencida aparecen aparte por vendedor. El vendedor ve su lista de oportunidades ordenada rojo → amarillo → verde. Cada ficha compara citas,
   propuestas y ganados del vendedor con el equipo (ambos países, mismo período y tipo de lead);
-  muestra su avance por etapa, brecha principal, seguimientos vencidos, acciones y ranking de
-  ventas. Clic en un paso o acción → detalle del ejecutivo con los leads correspondientes.
-  Los ejecutivos sin leads en el período aparecen en una franja aparte. El PDF conserva su tabla
-  actual de ejecutivos (D17).
+  muestra su avance por etapa, tiempo y cumplimiento de SLA, brecha principal, seguimientos
+  vencidos, acciones de esta semana y ranking de ventas. En la vista de jefatura se puede elegir un
+  vendedor para consultar su coaching sin abandonar el panel. El SLA de etapa y el vencimiento de
+  próxima gestión son indicadores distintos. Clic en un paso o acción → detalle del ejecutivo con
+  los leads correspondientes. El PDF conserva su tabla de ejecutivos (D17).
+- **Forecast:** conserva los filtros de País, Período, Ejecutivo y Tipo de lead de la barra superior.
+  Los botones de 7, 15, 30 y 60 días cambian el horizonte sin alterar los filtros. Cuenta casos,
+  ejecutivos y unidades; lista solo leads abiertos en Seguimiento, no excluidos, con señal de cierre
+  en el comentario y próxima gestión dentro del horizonte. Debajo permite desplegar las oportunidades
+  por etapa, con tiempo promedio y SLA.
 
 ## Descarga en PDF
 
-Botón rojo **PDF** junto a la barra de filtros (visible en las 3 pestañas). Abre la misma ventana
+Botón rojo **PDF** junto a la barra de filtros (visible en las tres vistas). Abre la misma ventana
 de Activaciones ("¿Qué módulos deseas incluir?") con los filtros aplicados en chips y 3 módulos:
 **01 Resumen** (países, indicadores, leads por mes y embudo por etapa), **02 Ejecutivos** (una
 fila por ejecutivo, incluidos los de 0, y total del equipo) y **03 Informe detallado** (la vista
@@ -98,14 +112,14 @@ completo está en el Excel). Archivo: `Reporte_flujo_ventas_<GT|SV|GT-SV>_<desde
 Al abrir: todos los países, **Tipo de lead = Calificado** y **Período = del día 1 del mes
 hasta hoy**.
 
-## Recorrido de los leads (pestaña Resumen, DECISIONES D16)
+## Recorrido de los leads (Panel completo, DECISIONES D16)
 
 Seis círculos unidos por una línea (Asignación → Reunión → Demo → Envío de propuesta →
 Seguimiento → Cierre). Sobre cada tramo: "−X · Y % pasa", con color según el % de paso (verde
 ≥ 75 %, gris 60–74 %, amarillo < 60 %; punteado = pocos datos, menos de 5 leads). Debajo de cada
 etapa: leads que llegaron, % del total, cuántos esperan hoy ahí y "Mejor: ★ ejecutivo · xx %".
 Arriba: entraron · en camino (abiertos hoy) · cerrados (ganados). El tramo donde más se frena
-(menor % con al menos 5 leads) va resaltado en amarillo, con un aviso. Respeta los filtros.
+(menor % con al menos 5 leads) va resaltado en amarillo. Respeta los filtros.
 Componente: `pantalla/RecorridoLeads.jsx`; datos: `recorridoLeads()` en `pantalla/datos.js`.
 También se usa en "Avance por etapa" de la ventana del ejecutivo (sin "Mejor").
 
@@ -118,12 +132,32 @@ También se usa en "Avance por etapa" de la ventana del ejecutivo (sin "Mejor").
   cuántos con gestión vencida) y el mejor ejecutivo, más las pestañas **Por mes**,
   **Por ejecutivo** y **Leads en esta etapa**.
 
+## Tiempo y SLA por etapa
+
+El SLA común acordado es de **2 días hábiles por etapa** para los leads abiertos. Verde = dentro
+del plazo (hasta 2 días hábiles en la etapa), amarillo = 1–2 días hábiles de atraso y rojo = más de
+2 días hábiles de atraso. El indicador de etapas vencidas cuenta amarillo + rojo; el cumplimiento
+por ejecutivo es el porcentaje de etapas abiertas con fecha conocida que siguen verdes, aunque el
+negocio no se haya cerrado.
+
+Se cuentan lunes a viernes; el cálculo **no descuenta feriados** porque aún no hay calendarios
+aprobados por país. Se usa el hito disponible de la etapa (reunión, demo, envío de propuesta,
+seguimiento o cierre); si falta, se estima desde la creación y la pantalla lo etiqueta como
+aproximado. Si tampoco existe fecha de creación, esa etapa aparece como "Sin fecha" y no entra en
+el porcentaje de cumplimiento. Los leads cerrados no cuentan como una etapa activa vencida.
+
+El panel muestra arriba las etapas vencidas, rojas, amarillas y a tiempo; el recorrido agrega el
+promedio de días y conteos de cada color por etapa. El Informe agrega las columnas **Días en etapa**
+y **SLA de etapa**, además de una vista rápida de etapas vencidas. La vista del vendedor inicia con
+rojo → amarillo → verde; la de jefatura ordena a los vendedores por cantidad de rojos y lista
+aparte los seguimientos cuya próxima gestión ya pasó.
+
 ## Regla de colores de los datos (DECISIONES D12)
 
 | Color | Para qué |
 |---|---|
-| Rojo `#c43c50` | Solo lo crítico: seguimientos vencidos y próxima gestión vencida |
-| Amarillo `#c59600` | Atención: etapa con la mayor caída, % de paso bajo (< 60 %), gestión para hoy, perdidos sin motivo |
+| Rojo `#c43c50` | Solo lo crítico: etapas SLA con más de 2 días hábiles de atraso y seguimientos vencidos |
+| Amarillo `#c59600` | Atención: etapa SLA con hasta 2 días hábiles de atraso, etapa con la mayor caída, % de paso bajo (< 60 %), gestión para hoy, perdidos sin motivo |
 | Verde `#2f8f76` | Va bien: % de paso ≥ 75 %, ganados, gestión a tiempo |
 | Azul `#4f8fd8` / gris | Información neutral: calificados, % normales (60–74 %), perdidos |
 
