@@ -9,7 +9,7 @@ import { exportarExcel } from '../../datos/excel.js'
 import { AvisoDetalle, BotonExcel, Buscador, columnasExportar, filasDelCorreo, nombreCampana, Paginacion, Tabla, TONO_ESTADO } from './Correos.jsx'
 import { Ficha } from './Ficha.jsx'
 import { CeldaEmpresas, textoEmpresas } from './empresas.jsx'
-import { Aviso, Enfoque, InsigniaCargo, Tarjeta, TarjetaBajita, TituloCampana } from './piezas.jsx'
+import { Aviso, Bloque, Enfoque, InsigniaCargo, Tarjeta, TarjetaBajita, TituloCampana } from './piezas.jsx'
 
 const TARJETAS = [
   { id: 'varias', sub: 'El correo aparece en más de un código de cliente', color: COLORES.amarillo, tono: 'amarillo' },
@@ -62,6 +62,7 @@ export function RelacionConClientes({ campanas, detalle, errorDetalle, foco, lim
     {foco && <Enfoque titulo={foco.titulo ?? 'Relación con clientes'} detalle={`${numero(campanas.length)} campañas según los filtros de arriba`} onTodos={limpiarFoco} onVolver={volver} />}
     <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
     {sinCruce && <Aviso titulo="No se pudo leer Cumplimiento de Clientes" texto={detalle.avisoCruce} />}
+    <Bloque titulo="Base de clientes · verificación de correspondencias" />
     <div className="mkv2-bajitas">
       {TARJETAS.map((t) => <TarjetaBajita key={t.id} titulo={CLASIFICACIONES[t.id]} valor={sinCruce ? '—' : numero(conteo[t.id])} color={t.color}
         sub={categoria === t.id ? 'filtro puesto' : undefined} activo={categoria === t.id} onClick={sinCruce ? undefined : elegir(t.id)}
@@ -75,7 +76,7 @@ ${categoria === t.id ? 'Clic para quitar el filtro' : 'Clic para ver solo estos 
       personal (gmail, hotmail, outlook, yahoo…) nunca dan posibles. «Sin coincidencia» <strong>no</strong> significa
       correo inválido: solo que no está en la base.
     </div>
-    <Tarjeta titulo="Directorio y coincidencias" sub="Una fila por correo y campaña · clic en una tarjeta para filtrar · exporta lo que se ve"
+    <Tarjeta titulo="Directorio y coincidencias" sub="Una fila por correo y campaña · clic en una tarjeta para filtrar · «Ejecutivo» es el responsable del cliente en la base, no el destinatario"
       acciones={<BotonExcel onClick={exportar} total={lista.length} />}>
       <div className="mkv2-barra-tabla">
         <Buscador valor={texto} onCambio={(v) => { setTexto(v); setPagina(1) }} placeholder="Buscar correo, cliente, código, ejecutivo o campaña" />
@@ -84,6 +85,7 @@ ${categoria === t.id ? 'Clic para quitar el filtro' : 'Clic para ver solo estos 
       <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`} onFila={(x) => setFicha({ correo: x.correo, campana: x.campana_id })}
         vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : filas.length ? 'Sin resultados con esta búsqueda o filtros.' : 'Sin detalle por correo para estas campañas.'} />
       <Paginacion p={p} onPagina={setPagina} tamano={tamano} onTamano={(n) => { setTamano(n); setPagina(1) }} />
+      <p className="mkv2-nota">Cumplimiento de Clientes se lee en SOLO LECTURA. Los datos de clientes son de uso interno.</p>
     </Tarjeta>
     {ficha && <Ficha filas={filasDelCorreo(filas, ficha.correo, ficha.campana)} nombres={nombres} onCerrar={cerrarFicha} />}
   </>

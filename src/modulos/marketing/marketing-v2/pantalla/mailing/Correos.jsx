@@ -16,7 +16,7 @@ import {
 import { columnasCampana, textosCampana } from '../../datos/campana.js'
 import { aCsv, descargarCsv } from '../../datos/csv.js'
 import { exportarExcel } from '../../datos/excel.js'
-import { Aviso, Enfoque, FilaBarra, Gris, InsigniaCargo, Tarjeta, TarjetaBajita, TEXTO_WEBHOOK, TituloCampana } from './piezas.jsx'
+import { Aviso, Bloque, COLOR_MAILING, Enfoque, FilaBarra, Gris, InsigniaCargo, Tarjeta, TarjetaBajita, TEXTO_WEBHOOK, TituloCampana } from './piezas.jsx'
 
 const v = (s, n) => (s.hayDatos ? numero(n) : '—')
 const detalleFiltro = (campanas) => `${numero(campanas.length)} campañas según los filtros de arriba`
@@ -123,12 +123,18 @@ const filtrosTexto = (campanas, extra) => [['Campañas (filtros de arriba)', `${
 // Misma estructura que la referencia visual: franja con el total y «Exportar lista CSV», «Correos pendientes por
 // ejecutivo» (Ejecutivos.jsx) y el listado con una fila por correo + campaña; «Ver eventos» abre la ficha de siempre.
 
-/** Motivos técnicos (CORREGIR / MANTENER): se muestran en Detalle por correo (paso 5 del rediseño). */
-export function Motivos({ titulo, sub, motivos, color, hayDatos }) {
+/**
+ * Motivos técnicos (CORREGIR / MANTENER) en Detalle por correo (paso 5 del rediseño). motivos: [[motivo, n]].
+ * Con onElegir, cada motivo filtra la tabla (activo = el motivo puesto).
+ */
+export function Motivos({ titulo, sub, motivos, color, hayDatos, onElegir, activo = '' }) {
   const max = motivos[0]?.[1] ?? 0
   return <Tarjeta titulo={titulo} sub={sub}>
     {hayDatos && motivos.length
-      ? <div className="mkv2-embudo">{motivos.map(([m, n]) => <FilaBarra key={m} nombre={m} valor={n} max={max} color={color} />)}</div>
+      ? <div className="mkv2-embudo mkv2-embudo-rol">{motivos.map(([m, n]) => <FilaBarra key={m} nombre={m} valor={n} max={max} color={color} activa={activo === m}
+        tip={`${m}: ${numero(n)} ${n === 1 ? 'caso' : 'casos'} (correo + campaña)${onElegir ? `
+${activo === m ? 'Clic para quitar el filtro' : 'Clic para ver solo estos en la tabla'}` : ''}`}
+        onClick={onElegir ? () => onElegir(m) : undefined} />)}</div>
       : <Aviso icono="info" titulo={hayDatos ? 'Sin casos en las campañas filtradas' : 'Sin detalle por correo todavía'} texto={hayDatos ? undefined : TEXTO_WEBHOOK} />}
   </Tarjeta>
 }
@@ -230,6 +236,17 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
   const e = estadoDetalle(f.estado)
   const poner = (k) => (val) => { setF((x) => ({ ...x, [k]: val })); setPagina(1) }
   const elegir = (id) => () => poner('estado')(id)
+  // Motivos técnicos de las filas de las campañas filtradas (sin los filtros de la tabla): CORREGIR y MANTENER.
+  const motivos = useMemo(() => {
+    const cuenta = { CORREGIR: new Map(), MANTENER: new Map() }
+    for (const x of filas) {
+      const m = x.motivoTecnico ?? (x.status === 'CORREGIR' ? 'Pendiente de verificar' : null)
+      if (m && cuenta[x.status]) cuenta[x.status].set(m, (cuenta[x.status].get(m) ?? 0) + 1)
+    }
+    const orden = (mapa) => [...mapa].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es'))
+    return { CORREGIR: orden(cuenta.CORREGIR), MANTENER: orden(cuenta.MANTENER) }
+  }, [filas])
+  const elegirMotivo = (status) => (m) => { setF((x) => (x.motivo === m && x.status === status ? { ...x, motivo: '', status: '' } : { ...x, motivo: m, status })); setPagina(1) }
 
   const columnas = [
     { label: 'Correo', clase: 'mkv2-celda-correo', celda: (x) => <strong className="mkv2-texto-fuerte">{x.correo}</strong>, valor: (x) => x.correo, ancho: 34 },
@@ -252,7 +269,7 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
     titulo: 'DETALLE POR CORREO · MAILING', subtitulo: `${numero(lista.length)} filas (correo y campaña) · estado: ${e.label}`,
     columnas: columnasExportar(columnas, nombres), filas: lista,
     filtros: filtrosTexto(campanas, [['Estado', e.label], ['Status', f.status || 'Todos'], ['Apertura', f.apertura || 'Todas'], ['Clic', f.clic || 'Todos'],
-      ['Origen', ORIGEN[f.origen] ?? 'Todos'], ['Búsqueda', f.texto || 'Ninguna']]),
+      ['Origen', ORIGEN[f.origen] ?? 'Todos'], ['Motivo técnico', f.motivo || 'Todos'], ['Búsqueda', f.texto || 'Ninguna']]),
   })
 
   return <>
@@ -260,12 +277,21 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
     <AvisoDetalle detalle={detalle} errorDetalle={errorDetalle} onReintentar={reintentar} />
     {errorResumen && <Aviso titulo="No se pudo leer el resumen de eventos" texto={errorResumen} onReintentar={reintentar} />}
 
+    <Bloque titulo="Resultado del envío" />
     <div className="mkv2-bajitas">
       {ESTADOS_DETALLE.filter((x) => x.id !== 'todos').map((x) => <TarjetaBajita key={x.id} titulo={x.label} valor={numero(x.brevo(t))} color={COLOR_ESTADO[x.id]}
         sub={s.hayDatos ? `con detalle: ${numero(x.webhook(s))}` : 'total de Brevo'} activo={f.estado === x.id} onClick={elegir(f.estado === x.id ? 'todos' : x.id)}
         tip={`${x.label}: ${numero(x.brevo(t))} según Brevo${x.notaBrevo ? ` (${x.notaBrevo})` : ''}${s.hayDatos ? `
 Con detalle por persona: ${numero(x.webhook(s))}` : ''}
 ${f.estado === x.id ? 'Clic para ver todos' : 'Clic para ver solo estos en la tabla'}`} />)}
+    </div>
+
+    <Bloque titulo="Motivos técnicos" />
+    <div className="mkv2-duo">
+      <Motivos titulo="Motivos de «CORREGIR CORREO»" sub="La dirección se debe verificar o corregir · clic para ver esos correos" motivos={motivos.CORREGIR}
+        color={COLOR_MAILING.duro} hayDatos={filas.length > 0} onElegir={elegirMotivo('CORREGIR')} activo={f.status === 'CORREGIR' ? f.motivo : ''} />
+      <Motivos titulo="Motivos de «MANTENER CORREO»" sub="Rebotes que no prueban que la dirección esté mal · clic para ver esos correos" motivos={motivos.MANTENER}
+        color={COLOR_MAILING.temporal} hayDatos={filas.length > 0} onElegir={elegirMotivo('MANTENER')} activo={f.status === 'MANTENER' ? f.motivo : ''} />
     </div>
 
     <Tarjeta titulo="Detalle por destinatario" sub={`Una fila por correo y campaña · ${e.label}: ${numero(e.brevo(t))} según Brevo; con detalle por persona: ${numero(lista.length)} filas`}
@@ -278,6 +304,7 @@ ${f.estado === x.id ? 'Clic para ver todos' : 'Clic para ver solo estos en la ta
         <Selector etiqueta="Apertura" valor={f.apertura} onCambio={poner('apertura')} opciones={['APERTURA REGISTRADA', 'APERTURA AUTOMÁTICA', 'NO REGISTRADA']} todos="Todas" />
         <Selector etiqueta="Clic" valor={f.clic} onCambio={poner('clic')} opciones={['CLIC REGISTRADO', 'SIN CLIC REGISTRADO']} />
         <Selector etiqueta="Origen" valor={f.origen} onCambio={poner('origen')} opciones={Object.entries(ORIGEN)} />
+        {f.motivo && <button type="button" className="fv2-pildora" onClick={() => poner('motivo')('')}>Quitar motivo «{f.motivo}»</button>}
       </div>
       <Tabla columnas={columnas} filas={p.filas} clave={(x) => `${x.campana_id}|${x.correo}`} onFila={(x) => setFicha({ correo: x.correo, campana: x.campana_id })}
         vacio={detalle?.mostrarCorreos === false ? 'Los correos están ocultos.' : filas.length ? 'Sin resultados con esta búsqueda o filtros.' : TEXTO_WEBHOOK} />
