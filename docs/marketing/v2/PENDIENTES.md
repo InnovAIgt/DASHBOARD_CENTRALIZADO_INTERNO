@@ -34,6 +34,10 @@ la fecha.
 | Pendiente | A quién se le pidió | Fecha | Estado |
 |---|---|---|---|
 | Confirmar la definición de «Lectura estimada» (aperturas de Brevo menos las automáticas de Apple MPP, campaña por campaña, sobre entregados; MAILING.md, sección 5) y los indicadores de Redes; meta de costo por mensaje y de costo por clic para el semáforo | Ingeniero | 2026-11-23 | Pendiente: la lectura estimada ya se muestra con esa regla |
+| Redes · meta de **costo por mensaje** por moneda para la pauta (hoy US$ 1.50 y «cerca» hasta US$ 2.50, tomadas del mockup; sin meta en Q no hay color) | Ingeniero / Keily | 2026-11-24 | Pendiente |
+| Redes · caso B: confirmar en la parte (1) que las publicaciones de Facebook traen `scheduled_publish_time` (sin eso, lo programado que ya salió no se puede reconocer y el caso B solo muestra pendientes vencidas y por venir) | Keily (con el token) | Parte (1) | Pendiente |
+| Redes · fase 2 con datos de ejemplo: horarios (por hora), edad y sexo, segmentaciones (conjuntos de anuncios), plataforma y ubicación y formularios. Conectar solo si Meta los da sin complicar la fase 1 | Keily / Ismael | Después de la fase 1 | Pendiente |
+| Redes · el cuadro marca → cuentas (server/redes/cuadroMarcas.js) se llena en la parte (1) con la lista que confirme Marketing | Keily / Marketing | Parte (1) | Pendiente |
 | Redes · umbral del semáforo «¿Cumplimos lo programado?» (propuesta: 100 % verde, 90–99 % amarillo, menos de 90 % rojo; REDES.md, sección 4) y meta de costo por mensaje y por clic | Ingeniero | 2026-11-24 | Pendiente |
 
 ## Eduardo / TI

@@ -2,6 +2,25 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Redes sociales: partes (2) a (5) y Anuncios, con datos de ejemplo (sin token)
+
+- **(2) Rutas** `/api/marketing/redes/{cuentas,publicaciones,programadas,anuncios}` (server/redes/): solo lectura de Meta,
+  firma appsecret_proof, token de página, errores claros (token vencido, permiso, límite), aviso por cuenta que falla y
+  caché de 30 min. Sin `META_TOKEN` responden «sin_token» y la pantalla usa ejemplo. El cuadro de marcas
+  (server/redes/cuadroMarcas.js) está vacío hasta la parte (1). Probado con respuestas inventadas; no se llamó a Meta.
+- **(3) Resumen y Publicaciones** como el mockup v6 (lo esencial, pedido del ingeniero): 6 tarjetas, «Lo importante del
+  mes», 3 donas que filtran, programado vs publicado por marca, alcance por semana, ¿qué marca va mejor? (vs mismo
+  período del mes anterior), top 5 / no salieron, pauta; calendario, mejor día y tabla ordenable.
+- **(4) Programadas en 3 casos** (datos/redesProgramadas.js). Ejemplo: noviembre = A (plan), octubre = B (Facebook),
+  septiembre = C (sin programadas). El cumplimiento cuenta solo lo programado; lo publicado fuera del plan suma aparte.
+- **(5) PDF** con la misma herramienta de Mailing (Resumen, Publicaciones, Anuncios).
+- **Anuncios (fase 2):** indicadores, presupuestos y tabla con forma real; horarios, edad y sexo, segmentaciones,
+  ubicación y formularios marcados «Ejemplo».
+- **Cómo revisarlo en local:** `npm run dev` → http://localhost:3000 → Marketing → Canales de marketing → Redes
+  sociales. Cambiar el mes (Septiembre / Octubre / Noviembre) para ver los casos C, B y A; tocar las donas (filtran y
+  llevan a Publicaciones), el calendario (marca la fila), los encabezados de la tabla y el botón PDF. En Production la
+  pestaña sigue en «Próximamente».
+
 ## 2026-11-24 · Redes sociales: plan v2 (como Mailing)
 
 - REDES.md reescrito por partes: objetivo (fase 1: hechas y programadas por marca y país; leads y lo de Ismael en
