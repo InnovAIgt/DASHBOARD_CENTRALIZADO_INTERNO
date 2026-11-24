@@ -2,6 +2,14 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Redes sociales: plan aprobado
+
+- Keily aprobó el plan de la pestaña Redes sociales por partes (REDES.md): acceso a Meta (Erick agrega a Keily al
+  Business Manager; Keily crea la app tipo Empresa, el usuario del sistema de solo lectura y el token), qué da la API y
+  qué no (leads calificados, programadas de Instagram), rutas con caché, pantalla con el estilo de Mailing y, para
+  después, «Plan del mes» con la clave de Marketing. Variables: META_TOKEN, META_APP_SECRET y META_API_VERSION.
+- La parte (1) (prueba de solo lectura) espera el token de Meta. Todavía no hay código de Redes.
+
 ## 2026-11-23 · «Cargo y objetivo»: Guardar con clave de Marketing
 
 - Ruta `POST/DELETE /api/marketing/mailing/cargo`: «entrar» valida la clave de Marketing en el servidor

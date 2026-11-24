@@ -34,14 +34,19 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Confirmar con la campaña de prueba qué es el evento `proxy_open` (¿apertura automática de Apple?) para clasificar APERTURA AUTOMÁTICA por destinatario | Keily | Con la campaña [PRUEBA] | Pendiente: tampoco llegó con la campaña [PRUEBA] (id 80, 23/11). El webhook está suscrito a «cargado por proxy»; se revisa otra vez el 24/11 |
 | Segunda revisión de la campaña [PRUEBA] (id 80): clics (Brevo 2 personas, tabla 1 persona con 2 clics) y `proxy_open` | Keily (avisa a Claude) | 2026-11-24 | Pendiente |
 | Borrar de la tabla los eventos de la campaña [PRUEBA] (id 80) al terminar la prueba | Keily | Al terminar la prueba | Pendiente |
-| Acceso a Meta: Business Manager, páginas por marca y país, cuentas de anuncios | Erick / Ismael | 2026-11-20 | Pendiente |
+| Acceso a Meta: agregar a Keily como administradora del Business Manager y pasar la lista marca → país → página de Facebook → Instagram → cuenta publicitaria (REDES.md, sección 2) | Erick / Ismael | 2026-11-20 | Pendiente |
+| Confirmar a qué país pertenece DATA RED, si hay anuncios pagados fuera del Business Manager y quién programa las publicaciones (y desde dónde) | Erick / Ismael | Por confirmar | Pendiente |
+| Crear la app de Meta (tipo Empresa), el usuario del sistema de solo lectura y su token; poner META_TOKEN, META_APP_SECRET y META_API_VERSION en .env.local y en Vercel (Secret) — REDES.md, sección 2. La parte (1) de Redes espera este token | Keily | Cuando Erick dé el acceso | Pendiente |
+| Códigos por publicación para unir cada lead con su publicación (Redes) | Ismael + equipo Prospekt IA | Por confirmar | Pendiente |
+| Acceso a G24 para la calificación de leads (¿quién lo administra?) | Ismael | Por confirmar | Pendiente |
+| Redes · «Plan del mes» (para después): pantallita donde Marketing carga lo programado (fecha, marca, red, título) con la clave de Marketing, para comparar programado vs publicado con semáforo (14 programadas y 10 publicadas = rojo). Falta definir el umbral del amarillo y el SQL de la tabla (REDES.md, sección 7) | Keily / Ingeniero | Después de las partes 1 a 6 de Redes | Pendiente |
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
 | Permiso de lectura de la base de Cumplimiento de Clientes | Keily | 2026-11-23 | Resuelto: SOLO LECTURA con la contraseña de la base (`CC_DB_PASSWORD`) y candados (MAILING.md, sección 8) |
 | Crear usuario de solo lectura en la base de Cumplimiento de Clientes para el dashboard y cambiar la contraseña principal (estaba en un documento) | Keily / Eduardo | — | Pendiente |
 | Aviso por correo a cada ejecutivo con sus correos por corregir (plazo de 48 horas; borrador, sin envío automático) | Keily | Por definir | En curso: ventana por ejecutivo y correo con diseño listos (borrador .eml, copiar con formato y correo simple; sin envío automático); esperando la revisión de Keily |
 | Regla de nombres de campaña entregada a Marketing | Ismael / Laura | Por confirmar | Pendiente |
 | Enlace «IR A CORREGIR» desactualizado; el correcto es https://cumplimientoclientes-88n2.onrender.com | Ismael | Por confirmar | Resuelto (2026-11-23): Keily confirmó el enlace; se usa en el botón y en el texto del correo |
-| Definición de «lectura» e indicadores de Redes | Ingeniero | Por confirmar | Pendiente |
+| Definición de «lectura» e indicadores de Redes; meta de costo por mensaje y de costo por clic para el semáforo | Ingeniero | Por confirmar | Pendiente |
 | Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
 | Explicar a Marketing las diferencias de clasificación con la plantilla (MAILING.md, sección 9) | Ismael / Laura | Por confirmar | Pendiente |
 | Rediseño de la pestaña Mailing como la referencia visual negra (5 pasos: estilos y tarjetas, gráficas, comparar, correos por corregir con ventana y correo con diseño, detalle y clientes) | Keily | 2026-11-23 | En curso: pasos 1 y 2, Correos por corregir y Comparar hechos (commits); asunto arriba, Comparar como la maqueta, barra de filtros, PDF y tarjetas compactas listos, esperando la revisión de Keily |
