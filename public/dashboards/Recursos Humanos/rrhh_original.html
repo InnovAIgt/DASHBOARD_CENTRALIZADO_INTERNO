@@ -187,6 +187,7 @@
 .val-aprobadas { color: #4ade80; }
 .val-pendientes { color: #facc15; }
 .val-rechazadas { color: #f87171; }
+.val-rechazadas-1 { color: #fb923c; }
 
 table.apx-table .apx-num{text-align:right;font-variant-numeric:tabular-nums}
 .apx-dur-resumen{padding:10px 16px 0}
@@ -367,6 +368,34 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
 .sol-det-lab{display:block;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(232,234,240,.55)}
 .sol-det-txt{margin:6px 0 0;font-size:12px;line-height:1.6;color:#e8eaf0;white-space:pre-wrap;overflow-wrap:anywhere}
 .sol-det-vacio{color:rgba(232,234,240,.55);font-style:italic}
+/* ==== Por estado: gráfica circular ==== */
+#chartEstado .apx-dn{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%;padding:6px 0 2px}
+#chartEstado .apx-dn-svg{display:block;width:100%;max-width:250px;height:auto;aspect-ratio:1/1;overflow:visible}
+#chartEstado .apx-dn-seg{fill:none;cursor:pointer;transition:filter .18s,opacity .18s;filter:drop-shadow(0 0 7px var(--dn-c))}
+#chartEstado .apx-dn-seg:hover,#chartEstado .apx-dn-seg:focus-visible{filter:drop-shadow(0 0 11px var(--dn-c)) brightness(1.15);outline:0}
+#chartEstado .apx-dn-track{fill:none;stroke:rgba(255,255,255,.05)}
+#chartEstado .apx-dn-num{fill:#fff;font-weight:800;text-anchor:middle;font-family:inherit}
+#chartEstado .apx-dn-lbl{fill:rgba(232,234,240,.62);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;text-anchor:middle;font-family:inherit}
+#chartEstado .apx-dn-legend{display:flex;flex-direction:column;gap:8px;width:100%;min-width:0}
+#chartEstado .apx-dn-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s,border-color .15s}
+#chartEstado .apx-dn-row:hover,#chartEstado .apx-dn-row:focus-visible{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);outline:0}
+#chartEstado .apx-dn-dot{width:10px;height:10px;border-radius:50%;background:var(--dn-c);box-shadow:0 0 8px var(--dn-c)}
+#chartEstado .apx-dn-name{font-size:11.5px;font-weight:600;color:var(--dn-c);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#chartEstado .apx-dn-val{font-size:12px;font-weight:800;color:#fff;text-align:right;font-variant-numeric:tabular-nums}
+#chartEstado .apx-dn-pct{font-size:11px;font-weight:700;color:rgba(232,234,240,.62);min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+/* ==== Tipos de acción por área: líneas hasta el final y división entre áreas ==== */
+.dsc-plot{width:max-content;min-width:100%}
+.dsc-g{flex:1 0 96px}
+.dsc-g + .dsc-g{border-left:3px solid rgba(255,255,255,.2)}
+.dsc-grid i{background:rgba(255,255,255,.06)}
+/* ==== Empleados activos / inactivos ==== */
+.emp-n{display:inline}
+.emp-dot{display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;vertical-align:middle;position:relative;top:-1px;flex:0 0 auto}
+.emp-act{color:#fff}
+.emp-act .emp-dot{background:#34d399;box-shadow:0 0 0 2px rgba(52,211,153,.2)}
+html body .emp-n.emp-off,html body .emp-n.emp-off *:not(.emp-dot){color:#8e95a5 !important;-webkit-text-fill-color:#8e95a5 !important}
+.emp-off{color:#8e95a5}
+.emp-off .emp-dot{background:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.2)}
 </style>
 </head>
 <body class="apx-rh-page">
@@ -652,8 +681,8 @@ const AREA_GT_POR_USUARIO = {
   'aayala': 'Recursos Humanos', 'acano': 'Recursos Humanos', 'jmagana': 'Recursos Humanos',
   'lngonzalez': 'Finanzas', 'afhernandez': 'Marketing', 'memartinez': 'Bodega',
   'dcmonge': 'Auxiliar de Operaciones',
-  'ecandray': 'Comercial', 'rramirez': 'SAC',
-  'gherrera': 'Comercial', 'oahernandez': 'Activaciones'
+  'gherrera': 'Comercial', 'oahernandez': 'Activaciones',
+  'ecandray': 'Comercial', 'rramirez': 'SAC', 'caguilar': 'Recursos Humanos'
 };
 // Áreas que se unen: Contabilidad y Finanzas -> Finanzas; Ventas -> Comercial
 function areaFinal(a) {
@@ -694,7 +723,7 @@ let ALL_RECORDS = [];
 let RECORDS = [];
 const INACTIVE_LEADERS = ['Elmer Miranda', 'César Guerrero', 'Eduardo Ortiz'];
   const INACTIVE_SOLICITANTES = ['gmolina@red.com.sv'];
-const EMPLEADOS_EXCLUIDOS = ['aacosta'];
+const EMPLEADOS_EXCLUIDOS = ['aacosta', 'lmgonzalez'];
 function esEmpleadoExcluido(r) {
   var usuario = String(r.solicitante || '').split('@')[0].trim().toLowerCase();
   return EMPLEADOS_EXCLUIDOS.indexOf(usuario) !== -1;
@@ -767,10 +796,13 @@ function buildRecordsFromSupabaseRows(dataRows) {
     } else if (diasComp) {
       duracion = diasComp + (diasComp === '1' ? ' día' : ' días');
       diasNum = parseFloat(diasComp);
-    } else if (diasIncap) {
-      duracion = diasIncap + (diasIncap === '1' ? ' día' : ' días');
-      diasNum = parseFloat(diasIncap);
-    }
+      } else if (diasIncap) {
+  duracion = diasIncap + (diasIncap === '1' ? ' día' : ' días');
+  diasNum = parseFloat(diasIncap);
+} else if (diasPerm) {
+  duracion = diasPerm + (diasPerm === '1' ? ' día' : ' días');
+  diasNum = parseFloat(diasPerm);
+}
     if (horasNum !== null && isNaN(horasNum)) horasNum = null;
     if (diasNum !== null && isNaN(diasNum)) diasNum = null;
     var horasDbNum = horas === null ? NaN : parseFloat(horas);
@@ -891,11 +923,11 @@ syncPeriodInputs();
 }
 loadFromSupabase();
 const STATUS_META = {
-  'Ingresada': { label: 'Pendiente 1.er aprobador', color: '#c59600' },
-  'Aval Jefe': { label: 'Pendiente 1.er aprobador', color: '#2f8f76' },
+  'Ingresada': { label: 'Pendiente 1.er aprobador', color: '#facc15' },
+  'Aval Jefe': { label: 'Pendiente 1.er aprobador', color: '#facc15' },
   'Aprobacion RRHH': { label: 'Aprobada 2.º aprobador', color: '#4f8fd8' },
   'Pendiente Segundo': { label: 'Pendiente 2.º aprobador', color: '#8b909e' },
-  'Rechazo Jefe': { label: 'Rechazada 1.er aprobador', color: '#c43c50' },
+  'Rechazo Jefe': { label: 'Rechazada 1.er aprobador', color: '#fb923c' },
   'Rechazo RRHH': { label: 'Rechazada 2.º aprobador', color: '#d95f6e' },
   'Sin estado': { label: 'Sin estado', color: '#8b909e' }
 };
@@ -1001,6 +1033,7 @@ function defaultPeriodo() {
 }
 function xfLabel(key, value) {
   if (key === 'estado') return value;
+  if (key === 'solicitante') { var uu = shortUser(value); return nombreCompletoEmpleado(uu) || (uu === '—' ? value : uu); }
   if (key === 'jefe' && CARGO_MAP[value]) return value + ' — ' + CARGO_MAP[value];
   return value;
 }
@@ -1075,7 +1108,7 @@ function updateXfOptions(def, filters) {
   return !kept.size;
 }
 function initFilters() {
-  ALL_SOLICITANTE_OPTS = uniqueCounts(RECORDS, 'solicitante').sort(function(a,b) { return a.value.localeCompare(b.value); });
+  ALL_SOLICITANTE_OPTS = uniqueCounts(RECORDS, 'solicitante').sort(function(a,b) { return xfLabel('solicitante', a.value).localeCompare(xfLabel('solicitante', b.value), 'es'); });
   ALL_APROBADOR_OPTS = uniqueCounts(RECORDS, 'aprobador');
   ALL_TIPO_OPTS = uniqueCounts(RECORDS, 'tipo');
   ALL_ESTADO_OPTS = APS_ESTADOS_FILTRO.map(function(s) { return { value: s, label: s }; });
@@ -1233,7 +1266,7 @@ function renderKpis(filtered) {
               '</div>' +
               '<div class="kpi-div-item">' +
                 '<span class="kpi-div-label">Rechazadas</span>' +
-                '<span class="kpi-div-val val-rechazadas">' + pRechazadasStr + '</span>' +
+                '<span class="kpi-div-val val-rechazadas-1">' + pRechazadasStr + '</span>' +
                 '<span class="kpi-div-sub">Por jefe</span>' +
               '</div>' +
             '</div>' +
@@ -1331,13 +1364,8 @@ function abrirDetalleKpi(clave) {
   if (!def) return;
   var colAprob = /^[ps]-/.test(clave) ? (clave.charAt(0) === 'p' ? 'Primer aprobador' : 'Segundo aprobador') : null;
   var rows = (def.rows || KPI_ROWS).filter(function(r) { return !def.estados || def.estados.indexOf(r.estado) >= 0; });
-  var esPrimer = def.cejilla === 'Primer aprobador';
-  function mf(r) {
-    if (esPrimer) { var g = PRIMER_GRP[grupoPrimer(r.estado)]; return { lab: g.label, col: g.color }; }
-    return { lab: etiquetaEstadoAPS(r), col: ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color };
-  }
   function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
-  rows.sort(function(a, b) { return String(nom(a)).localeCompare(String(nom(b)), 'es') || String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')); });
+  rows.sort(function(a, b) { return String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')) || String(nom(a)).localeCompare(String(nom(b)), 'es'); });
   var empleados = {};
   rows.forEach(function(r) { empleados[shortUser(r.solicitante)] = 1; });
   var nEmp = Object.keys(empleados).length;
@@ -1345,21 +1373,25 @@ function abrirDetalleKpi(clave) {
   document.getElementById('kpixCejilla').textContent = def.cejilla;
   document.getElementById('kpixTitulo').textContent = def.titulo;
   document.getElementById('kpixSub').textContent = rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · ' + nEmp + (nEmp === 1 ? ' empleado' : ' empleados');
+  var vistaPrimero = colAprob === 'Primer aprobador' || !!def.primero;
+  function esAprobada1(r) { return vistaPrimero && estadoVistaPrimero(r) === 'Aprobada1'; }
+  function etiquetaFila(r) { return esAprobada1(r) ? 'Aprobada 1.er aprobador' : etiquetaEstadoAPS(r); }
+  function colorFila(r) { return esAprobada1(r) ? COLOR_APROBADA_1 : (ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color); }
   var vistos = {}, leyenda = '';
   rows.forEach(function(r) {
-    var m = mf(r), lab = m.lab;
+    var lab = etiquetaFila(r);
     if (vistos[lab]) return;
     vistos[lab] = 1;
-    leyenda += '<span><i class="expx-dot" style="background:' + m.col + '"></i>' + escapeHtml(lab) + '</span>';
+    leyenda += '<span><i class="expx-dot" style="background:' + colorFila(r) + '"></i>' + escapeHtml(lab) + '</span>';
   });
   var filas = rows.map(function(r) {
-    var u = shortUser(r.solicitante), col = mf(r).col;
+    var u = shortUser(r.solicitante), col = colorFila(r);
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
-    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
-      (colAprob ? '<td>' + escapeHtml(clave.charAt(0) === 'p' ? (r.jefeInmediato || '—') : shortUser(r.aprobador)) + '</td>' : '') +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(mf(r).lab) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
+    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + empNombreHtml(u, nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      (colAprob ? '<td>' + (function(v) { return empNombreHtml(v, v); })(clave.charAt(0) === 'p' ? (r.jefeInmediato || '—') : shortUser(r.aprobador)) + '</td>' : '') +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaFila(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
   }).join('');
-  document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+  document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más antigua a la más reciente</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
     (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th>' + (colAprob ? '<th>' + colAprob + '</th>' : '') + '<th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en esta categoría.</div>') + '</div>';
   var bg = document.getElementById('kpixBg');
   bg.classList.add('open');
@@ -1385,14 +1417,14 @@ function abrirDetalleBarra(t) {
   var p = t.getAttribute('data-graf').split(':');
   if (p[0] === 'estado') {
     var e = GRAF_ESTADO[Number(p[1])];
-    if (e) abrirDetalleGrafica({ cejilla: 'Por estado', titulo: e.name, estados: e.estados }, t);
+    if (e) abrirDetalleGrafica({ cejilla: 'Por estado', titulo: e.name, estados: e.estados, primero: !!e.extra }, t);
     return;
   }
   var d = (GRAF_RANK[p[0]] || [])[Number(p[1])];
   if (!d) return;
   var jefe = p[0] === 'chartJefe';
   var nombre = jefe ? d.name : (d.name === '—' ? 'Sin asignar' : (nombreCompletoEmpleado(d.name) || d.name));
-  abrirDetalleGrafica({ cejilla: jefe ? 'Primer aprobador' : 'Segundo aprobador', titulo: nombre, estados: null, rows: d.items }, t);
+  abrirDetalleGrafica({ cejilla: jefe ? 'Primer aprobador' : 'Segundo aprobador', titulo: nombre, estados: null, rows: d.items, primero: jefe }, t);
 }
 function bindGraficaClicks(el) {
   if (el.dataset.grBound) return;
@@ -1404,6 +1436,7 @@ function bindGraficaClicks(el) {
   });
 }
 var DESC_AREAS = [];
+var DESC_MES = '', DESC_BASE = [], DESC_AREAS_VISTA = [];
 var DESC_TIPOS = [];
 var DESC_COLOR = {};
 function esDescanso(r) { return r.tipo !== DUR_TIPO_NO_AUSENCIA && ((r.horas || 0) > 0 || (r.dias || 0) > 0); }
@@ -1440,15 +1473,16 @@ function dscAbrirModal(cejilla, titulo, sub, nombre, cuerpo, letra) {
   bg.querySelector('.expx').scrollTop = 0;
   document.getElementById('expxCerrar').focus();
 }
-function abrirDetalleArea(i) {
-  var o = DESC_AREAS[i];
+function abrirDetalleArea(i, usarMes) {
+  var vistaMes = !!(usarMes && DESC_MES);
+  var o = (vistaMes && DESC_AREAS_VISTA[i]) || DESC_AREAS[i];
   if (!o) return;
   var areaColor = DESC_COLOR[o.area] || '#4f8fd8';
   var kpi = function(v, l, accent) { return '<div class="expx-kpi" style="--kpi-accent:' + (accent || areaColor) + '"><b>' + v + '</b><span>' + l + '</span></div>'; };
   var pers = Object.keys(o.personas).map(function(s) {
     var u = shortUser(s);
     return { nombre: nombreCompletoEmpleado(u) || u, u: u, p: o.personas[s] };
-  }).sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+  }).sort(function(a, b) { return (b.p.n - a.p.n) || a.nombre.localeCompare(b.nombre, 'es'); });
   var kpis = '<div class="expx-kpis" style="grid-template-columns:repeat(3,1fr)">' +
     kpi(o.n, 'Total de acciones') + kpi(fmtNum(o.horas) + ' h', 'Horas registradas') + kpi(fmtNum(o.dias) + ' d', 'Días registrados') +
     kpi(o.pendN ? o.pendN + ' · ' + dscHD(o.pendHoras, o.pendDias) : '0', 'Pendientes de aprobar') +
@@ -1471,9 +1505,9 @@ function abrirDetalleArea(i) {
   var persHtml = '<div class="expx-sec"><h4>Trabajadores del área<small>' + pers.length + '</small></h4>' +
     (pers.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>Trabajador</th><th class="dsc-r">Acciones</th><th class="dsc-r">Horas registradas</th><th class="dsc-r">Días registrados</th></tr></thead><tbody>' +
     pers.map(function(x) {
-      return '<tr><td>' + escapeHtml(x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td><td class="dsc-r">' + x.p.n + '</td><td class="dsc-r">' + fmtNum(x.p.horas) + ' h</td><td class="dsc-r">' + fmtNum(x.p.dias) + ' d</td></tr>';
+      return '<tr><td>' + empNombreHtml(x.u, x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td><td class="dsc-r">' + x.p.n + '</td><td class="dsc-r">' + fmtNum(x.p.horas) + ' h</td><td class="dsc-r">' + fmtNum(x.p.dias) + ' d</td></tr>';
     }).join('') + '</tbody></table></div>' : '<div class="expx-vacio">Sin trabajadores registrados.</div>') + '</div>';
-  dscAbrirModal('Detalle del área', o.area, o.n + (o.n === 1 ? ' acción' : ' acciones') + ' · ' + pers.length + (pers.length === 1 ? ' trabajador' : ' trabajadores'),
+  dscAbrirModal('Detalle del área', o.area, (vistaMes ? dscMesLargo(DESC_MES) + ' · ' : '') + o.n + (o.n === 1 ? ' acción' : ' acciones') + ' · ' + pers.length + (pers.length === 1 ? ' trabajador' : ' trabajadores'),
     JEFES_AREA[o.area] ? 'Jefe del área: ' + JEFES_AREA[o.area] : '', kpis + tiposHtml + persHtml, o.area.charAt(0));
 }
 var DESC_METRICAS = {
@@ -1499,7 +1533,7 @@ function abrirDetalleMetrica(key) {
     (filas.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>Trabajador</th><th>Área</th><th class="dsc-r">' + m.t + '</th>' +
     m.cols.map(function(c) { return '<th class="dsc-r">' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' +
     filas.map(function(x) {
-      return '<tr><td>' + escapeHtml(x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td>' +
+      return '<tr><td>' + empNombreHtml(x.u, x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td>' +
         '<td><button type="button" class="dsc-lnk" data-dsc-open-area="' + x.ai + '">' + escapeHtml(x.area) + '</button></td><td class="dsc-r">' + m.fmt(x.v) + '</td>' +
         m.cols.map(function(c) { return '<td class="dsc-r">' + c[1](x.p) + '</td>'; }).join('') + '</tr>';
     }).join('') + '<tr class="dsc-tot"><td>Total</td><td></td><td class="dsc-r">' + m.fmt(total) + '</td>' + m.cols.map(function() { return '<td></td>'; }).join('') + '</tr></tbody></table></div>'
@@ -1521,9 +1555,23 @@ function renderSummaryCards(filtered) {
   var tipos = Object.keys(tipoTot).sort(function(a, b) { return tipoTot[b] - tipoTot[a]; });
   var color = {}; tipos.forEach(function(t, i) { color[t] = AREA_PALETTE[i % AREA_PALETTE.length]; });
   DESC_TIPOS = tipos; DESC_COLOR = color;
-  var maxV = Math.max.apply(null, areas.map(function(o) { return Math.max.apply(null, tipos.map(function(t) { return o.tipos[t] ? o.tipos[t].n : 0; }).concat([0])); }).concat([1]));
-  var step = Math.max(1, Math.ceil(maxV / 4)), top = step * 4;
-  var ticks = [0, 1, 2, 3, 4].map(function(k) { return k * step; });
+  DESC_BASE = filtered;
+  var mesesDisp = {};
+  filtered.forEach(function(r) { if (!esSinArea(r.area) && esDescanso(r)) { var ymd = yearMonth(r.fechaSolicitud); if (ymd) mesesDisp[ymd] = 1; } });
+  var mesesLista = Object.keys(mesesDisp).sort();
+  if (DESC_MES && !mesesDisp[DESC_MES]) DESC_MES = '';
+  var areasChart = areas;
+  if (DESC_MES) {
+    var porMes = {};
+    descansosPorArea(filtered.filter(function(r) { return yearMonth(r.fechaSolicitud) === DESC_MES; })).forEach(function(o) { porMes[o.area] = o; });
+    areasChart = areas.map(function(o) { return porMes[o.area] || { area: o.area, n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0, tipos: {}, personas: {} }; });
+  }
+  DESC_AREAS_VISTA = areasChart;
+  var mesSelHtml = '<div class="mes-ctrl"><select id="dscMesSel" class="mes-sel" aria-label="Filtrar por mes"><option value="">Todos los meses</option>' +
+    mesesLista.map(function(ym) { return '<option value="' + ym + '"' + (ym === DESC_MES ? ' selected' : '') + '>' + escapeHtml(dscMesLargo(ym)) + '</option>'; }).join('') + '</select></div>';
+  var maxV = Math.max.apply(null, areasChart.map(function(o) { return Math.max.apply(null, tipos.map(function(t) { return o.tipos[t] ? o.tipos[t].n : 0; }).concat([0])); }).concat([1]));
+  var step = maxV <= 24 ? 1 : Math.ceil(maxV / 24), top = Math.ceil(maxV / step) * step;
+  var ticks = []; for (var tk = 0; tk <= top; tk += step) ticks.push(tk);
 
   function kpi(key, label, main, word, total) {
     var accents = { n: '#4f8fd8', horas: '#2f8f76', dias: '#c59600', pend: '#c43c50', extra: '#9e2a4b' };
@@ -1531,7 +1579,7 @@ function renderSummaryCards(filtered) {
   }
   var legend = tipos.map(function(t) { return '<span><span class="apx-dot" style="background:' + color[t] + '"></span>' + escapeHtml(t) + '</span>'; }).join('');
   var minG = tipos.length * 19 + 24;
-  var grupos = areas.map(function(o, i) {
+  var grupos = areasChart.map(function(o, i) {
     var barras = tipos.map(function(t) {
       var n = o.tipos[t] ? o.tipos[t].n : 0;
       return '<button type="button" class="dsc-bar' + (n ? '' : ' is-zero') + '" data-dsc-bar="' + i + '" style="height:' + (n / top * 100).toFixed(2) + '%;--c:' + color[t] + '" title="' + escapeHtml(o.area) + ' · ' + escapeHtml(t) + ': ' + n + '" aria-label="' + escapeHtml(o.area) + ', ' + escapeHtml(t) + ': ' + n + '"></button>';
@@ -1553,8 +1601,8 @@ function renderSummaryCards(filtered) {
       '</div>' +
     '</div>' +
     '<div class="card apx-summary-card dsc-sec">' +
-      '<h2 class="card-title">Tipos de acción por área</h2>' +
-      '<p class="card-caption">Haz clic en cualquier barra para ver el detalle del área.</p>' +
+      '<div class="apx-card-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><h2 class="card-title">Tipos de acción por área</h2>' +
+      '<p class="card-caption">Haz clic en cualquier barra para ver el detalle del área.</p></div>' + mesSelHtml + '</div>' +
       (areas.length && tipos.length ?
       '<div class="dsc-legend">' + legend + '</div>' +
       '<div class="dsc-vchart"><div class="dsc-y">' + ticks.map(function(v) { return '<span style="bottom:' + (v / top * 100) + '%">' + v + '</span>'; }).join('') + '</div>' +
@@ -1565,10 +1613,18 @@ function renderSummaryCards(filtered) {
 
   if (!el.dataset.dscBound) {
     el.dataset.dscBound = '1';
+    el.addEventListener('change', function(ev) {
+      if (ev.target && ev.target.id === 'dscMesSel') {
+        DESC_MES = ev.target.value;
+        renderSummaryCards(DESC_BASE);
+        var selMes = document.getElementById('dscMesSel');
+        if (selMes) selMes.focus();
+      }
+    });
     el.addEventListener('click', function(ev) {
       var bar = ev.target.closest('[data-dsc-bar]');
       var met = ev.target.closest('[data-dsc-metric]');
-      if (bar) { EXPX_FOCO = bar; abrirDetalleArea(Number(bar.getAttribute('data-dsc-bar'))); }
+      if (bar) { EXPX_FOCO = bar; abrirDetalleArea(Number(bar.getAttribute('data-dsc-bar')), true); }
       else if (met) { EXPX_FOCO = met; abrirDetalleMetrica(met.getAttribute('data-dsc-metric')); }
     });
     document.getElementById('expxCuerpo').addEventListener('click', function(ev) {
@@ -1579,15 +1635,15 @@ function renderSummaryCards(filtered) {
 }
 
 var ESTADO_COLOR_GRAFICA = {
-  'Ingresada': '#2f8f76', 'Aval Jefe': '#2f8f76', 'Pendiente Segundo': '#8b909e', 'Aprobacion RRHH': '#7fb0f0',
-  'Rechazo Jefe': '#c43c50', 'Rechazo RRHH': '#d95f6e', 'Sin estado': '#8b909e'
+  'Ingresada': '#facc15', 'Aval Jefe': '#facc15', 'Pendiente Segundo': '#8b909e', 'Aprobacion RRHH': '#7fb0f0',
+  'Rechazo Jefe': '#fb923c', 'Rechazo RRHH': '#d95f6e', 'Sin estado': '#8b909e'
 };
 function renderDonut(filtered) {
   var counts = conteoEstados(filtered);
   var sumIngAval = (counts['Ingresada'] || 0) + (counts['Aval Jefe'] || 0);
   var data = [];
   if (sumIngAval > 0) {
-    data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#2f8f76', estados: ['Ingresada', 'Aval Jefe'] });
+    data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#facc15', estados: ['Ingresada', 'Aval Jefe'] });
   }
   // Aprobadas por el 1.er aprobador = las que avanzaron al segundo nivel (se solapa con las filas del 2.º aprobador)
   var estadosAprobada1 = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
@@ -1604,18 +1660,32 @@ function renderDonut(filtered) {
   var total = filtered.length;
   var el = document.getElementById('chartEstado');
   if (data.length === 0) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
-  var max = Math.max.apply(null, data.map(function(d){ return d.value; }).concat([1]));
+  // Anillo: solo los estados que no se solapan (suman el total). «Aprobada 1.er aprobador» (extra) se muestra en el detalle.
+  var R = 84, SW = 24, CIRC = 2 * Math.PI * R;
+  var base = data.filter(function(d) { return !d.extra; });
+  var baseTotal = base.reduce(function(s, d) { return s + d.value; }, 0) || 1;
+  var gap = base.length > 1 ? 2.5 : 0, acum = 0;
+  var segs = data.map(function(d, i) {
+    if (d.extra) return '';
+    var len = d.value / baseTotal * CIRC, vis = Math.max(len - gap, 1.2);
+    var seg = '<circle class="apx-dn-seg" data-graf="estado:' + i + '" role="button" tabindex="0" cx="110" cy="110" r="' + R + '" stroke="' + d.color + '" stroke-width="' + SW + '" stroke-dasharray="' + vis.toFixed(2) + ' ' + (CIRC - vis).toFixed(2) + '" stroke-dashoffset="' + (-acum).toFixed(2) + '" transform="rotate(-90 110 110)" style="--dn-c:' + d.color + '"><title>' + escapeHtml(d.name) + ': ' + d.value + '</title></circle>';
+    acum += len;
+    return seg;
+  }).join('');
+  var numSize = String(total).length > 5 ? 30 : (String(total).length > 3 ? 38 : 46);
+  var svg = '<svg class="apx-dn-svg" viewBox="0 0 220 220" role="img" aria-label="Total de solicitudes: ' + total + '">' +
+    '<circle class="apx-dn-track" cx="110" cy="110" r="' + R + '" stroke-width="' + SW + '"/>' + segs +
+    '<text class="apx-dn-num" x="110" y="116" style="font-size:' + numSize + 'px">' + total + '</text>' +
+    '<text class="apx-dn-lbl" x="110" y="136">total de solicitudes</text></svg>';
   var rows = data.map(function(d, i) {
     var pct = total ? (d.value / total * 100).toFixed(1) : '0.0';
-    return '<div class="apx-estado-row" data-graf="estado:' + i + '" role="button" tabindex="0" title="' + escapeHtml(d.name) + ': ' + d.value + '">' +
-      '<span class="apx-estado-name"><span class="apx-dot" style="background:' + d.color + '"></span>' + escapeHtml(d.name) + ' · ' + pct + '%</span>' +
-      '<div class="apx-rank-track" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)"><div class="apx-rank-fill gx-bar-h" style="width:' + (d.value / max * 100).toFixed(1) + '%;background:linear-gradient(90deg,' + d.color + ',' + d.color + '8c);--gx-i:' + i + '" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)"></div></div>' +
-      '<span class="apx-legend-count">' + d.value + '</span></div>';
+    return '<div class="apx-dn-row" data-graf="estado:' + i + '" role="button" tabindex="0" style="--dn-c:' + d.color + '" title="' + escapeHtml(d.name) + ': ' + d.value + ' (' + pct + '%)">' +
+      '<span class="apx-dn-dot"></span><span class="apx-dn-name">' + escapeHtml(d.name) + '</span>' +
+      '<span class="apx-dn-val">' + d.value + '</span><span class="apx-dn-pct">' + pct + '%</span></div>';
   }).join('');
   var top = data.filter(function(d){ return !d.extra; }).sort(function(a,b){return b.value-a.value;})[0];
   document.getElementById('insightEstado').textContent = top ? top.name + ': ' + top.value : '—';
-  el.innerHTML = '<div class="apx-estado"><div class="apx-estado-total"><span class="apx-donut-center-num">' + total + '</span><span class="apx-donut-center-lbl">total de solicitudes</span></div>' +
-    rows + '</div>';
+  el.innerHTML = '<div class="apx-dn">' + svg + '<div class="apx-dn-legend">' + rows + '</div></div>';
   GRAF_ESTADO = data;
   bindGraficaClicks(el);
 }
@@ -1625,6 +1695,28 @@ function unirPendientes1(c) {
   var o = {}; Object.keys(c).forEach(function(k) { o[k] = c[k]; });
   if (o['Ingresada']) { o['Aval Jefe'] = (o['Aval Jefe'] || 0) + o['Ingresada']; delete o['Ingresada']; }
   return o;
+}
+// Vista del 1.er aprobador: pendiente / aprobada (la que avanzó al segundo nivel) / rechazada
+var COLOR_APROBADA_1 = '#4ade80';
+var ESTADOS_SEGUNDO_NIVEL = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
+var ORDEN_VISTA_PRIMERO = ['Aval Jefe', 'Aprobada1', 'Rechazo Jefe'];
+function estadoVistaPrimero(r) {
+  if (r.estado === 'Ingresada' || r.estado === 'Aval Jefe') return 'Aval Jefe';
+  if (ESTADOS_SEGUNDO_NIVEL.indexOf(r.estado) !== -1) return 'Aprobada1';
+  return r.estado;
+}
+function conteoVistaPrimero(items) {
+  var o = {};
+  items.forEach(function(r) { var k = estadoVistaPrimero(r); o[k] = (o[k] || 0) + 1; });
+  return o;
+}
+function colorVistaPrimero(e) { return e === 'Aprobada1' ? COLOR_APROBADA_1 : ESTADO_COLOR_GRAFICA[e]; }
+function etiquetaVistaPrimero(e) { return e === 'Aprobada1' ? 'Aprobada 1.er aprobador' : statusMeta(e).label; }
+function leyendaPrimeroHtml(estTot) {
+  var guia = ORDEN_VISTA_PRIMERO.filter(function(e) { return estTot[e]; }).map(function(e) {
+    return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + colorVistaPrimero(e) + '"></span>' + etiquetaVistaPrimero(e) + '</span>';
+  }).join('');
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
 }
 var ESTADOS_ORDEN_GRAFICA = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
 function leyendaEstadosHtml(estTot) {
@@ -1640,31 +1732,6 @@ function leyendaEstadosHtml(estTot) {
   }).join('');
   return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
 }
-// Primer aprobador: solo se muestran estados del primer nivel (Pendiente / Aprobada / Rechazada 1.er aprobador)
-var PRIMER_GRP = {
-  'P1': { label: 'Pendiente 1.er aprobador', color: '#2f8f76' },
-  'A1': { label: 'Aprobada 1.er aprobador', color: '#4ade80' },
-  'R1': { label: 'Rechazada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'] },
-  'SE': { label: 'Sin estado', color: ESTADO_COLOR_GRAFICA['Sin estado'] }
-};
-function grupoPrimer(estado) {
-  if (estado === 'Ingresada' || estado === 'Aval Jefe') return 'P1';
-  if (estado === 'Pendiente Segundo' || estado === 'Aprobacion RRHH' || estado === 'Rechazo RRHH') return 'A1';
-  if (estado === 'Rechazo Jefe') return 'R1';
-  return 'SE';
-}
-function conteoPrimer(items) {
-  var o = {};
-  (items || []).forEach(function(r) { var g = grupoPrimer(r.estado); o[g] = (o[g] || 0) + 1; });
-  return o;
-}
-var PRIMER_ORDEN = ['P1', 'A1', 'R1', 'SE'];
-function leyendaPrimerHtml(tot) {
-  var guia = PRIMER_ORDEN.filter(function(g) { return tot[g]; }).map(function(g) {
-    return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + PRIMER_GRP[g].color + '"></span>' + PRIMER_GRP[g].label + '</span>';
-  }).join('');
-  return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
-}
 function renderRanking(containerId, data, limit) {
   var el = document.getElementById(containerId);
   var rows = data.slice(0, limit || 8);
@@ -1672,20 +1739,20 @@ function renderRanking(containerId, data, limit) {
   if (!rows.length) { el.innerHTML = '<div class="apx-empty">Sin datos</div>'; return; }
   var max = Math.max.apply(null, rows.map(function(d){return d.count;}).concat([1]));
   var conEstados = rows.some(function(d){ return d.items; });
-  var primer = containerId === 'chartJefe';
+  var primero = containerId === 'chartJefe';
   var estTot = {};
   if (conEstados) rows.forEach(function(d){
-    var c = primer ? conteoPrimer(d.items) : conteoEstados(d.items || []);
+    var c = primero ? conteoVistaPrimero(d.items || []) : conteoEstados(d.items || []);
     Object.keys(c).forEach(function(k){ estTot[k] = (estTot[k] || 0) + c[k]; });
   });
-  el.innerHTML = (conEstados ? (primer ? leyendaPrimerHtml(estTot) : leyendaEstadosHtml(estTot)) : '') + '<div class="apx-ranking">' + rows.map(function(d, i){
+  el.innerHTML = (conEstados ? (primero ? leyendaPrimeroHtml(estTot) : leyendaEstadosHtml(estTot)) : '') + '<div class="apx-ranking">' + rows.map(function(d, i){
     var pct = (d.count / max * 100).toFixed(1);
     var fill, nums = '';
     if (d.items) {
-      var estCount = primer ? conteoPrimer(d.items) : unirPendientes1(conteoEstados(d.items));
-      var ordenE = primer ? PRIMER_ORDEN : ESTADOS_ORDEN_GRAFICA;
-      var colE = function(e) { return primer ? PRIMER_GRP[e].color : ESTADO_COLOR_GRAFICA[e]; };
-      var labE = function(e) { return primer ? PRIMER_GRP[e].label : statusMeta(e).label; };
+      var estCount = primero ? conteoVistaPrimero(d.items) : unirPendientes1(conteoEstados(d.items));
+      var ordenE = primero ? ORDEN_VISTA_PRIMERO : ESTADOS_ORDEN_GRAFICA;
+      var colE = function(e) { return primero ? colorVistaPrimero(e) : ESTADO_COLOR_GRAFICA[e]; };
+      var labE = function(e) { return primero ? etiquetaVistaPrimero(e) : statusMeta(e).label; };
       var accN = 0;
       nums = '<div class="apx-rank-nums" style="position:relative;width:' + pct + '%">' + ordenE.filter(function(e){ return estCount[e]; }).map(function(e) {
         var wN = estCount[e] / d.count * 100, cN = accN + wN / 2; accN += wN;
@@ -1700,7 +1767,7 @@ function renderRanking(containerId, data, limit) {
     }
     return '<div class="apx-rank-row" data-graf="' + containerId + ':' + i + '" role="button" tabindex="0">' +
       '<span class="apx-rank-no">' + (i+1) + '</span>' +
-      '<span class="apx-rank-name" title="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</span>' +
+      '<span class="apx-rank-name" title="' + escapeHtml(d.name) + '">' + empNombreHtml(d.name, d.name) + '</span>' +
       nums +
       '<div class="apx-rank-track">' + fill + '</div>' +
       '<span class="apx-rank-value">' + d.count + '</span>' +
@@ -1722,7 +1789,7 @@ function renderTreemap(containerId, data) {
   var slices = rows.map(function(d, i) {
     var color = AREA_PALETTE_PIE[i % AREA_PALETTE_PIE.length];
     var pct = (d.count / total * 100).toFixed(1);
-    var tip = '<title>' + escapeHtml(d.name) + ': ' + d.count + ' (' + pct + '%)' + (d.nota ? ' — ' + escapeHtml(d.nota) : '') + '</title>';
+    var tip = '<title>' + escapeHtml(d.name) + ': ' + d.count + ' (' + pct + '%)</title>';
     if (d.count >= total) {
       return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '" style="stroke:var(--card-bg);stroke-width:2">' + tip + '</circle>';
     }
@@ -1737,7 +1804,7 @@ function renderTreemap(containerId, data) {
   var legend = rows.map(function(d, i) {
     var pct = (d.count / total * 100).toFixed(1);
     var color = AREA_PALETTE_PIE[i % AREA_PALETTE_PIE.length];
-    return '<div class="apx-pie-row" title="' + escapeHtml(d.name) + ': ' + d.count + (d.nota ? ' — ' + escapeHtml(d.nota) : '') + '">' +
+    return '<div class="apx-pie-row" title="' + escapeHtml(d.name) + ': ' + d.count + '">' +
       '<span class="apx-estado-name"><span class="apx-dot" style="background:' + color + '"></span>' + escapeHtml(d.name) + ' · ' + pct + '%</span>' +
       '<span class="apx-legend-count">' + d.count + '</span></div>';
   }).join('');
@@ -1797,8 +1864,6 @@ var NOMBRES_EMPLEADOS = {
   'ingonzalez': 'Lourdes Gonzales',
   'ecandry': 'Erick Candray',
   'ecandray': 'Erick Candray',
-  'gherrera': 'Gabriela Herrera',
-  'oahernandez': 'Obed Alberto Hernández',
   'dmorataya': 'David Morataya',
   'jcifuentes': 'Joel Cifuentes',
   'edlopez': 'Daniel Lopez',
@@ -1819,6 +1884,8 @@ var NOMBRES_EMPLEADOS = {
   'rfuentes': 'Rachel Fuentes',
   'rapineda': 'Ricardo Pineda',
   'dcmonge': 'Daniela Monge',
+  'gherrera': 'Gabriela Herrera',
+  'oahernandez': 'Obed Alberto Hernández',
   'kreyna': 'Karla Reyna',
   'ksoriano': 'Kenny Soriano',
   'cche': 'Cristian Che',
@@ -1838,10 +1905,59 @@ var NOMBRES_EMPLEADOS = {
   'bsantos': 'Bryan Santos',
   'alondono': 'Alexandra Londono',
   'enflores': 'Erick Flores',
-  'mfsandoval': 'Miriam Sandoval'
+  'mfsandoval': 'Miriam Sandoval',
+  'jrustrian': 'Jose Rustrian',
+  'afhernandez': 'Allan Hernandez',
+  'caguilar': 'Cindy Aguilar'
 };
 function nombreCompletoEmpleado(usuario) {
   return NOMBRES_EMPLEADOS[String(usuario || '').trim().toLowerCase()] || '';
+}
+var EMP_TXT_ACTIVO = 'Empleado Activo';
+var EMP_TXT_INACTIVO = 'Empleado Inactivo';
+var EMP_ACTIVOS = ['aayala','sconde','kaescobar','sfigueroa','edlopez','fespinal','ohernandez','asolis','ecandray','mchicas','rapineda','acano','cemartinez','cche','jcifuentes','kreyna','kmazariego','kmazariegos','jflores','rfuentes','tcastillo','jrustrian','mdcastillo','rballadares','wortega','afhernandez','caguilar','dcmonge','dmorataya','dbolaines','gherrera','ieportillo','mpalacios','jmira','ksoriano','lngonzalez','memartinez','mfsandoval','nmarroquin','rarias'];
+var EMP_INACTIVOS = ['lcanas','icanas','alondono','bsantos','enflores','hamejia','paguilar','gmolina'];
+var EMP_IDX = null;
+function empIndice() {
+  if (EMP_IDX) return EMP_IDX;
+  EMP_IDX = { u: {}, n: {} };
+  function add(u, est) {
+    EMP_IDX.u[u] = est;
+    var nombre = NOMBRES_EMPLEADOS[u];
+    if (nombre) EMP_IDX.n[normTxt(nombre)] = est;
+  }
+  EMP_ACTIVOS.forEach(function(u) { add(u, 'activo'); });
+  EMP_INACTIVOS.forEach(function(u) { add(u, 'inactivo'); });
+  INACTIVE_LEADERS.forEach(function(n) { EMP_IDX.n[normTxt(n)] = 'inactivo'; });
+  return EMP_IDX;
+}
+// key: usuario, correo o nombre completo. Devuelve 'activo', 'inactivo' o null (no es una persona)
+function empEstado(key) {
+  var k = String(key == null ? '' : key).trim();
+  if (!k || k === '—' || k === 'Sin asignar' || k === 'No especificado' || k === 'Sin me asigno') return null;
+  var idx = empIndice();
+  var u = k.split('@')[0].toLowerCase();
+  if (idx.u[u]) return idx.u[u];
+  var n = normTxt(k);
+  if (idx.n[n]) return idx.n[n];
+  return 'activo';
+}
+function empNombreHtml(key, texto) {
+  var t = escapeHtml(texto);
+  var e = empEstado(key);
+  if (!e) return t;
+  return '<span class="emp-n ' + (e === 'activo' ? 'emp-act' : 'emp-off') + '" title="' + (e === 'activo' ? EMP_TXT_ACTIVO : EMP_TXT_INACTIVO) + '"><i class="emp-dot"></i>' + t + '</span>';
+}
+function xfConEstado(key) { return key === 'solicitante' || key === 'aprobador' || key === 'jefe'; }
+function xfTitulo(key, o) {
+  var e = xfConEstado(key) ? empEstado(o.value) : null;
+  return e === 'activo' ? EMP_TXT_ACTIVO : (e === 'inactivo' ? EMP_TXT_INACTIVO : o.label);
+}
+function xfTexto(key, o) { return xfConEstado(key) ? empNombreHtml(o.value, o.label) : escapeHtml(o.label); }
+var MESES_LARGOS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function dscMesLargo(ym) {
+  var p = String(ym).split('-'), m = MESES_LARGOS[parseInt(p[1], 10) - 1] || '';
+  return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + p[0];
 }
 function abrirExpedienteSolicitante(ev, idx) {
   if (ev) { ev.stopPropagation(); EXPX_FOCO = ev.currentTarget || null; }
@@ -1855,7 +1971,7 @@ function abrirExpedienteSolicitante(ev, idx) {
 
   document.querySelector('.expx-cejilla').textContent = 'Expediente del solicitante';
   document.getElementById('expxAvatar').textContent = name.charAt(0);
-  document.getElementById('expxTitulo').textContent = name;
+  document.getElementById('expxTitulo').innerHTML = empNombreHtml(d.value, name);
   var nombreEl = document.getElementById('expxNombre');
   var nombreCompleto = nombreCompletoEmpleado(name);
   nombreEl.textContent = nombreCompleto;
@@ -1901,7 +2017,7 @@ function abrirExpedienteSolicitante(ev, idx) {
     }).join('') + '</div></div>';
 
   var ordenadas = rows.slice().sort(function(a, b) {
-    return String(b.fechaSolicitud || '').localeCompare(String(a.fechaSolicitud || '')) || String(b.id).localeCompare(String(a.id));
+    return String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')) || String(a.id).localeCompare(String(b.id));
   });
   var filas = ordenadas.map(function(r) {
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
@@ -1913,7 +2029,7 @@ function abrirExpedienteSolicitante(ev, idx) {
       '<td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
       '<td class="expx-just" title="' + escapeHtml(r.justificacion || '') + '">' + escapeHtml(just) + '</td></tr>' + msgSolicitudHtml(r, 6);
   }).join('');
-  var tablaHtml = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más reciente a la más antigua</small></h4>' +
+  var tablaHtml = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más antigua a la más reciente</small></h4>' +
     (rows.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>ID</th><th>Tipo</th><th>Duración</th><th>Estado</th><th>Fecha</th><th>Justificación</th></tr></thead><tbody>' + filas + '</tbody></table></div>'
       : '<div class="expx-vacio">Sin solicitudes en el periodo filtrado.</div>') + '</div>';
 
@@ -1967,7 +2083,7 @@ function renderSolicitantesChart(filtered) {
       return '<span style="display:block;height:100%;width:' + (estCount[e] / d.count * 100).toFixed(2) + '%;background:' + ESTADO_COLOR_GRAFICA[e] + '" title="' + escapeHtml(statusMeta(e).label) + ': ' + estCount[e] + ' (' + (estCount[e] / d.count * 100).toFixed(1) + '%)"></span>';
     }).join('');
     return '<div class="apx-solic-item"><div class="apx-solic-row">' +
-      '<span class="apx-solic-arrow" aria-hidden="true"></span><span class="apx-barlabel" title="' + escapeHtml(name) + '">' + (idx+1) + '. ' + escapeHtml(name) + '</span>' +
+      '<span class="apx-solic-arrow" aria-hidden="true"></span><span class="apx-barlabel" title="' + escapeHtml(name) + '">' + (idx+1) + '. ' + empNombreHtml(d.value, name) + '</span>' +
       '<div class="sx-trackwrap"><div class="sx-nums" style="display:block;height:10px;width:' + pct + '%">' + nums + '</div><div class="apx-bartrack apx-bartrack-click" role="button" tabindex="0" onclick="abrirExpedienteSolicitante(event,' + idx + ')" title="Ver expediente de ' + escapeHtml(name) + '"><div class="apx-barfill gx-bar-h" style="display:flex;background:none;width:' + pct + '%;--gx-i:' + idx + '">' + segs + '</div></div></div><span class="apx-barcount">' + d.count + '</span></div></div>';
   }).join('');
 }
@@ -2024,7 +2140,7 @@ function renderMonthChart(filtered) {
 function abrirRegistrosMes(ym) {
   var rows = MES_ROWS.filter(function(r) { return yearMonth(r.fechaSolicitud) === ym; });
   function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
-  rows.sort(function(a, b) { return String(nom(a)).localeCompare(String(nom(b)), 'es') || String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')); });
+  rows.sort(function(a, b) { return String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')) || String(nom(a)).localeCompare(String(nom(b)), 'es'); });
   var empleados = {};
   rows.forEach(function(r) { empleados[shortUser(r.solicitante)] = 1; });
   var nEmp = Object.keys(empleados).length, mes = fmtMonthLabel(ym);
@@ -2041,10 +2157,10 @@ function abrirRegistrosMes(ym) {
   var filas = rows.map(function(r) {
     var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
-    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + empNombreHtml(u, nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
       '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, 5);
   }).join('');
-  document.getElementById('mesxCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>por empleado</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+  document.getElementById('mesxCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más antigua a la más reciente</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
     (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en este mes.</div>') + '</div>';
   var bg = document.getElementById('mesxBg');
   bg.classList.add('open');
@@ -2111,8 +2227,8 @@ function renderTable(filtered) {
     return '<tr><td class="apx-mono">' + r.id + '</td><td>' + escapeHtml(r.tipo) + durMarcas(r) + '</td>' +
       '<td class="apx-num">' + horasPantalla(r) + '</td><td class="apx-num">' + escapeHtml(diasPantalla(r)) + '</td>' +
       '<td>' + escapeHtml(r.pais) + '</td>' +
-      '<td class="apx-mono">' + escapeHtml(r.solicitante) + '</td><td>' + escapeHtml(r.jefeInmediato || '—') + '</td>' +
-      '<td class="apx-mono">' + escapeHtml(shortUser(r.aprobador)) + '</td><td>' + stampBadge(r.estado) + '</td>' +
+      '<td class="apx-mono">' + empNombreHtml(r.solicitante, r.solicitante) + '</td><td>' + empNombreHtml(r.jefeInmediato || '—', r.jefeInmediato || '—') + '</td>' +
+      '<td class="apx-mono">' + empNombreHtml(shortUser(r.aprobador), shortUser(r.aprobador)) + '</td><td>' + stampBadge(r.estado) + '</td>' +
       '<td class="apx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
       '<td class="apx-justif">' + justifCell(r.justificacion) + '</td></tr>';
   }).join('');
@@ -2547,7 +2663,7 @@ function pdfConfig(marcados){
   var e = rrhhPdfEstadoCounts(rows);
 
   var partesEstado = [
-    { etiqueta:'Pendientes 1.er aprobador', valor:e.ingresadas + e.aval, color:'#2f8f76' },
+    { etiqueta:'Pendientes 1.er aprobador', valor:e.ingresadas + e.aval, color:'#facc15' },
     { etiqueta:'Pendientes 2.º aprobador', valor:e.pendienteSegundo, color:'#8b909e' },
     { etiqueta:'Aprobadas 2.º aprobador', valor:e.rrhh, color:'#4f8fd8' },
     { etiqueta:'Rechazadas 1.er y 2.º aprobador', valor:e.rechazadas, color:'#c43c50' }
@@ -2629,9 +2745,9 @@ function pdfConfig(marcados){
     pill:{ etiqueta:'Solicitudes', valor:rrhhPdfNum(total) },
     tarjetas:M('indicadores') ? [
       { lbl:'Total solicitudes', num:rrhhPdfNum(I.total), acento:'#c43c50', sub:'Registros visibles en el período' },
-      { lbl:'Pendientes 1.er aprobador', num:rrhhPdfNum(I.pendientesPrimero), acento:'#2f8f76', sub:'Ingresadas + en aval' },
+      { lbl:'Pendientes 1.er aprobador', num:rrhhPdfNum(I.pendientesPrimero), acento:'#facc15', sub:'Ingresadas + en aval' },
       { lbl:'Aprobadas 1.er aprobador', num:rrhhPdfNum(I.aprobadasPrimero), acento:'#0891b2', sub:'Ya avanzaron al segundo nivel' },
-      { lbl:'Rechazadas 1.er aprobador', num:rrhhPdfNum(I.rechazadasPrimero), acento:'#c43c50', sub:'Rechazo jefe' },
+      { lbl:'Rechazadas 1.er aprobador', num:rrhhPdfNum(I.rechazadasPrimero), acento:'#fb923c', sub:'Rechazo jefe' },
       { lbl:'Pendientes 2.º aprobador', num:rrhhPdfNum(I.pendientesSegundo), acento:'#8b909e', sub:'Campo aprobador sin asignar' },
       { lbl:'Aprobadas 2.º aprobador', num:rrhhPdfNum(I.aprobadasSegundo), acento:'#4f8fd8', sub:'Aprobación RRHH' },
       { lbl:'Rechazadas 2.º aprobador', num:rrhhPdfNum(I.rechazadasSegundo), acento:'#be3651', sub:'Rechazo RRHH' }
@@ -2881,6 +2997,7 @@ function render() {
   var filtradoSegundo = filtered.filter(function(r) { return ESTADOS_SEGUNDO.indexOf(r.estado) !== -1; });
   filtradoSegundo.forEach(function(r) { if (!segundoSinAsignar(r)) cuentaDeAprobador[shortUser(r.aprobador).toLowerCase()] = r.aprobador; });
   filtradoSegundo.forEach(function(r) {
+    if (segundoSinAsignar(r) && !r.jefeInmediato) return; // sin aprobador y sin jefe: no se muestra
     var k = r.aprobador;
     if (segundoSinAsignar(r) && r.jefeInmediato) {
       var usuarioJefe = APROBADOR_DE_JEFE[r.jefeInmediato];
@@ -2896,12 +3013,6 @@ function render() {
 
   var areasData = uniqueCounts(filtered.filter(function(r){ return !esSinArea(r.area); }), 'area').map(function(d){return {name:d.value,count:d.count};});
   if (areasData.length) document.getElementById('insightArea').textContent = areasData[0].name + ' · ' + areasData[0].count;
-  // Registros que no tienen área (jefe sin área en el mapa o «Gerencia de País»): se muestran aparte para que el total cuadre
-  var sinAreaRows = filtered.filter(function(r){ return esSinArea(r.area); });
-  if (sinAreaRows.length) {
-    areasData.push({ name: 'Sin área asignada', count: sinAreaRows.length,
-      nota: sinAreaRows.slice(0, 12).map(function(r){ return 'ID ' + r.id + ' (jefe: ' + (r.jefeInmediato || '—') + ', solicitante: ' + shortUser(r.solicitante) + ')'; }).join('; ') });
-  }
   renderTreemap('chartArea', areasData);
 
   var jefesData = uniqueCounts(filtered.filter(function(r){return r.jefeInmediato;}), 'jefeInmediato').map(function(d){return {name:d.value,count:d.count,items:filtered.filter(function(r){ return r.jefeInmediato === d.value; })};});
@@ -2980,7 +3091,7 @@ function paintXfCol(key) {
   var st = XF_STATE[key];
   var list = xfCol(key).querySelector('.xf-list');
   var q = normTxt(XF_DRAFT.q[key].trim());
-  var vis = st.avail.filter(function(o) { return !q || normTxt(o.label).indexOf(q) !== -1; });
+  var vis = st.avail.filter(function(o) { return !q || normTxt(o.label).indexOf(q) !== -1 || normTxt(o.value).indexOf(q) !== -1; });
   XF_DRAFT.vis[key] = vis;
   if (!vis.length) {
     list.innerHTML = '<div class="apx-xf-empty">' + (st.avail.length ? 'Sin coincidencias' : 'Sin opciones con los filtros actuales') + '</div>';
@@ -2989,9 +3100,9 @@ function paintXfCol(key) {
       '<label class="xf-option all"><input type="checkbox" data-all><span class="xf-option-text">' +
         (q ? '(Seleccionar todos los resultados)' : '(Seleccionar todo)') + '</span></label>' +
       vis.map(function(o, i) {
-        return '<label class="xf-option" title="' + escapeHtml(o.label) + '">' +
+        return '<label class="xf-option" title="' + escapeHtml(xfTitulo(key, o)) + '">' +
           '<input type="checkbox" data-i="' + i + '"' + (XF_DRAFT.sel[key].has(o.value) ? ' checked' : '') + '>' +
-          '<span class="xf-option-text">' + escapeHtml(o.label) + '</span>' +
+          '<span class="xf-option-text">' + xfTexto(key, o) + '</span>' +
           '<span class="xf-option-count">' + o.count + '</span></label>';
       }).join('');
   }
