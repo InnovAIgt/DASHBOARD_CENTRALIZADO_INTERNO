@@ -863,3 +863,104 @@
   .mkv2 .mkv2-redes-dona { grid-template-columns: 120px minmax(0, 1fr); }
   .mkv2 .mkv2-redes-dona-figura { width: 120px; height: 120px; }
 }
+/* ---------- Redes · mockup v6 (Resumen y Publicaciones) ---------- */
+.mkv2 .mkv2-redes-barra .mkv2-barra-fila { flex-wrap: wrap; }
+.mkv2 .mkv2-redes-punto { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; }
+/* Lo importante del mes: píldoras de una línea */
+.mkv2 .mkv2-redes-importantes { display: flex; flex-wrap: wrap; gap: 8px; }
+.mkv2 .mkv2-redes-importante {
+  --c: #3987e5; display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 9px; font: inherit; font-size: 12px; color: var(--fv2-texto);
+  background: color-mix(in srgb, var(--c) 10%, var(--fv2-tarjeta)); border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); border-radius: 99px;
+  animation: mkv2-sube .4s ease both;
+}
+.mkv2 button.mkv2-redes-importante { cursor: pointer; }
+.mkv2 button.mkv2-redes-importante:hover { border-color: var(--c); }
+.mkv2 .mkv2-redes-importante svg { color: var(--c); }
+.mkv2 .mkv2-redes-importante span { color: var(--mkv2-suave); }
+/* Programado vs publicado por marca */
+.mkv2 .mkv2-redes-prog-graf { display: flex; align-items: stretch; justify-content: space-around; gap: 12px; height: 190px; padding-top: 18px; border-bottom: 1px solid rgba(255, 255, 255, .12); }
+.mkv2 .mkv2-redes-prog-grupo { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 0; font: inherit; color: inherit; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+.mkv2 .mkv2-redes-prog-grupo:hover, .mkv2 .mkv2-redes-prog-grupo.is-activa { background: rgba(255, 255, 255, .04); }
+.mkv2 .mkv2-redes-prog-grupo small { text-align: center; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-prog-barras { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+.mkv2 .mkv2-redes-prog-barras .mkv2-redes-columna { position: relative; width: min(40px, 34%); }
+.mkv2 .mkv2-redes-columna.is-programada { --c: rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .18); }
+.mkv2 .mkv2-redes-columna b { position: absolute; bottom: 100%; left: 0; right: 0; padding-bottom: 2px; text-align: center; font-size: 11px; color: var(--mkv2-suave); }
+.mkv2 .mkv2-redes-semana small.is-futura { opacity: .5; }
+.mkv2 .mkv2-redes-nota-caso { margin: 10px 0 0; padding: 12px; font-size: 12px; line-height: 1.5; color: var(--mkv2-suave); background: rgba(255, 255, 255, .03); border: 1px dashed rgba(255, 255, 255, .15); border-radius: 10px; }
+/* ¿Qué marca va mejor? (en columna dentro de su tarjeta) */
+.mkv2 .mkv2-redes-tres .mkv2-redes-marcas { grid-template-columns: 1fr; gap: 7px; }
+.mkv2 .mkv2-redes-tres .mkv2-redes-marca { grid-template-columns: 58px minmax(0, 1fr); gap: 10px; padding: 6px 8px; }
+.mkv2 .mkv2-redes-tres .mkv2-redes-marca:hover { transform: translateX(3px); }
+.mkv2 .mkv2-redes-tres .mkv2-redes-anillo { width: 58px; height: 58px; }
+.mkv2 .mkv2-redes-tres .mkv2-redes-marca-datos > span.mkv2-redes-marca-cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.mkv2 .mkv2-redes-marca-cifras > span { display: grid; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-marca-cifras b { font-size: 12.5px; color: var(--fv2-texto); white-space: nowrap; }
+.mkv2 .mkv2-redes-marca-cifras b b { font-size: 10px; }
+.mkv2 .mkv2-redes-marca-cabeza em { padding: 0 6px; background: var(--fv2-elevado); border-radius: 5px; }
+/* Variaciones ▲ ▼ */
+.mkv2 .mkv2-redes .is-sube { color: #4fc98f; }
+.mkv2 .mkv2-redes .is-baja { color: #ef6a7d; }
+/* Mini pestañas y listas compactas */
+.mkv2 .mkv2-redes-minitabs { display: flex; gap: 4px; }
+.mkv2 .mkv2-redes-minitabs button { padding: 3px 8px; font: inherit; font-size: 11px; font-weight: 700; color: var(--mkv2-suave); background: var(--fv2-elevado); border: 1px solid var(--fv2-borde); border-radius: 7px; cursor: pointer; }
+.mkv2 .mkv2-redes-minitabs button.is-activa { color: #fff; background: var(--mkv2-duro); border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-redes-lista { display: grid; gap: 5px; }
+.mkv2 .mkv2-redes-li { display: flex; align-items: center; gap: 8px; padding: 5px 7px; font-size: 12px; background: rgba(255, 255, 255, .025); border: 1px solid transparent; border-radius: 8px; animation: mkv2-sube .3s ease both; }
+.mkv2 .mkv2-redes-li.is-no { background: rgba(201, 54, 75, .08); border-color: rgba(201, 54, 75, .2); }
+.mkv2 .mkv2-redes-li-n { display: grid; place-items: center; flex: none; width: 19px; height: 19px; font-size: 10px; font-weight: 800; background: var(--fv2-elevado); border-radius: 50%; }
+.mkv2 .mkv2-redes-li-n.is-oro { color: #111; background: var(--mkv2-temporal); }
+.mkv2 .mkv2-redes-li-t { flex: 1; min-width: 0; }
+.mkv2 .mkv2-redes-li-t b { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-redes-li-t small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-li-v { text-align: right; font-weight: 800; }
+.mkv2 .mkv2-redes-li-v small { display: block; font-size: 10px; font-weight: 600; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-red { padding: 0 5px; font-size: 9.5px; font-weight: 800; color: #fff; border-radius: 4px; }
+.mkv2 .mkv2-redes-red.is-fb { background: #3b82e0; }
+.mkv2 .mkv2-redes-red.is-ig { background: #d64f9a; }
+.mkv2 .mkv2-redes-vacio { margin: 0; padding: 18px; text-align: center; font-size: 12.5px; color: #4fc98f; }
+.mkv2 .mkv2-redes-vacio.is-gris { color: var(--fv2-tenue); }
+/* Pauta: costo por mensaje */
+.mkv2 .mkv2-redes-pauta { display: grid; margin-top: 8px; }
+.mkv2 .mkv2-redes-pauta-fila { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 8px; align-items: center; padding: 5px 0; font-size: 12px; border-bottom: 1px dashed var(--fv2-borde); }
+.mkv2 .mkv2-redes-pauta-fila:last-child { border-bottom: 0; }
+.mkv2 .mkv2-redes-pauta-fila b { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-redes-pauta-fila small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-pauta-barra { height: 9px; overflow: hidden; background: rgba(255, 255, 255, .05); border-radius: 99px; }
+.mkv2 .mkv2-redes-pauta-barra i { display: block; height: 100%; border-radius: 99px; animation: mkv2-crece .9s ease both; }
+.mkv2 .mkv2-redes-pauta-fila .mkv2-redes-sem { color: var(--mkv2-suave); background: rgba(255, 255, 255, .06); }
+.mkv2 .mkv2-redes-pauta-fila .mkv2-redes-sem.is-verde { color: #3fcf8e; background: rgba(24, 147, 95, .2); }
+.mkv2 .mkv2-redes-pauta-fila .mkv2-redes-sem.is-amarillo { color: #f0c15a; background: rgba(217, 165, 32, .2); }
+.mkv2 .mkv2-redes-pauta-fila .mkv2-redes-sem.is-rojo { color: #f06b7e; background: rgba(201, 54, 75, .2); }
+/* Publicaciones: calendario, mejor día y tabla */
+.mkv2 .mkv2-redes-duo-cal { grid-template-columns: 1.2fr 1fr; }
+.mkv2 .mkv2-redes-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.mkv2 .mkv2-redes-cal-dn { text-align: center; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-dia { display: flex; flex-direction: column; gap: 2px; min-height: 46px; padding: 3px 4px; background: rgba(255, 255, 255, .025); border: 1px solid var(--fv2-borde); border-radius: 8px; animation: mkv2-sube .35s ease both; }
+.mkv2 .mkv2-redes-dia.is-hoy { border-color: rgba(201, 54, 75, .7); }
+.mkv2 .mkv2-redes-dia-n { font-size: 10px; font-weight: 700; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-dia.is-hoy .mkv2-redes-dia-n { color: #ef6a7d; }
+.mkv2 .mkv2-redes-pills { display: flex; flex-wrap: wrap; gap: 3px; }
+.mkv2 .mkv2-redes-pill { width: 13px; height: 13px; padding: 0; background: var(--c); border: 0; border-radius: 4px; cursor: pointer; transition: transform .12s; }
+.mkv2 .mkv2-redes-pill:hover { transform: scale(1.3); }
+.mkv2 .mkv2-redes-pill.is-no_publicada { background: transparent; border: 2px solid #c9364b; }
+.mkv2 .mkv2-redes-pill.is-programada { opacity: .45; outline: 1px dashed rgba(255, 255, 255, .6); }
+.mkv2 .mkv2-redes-pill.is-marcada { opacity: 1; outline: 2px solid #fff; outline-offset: 1px; }
+.mkv2 .mkv2-redes-dias { display: flex; align-items: stretch; gap: 10px; height: 280px; padding-top: 16px; }
+.mkv2 .mkv2-redes-dia-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.mkv2 .mkv2-redes-dia-col small { text-align: center; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-dia-col.is-mejor small { font-weight: 700; color: #f0b45c; }
+.mkv2 .mkv2-redes-dia-barra { flex: 1; display: flex; align-items: flex-end; justify-content: center; }
+.mkv2 .mkv2-redes-dia-barra i { position: relative; width: min(38px, 80%); height: var(--alto); min-height: 2px; background: #3a4357; border-radius: 5px 5px 2px 2px; animation: mkv2-redes-alza .7s ease both; }
+.mkv2 .mkv2-redes-dia-col.is-mejor .mkv2-redes-dia-barra i { background: var(--mkv2-temporal); }
+.mkv2 .mkv2-redes-dia-barra b { position: absolute; bottom: 100%; left: 0; right: 0; text-align: center; font-style: normal; color: #f0b45c; }
+.mkv2 .mkv2-redes-tabla tr.is-marcada td { background: rgba(201, 54, 75, .12); }
+.mkv2 .mkv2-redes-est { padding: 1px 7px; font-size: 10.5px; font-weight: 800; border-radius: 5px; white-space: nowrap; }
+.mkv2 .mkv2-redes-est.is-pub { color: #7fb0f0; background: rgba(57, 135, 229, .18); }
+.mkv2 .mkv2-redes-est.is-prog { color: var(--mkv2-suave); background: rgba(255, 255, 255, .08); }
+.mkv2 .mkv2-redes-est.is-no { color: #ef6a7d; background: rgba(201, 54, 75, .2); }
+.mkv2 .mkv2-redes-enlace { margin-left: 6px; color: var(--fv2-azul-claro); vertical-align: -1px; }
+.mkv2 .mkv2-redes-ver { display: block; margin: 10px auto 0; }
+@media (max-width: 1000px) {
+  .mkv2 .mkv2-redes-duo-cal { grid-template-columns: 1fr; }
+}

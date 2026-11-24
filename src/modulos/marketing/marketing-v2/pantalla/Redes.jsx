@@ -3,12 +3,13 @@
 // barra de filtros, sub-pestañas Resumen · Publicaciones · Anuncios y «Filtrado por».
 // HOY con DATOS DE EJEMPLO (datos/redesEjemplo.js) y aviso visible; con el token de Meta solo cambia la fuente
 // (datos/useRedesDatos.js). Sin leads por ahora.
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
-import { ESTADOS, FILTROS_REDES, FORMATOS, MARCAS, REDES } from '../datos/redes.js'
+import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, REDES } from '../datos/redes.js'
 import { useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 import { BarraRedes } from './redes/BarraRedes.jsx'
+import { PublicacionesRedes } from './redes/Publicaciones.jsx'
 import { ResumenRedes } from './redes/Resumen.jsx'
 
 export const SUBPESTANAS_REDES = [
@@ -17,7 +18,7 @@ export const SUBPESTANAS_REDES = [
   { key: 'anuncios', label: 'Anuncios' },
 ]
 
-/** Sub-pestaña que todavía no está armada (partes 4 y 5). */
+/** Sub-pestaña que todavía no está armada. */
 function Pendiente({ parte }) {
   return <Aviso icono="info" titulo="En construcción" texto={`Esta sub-pestaña se arma en la parte ${parte} del plan de Redes.`} />
 }
@@ -29,6 +30,13 @@ export function Redes() {
   const [filtros, setFiltros] = useState({ ...FILTROS_REDES, mes: datos.meses[0] ?? '' })
   const filtrar = (cambio) => setFiltros((f) => ({ ...f, ...cambio }))
   const globo = useGlobo()
+  // Publicaciones del mes con su estado (publicada / no_publicada / programada) y el caso de programadas (A, B o C).
+  const items = datos.publicaciones
+  const caso = 'A'
+  const cuenta = useMemo(() => ({
+    publicaciones: filtrarRedes(items, filtros).length,
+    anuncios: filtrarRedes(datos.anuncios, { ...filtros, red: '', formato: '', estado: '' }).length,
+  }), [items, datos.anuncios, filtros])
   const etiquetas = [
     filtros.pais && { quitar: { pais: '' }, texto: `País: ${filtros.pais}` },
     filtros.marca && { quitar: { marca: '' }, texto: MARCAS[filtros.marca]?.corto ?? filtros.marca },
@@ -44,7 +52,8 @@ export function Redes() {
     <BarraRedes filtros={filtros} cambiar={setFiltros} meses={datos.meses} pdfListo={false} />
     <nav className="mkv2-subpestanas" role="tablist" aria-label="Secciones de Redes sociales">
       {SUBPESTANAS_REDES.map((p) => <button type="button" key={p.key} role="tab" aria-selected={sub === p.key}
-        className={`mkv2-subpestana ${sub === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>{p.label}</button>)}
+        className={`mkv2-subpestana ${sub === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>{p.label}
+        {cuenta[p.key] != null && !datos.cargando && <span className="mkv2-subpestana-cuenta">{cuenta[p.key]}</span>}</button>)}
     </nav>
     {etiquetas.length > 0 && <div className="mkv2-filtrado" role="status">
       <span>Filtrado por:</span>
@@ -54,8 +63,9 @@ export function Redes() {
     {datos.cargando && <div className="fv2-vacio"><strong>Cargando datos de Meta…</strong></div>}
     {!datos.cargando && datos.error && <Aviso titulo="No se pudieron leer los datos de Meta" texto={datos.error} onReintentar={datos.reintentar} />}
     {!datos.cargando && !datos.error && <>
-      {sub === 'resumen' && <ResumenRedes datos={datos} filtros={filtros} filtrar={filtrar} irA={irA} />}
-      {sub === 'publicaciones' && <Pendiente parte={4} />}
+      {datos.avisos?.map((a) => <Aviso key={a} titulo="Aviso de Meta" texto={a} />)}
+      {sub === 'resumen' && <ResumenRedes datos={datos} items={items} caso={caso} filtros={filtros} filtrar={filtrar} irA={irA} />}
+      {sub === 'publicaciones' && <PublicacionesRedes datos={datos} items={items} filtros={filtros} />}
       {sub === 'anuncios' && <Pendiente parte={5} />}
     </>}
     {globo.nodo}

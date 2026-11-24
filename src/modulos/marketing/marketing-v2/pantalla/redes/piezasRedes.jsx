@@ -91,8 +91,11 @@ export function Anillo({ pct, color }) {
   </svg>
 }
 
-/** Alcance por semana: columnas de Facebook e Instagram lado a lado (solo las redes que pasan el filtro). */
-export function BarrasSemana({ semanas = [], redes = ['fb', 'ig'] }) {
+/**
+ * Alcance por semana: columnas de Facebook e Instagram lado a lado (solo las redes que pasan el filtro).
+ * corte = día de hoy si el mes está en curso: las semanas que empiezan después dicen «por venir».
+ */
+export function BarrasSemana({ semanas = [], redes = ['fb', 'ig'], corte = null }) {
   const max = Math.max(...semanas.flatMap((s) => redes.map((r) => s[r])), 1)
   return <div className="mkv2-redes-semanas">
     <div className="mkv2-redes-semanas-graf">
@@ -101,11 +104,40 @@ export function BarrasSemana({ semanas = [], redes = ['fb', 'ig'] }) {
           {redes.map((r) => <span key={r} className="mkv2-redes-columna" style={{ '--alto': `${(s[r] / max) * 100}%`, '--c': COLOR_RED[r] }}
             data-tip={`${r === 'fb' ? 'Facebook' : 'Instagram'} · días ${s.desde}–${s.hasta}: ${numero(s[r])} de alcance`} />)}
         </div>
-        <small>{s.desde}–{s.hasta}</small>
+        <small className={corte && s.desde > corte ? 'is-futura' : ''}>{s.desde}–{s.hasta}{corte && s.desde > corte ? ' · por venir' : ''}</small>
       </div>)}
     </div>
     <div className="mkv2-redes-leyenda">
       {redes.map((r) => <span key={r}><i style={{ background: COLOR_RED[r] }} />{r === 'fb' ? 'Facebook' : 'Instagram'}</span>)}
     </div>
   </div>
+}
+
+/**
+ * Programado vs publicado por marca: por cada marca, columna gris (programadas a la fecha) y columna con el color del
+ * semáforo (publicadas). filas = [{marca, nombre, programadas, publicadas, cumplimiento, color}]. Clic = filtrar marca.
+ */
+export function BarrasProgramado({ filas = [], onElegir, activa = '' }) {
+  const max = Math.max(1, ...filas.map((f) => Math.max(f.programadas, f.publicadas)))
+  return <div className="mkv2-redes-prog">
+    <div className="mkv2-redes-prog-graf">
+      {filas.map((f) => <button type="button" key={f.marca} className={`mkv2-redes-prog-grupo ${activa === f.marca ? 'is-activa' : ''}`} onClick={onElegir ? () => onElegir(f.marca) : undefined}
+        data-tip={`${f.nombre}
+${f.publicadas} de ${f.programadas} programadas · ${f.cumplimiento === null ? '—' : `${Math.round(f.cumplimiento)} %`}`}>
+        <span className="mkv2-redes-prog-barras">
+          <span className="mkv2-redes-columna is-programada" style={{ '--alto': `${(f.programadas / max) * 100}%` }}><b>{f.programadas}</b></span>
+          <span className="mkv2-redes-columna" style={{ '--alto': `${(f.publicadas / max) * 100}%`, '--c': f.color }}><b style={{ color: f.color }}>{f.publicadas}</b></span>
+        </span>
+        <small>{f.corto}</small>
+      </button>)}
+    </div>
+  </div>
+}
+
+/** Píldora de «Lo importante del mes» (una línea; la explicación va en el globo). */
+export function PildoraImportante({ icono: Icono, color, texto, detalle, tip, onClick }) {
+  const Caja = onClick ? 'button' : 'span'
+  return <Caja {...(onClick ? { type: 'button', onClick } : {})} className="mkv2-redes-importante" style={{ '--c': color }} data-tip={tip}>
+    {Icono && <Icono size={14} aria-hidden="true" />}<b>{texto}</b>{detalle && <span>{detalle}</span>}
+  </Caja>
 }
