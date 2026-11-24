@@ -9,6 +9,7 @@
 
 - Publicaciones **hechas** y **programadas**, por **marca** y **país**, en **Facebook** e **Instagram**.
   Cuentas: **DATA RED**, **RED Intelfon Guatemala** y **RED Intelfon El Salvador**.
+- **DATA RED es de El Salvador** (confirmado, 23/11/2026): en filtros y resúmenes cuenta como país **SV**.
 - Por publicación o campaña: **presupuesto**, **alcance**, **visualizaciones**, **clics**, **costo por clic**,
   **mensajes** y **costo por mensaje**.
 - **Leads calificados / no calificados** (pendiente: códigos por publicación + G24).
@@ -20,9 +21,11 @@
 1. Agrega a Keily en **business.facebook.com → Configuración del negocio → Personas** como **Administradora**.
 2. Confirma que estén dentro del negocio las 3 páginas de Facebook, sus cuentas de Instagram y las cuentas
    publicitarias.
-3. Pasa la lista **marca → país → página de Facebook → cuenta de Instagram → cuenta publicitaria** (¿DATA RED es de
-   un país o de los dos?), si hay anuncios pagados **fuera** de ese Business Manager (agencia o cuenta personal) y
-   quién programa las publicaciones y desde dónde.
+3. Pasa la lista **marca → país → página de Facebook → cuenta de Instagram → cuenta publicitaria** (DATA RED ya está
+   confirmada como de El Salvador).
+
+**Pendiente con Marketing:** si hay anuncios pagados **fuera** de ese Business Manager (agencia o cuenta personal) y
+quién programa las publicaciones y con qué herramienta.
 
 **Keily**:
 4. **developers.facebook.com → Crear app**, tipo **«Empresa» (Business)**, conectada al Business Manager de RED. Se
@@ -95,8 +98,10 @@ Instagram** después de 24 horas (solo si se guardan ese día).
 
 ## 7. Partes del trabajo
 
-1. **Prueba de solo lectura** con el token: antes se muestran las consultas exactas; luego solo conteos y qué
-   métricas existen. *(Espera el token de Meta.)*
+1. **Prueba de solo lectura** con el token *(espera el token de Meta)*. Antes se muestran las consultas exactas y se
+   espera el «sí» de Keily. **Primero lista las páginas, las cuentas de Instagram y las cuentas de anuncios que el
+   token ve** (nombre e id, sin datos personales), para confirmar con Marketing que no falte ninguna; después, solo
+   conteos y qué métricas existen.
 2. Rutas del servidor y cuadro de marcas.
 3. Resumen.
 4. Publicaciones y Programadas.

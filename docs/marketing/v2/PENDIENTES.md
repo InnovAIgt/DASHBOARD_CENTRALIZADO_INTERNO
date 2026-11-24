@@ -35,7 +35,8 @@ Cuando algo se resuelva, se cambia el **Estado** y se anota en [BITACORA.md](BIT
 | Segunda revisión de la campaña [PRUEBA] (id 80): clics (Brevo 2 personas, tabla 1 persona con 2 clics) y `proxy_open` | Keily (avisa a Claude) | 2026-11-24 | Pendiente |
 | Borrar de la tabla los eventos de la campaña [PRUEBA] (id 80) al terminar la prueba | Keily | Al terminar la prueba | Pendiente |
 | Acceso a Meta: agregar a Keily como administradora del Business Manager y pasar la lista marca → país → página de Facebook → Instagram → cuenta publicitaria (REDES.md, sección 2) | Erick / Ismael | 2026-11-20 | Pendiente |
-| Confirmar a qué país pertenece DATA RED, si hay anuncios pagados fuera del Business Manager y quién programa las publicaciones (y desde dónde) | Erick / Ismael | Por confirmar | Pendiente |
+| Confirmar si hay anuncios pagados fuera del Business Manager (agencia o cuenta personal) y quién programa las publicaciones y con qué herramienta | Marketing (Erick / Ismael) | Por confirmar | Pendiente |
+| Confirmar con Marketing la lista de páginas, cuentas de Instagram y cuentas de anuncios que vea el token de Meta (la parte (1) las lista primero), para que no falte ninguna | Keily / Marketing | Cuando exista el token | Pendiente |
 | Crear la app de Meta (tipo Empresa), el usuario del sistema de solo lectura y su token; poner META_TOKEN, META_APP_SECRET y META_API_VERSION en .env.local y en Vercel (Secret) — REDES.md, sección 2. La parte (1) de Redes espera este token | Keily | Cuando Erick dé el acceso | Pendiente |
 | Códigos por publicación para unir cada lead con su publicación (Redes) | Ismael + equipo Prospekt IA | Por confirmar | Pendiente |
 | Acceso a G24 para la calificación de leads (¿quién lo administra?) | Ismael | Por confirmar | Pendiente |

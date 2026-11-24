@@ -2,6 +2,12 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Redes: DATA RED es de El Salvador
+
+- Confirmado: DATA RED es de El Salvador (país SV en filtros y resúmenes); se quitó de pendientes.
+- La parte (1) de Redes listará primero las páginas, cuentas de Instagram y cuentas de anuncios que vea el token,
+  para confirmar con Marketing que no falte ninguna.
+
 ## 2026-11-23 · Redes sociales: plan aprobado
 
 - Keily aprobó el plan de la pestaña Redes sociales por partes (REDES.md): acceso a Meta (Erick agrega a Keily al
