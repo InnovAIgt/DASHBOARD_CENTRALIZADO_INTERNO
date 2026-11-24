@@ -11,6 +11,11 @@ import { AvisoPendiente } from './pantalla/comunes.jsx'
 import { Mailing, SUBPESTANAS_MAILING } from './pantalla/Mailing.jsx'
 import { Redes } from './pantalla/Redes.jsx'
 
+/* global __MKT_REDES_VISIBLE__ */
+// Redes sociales: en Vercel Production sale «Próximamente» y en Preview / local la pantalla de ejemplo (datos/bandera.js,
+// vite.config.ts). Si la constante no existe (por ejemplo, en pruebas), se muestra.
+const REDES_VISIBLE = typeof __MKT_REDES_VISIBLE__ === 'undefined' ? true : __MKT_REDES_VISIBLE__
+
 const PESTANAS = [
   { key: 'mailing', label: 'Mailing' },
   { key: 'redes', label: 'Redes sociales' },
@@ -52,7 +57,9 @@ export function MarketingV2() {
       </nav>
 
       {pestana === 'mailing' && <Mailing sub={subMailing} onSub={setSubMailing} />}
-      {pestana === 'redes' && <Redes />}
+      {pestana === 'redes' && (REDES_VISIBLE
+        ? <Redes />
+        : <AvisoPendiente titulo="Próximamente: Redes sociales" texto="Facebook e Instagram de RED GT, RED SV y DATA RED. Se activa cuando esté conectado a Meta." proximamente />)}
       {pestana === 'otros' && <AvisoPendiente titulo="Próximamente (PBX, web, etc.)" proximamente />}
     </div>
   </div>
