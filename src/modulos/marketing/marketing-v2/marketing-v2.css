@@ -964,3 +964,44 @@
 @media (max-width: 1000px) {
   .mkv2 .mkv2-redes-duo-cal { grid-template-columns: 1fr; }
 }
+/* ---------- Redes · Anuncios (fase 2) ---------- */
+.mkv2 .mkv2-redes-kpis.mkv2-redes-kpis7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mkv2 .mkv2-redes-fase { display: inline-block; margin-left: 6px; padding: 1px 8px; font-size: 10px; font-weight: 800; letter-spacing: .06em; vertical-align: 2px; color: #b9b1f5; background: rgba(144, 133, 233, .18); border: 1px solid rgba(144, 133, 233, .4); border-radius: 99px; }
+.mkv2 .mkv2-redes-fase-nota { margin: 0; font-size: 12px; color: var(--mkv2-suave); }
+.mkv2 .mkv2-redes-fase-nota .mkv2-redes-fase { margin: 0 6px 0 0; }
+.mkv2 .mkv2-redes-duo-ads { grid-template-columns: 1.3fr 1fr; }
+.mkv2 .mkv2-redes-heat { display: grid; grid-template-columns: 34px repeat(12, minmax(0, 1fr)); gap: 3px; margin-top: 8px; font-size: 10px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-heat-h { text-align: center; }
+.mkv2 .mkv2-redes-heat-d { display: flex; align-items: center; }
+.mkv2 .mkv2-redes-heat-c { height: 22px; border-radius: 5px; animation: mkv2-sube .4s ease both; transition: transform .12s; }
+.mkv2 .mkv2-redes-heat-c:hover { transform: scale(1.15); outline: 1px solid rgba(255, 255, 255, .5); }
+.mkv2 .mkv2-redes-esc { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-esc i { width: 120px; height: 8px; background: linear-gradient(90deg, rgba(47, 184, 196, .08), #2fb8c4); border-radius: 99px; }
+.mkv2 .mkv2-redes-esc b { color: var(--fv2-texto); }
+.mkv2 .mkv2-redes-edad { display: grid; grid-template-columns: 44px 1fr 1fr 70px; gap: 6px; align-items: center; margin-top: 6px; font-size: 11.5px; }
+.mkv2 .mkv2-redes-edad > b { color: var(--mkv2-suave); }
+.mkv2 .mkv2-redes-edad > span { display: flex; }
+.mkv2 .mkv2-redes-edad > span.is-izq { justify-content: flex-end; }
+.mkv2 .mkv2-redes-edad > span i { height: 14px; border-radius: 4px; animation: mkv2-crece .9s cubic-bezier(.2, .8, .2, 1) both; }
+.mkv2 .mkv2-redes-edad > small { text-align: right; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-edad-h { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-edad-h > span { align-items: center; gap: 4px; }
+.mkv2 .mkv2-redes-edad-h > span:nth-child(2) { justify-content: flex-end; }
+.mkv2 .mkv2-redes-edad-h > span:last-child { justify-content: flex-end; }
+.mkv2 .mkv2-redes-edad-h i { width: 9px; height: 9px; border-radius: 3px; }
+.mkv2 .mkv2-redes-burbujas { width: 100%; height: auto; }
+.mkv2 .mkv2-redes-burbujas text { font-size: 10px; fill: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-burbuja { animation: mkv2-sube .5s ease both; }
+.mkv2 .mkv2-redes-li .mkv2-redes-sem { flex: none; }
+.mkv2 .mkv2-redes-li .mkv2-redes-sem.is-verde, .mkv2 .mkv2-redes-edad small.is-verde { color: #3fcf8e; background: rgba(24, 147, 95, .2); }
+.mkv2 .mkv2-redes-li .mkv2-redes-sem.is-amarillo { color: #f0c15a; background: rgba(217, 165, 32, .2); }
+.mkv2 .mkv2-tabla .mkv2-redes-sem.is-verde { color: #3fcf8e; background: rgba(24, 147, 95, .2); }
+.mkv2 .mkv2-tabla .mkv2-redes-sem.is-amarillo { color: #f0c15a; background: rgba(217, 165, 32, .2); }
+.mkv2 .mkv2-tabla .mkv2-redes-sem.is-rojo { color: #f06b7e; background: rgba(201, 54, 75, .2); }
+@media (max-width: 1240px) {
+  .mkv2 .mkv2-redes-kpis.mkv2-redes-kpis7 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mkv2 .mkv2-redes-duo-ads { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .mkv2 .mkv2-redes-kpis.mkv2-redes-kpis7 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

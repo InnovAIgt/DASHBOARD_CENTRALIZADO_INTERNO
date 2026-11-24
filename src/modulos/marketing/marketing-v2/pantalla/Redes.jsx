@@ -11,6 +11,7 @@ import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, REDES } from '.
 import { armarProgramado } from '../datos/redesProgramadas.js'
 import { useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
+import { AnunciosRedes } from './redes/Anuncios.jsx'
 import { BarraRedes, ID_BOTON_PDF_REDES } from './redes/BarraRedes.jsx'
 import { PublicacionesRedes } from './redes/Publicaciones.jsx'
 import { ResumenRedes } from './redes/Resumen.jsx'
@@ -20,11 +21,6 @@ export const SUBPESTANAS_REDES = [
   { key: 'publicaciones', label: 'Publicaciones' },
   { key: 'anuncios', label: 'Anuncios' },
 ]
-
-/** Sub-pestaña que todavía no está armada. */
-function Pendiente({ parte }) {
-  return <Aviso icono="info" titulo="En construcción" texto={`Esta sub-pestaña se arma en la parte ${parte} del plan de Redes.`} />
-}
 
 export function Redes() {
   const datos = useRedesDatos()
@@ -96,7 +92,7 @@ export function Redes() {
       {datos.avisos?.map((a) => <Aviso key={a} titulo="Aviso de Meta" texto={a} />)}
       {sub === 'resumen' && <ResumenRedes datos={datos} items={items} caso={caso} filtros={filtros} filtrar={filtrar} irA={irA} />}
       {sub === 'publicaciones' && <PublicacionesRedes datos={datos} items={items} filtros={filtros} />}
-      {sub === 'anuncios' && <Pendiente parte={5} />}
+      {sub === 'anuncios' && <AnunciosRedes datos={datos} filtros={filtros} />}
     </>}
     {globo.nodo}
   </div>
