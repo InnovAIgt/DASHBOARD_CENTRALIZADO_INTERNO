@@ -11,8 +11,7 @@ import { HistoryView } from '../views/HistoryView';
 import { UsersView } from '../views/UsersView';
 import { RegionStatusBar } from './RegionStatusBar';
 import { FlujoVentasV2 } from '../../modulos/marketing/flujo-ventas-v2/FlujoVentasV2.jsx';
-import { MarketingCanales } from '../../modulos/marketing/canales/MarketingCanales.jsx';
-import { MarketingRedes } from '../../modulos/marketing/redes/MarketingRedes.jsx';
+import { MarketingV2 } from '../../modulos/marketing/marketing-v2/MarketingV2.jsx';
 
 interface NavSectionDef {
   id: string;
@@ -32,8 +31,8 @@ export const PortalLayout: React.FC = () => {
   const { currentUser, logout, isMaster } = useAuth();
   const { isFirebaseConnected } = useReport();
 
-  // Active page defaults to 'mailing-semanal' (Campañas de correo) as shown in reference screenshot
-  const [activePage, setActivePage] = useState<string>('mailing-semanal');
+  // Página de inicio: Ingresos acumulados (la primera del menú). Antes era «Campañas de correo», que se retiró.
+  const [activePage, setActivePage] = useState<string>('ingresos-acumulados');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set([
       'ingresos',
@@ -52,8 +51,9 @@ export const PortalLayout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [bankSubView, setBankSubView] = useState<string>('overview');
-  // Flujo de ventas v2: el menú lateral se esconde y se asoma al acercar el mouse al borde izquierdo.
-  // Solo aplica en esa página; los demás dashboards no cambian (estilos en flujo-ventas-v2.css).
+  // Flujo de ventas v2 y Canales de marketing: el menú lateral se esconde y se asoma al acercar el mouse al borde
+  // izquierdo, y el dashboard usa todo el ancho. En Canales de marketing, al asomarse el menú el dashboard se corre
+  // (mkv2-menu-empuja, marketing-v2.css) para que el menú no tape nada. Solo en esas páginas; los demás no cambian (estilos en flujo-ventas-v2.css).
   const [menuAsomado, setMenuAsomado] = useState(false);
 
   useEffect(() => {
@@ -130,27 +130,15 @@ export const PortalLayout: React.FC = () => {
       ),
       items: [
         {
-          id: 'mailing-semanal',
-          label: 'Campañas de correo',
-          hasData: true,
-          archivo: '/dashboards/marketing/mailing-campanas.html'
-        },
-        {
           // Reemplazo del Flujo de ventas anterior. El HTML viejo se conserva como respaldo.
           id: 'flujo-ventas-v2',
           label: 'Flujo de ventas',
           hasData: true
         },
         {
-          // Marketing por canales: módulo src/modulos/marketing/canales (docs/marketing-canales/README.md)
-          id: 'marketing-canales',
-          label: 'Marketing por canales',
-          hasData: true
-        },
-        {
-          // Redes sociales: módulo src/modulos/marketing/redes (docs/marketing-redes/README.md)
-          id: 'marketing-redes',
-          label: 'Redes sociales',
+          // Canales de marketing: módulo src/modulos/marketing/marketing-v2 (docs/marketing/v2/README.md)
+          id: 'marketing-v2',
+          label: 'Canales de marketing',
           hasData: true
         }
       ]
@@ -330,17 +318,12 @@ export const PortalLayout: React.FC = () => {
       return <FlujoVentasV2 />;
     }
 
-    // Marketing · Marketing por canales: componente React del módulo src/modulos/marketing/canales
-    if (currentItem.id === 'marketing-canales') {
-      return <MarketingCanales />;
+    // Marketing · Canales de marketing: componente React del módulo src/modulos/marketing/marketing-v2
+    if (currentItem.id === 'marketing-v2') {
+      return <MarketingV2 />;
     }
 
-    // Marketing · Redes sociales: componente React del módulo src/modulos/marketing/redes
-    if (currentItem.id === 'marketing-redes') {
-      return <MarketingRedes />;
-    }
-
-    // If it has an external dashboard file (like mailing-campanas.html)
+    // If it has an external dashboard file (HTML en public/dashboards)
     if (currentItem.archivo) {
       return (
         <iframe
@@ -362,10 +345,10 @@ export const PortalLayout: React.FC = () => {
     );
   };
 
-  const menuOculto = activePage === 'flujo-ventas-v2';
+  const menuOculto = activePage === 'flujo-ventas-v2' || activePage === 'marketing-v2';
 
   return (
-    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''}`}>
+    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''} ${activePage === 'marketing-v2' ? 'mkv2-menu-empuja' : ''}`}>
       {/* Flujo de ventas v2: franja invisible en el borde izquierdo que hace asomar el menú */}
       {menuOculto && (
         <div

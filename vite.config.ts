@@ -2,10 +2,15 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import {redesVisible} from './src/modulos/marketing/marketing-v2/datos/bandera.js';
 
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    // Canales de marketing: Redes sociales muestra «Próximamente» en Vercel Production (MKT_REDES_VISIBLE la fuerza).
+    define: {
+      __MKT_REDES_VISIBLE__: JSON.stringify(redesVisible(process.env)),
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

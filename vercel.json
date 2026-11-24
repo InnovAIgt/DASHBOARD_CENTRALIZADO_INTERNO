@@ -3,16 +3,22 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "functions": {
-    "api/marketing/redes.js": {
-      "includeFiles": "server/marketingRedes/datos/**"
-    },
     "api/sac/*.js": {
+      "maxDuration": 60
+    },
+    "api/marketing/mailing/*.js": {
       "maxDuration": 60
     },
     "api/bodega-despachos.js": {
       "maxDuration": 300
     }
   },
+  "crons": [
+    {
+      "path": "/api/marketing/mantener-supabase",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/bodega/despachos",

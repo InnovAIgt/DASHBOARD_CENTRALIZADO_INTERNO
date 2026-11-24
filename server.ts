@@ -4,10 +4,12 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { getDispatchData } from './server/bodega-despachos.mjs';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
-import { obtenerMailing } from './server/marketingMailing.js';
-import { obtenerDetalleMailing } from './server/marketingMailingDetalle.js';
-import { obtenerRedes } from './server/marketingRedes.js';
 import { reenviarSac } from './server/sacProxy.js';
+import { procesarWebhookBrevo } from './server/brevoWebhook.js';
+import { responderCampanas } from './server/mailing/campanas.js';
+import { responderResumen } from './server/mailing/resumen.js';
+import { responderCargo } from './server/mailing/cargoEditar.js';
+import { responderDetalle } from './server/mailing/detalle.js';
 import { obtenerPreofertas } from './server/flashPreofertas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
@@ -38,56 +40,53 @@ app.all('/api/marketing/reuniones', async (req, res) => {
   res.status(resultado.status).send(resultado.body);
 });
 
-// Marketing por canales · métricas de mailing (docs/marketing-canales/README.md).
-// En Vercel esta misma ruta la atiende api/marketing/mailing.js.
-app.all('/api/marketing/mailing', async (req, res) => {
-  const resultado = await obtenerMailing({
-    method: req.method,
-    actualizar: req.query.actualizar === '1',
-    campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
-    pais: typeof req.query.pais === 'string' ? req.query.pais : undefined,
-  });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', resultado.contentType);
-  res.status(resultado.status).send(resultado.body);
-});
-
-// Marketing por canales · detalle de personas (D34 y D42).
-// En Vercel esta misma ruta la atiende api/marketing/mailing-detalle.js.
-app.all('/api/marketing/mailing-detalle', async (req, res) => {
-  const resultado = await obtenerDetalleMailing({
-    method: req.method,
-    campana: typeof req.query.campana === 'string' ? req.query.campana : undefined,
-    vista: typeof req.query.vista === 'string' ? req.query.vista : undefined,
-    pais: typeof req.query.pais === 'string' ? req.query.pais : undefined,
-    campanas: typeof req.query.campanas === 'string' ? req.query.campanas : undefined,
-    desde: typeof req.query.desde === 'string' ? req.query.desde : undefined,
-    hasta: typeof req.query.hasta === 'string' ? req.query.hasta : undefined,
-    cargos: typeof req.query.cargos === 'string' ? req.query.cargos : undefined,
-    tarjeta: typeof req.query.tarjeta === 'string' ? req.query.tarjeta : undefined,
-  });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', resultado.contentType);
-  res.status(resultado.status).send(resultado.body);
-});
-
-// Marketing · Redes sociales: métricas del Excel de RRSS (docs/marketing-redes/README.md).
-// En Vercel esta misma ruta la atiende api/marketing/redes.js.
-app.all('/api/marketing/redes', async (req, res) => {
-  const resultado = await obtenerRedes({ method: req.method });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Type', resultado.contentType);
-  res.status(resultado.status).send(resultado.body);
-});
-
 // Servicio al Cliente · datos de SAC por el servidor (solo lectura, evita el bloqueo CORS de las Edge Functions).
 // /api/sac/corte, /api/sac/vivo y /api/sac/historico. En Vercel las atienden api/sac/*.js.
 app.all('/api/sac/:fuente(corte|vivo|historico)', async (req, res) => {
   const i = req.originalUrl.indexOf('?');
   const resultado = await reenviarSac({ fuente: req.params.fuente, method: req.method, query: i < 0 ? '' : req.originalUrl.slice(i) });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · avisos (webhooks de marketing) de Brevo, protegidos con BREVO_WEBHOOK_SECRET.
+// Guarda en el proyecto Supabase «Dashboard Canales de marketing». En Vercel: api/marketing/brevo-webhook.js.
+app.all('/api/marketing/brevo-webhook', async (req, res) => {
+  const resultado = await procesarWebhookBrevo({ method: req.method, headers: req.headers, body: req.body });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: campañas de Brevo con sus totales (sin datos personales, con caché).
+// En Vercel: api/marketing/mailing/campanas.js.
+app.all('/api/marketing/mailing/campanas', async (req, res) => {
+  const resultado = await responderCampanas({ method: req.method });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: conteos de los eventos del webhook (nunca correos). En Vercel: api/marketing/mailing/resumen.js.
+app.all('/api/marketing/mailing/resumen', async (req, res) => {
+  const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
+  const resultado = await responderResumen({ method: req.method, query: { campanas } });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: guardar cargo y objetivo con clave de Marketing (sin inicio de sesión; decisión de
+// Keily, DECISIONES.md). Solo escribe en mkt_campana_cargo. En Vercel: api/marketing/mailing/cargo.js.
+app.all('/api/marketing/mailing/cargo', async (req, res) => {
+  const ip = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? 'desconocida').split(',')[0].trim();
+  const resultado = await responderCargo({ method: req.method, body: req.body, ip });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: detalle por correo. Muestra correos sin inicio de sesión (decisión de Keily,
+// docs/marketing/v2/DECISIONES.md); interruptor MKT_MOSTRAR_CORREOS. En Vercel: api/marketing/mailing/detalle.js.
+app.all('/api/marketing/mailing/detalle', async (req, res) => {
+  const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
+  const resultado = await responderDetalle({ method: req.method, query: { campanas } });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });

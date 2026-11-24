@@ -1,0 +1,865 @@
+/*
+ * Canales de marketing · estilos propios (solo lo que no trae Flujo de ventas).
+ * La base es flujo-ventas-v2.css (clase .fv2), que se importa sin modificarlo.
+ * Todo va dentro de .mkv2, con prefijo mkv2-.
+ * Mailing usa el TEMA NEGRO de la referencia visual de Mailing (solo su diseño; la referencia no se copia al repo
+ * porque trae datos de clientes): dentro de .mkv2-mailing se redefinen los tonos de fondo y texto, y los colores por
+ * significado son variables propias --mkv2-* (no cambian las --fv2-* de Flujo de ventas ni los estilos globales).
+ * Documentación: docs/marketing/v2/README.md
+ */
+
+/* ---------- Tema negro de Mailing ---------- */
+.mkv2 .mkv2-mailing {
+  /* tonos de fondo y texto (solo dentro de Mailing) */
+  --fv2-fondo: #0b0d12;
+  --fv2-panel: #141821;
+  --fv2-tarjeta: #181c26;
+  --fv2-elevado: #222837;
+  --fv2-caja: #11141b;
+  --fv2-texto: #e9ecf2;
+  --fv2-tenue: #8c93a3;
+  --mkv2-suave: #b7bdca;
+  /* color por significado */
+  --mkv2-enviados: #2f5d8a;
+  --mkv2-entregados: #18935f;
+  --mkv2-apertura: #2f86c9;
+  --mkv2-clic: #6650c8;
+  --mkv2-temporal: #d98b1f;
+  --mkv2-duro: #c9364b;
+  --mkv2-amarillo: #d9a520;
+  --mkv2-gris: #8c93a3;
+  display: flex; flex-direction: column; gap: 18px; min-width: 0;
+}
+/* Fondo negro con el brillo rojo de la referencia, solo cuando se ve Mailing */
+.fv2.mkv2:has(.mkv2-mailing) {
+  min-height: 100%;
+  background: radial-gradient(1100px 480px at 90% -8%, rgba(201, 54, 75, .14), transparent 60%), #0b0d12;
+}
+
+/* Animaciones suaves (se apagan con «reducir movimiento») */
+@keyframes mkv2-sube { from { opacity: 0; transform: translateY(8px); } }
+@keyframes mkv2-crece { from { width: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .mkv2 .mkv2-mailing *, .mkv2 .mkv2-mailing *::before, .mkv2 .mkv2-mailing *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Avisos de Redes sociales y Otros ---------- */
+.mkv2 .mkv2-aviso {
+  display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px;
+  background: var(--fv2-panel); border: 1px dashed var(--fv2-borde-fuerte); border-left: 3px solid var(--fv2-amarillo);
+  border-radius: 14px; color: var(--fv2-amarillo);
+}
+.mkv2 .mkv2-aviso > div { display: flex; flex-direction: column; gap: 3px; }
+.mkv2 .mkv2-aviso strong { font-size: 14px; font-weight: 800; color: var(--fv2-texto); }
+.mkv2 .mkv2-aviso span { font-size: 12px; color: var(--fv2-tenue); }
+
+/* ---------- Sub-pestañas de Mailing: botones como «Facturación / Informe detallado» (activa en rojo) ---------- */
+.mkv2 .mkv2-subpestanas { display: flex; flex-wrap: wrap; gap: 10px; }
+.mkv2 .mkv2-subpestana {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px;
+  border: 1px solid rgba(201, 54, 75, .45); border-radius: 10px; background: var(--fv2-tarjeta); color: var(--fv2-texto);
+  font-size: 13.5px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: background .16s, border-color .16s, transform .16s;
+}
+.mkv2 .mkv2-subpestana:hover { border-color: var(--mkv2-duro); transform: translateY(-1px); }
+.mkv2 .mkv2-subpestana.is-activa { background: var(--mkv2-duro, var(--fv2-rojo)); border-color: var(--mkv2-duro, var(--fv2-rojo)); color: #fff; box-shadow: 0 6px 16px rgba(201, 54, 75, .3); }
+.mkv2 .mkv2-subpestana-cuenta { padding: 0 7px; border-radius: 99px; background: rgba(255, 255, 255, .15); font-family: var(--fv2-mono); font-size: 11px; color: #fff; }
+/* Pestañas de campaña dentro de la ficha: más chicas y activa discreta (no roja) */
+.mkv2 .mkv2-ficha-campanas .mkv2-subpestana { border-color: var(--fv2-borde); }
+.mkv2 .mkv2-ficha-campanas .mkv2-subpestana.is-activa { background: var(--fv2-elevado); border-color: var(--fv2-borde-fuerte); box-shadow: inset 0 -2px 0 var(--mkv2-duro); }
+
+/* ---------- Barra de filtros con el estilo de Facturación (maqueta de tarjetas) ---------- */
+.mkv2 .mkv2-barra { display: grid; gap: 10px; padding: 12px; background: var(--fv2-panel); border: 1px solid var(--fv2-borde); border-radius: 14px; }
+.mkv2 .mkv2-barra-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mkv2 .mkv2-barra-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--fv2-borde); border-radius: 12px; background: rgba(255, 255, 255, .015); }
+.mkv2 .mkv2-barra-etiqueta { margin-right: 4px; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-chip-pais {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 9px;
+  background: var(--fv2-elevado); color: var(--fv2-texto); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s;
+}
+.mkv2 .mkv2-chip-pais:hover:not(:disabled) { border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-chip-pais:disabled { cursor: not-allowed; }
+/* País desactivado (Resultados generales y Cargo y objetivo): se ve en gris y conserva lo elegido */
+.mkv2 .mkv2-barra-grupo.is-inactivo { opacity: .45; filter: grayscale(.6); }
+.mkv2 .mkv2-barra-nota { font-size: 11.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-chip-pais.is-activo { background: var(--mkv2-duro); border-color: var(--mkv2-duro); color: #fff; box-shadow: 0 6px 16px rgba(201, 54, 75, .35); }
+.mkv2 .mkv2-barra-periodo { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--fv2-texto); }
+.mkv2 .mkv2-fecha { min-width: 150px; padding: 7px 12px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 9px; background: var(--fv2-tarjeta); color: var(--fv2-texto); font: inherit; font-size: 13px; font-weight: 600; color-scheme: dark; }
+.mkv2 .mkv2-barra-guion { color: var(--fv2-tenue); }
+.mkv2 .mkv2-boton-icono {
+  display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid rgba(255, 255, 255, .12); border-radius: 10px;
+  background: var(--fv2-elevado); color: #fff; cursor: pointer; transition: border-color .15s, transform .15s;
+}
+.mkv2 .mkv2-boton-icono:hover:not(:disabled) { border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-boton-icono:disabled { opacity: .45; cursor: default; }
+.mkv2 .mkv2-boton-redondo { margin-left: auto; border-radius: 50%; }
+.mkv2 .mkv2-boton-redondo:hover:not(:disabled) { transform: rotate(-45deg); }
+.mkv2 .mkv2-boton-barra {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 10px;
+  background: var(--fv2-tarjeta); color: var(--fv2-texto); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.mkv2 .mkv2-boton-barra:hover:not(:disabled), .mkv2 .mkv2-boton-barra.is-abierto { border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-boton-barra.is-abierto svg:last-child { transform: rotate(180deg); }
+.mkv2 .mkv2-boton-pdf { background: var(--mkv2-duro); border-color: var(--mkv2-duro); color: #fff; box-shadow: 0 6px 16px rgba(201, 54, 75, .3); }
+.mkv2 .mkv2-boton-pdf:hover:not(:disabled) { background: #a92c3f; }
+.mkv2 .mkv2-boton-pdf:disabled { opacity: .6; cursor: progress; }
+.mkv2 .mkv2-insignia-filtros { min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--mkv2-duro); color: #fff; font-size: 11px; text-align: center; }
+.mkv2 .mkv2-panel-filtros {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: end;
+  padding-top: 10px; border-top: 1px dashed var(--fv2-borde); animation: mkv2-sube .2s ease both;
+}
+.mkv2 .mkv2-panel-prueba { min-height: 38px; white-space: nowrap; }
+
+/* ---------- Tarjetas (card + toolbar de la plantilla) ---------- */
+.mkv2 .mkv2-tarjeta {
+  min-width: 0; padding: 20px 22px; background: var(--fv2-panel); border: 1px solid var(--fv2-borde);
+  border-radius: 14px; box-shadow: 0 6px 22px rgba(0, 0, 0, .25);
+}
+.mkv2 .mkv2-tarjeta-cabeza { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.mkv2 .mkv2-tarjeta-titulo { margin: 0; font-size: 14px; font-weight: 800; color: var(--fv2-texto); }
+.mkv2 .mkv2-tarjeta-sub { margin: 4px 0 0; font-size: 11px; line-height: 1.45; color: var(--fv2-tenue); }
+.mkv2 .mkv2-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+.mkv2 .mkv2-compacta { display: flex; flex-direction: column; }
+.mkv2 .mkv2-nota { margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: var(--fv2-tenue); }
+.mkv2 .mkv2-actualizado { margin-top: 0; text-align: right; }
+.mkv2 .mkv2-seccion { margin: 4px 0 -6px; font-size: 11px; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase; color: var(--fv2-tenue); }
+
+/* Franja de aviso (focus-strip) */
+.mkv2 .mkv2-foco {
+  display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px;
+  background: rgba(197, 150, 0, .08); border: 1px solid rgba(197, 150, 0, .32); border-radius: 10px; color: var(--fv2-amarillo);
+}
+.mkv2 .mkv2-foco svg { flex-shrink: 0; margin-top: 1px; }
+.mkv2 .mkv2-foco > div { display: grid; gap: 3px; min-width: 0; }
+.mkv2 .mkv2-foco strong { font-size: 13px; color: var(--fv2-texto); }
+.mkv2 .mkv2-foco span { font-size: 11.5px; line-height: 1.5; color: var(--fv2-tenue); }
+.mkv2 .mkv2-foco .mkv2-reintentar { flex-shrink: 0; margin-left: auto; align-self: center; }
+.mkv2 .mkv2-foco .mkv2-reintentar svg { margin: 0; }
+
+/* Etiquetas «Filtrado por: …» (un clic en ✕ quita ese filtro) */
+.mkv2 .mkv2-filtrado { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--fv2-tenue); animation: mkv2-sube .3s ease both; }
+.mkv2 .mkv2-filtrado-etiqueta {
+  display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 6px 10px 6px 12px; border-radius: 99px;
+  border: 1px solid rgba(201, 54, 75, .45); background: rgba(201, 54, 75, .16); color: #ffd0d6;
+  font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; transition: background .16s, border-color .16s;
+}
+.mkv2 .mkv2-filtrado-etiqueta:hover { background: rgba(201, 54, 75, .3); border-color: var(--mkv2-duro); }
+
+/* Globo con el valor exacto (sigue al mouse) */
+.mkv2 .mkv2-globo {
+  position: fixed; z-index: 120; /* encima de las ventanas (110 y 115) */ max-width: 290px; padding: 7px 10px; pointer-events: none;
+  background: #05070b; border: 1px solid rgba(255, 255, 255, .16); border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
+  font-size: 11.5px; font-weight: 600; line-height: 1.45; color: var(--fv2-texto); white-space: pre-line;
+}
+
+/* Cifra de tabla que se puede abrir */
+.mkv2 .mkv2-cifra {
+  padding: 1px 5px; margin: -1px -5px; border: 0; border-radius: 5px; background: transparent;
+  font: inherit; color: #9cc3f5; text-decoration: underline dotted rgba(156, 195, 245, .45); text-underline-offset: 3px; cursor: pointer;
+}
+.mkv2 .mkv2-cifra:hover { background: rgba(47, 134, 201, .18); color: #fff; }
+
+/* ---------- Campos (etiqueta arriba) ---------- */
+.mkv2 .mkv2-campo-v { display: grid; gap: 7px; min-width: 0; }
+.mkv2 .mkv2-campo-v > span { font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-control {
+  width: 100%; min-width: 0; height: 38px; padding: 7px 10px; background: var(--fv2-caja); color: var(--fv2-texto);
+  border: 1px solid var(--fv2-borde-fuerte); border-radius: 8px; font: inherit; font-size: 12px; color-scheme: dark;
+}
+.mkv2 .mkv2-control:disabled { opacity: .55; cursor: not-allowed; }
+.mkv2 .mkv2-control-chico { width: auto; min-width: 190px; height: 32px; }
+.mkv2 .mkv2-interruptor { display: inline-flex; align-items: center; gap: 9px; min-height: 38px; font-size: 12px; font-weight: 700; color: var(--fv2-texto); cursor: pointer; }
+.mkv2 .mkv2-campo-linea { display: inline-flex; align-items: center; gap: 8px; }
+.mkv2 .mkv2-campo-linea > span { font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--fv2-tenue); white-space: nowrap; }
+.mkv2 .mkv2-campo-linea .mkv2-control { width: auto; }
+.mkv2 .mkv2-buscar-v { position: relative; display: block; min-width: 240px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-buscar-v svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.mkv2 .mkv2-buscar-v .mkv2-control { padding-left: 30px; }
+
+/* ---------- Indicadores: tarjetas COMPACTAS de color (6 / 3 / 2 por fila), como la maqueta de tarjetas ---------- */
+.mkv2 .mkv2-kpis6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-kpi-t {
+  --mkv2-acento: var(--mkv2-enviados);
+  position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0; min-width: 0; padding: 11px 12px 12px;
+  background:
+    radial-gradient(160px 80px at 100% 0%, color-mix(in srgb, var(--mkv2-acento) 22%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--mkv2-acento) 11%, var(--fv2-tarjeta)), var(--fv2-tarjeta) 75%);
+  border: 1px solid color-mix(in srgb, var(--mkv2-acento) 30%, transparent); border-top: 3px solid var(--mkv2-acento);
+  border-radius: 12px;
+  animation: mkv2-sube .4s ease both;
+}
+.mkv2 .mkv2-kpi-t:nth-child(2) { animation-delay: .05s; }
+.mkv2 .mkv2-kpi-t:nth-child(3) { animation-delay: .1s; }
+.mkv2 .mkv2-kpi-t:nth-child(4) { animation-delay: .15s; }
+.mkv2 .mkv2-kpi-t:nth-child(5) { animation-delay: .2s; }
+.mkv2 .mkv2-kpi-t:nth-child(6) { animation-delay: .25s; }
+.mkv2 .mkv2-kpi-cabeza { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.mkv2 .mkv2-kpi-icono { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 7px; background: var(--mkv2-acento); color: #fff; }
+.mkv2 .mkv2-kpi-titulo { overflow: hidden; font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; color: var(--mkv2-suave); }
+.mkv2 .mkv2-ayuda {
+  display: grid; place-items: center; flex: none; width: 16px; height: 16px; margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, .2); border-radius: 50%; font-size: 10px; font-weight: 700; color: var(--fv2-tenue);
+}
+.mkv2 .mkv2-kpi-num { margin: 7px 0 0; font-family: var(--fv2-mono); font-size: 27px; font-weight: 800; line-height: 1.1; color: color-mix(in srgb, var(--mkv2-acento) 68%, #fff); white-space: nowrap; }
+.mkv2 .mkv2-kpi-base { overflow: hidden; font-size: 11.5px; color: var(--fv2-tenue); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-kpi-base b { color: color-mix(in srgb, var(--mkv2-acento) 68%, #fff); white-space: nowrap; }
+.mkv2 .mkv2-kpi-ir { position: absolute; right: 10px; bottom: 9px; color: color-mix(in srgb, var(--mkv2-acento) 65%, #fff); opacity: .7; transition: opacity .15s; }
+.mkv2 .mkv2-kpi-t:hover .mkv2-kpi-ir { opacity: 1; }
+.mkv2 .mkv2-kpi-medidor { display: block; height: 4px; margin: 8px 22px 0 0; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, .07); }
+.mkv2 .mkv2-kpi-medidor i { display: block; width: var(--mkv2-medida, 0%); height: 100%; border-radius: inherit; background: var(--mkv2-acento); animation: mkv2-crece .9s cubic-bezier(.2, .8, .2, 1) both; transition: width .7s var(--fv2-curva); }
+
+/* Fila de calidad: tarjetas bajitas (número + título; explicación en el «?») */
+.mkv2 .mkv2-bajitas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-bajitas.mkv2-bajitas6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.mkv2 .mkv2-bajita {
+  --mkv2-color: var(--mkv2-gris);
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; min-width: 0; min-height: 84px; padding: 10px 30px 10px 12px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--mkv2-color) 12%, var(--fv2-tarjeta)), var(--fv2-tarjeta) 70%);
+  border: 1px solid var(--fv2-borde); border-left: 3px solid var(--mkv2-color); border-radius: 11px;
+  transition: transform .15s; animation: mkv2-sube .4s ease both;
+}
+.mkv2 .mkv2-bajita.is-clic:hover { transform: translateY(-2px); }
+.mkv2 .mkv2-bajita-num { max-width: 100%; overflow: hidden; font-family: var(--fv2-mono); font-size: 22px; font-weight: 800; line-height: 1.1; color: color-mix(in srgb, var(--mkv2-color) 68%, #fff); white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-bajita-titulo { width: 100%; min-width: 0; overflow-wrap: break-word; hyphens: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; line-height: 1.3; text-transform: uppercase; color: var(--mkv2-suave); }
+.mkv2 .mkv2-bajita-titulo small { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--fv2-tenue); }
+.mkv2 .mkv2-bajita .mkv2-ayuda { position: absolute; top: 8px; right: 8px; }
+.mkv2 .mkv2-marca-apple { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid rgba(183, 189, 202, .35); border-radius: 99px; font-size: 10px; font-weight: 700; line-height: 16px; color: var(--mkv2-suave); vertical-align: 1px; }
+.mkv2 .mkv2-bajita.is-activo { border-color: color-mix(in srgb, var(--mkv2-color) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--mkv2-color) 70%, transparent) inset; }
+
+/* Todo lo clicable (tarjetas, etapas, estados, dona): botón sin aspecto de botón + realce al pasar */
+.mkv2 button.is-clic { width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.mkv2 .mkv2-kpi-t.is-clic, .mkv2 .mkv2-mini.is-clic { transition: transform .16s, border-color .16s, box-shadow .16s; }
+.mkv2 .mkv2-kpi-t.is-clic:hover { transform: translateY(-2px); border-color: var(--mkv2-acento); border-top-color: var(--mkv2-acento); box-shadow: 0 12px 26px color-mix(in srgb, var(--mkv2-acento) 22%, transparent); }
+.mkv2 .mkv2-mini.is-clic:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--mkv2-color) 55%, transparent); box-shadow: 0 10px 24px rgba(0, 0, 0, .4); }
+.mkv2 .is-clic:focus-visible { outline: 2px solid var(--fv2-azul-claro); outline-offset: 2px; }
+.mkv2 .mkv2-enlace { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; font-size: 10.5px; font-weight: 800; color: var(--fv2-azul-claro); }
+.mkv2 .mkv2-mini.is-activo { border-color: var(--fv2-azul-claro); box-shadow: 0 0 0 1px var(--fv2-azul-claro) inset; }
+.mkv2 .mkv2-mini-num small { margin-left: 8px; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--fv2-tenue); white-space: nowrap; }
+.mkv2 .mkv2-erow.is-clic { background: transparent; border: 1px solid transparent; border-radius: 8px; }
+.mkv2 .mkv2-erow.is-clic:hover, .mkv2 .mkv2-erow.is-activa { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .08); }
+.mkv2 .mkv2-fila-clic { cursor: pointer; }
+
+/* Franja «qué estoy viendo» (drill-banner de la plantilla) */
+.mkv2 .mkv2-enfoque {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 17px;
+  background: var(--fv2-caja); border: 1px solid var(--fv2-borde-fuerte); border-left: 4px solid var(--fv2-azul-claro); border-radius: 10px;
+}
+.mkv2 .mkv2-enfoque > div:first-child { display: grid; gap: 2px; }
+.mkv2 .mkv2-enfoque strong { font-size: 15px; color: var(--fv2-texto); }
+.mkv2 .mkv2-enfoque span { font-size: 11px; color: var(--fv2-tenue); }
+
+/* Indicadores secundarios */
+.mkv2 .mkv2-minis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.mkv2 .mkv2-minis6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.mkv2 .mkv2-minis5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.mkv2 .mkv2-enum, .mkv2 .mkv2-dona-item b, .mkv2 .fv2-insignia { white-space: nowrap; }
+.mkv2 .mkv2-mini {
+  --mkv2-color: var(--fv2-texto);
+  display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 15px 16px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--mkv2-color) 14%, var(--fv2-tarjeta)), var(--fv2-tarjeta) 65%);
+  border: 1px solid var(--fv2-borde); border-left: 5px solid var(--mkv2-color); border-radius: 11px;
+  animation: mkv2-sube .45s ease both;
+}
+.mkv2 .mkv2-mini .mkv2-enlace { color: color-mix(in srgb, var(--mkv2-color) 65%, #fff); }
+.mkv2 .mkv2-mini-nombre { font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-mini-num { font-family: var(--fv2-mono); font-size: 23px; font-weight: 800; color: color-mix(in srgb, var(--mkv2-color) 70%, #fff); }
+.mkv2 .mkv2-mini-nota { font-size: 10.5px; line-height: 1.4; color: var(--fv2-tenue); }
+.mkv2 .mkv2-borde-verde { border-top: 3px solid var(--fv2-verde-claro); }
+.mkv2 .mkv2-borde-amarillo { border-top: 3px solid var(--fv2-amarillo); }
+.mkv2 .mkv2-borde-azul { border-top: 3px solid var(--fv2-azul-claro); }
+.mkv2 .mkv2-borde-tenue { border-top: 3px solid var(--fv2-tenue); }
+
+/* ---------- Recorrido, comparaciones y barras: nombre · pista · cifra ---------- */
+.mkv2 .mkv2-duo { display: grid; grid-template-columns: 1.04fr .96fr; gap: 16px; align-items: stretch; }
+.mkv2 .mkv2-embudo { display: flex; flex-direction: column; gap: 8px; }
+.mkv2 .mkv2-erow { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 120px; align-items: center; gap: 12px; padding: 4px 2px; }
+.mkv2 .mkv2-erow-nombre { font-size: 12px; font-weight: 700; line-height: 1.3; color: var(--fv2-texto); overflow-wrap: anywhere; }
+.mkv2 .mkv2-epista { position: relative; height: 14px; border-radius: 7px; background: rgba(255, 255, 255, .06); }
+/* La barra crece al cargar y se mueve hacia el valor nuevo al cambiar un filtro */
+.mkv2 .mkv2-epista i {
+  --mkv2-barra: var(--mkv2-enviados);
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mkv2-barra) 85%, #000), color-mix(in srgb, var(--mkv2-barra) 80%, #fff));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--mkv2-barra) 30%, transparent), inset 0 -2px 0 rgba(0, 0, 0, .18);
+  animation: mkv2-crece 1s cubic-bezier(.2, .8, .2, 1) both; transition: width .7s var(--fv2-curva);
+}
+.mkv2 .mkv2-enum { display: grid; text-align: right; font-family: var(--fv2-mono); font-size: 13px; font-weight: 800; color: var(--fv2-texto); }
+.mkv2 .mkv2-enum small { font-family: inherit; font-size: 10px; font-weight: 500; color: var(--fv2-tenue); }
+.mkv2 .mkv2-compara .mkv2-erow { grid-template-columns: minmax(160px, 1.3fr) minmax(100px, 2fr) 110px; }
+
+/* Recorrido: barras gruesas y, entre etapas, el % que pasa a la siguiente */
+.mkv2 .mkv2-embudo-grueso { gap: 0; }
+.mkv2 .mkv2-embudo-grueso .mkv2-erow { grid-template-columns: minmax(100px, 150px) minmax(0, 1fr) 132px; padding: 7px 4px; }
+.mkv2 .mkv2-embudo-grueso .mkv2-epista { height: 26px; border-radius: 9px; }
+.mkv2 .mkv2-embudo-grueso .mkv2-enum { font-size: 14px; }
+.mkv2 .mkv2-paso { display: flex; align-items: center; gap: 6px; margin: 0 0 0 calc(min(150px, 28%) + 16px); padding: 1px 0; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-paso span { padding: 1px 7px; border-radius: 99px; background: rgba(255, 255, 255, .06); font-family: var(--fv2-mono); font-weight: 800; color: var(--mkv2-suave); }
+
+/* Meta de 90 %: línea punteada sobre la pista */
+.mkv2 .mkv2-meta { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 2px dashed rgba(255, 255, 255, .45); pointer-events: none; }
+.mkv2 .mkv2-embudo-cargo .mkv2-epista { height: 16px; border-radius: 8px; }
+.mkv2 .mkv2-leyenda-semaforo { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-leyenda-semaforo span { display: inline-flex; align-items: center; gap: 5px; }
+.mkv2 .mkv2-leyenda-semaforo i { width: 10px; height: 10px; border-radius: 3px; }
+.mkv2 .mkv2-leyenda-semaforo .mkv2-leyenda-meta { width: 0; height: 12px; border-radius: 0; border-left: 2px dashed rgba(255, 255, 255, .45); }
+
+/* Mini barra de apertura dentro de la tabla de campañas */
+.mkv2 .mkv2-celda-apertura { display: inline-grid; justify-items: end; gap: 4px; }
+.mkv2 .mkv2-minibarra { display: block; width: 64px; height: 5px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, .08); }
+.mkv2 .mkv2-minibarra i { display: block; height: 100%; border-radius: inherit; background: var(--mkv2-barra); animation: mkv2-crece .9s cubic-bezier(.2, .8, .2, 1) both; transition: width .7s var(--fv2-curva); }
+
+/* Dona de incidencias (SVG con separación entre sectores; aparece girando) */
+@keyframes mkv2-gira { from { opacity: 0; transform: rotate(-90deg) scale(.85); } }
+.mkv2 .mkv2-dona-area { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 20px; align-items: center; min-height: 180px; }
+.mkv2 .mkv2-dona { position: relative; display: grid; place-items: center; width: 172px; height: 172px; margin: auto; }
+.mkv2 .mkv2-dona-svg { width: 100%; height: 100%; overflow: visible; animation: mkv2-gira .8s cubic-bezier(.2, .8, .2, 1) both; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .45)); }
+.mkv2 .mkv2-dona-pista { fill: none; stroke: rgba(255, 255, 255, .05); stroke-width: 22; }
+.mkv2 .mkv2-dona-sector { stroke-width: 22; transition: stroke-width .18s, opacity .18s, stroke-dasharray .7s var(--fv2-curva), stroke-dashoffset .7s var(--fv2-curva); }
+.mkv2 .mkv2-dona-sector.is-clic { cursor: pointer; }
+.mkv2 .mkv2-dona-sector.is-activa { stroke-width: 28; }
+.mkv2 .mkv2-dona:has(.mkv2-dona-sector.is-activa) .mkv2-dona-sector:not(.is-activa) { opacity: .45; }
+.mkv2 .mkv2-dona-centro {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 104px; height: 104px; margin: auto; padding: 0; border: 0; border-radius: 50%; background: transparent; text-align: center;
+}
+.mkv2 button.mkv2-dona-centro.is-clic { width: 104px; text-align: center; }
+.mkv2 .mkv2-dona-centro:hover { background: rgba(255, 255, 255, .04); }
+.mkv2 .mkv2-dona-centro strong { font-family: var(--fv2-mono); font-size: 28px; line-height: 1.15; color: #fff; }
+.mkv2 .mkv2-dona-centro small { font-size: 10px; font-weight: 700; color: var(--fv2-tenue); }
+.mkv2 .mkv2-dona-leyenda { display: flex; flex-direction: column; gap: 7px; }
+.mkv2 .mkv2-dona-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; font-size: 12px; color: var(--fv2-texto);
+  background: var(--fv2-panel); border: 1px solid var(--fv2-borde); border-radius: 9px; transition: background .16s, border-color .16s, transform .16s;
+}
+.mkv2 .mkv2-dona-item.is-clic:hover, .mkv2 .mkv2-dona-item.is-activa { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .16); transform: translateX(2px); }
+.mkv2 .mkv2-dona-item i { width: 12px; height: 12px; flex-shrink: 0; border-radius: 50%; }
+.mkv2 .mkv2-dona-item b { display: grid; margin-left: auto; text-align: right; font-family: var(--fv2-mono); }
+.mkv2 .mkv2-dona-item b small { font-family: inherit; font-size: 10px; font-weight: 500; color: var(--fv2-tenue); }
+
+/* Análisis por cargo: barras + tabla */
+.mkv2 .mkv2-cargos-rejilla { display: grid; grid-template-columns: minmax(230px, .65fr) minmax(0, 1.35fr); gap: 16px; align-items: center; }
+/* Barras por cargo (como la referencia): nombre · barra de al menos 60 px · solo el % */
+.mkv2 .mkv2-embudo-rol { gap: 2px; margin-top: 10px; }
+.mkv2 .mkv2-embudo-rol .mkv2-erow { grid-template-columns: 145px minmax(60px, 1fr) 70px; gap: 8px; padding: 6px 2px; }
+.mkv2 .mkv2-embudo-rol .mkv2-erow-nombre { font-size: 11.5px; }
+.mkv2 .mkv2-embudo-rol .mkv2-epista { height: 16px; border-radius: 8px; }
+
+/* Explicación de categorías (client-logic) */
+.mkv2 .mkv2-logica {
+  padding: 13px 16px; border-radius: 9px; background: var(--fv2-caja); border-left: 3px solid var(--fv2-azul);
+  font-size: 11.5px; line-height: 1.6; color: var(--fv2-tenue);
+}
+.mkv2 .mkv2-logica strong { color: var(--fv2-texto); }
+
+/* ---------- Tablas ---------- */
+.mkv2 .fv2-tabla-caja { max-height: 680px; }
+.mkv2 .mkv2-tabla th { padding: 10px 10px; white-space: normal; line-height: 1.3; vertical-align: bottom; }
+.mkv2 .mkv2-tabla td { padding: 9px 10px; }
+.mkv2 .mkv2-orden {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer;
+}
+.mkv2 .mkv2-orden svg { opacity: .45; }
+.mkv2 .mkv2-orden:hover, .mkv2 .mkv2-orden.is-activa { color: var(--fv2-texto); }
+.mkv2 .mkv2-orden.is-activa svg { opacity: 1; }
+.mkv2 .mkv2-celda-larga { min-width: 160px; max-width: 280px; white-space: normal; }
+.mkv2 .mkv2-campana-celda { display: grid; gap: 2px; }
+.mkv2 .mkv2-campana-celda strong, .mkv2 .mkv2-texto-fuerte { font-size: 12px; font-weight: 700; color: var(--fv2-texto); }
+.mkv2 .mkv2-campana-celda small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-vacio-fila { padding: 26px 16px; line-height: 1.6; }
+.mkv2 .mkv2-celda-correo { min-width: 200px; max-width: 300px; white-space: normal; overflow-wrap: anywhere; }
+.mkv2 .mkv2-celda-media { min-width: 130px; max-width: 220px; white-space: normal; }
+
+/* Cruce con Cumplimiento: exacta (normal) · POSIBLE por dominio (ámbar, borde punteado) · sin identificar (gris) */
+.mkv2 .mkv2-empresas { display: grid; gap: 4px; min-width: 150px; }
+.mkv2 .mkv2-empresa { display: grid; gap: 1px; }
+.mkv2 .mkv2-empresa strong { font-size: 12px; font-weight: 700; color: var(--fv2-texto); }
+.mkv2 .mkv2-empresa small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-pais-celda { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.mkv2 .mkv2-posible { padding: 5px 7px; border: 1px dashed var(--fv2-amarillo); border-radius: 7px; background: rgba(197, 150, 0, .07); color: var(--fv2-amarillo); }
+.mkv2 .mkv2-posible .mkv2-empresa strong, .mkv2 .mkv2-posible span { color: var(--fv2-amarillo); }
+.mkv2 .mkv2-posible-etiqueta { font-size: 9.5px; font-style: normal; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+
+/* Bloque «por ejecutivo» */
+.mkv2 .mkv2-subtitulo-bloque { margin: 14px 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--fv2-tenue); }
+
+/* Ficha de cada correo (ventana) */
+.mkv2 .mkv2-modal-fondo { position: fixed; inset: 0; z-index: 110; /* encima del menú lateral del portal (100) */ display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .62); backdrop-filter: blur(3px); }
+.mkv2 .mkv2-modal {
+  width: min(780px, 100%); max-height: 90vh; overflow: auto; padding: 22px 24px; outline: none;
+  background: var(--fv2-tarjeta); border: 1px solid var(--fv2-borde-fuerte); border-radius: 14px; box-shadow: 0 24px 65px rgba(0, 0, 0, .55);
+}
+.mkv2 .mkv2-modal-cabeza { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.mkv2 .mkv2-modal-cabeza h3 { margin: 0; font-size: 18px; font-weight: 800; color: var(--fv2-texto); overflow-wrap: anywhere; }
+.mkv2 .mkv2-modal-cabeza p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--fv2-tenue); }
+.mkv2 .mkv2-ficha-campanas { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-ficha-campanas .mkv2-subpestana { flex: 0 1 auto; padding: 8px 10px; font-size: 11px; }
+.mkv2 .mkv2-ficha-etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.mkv2 .mkv2-ficha-cliente { display: grid; gap: 10px; margin-bottom: 14px; padding: 13px 15px; border: 1px solid var(--fv2-borde-fuerte); border-radius: 10px; background: var(--fv2-caja); }
+.mkv2 .mkv2-ficha-cliente.is-sin { color: var(--fv2-tenue); font-size: 12px; }
+.mkv2 .mkv2-ficha-cliente.is-sin strong { color: var(--fv2-texto); font-size: 13px; }
+.mkv2 .mkv2-ficha-empresa { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; }
+.mkv2 .mkv2-ficha-empresa + .mkv2-ficha-empresa { padding-top: 10px; border-top: 1px dashed var(--fv2-borde-fuerte); }
+.mkv2 .mkv2-ficha-dato { display: grid; gap: 2px; min-width: 0; }
+.mkv2 .mkv2-ficha-dato small, .mkv2 .mkv2-ficha-tarjeta small { font-size: 9.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-ficha-dato strong { font-size: 12.5px; color: var(--fv2-texto); overflow-wrap: anywhere; }
+.mkv2 .mkv2-posible .mkv2-ficha-dato strong { color: var(--fv2-amarillo); }
+.mkv2 .mkv2-ficha-tarjetas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-ficha-tarjeta { display: grid; gap: 4px; align-content: start; padding: 12px 14px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: var(--fv2-panel); }
+.mkv2 .mkv2-ficha-tarjeta strong { font-size: 12.5px; color: var(--fv2-texto); overflow-wrap: anywhere; }
+.mkv2 .mkv2-ficha-tarjeta span { font-size: 11px; line-height: 1.45; color: var(--fv2-tenue); }
+.mkv2 .mkv2-enlace-externo { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--fv2-azul-claro); overflow-wrap: anywhere; }
+.mkv2 .mkv2-ficha-subtitulo { margin: 18px 0 10px; font-size: 13px; font-weight: 800; color: var(--fv2-texto); }
+.mkv2 .mkv2-linea-tiempo { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.mkv2 .mkv2-linea-tiempo li { position: relative; display: flex; gap: 12px; padding: 0 0 12px; }
+.mkv2 .mkv2-linea-tiempo li::before { content: ""; position: absolute; left: 5px; top: 14px; bottom: 0; width: 2px; background: var(--fv2-borde-fuerte); }
+.mkv2 .mkv2-linea-tiempo li:last-child::before { display: none; }
+.mkv2 .mkv2-linea-punto { flex-shrink: 0; width: 12px; height: 12px; margin-top: 3px; border-radius: 50%; background: var(--fv2-tenue); }
+.mkv2 .mkv2-linea-tiempo li.is-verde .mkv2-linea-punto { background: var(--fv2-verde-claro); }
+.mkv2 .mkv2-linea-tiempo li.is-azul .mkv2-linea-punto { background: var(--fv2-azul-claro); }
+.mkv2 .mkv2-linea-tiempo li.is-amarillo .mkv2-linea-punto { background: var(--fv2-amarillo); }
+.mkv2 .mkv2-linea-tiempo li.is-rojo .mkv2-linea-punto { background: var(--fv2-rojo); }
+.mkv2 .mkv2-linea-tiempo strong { display: block; font-size: 12.5px; color: var(--fv2-texto); }
+.mkv2 .mkv2-linea-tiempo small { font-size: 11px; color: var(--fv2-tenue); overflow-wrap: anywhere; }
+@media (max-width: 760px) { .mkv2 .mkv2-ficha-empresa, .mkv2 .mkv2-ficha-tarjetas { grid-template-columns: 1fr; } }
+
+/* Tablas con correos: barra de búsqueda y filtros, paginación */
+.mkv2 .mkv2-barra-tabla { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 14px; }
+.mkv2 .mkv2-barra-tabla .mkv2-buscar-v { flex: 1 1 260px; }
+.mkv2 .mkv2-campo-chico { min-width: 150px; }
+.mkv2 .mkv2-campo-chico .mkv2-control { height: 36px; }
+.mkv2 .mkv2-paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 11.5px; color: var(--fv2-tenue); }
+
+/* ---------- Comparar campañas (como la referencia) ---------- */
+.mkv2 .mkv2-hero {
+  padding: 22px 24px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .12);
+  background: linear-gradient(120deg, rgba(201, 54, 75, .25), rgba(57, 135, 229, .12) 70%), var(--fv2-tarjeta);
+  animation: mkv2-sube .4s ease both;
+}
+.mkv2 .mkv2-hero h2 { margin: 0 0 4px; font-size: 19px; font-weight: 800; color: #fff; }
+.mkv2 .mkv2-hero p { max-width: 820px; margin: 0; font-size: 12px; line-height: 1.55; color: var(--mkv2-suave); }
+.mkv2 .mkv2-comparando { padding: 12px 16px; border: 1px solid var(--fv2-borde); border-radius: 10px; background: var(--fv2-panel); font-size: 12px; color: var(--mkv2-suave); }
+.mkv2 .mkv2-compara .mkv2-erow { grid-template-columns: minmax(180px, 1.3fr) minmax(120px, 2fr) 84px; }
+.mkv2 .mkv2-compara-nombre { display: grid; gap: 2px; min-width: 0; }
+.mkv2 .mkv2-compara-nombre strong { overflow: hidden; font-size: 12px; font-weight: 800; color: var(--fv2-texto); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-compara-nombre small { font-size: 10.5px; font-weight: 600; color: var(--fv2-tenue); }
+.mkv2 .mkv2-compara .mkv2-epista { height: 22px; border-radius: 8px; }
+.mkv2 .mkv2-espacio { height: 16px; }
+/* Textos largos de tabla: una línea cortada con «…» (el globo muestra el texto completo) */
+.mkv2 .mkv2-celda-asunto { max-width: 240px; }
+.mkv2 .mkv2-recorte { display: block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Correos por corregir (como la referencia) ---------- */
+.mkv2 .mkv2-franja-roja {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px;
+  background: rgba(201, 54, 75, .12); border: 1px solid rgba(201, 54, 75, .35); border-radius: 10px; color: #ffb3bd;
+}
+.mkv2 .mkv2-franja-roja > div { display: grid; gap: 3px; }
+.mkv2 .mkv2-franja-roja strong { font-size: 14px; color: #fff; }
+.mkv2 .mkv2-franja-roja span { font-size: 11px; color: #ffb3bd; }
+.mkv2 .mkv2-intro-ejecutivos { margin: -4px 0 6px; font-size: 12px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-intro-ejecutivos strong { color: var(--fv2-texto); }
+.mkv2 .mkv2-subtitulo-bloque.is-ambar { color: #f0c15a; }
+.mkv2 .mkv2-ejecutivos3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-ejecutivo-tarjeta {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; gap: 4px 12px;
+  width: 100%; padding: 13px 14px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--fv2-tarjeta); border: 1px solid var(--fv2-borde); border-radius: 12px;
+  transition: transform .16s, border-color .16s, background .16s; animation: mkv2-sube .4s ease both;
+}
+.mkv2 .mkv2-ejecutivo-tarjeta:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .18); }
+.mkv2 .mkv2-ejecutivo-tarjeta:focus-visible { outline: 2px solid var(--fv2-azul-claro); outline-offset: 2px; }
+.mkv2 .mkv2-ejecutivo-tarjeta.is-posible { border-style: dashed; border-color: rgba(217, 165, 32, .55); background: rgba(217, 165, 32, .06); }
+.mkv2 .mkv2-avatar {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; grid-row: span 2;
+  background: rgba(57, 135, 229, .18); color: #8fb9f2; font-size: 13px; font-weight: 800;
+}
+.mkv2 .is-posible .mkv2-avatar { background: rgba(217, 165, 32, .18); color: #f0c15a; }
+.mkv2 .is-sin .mkv2-avatar { background: rgba(255, 255, 255, .08); color: var(--fv2-tenue); }
+.mkv2 .mkv2-ejecutivo-datos { display: grid; gap: 2px; min-width: 0; grid-row: span 2; }
+.mkv2 .mkv2-ejecutivo-datos strong { overflow: hidden; font-size: 13px; color: var(--fv2-texto); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-ejecutivo-datos small { font-size: 10.5px; line-height: 1.4; color: var(--fv2-tenue); }
+.mkv2 .mkv2-ejecutivo-cuenta { padding: 3px 9px; border-radius: 99px; background: rgba(201, 54, 75, .16); color: #ff8a99; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.mkv2 .is-posible .mkv2-ejecutivo-cuenta { background: rgba(217, 165, 32, .16); color: #f0c15a; }
+.mkv2 .mkv2-ejecutivo-abrir { justify-self: end; font-size: 11px; font-weight: 800; color: #7fb0f0; white-space: nowrap; }
+
+/* Ventana emergente del ejecutivo */
+.mkv2 .mkv2-ventana-ejecutivo { width: min(1040px, 100%); padding: 0 0 20px; overflow-x: hidden; animation: mkv2-abre .2s ease both; }
+@keyframes mkv2-abre { from { opacity: 0; transform: translateY(14px); } }
+.mkv2 .mkv2-ventana-ejecutivo > *:not(.mkv2-ventana-cabeza) { width: auto; margin-left: 22px; margin-right: 22px; }
+.mkv2 .mkv2-ventana-ejecutivo .fv2-tabla-caja { max-height: none; overflow-x: auto; }
+.mkv2 .mkv2-ventana-ejecutivo .mkv2-celda-correo { min-width: 170px; }
+.mkv2 .mkv2-ventana-ejecutivo .mkv2-celda-campana { min-width: 180px; }
+.mkv2 .mkv2-ventana-cabeza {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 16px 22px;
+  background: var(--fv2-tarjeta); border-bottom: 1px solid var(--fv2-borde);
+}
+.mkv2 .mkv2-ventana-cabeza .mkv2-avatar { grid-row: auto; }
+.mkv2 .mkv2-ventana-cabeza > div { display: grid; gap: 2px; min-width: 0; }
+.mkv2 .mkv2-ventana-cabeza strong { font-size: 16px; color: #fff; }
+.mkv2 .mkv2-ventana-cabeza small { font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-x {
+  display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; margin-left: auto; padding: 0;
+  background: var(--fv2-elevado); border: 1px solid rgba(255, 255, 255, .14); border-radius: 9px; color: #fff; cursor: pointer;
+}
+.mkv2 .mkv2-x:hover { border-color: var(--mkv2-duro); }
+.mkv2 .mkv2-alerta-ambar { margin-bottom: 12px; padding: 10px 13px; border-radius: 9px; background: rgba(217, 139, 31, .14); color: #f0c15a; font-size: 12px; line-height: 1.5; }
+.mkv2 .mkv2-ventana-barra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 9px; margin-bottom: 6px; }
+.mkv2 .mkv2-campo-correo { flex: 1 1 260px; }
+.mkv2 .fv2-pildora.mkv2-boton-rojo { background: var(--mkv2-duro); border-color: var(--mkv2-duro); color: #fff; }
+.mkv2 .fv2-pildora.mkv2-boton-rojo:hover { background: #a92c3f; }
+.mkv2 .mkv2-correo-aviso { margin: 8px 0 0; font-size: 11.5px; font-weight: 650; line-height: 1.5; color: #6fd3a6; }
+
+/* Vista previa del correo con diseño */
+.mkv2 .mkv2-modal-correo { z-index: 115; background: rgba(0, 0, 0, .75); }
+.mkv2 .mkv2-correo-dialogo {
+  display: flex; flex-direction: column; gap: 10px; width: min(760px, 100%); max-height: 94vh; overflow: auto; padding: 20px 22px;
+  background: var(--fv2-tarjeta); border: 1px solid rgba(255, 255, 255, .14); border-radius: 16px; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+  animation: mkv2-abre .2s ease both;
+}
+.mkv2 .mkv2-correo-cabeza { display: flex; align-items: flex-start; gap: 12px; }
+.mkv2 .mkv2-correo-kicker { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: #ff8a99; }
+.mkv2 .mkv2-correo-cabeza h2 { margin: 3px 0 2px; font-size: 19px; font-weight: 800; color: #fff; }
+.mkv2 .mkv2-correo-cabeza p { margin: 0; font-size: 11.5px; color: var(--fv2-tenue); overflow-wrap: anywhere; }
+.mkv2 .mkv2-correo-nota { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--fv2-panel); font-size: 11px; line-height: 1.6; color: var(--mkv2-suave); }
+.mkv2 .mkv2-correo-vista { display: block; width: 100%; height: 56vh; min-height: 380px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 10px; background: #eef1f6; }
+
+/* Listado: celda Cliente (empresa + código país · relación en color) */
+.mkv2 .mkv2-cliente-celda { display: grid; gap: 2px; min-width: 150px; }
+.mkv2 .mkv2-cliente-celda strong { font-size: 12px; color: var(--fv2-texto); }
+.mkv2 .mkv2-cliente-celda small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-cliente-celda.is-posible strong { color: #f0c15a; }
+.mkv2 .mkv2-relacion { font-weight: 700; }
+.mkv2 .mkv2-relacion.is-verde { color: #6fd3a6; }
+.mkv2 .mkv2-relacion.is-ambar { color: #f0c15a; }
+.mkv2 .mkv2-relacion.is-gris { color: var(--fv2-tenue); }
+.mkv2 .mkv2-ver-eventos { padding: 5px 10px; color: #8fb9f2; }
+
+/* Ficha: indicación y nota de apertura */
+.mkv2 .mkv2-ficha-indicacion { display: grid; gap: 3px; margin-top: 10px; padding: 11px 14px; border-radius: 10px; background: var(--fv2-panel); border-left: 3px solid var(--mkv2-amarillo); }
+.mkv2 .mkv2-ficha-indicacion small { font-size: 9.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-ficha-indicacion span { font-size: 12px; line-height: 1.5; color: var(--fv2-texto); }
+.mkv2 .mkv2-ficha-auditoria { margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--fv2-panel); font-size: 11.5px; line-height: 1.55; color: var(--mkv2-suave); }
+
+/* ---------- Nombre de campaña en toda la pestaña: ASUNTO arriba, «#id · nombre real · fecha» abajo ---------- */
+.mkv2 .mkv2-tc { display: grid; gap: 2px; min-width: 0; max-width: 100%; }
+.mkv2 .mkv2-tc-titulo { display: block; overflow: hidden; font-size: 12.5px; font-weight: 700; line-height: 1.35; color: var(--fv2-texto); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-tc-linea { display: block; overflow: hidden; font-size: 10.5px; font-weight: 600; color: var(--fv2-tenue); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-tc.is-grande .mkv2-tc-titulo { font-size: 14.5px; color: #fff; }
+.mkv2 .mkv2-tc.is-grande .mkv2-tc-linea { font-size: 11.5px; }
+.mkv2 .mkv2-celda-campana { min-width: 200px; max-width: 320px; }
+.mkv2 .mkv2-tc-lista { display: grid; gap: 6px; }
+.mkv2 .mkv2-campana-con-marcas { display: grid; gap: 3px; min-width: 0; }
+.mkv2 .mkv2-marca-campana { font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #f0c15a; }
+.mkv2 .mkv2-ficha-campana { margin-top: 6px; }
+.mkv2 .mkv2-ficha-campana .mkv2-tc-titulo { white-space: normal; }
+
+/* ---------- Comparar campañas como la maqueta: tarjetas por campaña ---------- */
+.mkv2 .mkv2-comparando b { color: var(--fv2-texto); }
+.mkv2 .mkv2-segmento { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--fv2-panel); border: 1px solid var(--fv2-borde); border-radius: 10px; }
+.mkv2 .mkv2-segmento button { padding: 6px 12px; border: 0; border-radius: 7px; background: none; color: var(--fv2-tenue); font: 600 12.5px inherit; font-family: inherit; cursor: pointer; transition: background .15s, color .15s; }
+.mkv2 .mkv2-segmento button:hover { color: var(--fv2-texto); }
+.mkv2 .mkv2-segmento button.is-activo { background: var(--fv2-elevado); color: #fff; }
+.mkv2 .mkv2-rank-herramientas { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0 0 10px; }
+.mkv2 .mkv2-rank-herramientas .mkv2-leyenda-semaforo { margin: 0 0 0 auto; }
+.mkv2 .mkv2-interruptor-pill { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--mkv2-suave); font: inherit; font-size: 12.5px; cursor: pointer; }
+.mkv2 .mkv2-interruptor-pill i { position: relative; width: 32px; height: 18px; border-radius: 99px; background: var(--fv2-elevado); border: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-interruptor-pill i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--fv2-tenue); transition: left .15s, background .15s; }
+.mkv2 .mkv2-interruptor-pill.is-on i { background: rgba(24, 147, 95, .35); }
+.mkv2 .mkv2-interruptor-pill.is-on i::after { left: 16px; background: #6fd3a6; }
+.mkv2 .mkv2-rank-lista { display: grid; gap: 10px; }
+.mkv2 .mkv2-rank {
+  --a: var(--mkv2-enviados);
+  display: grid; grid-template-columns: 44px minmax(240px, 1.3fr) minmax(120px, 1.6fr) 110px; gap: 16px; align-items: center;
+  width: 100%; padding: 14px 16px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--a) 10%, var(--fv2-panel)), var(--fv2-panel) 45%);
+  border: 1px solid var(--fv2-borde); border-left: 4px solid var(--a); border-radius: 12px;
+  transition: transform .15s, border-color .15s; animation: mkv2-sube .4s ease both;
+}
+.mkv2 .mkv2-rank:hover { transform: translateX(3px); border-color: color-mix(in srgb, var(--a) 45%, transparent); border-left-color: var(--a); }
+.mkv2 .mkv2-rank:focus-visible { outline: 2px solid var(--fv2-azul-claro); outline-offset: 2px; }
+.mkv2 .mkv2-rank-pos { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: var(--fv2-elevado); color: var(--mkv2-suave); font-size: 14px; font-weight: 800; }
+.mkv2 .mkv2-rank-pos.is-m1 { background: linear-gradient(135deg, #f5c84c, #d8962a); color: #2a1a00; }
+.mkv2 .mkv2-rank-pos.is-m2 { background: linear-gradient(135deg, #e3e7ee, #9aa3b2); color: #1b1f27; }
+.mkv2 .mkv2-rank-pos.is-m3 { background: linear-gradient(135deg, #e0a27a, #a8643b); color: #2a1406; }
+.mkv2 .mkv2-rank-nombre { display: grid; gap: 7px; min-width: 0; }
+.mkv2 .mkv2-rank-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mkv2 .mkv2-chip { padding: 1px 8px; border-radius: 99px; background: rgba(255, 255, 255, .07); color: var(--mkv2-suave); font-size: 10.5px; font-weight: 700; }
+.mkv2 .mkv2-chip.is-cargo { background: rgba(47, 134, 201, .16); color: #8fc4f0; }
+.mkv2 .mkv2-chip.is-pocos { color: var(--fv2-tenue); }
+.mkv2 .mkv2-rank-pista { position: relative; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, .06); }
+.mkv2 .mkv2-rank-pista i {
+  display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--a) 75%, #000), color-mix(in srgb, var(--a) 80%, #fff));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--a) 45%, transparent); animation: mkv2-crece .9s cubic-bezier(.2, .8, .2, 1) both; transition: width .7s var(--fv2-curva);
+}
+.mkv2 .mkv2-rank-pista .mkv2-meta { top: -6px; bottom: -6px; border-left-color: rgba(255, 255, 255, .35); }
+.mkv2 .mkv2-rank-valor { display: grid; text-align: right; }
+.mkv2 .mkv2-rank-valor b { font-family: var(--fv2-mono); font-size: 20px; font-weight: 800; color: color-mix(in srgb, var(--a) 70%, #fff); white-space: nowrap; }
+.mkv2 .mkv2-rank-valor small { font-size: 11px; color: var(--fv2-tenue); }
+/* Dos gráficas lado a lado («Por campaña» y «Por comercial»), una debajo de la otra en pantalla angosta */
+.mkv2 .mkv2-dos-graficas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.mkv2 .mkv2-grafica { display: grid; gap: 10px; min-width: 0; align-content: start; }
+.mkv2 .mkv2-grafica-cabeza { display: grid; gap: 3px; padding: 10px 12px; border-radius: 10px; background: var(--fv2-panel); border: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-grafica-cabeza h3 { margin: 0; font-size: 13.5px; font-weight: 800; line-height: 1.35; color: #fff; }
+.mkv2 .mkv2-grafica-cabeza p { margin: 0; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-grafica-cabeza b { color: var(--mkv2-suave); font-weight: 700; }
+.mkv2 .mkv2-grafica-nota { margin: -2px 0 0; }
+.mkv2 .mkv2-grafica .mkv2-interruptor-pill { justify-self: start; }
+/* Tarjeta compacta: lugar · (título, línea, etiquetas y barra) · % */
+.mkv2 .mkv2-rank.is-compacta { grid-template-columns: 36px minmax(0, 1fr) 86px; gap: 12px; padding: 10px 12px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-pos { width: 32px; height: 32px; font-size: 13px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-nombre { gap: 5px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-tc.is-grande .mkv2-tc-titulo { font-size: 13px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-tc.is-grande .mkv2-tc-linea { font-size: 11px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-pista { height: 9px; margin-top: 2px; }
+.mkv2 .mkv2-rank.is-compacta .mkv2-rank-valor b { font-size: 17px; }
+/* Acordeón: el detalle se abre debajo de su tarjeta, unido con el mismo borde dorado */
+.mkv2 .mkv2-rank-item { display: grid; }
+.mkv2 .mkv2-rank-item.is-abierta .mkv2-rank { border-color: var(--mkv2-amarillo); border-left-color: var(--a); border-radius: 12px 12px 0 0; transform: none; }
+.mkv2 .mkv2-acordeon {
+  margin-top: -1px; padding: 14px 16px; border: 1px solid var(--mkv2-amarillo); border-top: 1px dashed rgba(217, 165, 32, .35);
+  border-radius: 0 0 12px 12px; background: var(--fv2-tarjeta); animation: mkv2-sube .2s ease both;
+}
+.mkv2 .mkv2-acordeon-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 1100px) { .mkv2 .mkv2-dos-graficas { grid-template-columns: 1fr; } }
+
+/* ---------- Detalle de una campaña / un ejecutivo (dentro del acordeón) ---------- */
+.mkv2 .mkv2-det { display: grid; gap: 14px; }
+.mkv2 .mkv2-objetivo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.mkv2 .mkv2-objetivo strong { font-size: 13.5px; color: #fff; }
+.mkv2 .mkv2-objetivo small { font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-estado-objetivo { padding: 2px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.mkv2 .mkv2-estado-objetivo.is-sugerido { background: rgba(47, 134, 201, .18); color: #8fc4f0; }
+.mkv2 .mkv2-estado-objetivo.is-revisar { background: rgba(217, 165, 32, .18); color: #f0c15a; }
+.mkv2 .mkv2-estado-objetivo.is-confirmado { background: rgba(24, 147, 95, .2); color: #6fd3a6; }
+.mkv2 .mkv2-det-datos { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 0; }
+.mkv2 .mkv2-det-datos div { min-width: 0; padding: 8px 10px; border-radius: 9px; background: var(--fv2-panel); }
+.mkv2 .mkv2-det-datos dt { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-datos dd { margin: 2px 0 0; font-size: 12.5px; color: var(--fv2-texto); overflow-wrap: anywhere; }
+.mkv2 .mkv2-det-rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.mkv2 .mkv2-det-rejilla section, .mkv2 .mkv2-det-bloque { min-width: 0; }
+.mkv2 .mkv2-det h4 { margin: 0 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mkv2-suave); }
+.mkv2 .mkv2-det h4 small { margin-left: 6px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-embudo { gap: 2px; }
+.mkv2 .mkv2-det-embudo .mkv2-erow { grid-template-columns: 82px minmax(0, 1fr) 108px; gap: 8px; padding: 2px 0; }
+.mkv2 .mkv2-det-embudo .mkv2-epista { height: 8px; }
+.mkv2 .mkv2-det-embudo .mkv2-enum { font-size: 12px; }
+.mkv2 .mkv2-det-lista { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.mkv2 .mkv2-det-lista li { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 6px 10px; border-radius: 8px; background: var(--fv2-panel); font-size: 12px; color: var(--fv2-texto); }
+.mkv2 .mkv2-det-lista li > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-det-lista b { flex-shrink: 0; font-family: var(--fv2-mono); font-size: 12px; white-space: nowrap; }
+.mkv2 .mkv2-det-lista small { color: var(--fv2-tenue); font-weight: 600; }
+.mkv2 .mkv2-det-lista li.is-rojo b { color: #ff8a99; }
+.mkv2 .mkv2-det-lista li.is-gris { color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-motivo { margin: 5px 0 0 10px; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det-leads { margin: 0 0 0 auto; align-self: center; }
+/* Cargo y objetivo: selector + de dónde salió, y estado (Sugerido / Revisar / Confirmado) */
+.mkv2 .mkv2-cargo-celda { display: grid; gap: 4px; min-width: 0; }
+.mkv2 .mkv2-cargo-celda small { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-celda-objetivo { min-width: 240px; }
+.mkv2 .mkv2-celda-objetivo .mkv2-control { height: 32px; }
+.mkv2 .mkv2-estado-celda { display: inline-grid; gap: 3px; justify-items: start; }
+.mkv2 .mkv2-estado-celda small { font-size: 10.5px; color: var(--fv2-tenue); white-space: nowrap; }
+.mkv2 .mkv2-guardar-celda { display: grid; gap: 5px; justify-items: start; }
+.mkv2 .mkv2-guardar-celda small { font-size: 11px; font-weight: 700; }
+.mkv2 .mkv2-guardar-celda small.is-ok { color: #6fd3a6; }
+.mkv2 .mkv2-guardar-celda small.is-error { color: #ff8a99; }
+/* Ventana de la clave de Marketing */
+.mkv2 .mkv2-ventana-clave { display: grid; gap: 12px; width: min(440px, 100%); }
+.mkv2 .mkv2-ventana-clave h3 { display: flex; align-items: center; gap: 8px; }
+.mkv2 .mkv2-error-clave { margin: 0; padding: 8px 10px; border-radius: 8px; background: rgba(201, 54, 75, .16); color: #ff8a99; font-size: 12px; font-weight: 700; }
+
+/* Detalle de un ejecutivo (como la maqueta del ejecutivo desplegado) */
+.mkv2 .mkv2-ej-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-ej-numeros > div { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--fv2-borde); border-radius: 11px; background: var(--fv2-panel); }
+.mkv2 .mkv2-ej-numeros b { font-family: var(--fv2-mono); font-size: 20px; font-weight: 800; color: #fff; }
+.mkv2 .mkv2-ej-numeros span { font-size: 11.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-det b.is-verde { color: #6fd3a6; }
+.mkv2 .mkv2-det b.is-ambar { color: #f0c15a; }
+.mkv2 .mkv2-det b.is-rojo { color: #ff8a99; }
+.mkv2 .mkv2-ej-lista { display: grid; gap: 8px; }
+.mkv2 .mkv2-ej-fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 14px; border: 1px solid var(--fv2-borde); border-radius: 11px; background: var(--fv2-panel); }
+.mkv2 .mkv2-ej-fila > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.mkv2 .mkv2-ej-fila b { overflow: hidden; font-size: 13px; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-ej-fila small { overflow: hidden; font-size: 11.5px; color: var(--fv2-tenue); text-overflow: ellipsis; white-space: nowrap; }
+.mkv2 .mkv2-ej-fila.is-fuego { border-color: rgba(217, 165, 32, .4); background: linear-gradient(100deg, rgba(217, 165, 32, .08), var(--fv2-panel) 60%); }
+.mkv2 .mkv2-ej-pill { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 3px 11px; border-radius: 99px; background: rgba(255, 255, 255, .07); color: var(--fv2-tenue); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.mkv2 .mkv2-ej-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.mkv2 .mkv2-ej-pill.is-verde { background: rgba(24, 147, 95, .2); color: #6fd3a6; }
+.mkv2 .mkv2-ej-pill.is-rojo { background: rgba(201, 54, 75, .18); color: #ff8a99; }
+.mkv2 .mkv2-ej-mas { justify-self: start; padding: 0; border: 0; background: none; color: #7fb0f0; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.mkv2 .mkv2-ej-fila.is-campana { align-items: center; }
+.mkv2 .mkv2-ej-fila.is-campana .mkv2-tc-titulo { color: #fff; font-size: 13px; }
+.mkv2 .mkv2-ej-cifras { display: flex; flex-shrink: 0; gap: 16px; }
+.mkv2 .mkv2-ej-cifras > span { display: grid; justify-items: end; }
+.mkv2 .mkv2-ej-cifras b { font-family: var(--fv2-mono); font-size: 15px; font-weight: 800; color: #fff; overflow: visible; }
+.mkv2 .mkv2-ej-cifras small { font-size: 11px; }
+.mkv2 .mkv2-ej-aviso { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-ej-aviso b { font-size: 13px; color: #fff; }
+.mkv2 .mkv2-ej-aviso .mkv2-control { width: auto; min-width: 220px; flex: 0 1 260px; }
+.mkv2 .mkv2-ej-cartera { margin-left: auto; }
+@media (max-width: 760px) { .mkv2 .mkv2-det-rejilla, .mkv2 .mkv2-det-datos { grid-template-columns: 1fr; } .mkv2 .mkv2-ej-numeros { grid-template-columns: 1fr 1fr; } }
+.mkv2 .mkv2-ver-mas { display: flex; justify-content: center; margin-top: 12px; }
+.mkv2 .mkv2-pie { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-cuadritos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.mkv2 .mkv2-cuadrito {
+  display: grid; gap: 4px; min-width: 0; padding: 12px 14px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--fv2-panel); border: 1px solid var(--fv2-borde); border-left: 4px solid var(--c); border-radius: 11px; transition: transform .15s;
+}
+.mkv2 .mkv2-cuadrito:hover:not(:disabled) { transform: translateY(-2px); }
+.mkv2 .mkv2-cuadrito:disabled { cursor: default; }
+.mkv2 .mkv2-cuadrito > small { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-cuadrito-num { font-family: var(--fv2-mono); font-size: 20px; font-weight: 800; color: var(--c2); }
+@media (max-width: 800px) {
+  .mkv2 .mkv2-rank { grid-template-columns: 28px minmax(0, 1fr) 70px; }
+  .mkv2 .mkv2-rank-pista { grid-column: 2 / 4; }
+  .mkv2 .mkv2-cuadritos { grid-template-columns: 1fr; }
+}
+
+/* ---------- Ancho de pantalla ---------- */
+@media (max-width: 900px) { .mkv2 .mkv2-ejecutivos3 { grid-template-columns: 1fr; } }
+@media (max-width: 1240px) {
+  .mkv2 .mkv2-kpis6, .mkv2 .mkv2-minis6, .mkv2 .mkv2-minis5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mkv2 .mkv2-bajitas, .mkv2 .mkv2-bajitas.mkv2-bajitas6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mkv2 .mkv2-panel-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1060px) {
+  .mkv2 .mkv2-duo, .mkv2 .mkv2-cargos-rejilla { grid-template-columns: 1fr; }
+  .mkv2 .mkv2-minis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .mkv2 .mkv2-kpis6, .mkv2 .mkv2-minis6, .mkv2 .mkv2-minis5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mkv2 .mkv2-bajitas, .mkv2 .mkv2-bajitas.mkv2-bajitas6, .mkv2 .mkv2-panel-filtros { grid-template-columns: 1fr 1fr; }
+  .mkv2 .mkv2-fecha { min-width: 0; }
+  .mkv2 .mkv2-erow, .mkv2 .mkv2-compara .mkv2-erow { grid-template-columns: 96px minmax(0, 1fr) 92px; gap: 8px; }
+  .mkv2 .mkv2-dona-area { grid-template-columns: 1fr; }
+  .mkv2 .mkv2-paso { margin-left: 104px; }
+}
+
+/* ---------- Menú lateral del portal en Canales de marketing ----------
+   Escondido como en Flujo de ventas, pero al asomarse EMPUJA el dashboard (no lo tapa). PortalLayout.tsx pone la
+   clase .mkv2-menu-empuja solo en esta página; Flujo de ventas y los demás dashboards no cambian. */
+@media (min-width: 901px) {
+  .portal-app.mkv2-menu-empuja.fv2-menu-oculto.is-menu-asomado .portal-main { margin-left: 280px; }
+  .portal-app.mkv2-menu-empuja.fv2-menu-oculto.is-menu-asomado .portal-sidebar { box-shadow: none; }
+}
+
+/* ======================================================================================================
+   Redes sociales (pestaña propia; mismo tema negro y piezas que Mailing). Solo reglas mkv2-redes-…
+   ====================================================================================================== */
+.mkv2 .mkv2-redes-ejemplo {
+  padding: 9px 14px; border: 1px dashed rgba(217, 165, 32, .55); border-radius: 10px; background: rgba(217, 165, 32, .1);
+  font-size: 12px; color: #f0c15a;
+}
+.mkv2 .mkv2-redes-ejemplo strong { color: #ffd36b; text-transform: uppercase; letter-spacing: .06em; }
+
+/* ---------- Redes · Resumen: tarjetas compactas (6 columnas → 3 → 2) ---------- */
+.mkv2 .mkv2-redes-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-redes-kpi {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0;
+  height: 96px; padding: 10px 12px; text-align: left; font: inherit; color: var(--fv2-texto);
+  border: 1px solid rgba(255, 255, 255, .07); border-top: 2px solid var(--mkv2-acento); border-radius: 12px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--mkv2-acento) 16%, transparent), transparent 70%), var(--fv2-tarjeta);
+  animation: mkv2-sube .4s ease both; transition: transform .15s ease, border-color .15s ease;
+}
+.mkv2 .mkv2-redes-kpi.is-clic { cursor: pointer; }
+.mkv2 .mkv2-redes-kpi.is-clic:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--mkv2-acento) 55%, transparent); }
+.mkv2 .mkv2-redes-kpi:focus-visible { outline: 2px solid var(--mkv2-acento); outline-offset: 2px; }
+.mkv2 .mkv2-redes-kpi-cabeza { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.mkv2 .mkv2-redes-kpi-icono {
+  display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: 6px;
+  color: var(--mkv2-acento); background: color-mix(in srgb, var(--mkv2-acento) 20%, transparent);
+}
+.mkv2 .mkv2-redes-kpi-titulo {
+  flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mkv2-suave);
+}
+.mkv2 .mkv2-redes-kpi .mkv2-ayuda { flex: none; }
+.mkv2 .mkv2-redes-kpi-cuerpo { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; min-width: 0; }
+.mkv2 .mkv2-redes-kpi-num { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 25px; font-weight: 800; line-height: 1; }
+.mkv2 .mkv2-redes-kpi-num small { font-size: 12px; font-weight: 600; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-kpi-num .mkv2-redes-monedas { font-size: 14px; }
+.mkv2 .mkv2-redes-mini { flex: none; width: 64px; height: 26px; opacity: .9; }
+.mkv2 .mkv2-redes-kpi-sub { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-kpi-sub b { color: var(--fv2-texto); }
+.mkv2 .mkv2-redes-kpi-sub .is-sube { color: #3fcf8e; }
+.mkv2 .mkv2-redes-kpi-sub .is-baja { color: #f06b7e; }
+.mkv2 .mkv2-redes-sem { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 700; }
+.mkv2 .mkv2-redes-sem.is-verde { color: #3fcf8e; background: rgba(24, 147, 95, .2); }
+.mkv2 .mkv2-redes-sem.is-amarillo { color: #f0c15a; background: rgba(217, 165, 32, .2); }
+.mkv2 .mkv2-redes-sem.is-rojo { color: #f06b7e; background: rgba(201, 54, 75, .2); }
+
+/* ---------- Redes · donas ---------- */
+.mkv2 .mkv2-redes-tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.mkv2 .mkv2-redes-dona { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 8px; }
+.mkv2 .mkv2-redes-dona-figura { position: relative; width: 140px; height: 140px; }
+.mkv2 .mkv2-redes-dona-svg { width: 100%; height: 100%; animation: mkv2-gira .6s ease both; }
+.mkv2 .mkv2-redes-dona-sector { transition: stroke-width .15s ease, opacity .15s ease; }
+.mkv2 .mkv2-redes-dona-sector.is-clic { cursor: pointer; }
+.mkv2 .mkv2-redes-dona-sector.is-apagado { opacity: .3; }
+.mkv2 .mkv2-redes-dona-centro { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+.mkv2 .mkv2-redes-dona-centro strong { font-size: 22px; font-weight: 800; line-height: 1.1; }
+.mkv2 .mkv2-redes-dona-centro small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-dona-lista { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mkv2 .mkv2-redes-dona-lista button {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 38px; align-items: center; gap: 7px; padding: 5px 7px;
+  border: 1px solid transparent; border-radius: 8px; background: none; font: inherit; font-size: 11.5px; color: var(--mkv2-suave); text-align: left; cursor: pointer;
+}
+.mkv2 .mkv2-redes-dona-lista button:disabled { cursor: default; }
+.mkv2 .mkv2-redes-dona-lista button i { width: 10px; height: 10px; border-radius: 3px; }
+.mkv2 .mkv2-redes-dona-lista button span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-redes-dona-lista button b { color: var(--fv2-texto); }
+.mkv2 .mkv2-redes-dona-lista button em { font-style: normal; text-align: right; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-dona-lista button.is-marcado { background: rgba(255, 255, 255, .05); }
+.mkv2 .mkv2-redes-dona-lista button.is-activo { border-color: rgba(255, 255, 255, .25); color: var(--fv2-texto); }
+
+/* ---------- Redes · alcance por semana (Facebook e Instagram lado a lado) ---------- */
+@keyframes mkv2-redes-alza { from { height: 0; } }
+.mkv2 .mkv2-redes-semanas { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.mkv2 .mkv2-redes-semanas-graf {
+  display: flex; align-items: stretch; gap: 10px; height: 190px; padding: 0 4px;
+  background: repeating-linear-gradient(to top, rgba(255, 255, 255, .05) 0 1px, transparent 1px 25%);
+}
+.mkv2 .mkv2-redes-semana { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mkv2 .mkv2-redes-semana small { text-align: center; font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-semana-barras { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+.mkv2 .mkv2-redes-columna {
+  width: min(22px, 40%); height: var(--alto); min-height: 2px; border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(to top, color-mix(in srgb, var(--c) 70%, transparent), var(--c));
+  animation: mkv2-redes-alza .6s ease both; transition: height .35s ease, filter .15s ease;
+}
+.mkv2 .mkv2-redes-columna:hover { filter: brightness(1.25); }
+.mkv2 .mkv2-redes-leyenda { display: flex; gap: 16px; justify-content: center; font-size: 11.5px; color: var(--mkv2-suave); }
+.mkv2 .mkv2-redes-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.mkv2 .mkv2-redes-leyenda i { width: 10px; height: 10px; border-radius: 3px; }
+
+/* ---------- Redes · tarjetas por marca con anillo ---------- */
+.mkv2 .mkv2-redes-marcas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.mkv2 .mkv2-redes-marca {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .07); border-left: 3px solid var(--c); border-radius: 12px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c) 14%, transparent), transparent 65%), var(--fv2-tarjeta);
+  font: inherit; color: var(--fv2-texto); text-align: left; cursor: pointer;
+  animation: mkv2-sube .4s ease both; transition: transform .15s ease, border-color .15s ease;
+}
+.mkv2 .mkv2-redes-marca:hover { transform: translateY(-2px); }
+.mkv2 .mkv2-redes-marca.is-activa { border-color: var(--c); box-shadow: 0 0 0 1px var(--c) inset; }
+.mkv2 .mkv2-redes-anillo { width: 84px; height: 84px; }
+.mkv2 .mkv2-redes-anillo text { fill: var(--fv2-texto); font-size: 16px; font-weight: 800; }
+.mkv2 .mkv2-redes-anillo-arco { transition: stroke-dasharray .5s ease; }
+.mkv2 .mkv2-redes-marca-datos { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mkv2 .mkv2-redes-marca-datos > span { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; }
+.mkv2 .mkv2-redes-marca-datos small { color: var(--fv2-tenue); font-size: 11px; }
+.mkv2 .mkv2-redes-marca-cabeza b { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; }
+.mkv2 .mkv2-redes-marca-cabeza em { font-style: normal; font-size: 10.5px; color: var(--fv2-tenue); }
+
+/* ---------- Redes · pantallas angostas ---------- */
+@media (max-width: 1240px) {
+  .mkv2 .mkv2-redes-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mkv2 .mkv2-redes-tres, .mkv2 .mkv2-redes-marcas { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 760px) {
+  .mkv2 .mkv2-redes-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mkv2 .mkv2-redes-tres, .mkv2 .mkv2-redes-marcas { grid-template-columns: 1fr; }
+  .mkv2 .mkv2-redes-dona { grid-template-columns: 120px minmax(0, 1fr); }
+  .mkv2 .mkv2-redes-dona-figura { width: 120px; height: 120px; }
+}

@@ -32,7 +32,6 @@ const DASHBOARDS = [
 
   // ── MARKETING ───────────────────────────────────────────────────
   { id: 'publicaciones-redes',archivo: null, estado: 'pendiente' },
-  { id: 'mailing-semanal',          archivo: 'dashboards/marketing/mailing-campanas.html',      estado: 'activo'    },
   { id: 'flujo-ventas',  archivo: 'dashboards/marketing/flujo-ventas.html', estado: 'activo' },
 
   // leads-semanales / leads-calificados / leads-calificados-semanales
