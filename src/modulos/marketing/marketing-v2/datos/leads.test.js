@@ -1,7 +1,7 @@
 // Pruebas de los leads en la pantalla de Mailing (datos inventados).
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { conteoCruce, filtrarLeads, leadsPorCampana, leadsPorEjecutivo, porEtapa, resumenLeads, SIN_CRUCE, textoCampanaLead } from './leads.js'
+import { conteoCruce, esLeadMailing, notaLeads, filtrarLeads, leadsPorCampana, leadsPorEjecutivo, porEtapa, resumenLeads, SIN_CRUCE, textoCampanaLead } from './leads.js'
 
 const lead = (codigo, extra = {}) => ({ codigo, fecha: '2026-11-20T15:00:00.000Z', pais: 'GT', asesor: 'Asesor Uno', ejecutivo: 'Ejecutivo Uno', cruceEjecutivo: 'exacta', status: 'en_proceso', etapa: 3, cerrado: false, origen: 'PostIAlo Mailing', tieneCorreo: false, atribucion: 'sin_campana', campanas: [], grupo: null, motivo: null, ...extra })
 const FILAS = [
@@ -63,4 +63,14 @@ test('etapas y texto de campaña', () => {
   assert.equal(textoCampanaLead(FILAS[0], nombres), '#71 · Campaña 71')
   assert.equal(textoCampanaLead(FILAS[1], nombres), '19 nov (77–79)')
   assert.equal(textoCampanaLead(FILAS[3], nombres), '—')
+})
+
+test('leads de Mailing: con campaña asignada o con origen «PostIAlo Mailing»; los demás orígenes no', () => {
+  assert.equal(esLeadMailing(lead('A', { origen: 'PostIAlo Redes Sociales', atribucion: 'exacta', campanas: [71] })), true)
+  assert.equal(esLeadMailing(lead('B', { origen: 'Página Web', atribucion: 'estimada', campanas: [71] })), true)
+  assert.equal(esLeadMailing(lead('C', { origen: ' postialo  MAILING ' })), true)
+  assert.equal(esLeadMailing(lead('D', { origen: 'PostIAlo Redes Sociales' })), false)
+  assert.equal(esLeadMailing(lead('E', { origen: 'PBX SV' })), false)
+  assert.equal(esLeadMailing(lead('F', { origen: null })), false)
+  assert.equal(notaLeads({ deCorreo: 6, conCorreo: 29, total: 291 }), 'Leads de correo: 6. Solo 29 de 291 leads de Prospekt traen correo')
 })

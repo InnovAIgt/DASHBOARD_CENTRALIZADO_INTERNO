@@ -577,9 +577,13 @@ El `asesor_nombre` de Prospekt se cruza con los ejecutivos de Cumplimiento de Cl
 
 ### 11.3 En la pantalla
 
-- **Resultados generales → Leads:** total, exactos, estimados, sin campaña, cerrados (etapa 6) y el espacio
-  «No calificados: pendiente — Prospekt no envía origen ni correo». Nota: «Solo N de M leads traen correo; la mayoría
-  no se puede cruzar con campañas». Cada cifra abre la sub-pestaña Leads ya filtrada.
+- **Solo leads de Mailing (Keily, 24/11/2026):** en la tarjeta, la sub-pestaña Leads y Comparar se cuentan por
+  defecto solo los leads **con campaña asignada** (exacta o estimada) **o con origen «PostIAlo Mailing»** (hoy 6). Los
+  demás orígenes (Redes, Web, PBX, Manual) no se cuentan en Mailing. El interruptor **«Ver leads de todos los
+  orígenes»** (apagado por defecto, el mismo en las tres vistas) los muestra para revisión.
+- **Resultados generales → Leads de Mailing:** total, exactos, estimados, sin campaña, cerrados (etapa 6) y el espacio
+  «No calificados: pendiente — Prospekt no envía origen ni correo». Nota: «Leads de correo: X. Solo N de M leads de
+  Prospekt traen correo». Cada cifra abre la sub-pestaña Leads ya filtrada.
 - **Comparar campañas:** en la comparación detallada, columnas **Leads** (exactos + estimados de esa campaña),
   **Cerrados** y **Conversión** (leads ÷ clics de Brevo). Los **grupos** del mismo día van en su propia tabla, con los
   clics sumados del grupo. Tarjeta **«Leads por ejecutivo y territorio»**: una fila por ejecutivo y país con leads,

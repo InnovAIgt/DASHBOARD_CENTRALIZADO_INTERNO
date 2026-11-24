@@ -22,6 +22,16 @@ export const TEXTO_NO_CALIFICADOS = 'No calificados: pendiente — Prospekt no e
 const normalizarTexto = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
 /**
+ * ¿Es un lead de Mailing? (Keily, 24/11/2026): tiene campaña asignada (exacta o estimada) o su origen es
+ * «PostIAlo Mailing». Los demás orígenes (Redes, Web, PBX, Manual…) no se cuentan en Mailing, salvo con el interruptor
+ * «Ver leads de todos los orígenes».
+ */
+export const esLeadMailing = (x) => x.atribucion === 'exacta' || x.atribucion === 'estimada' || normalizarTexto(x.origen).replace(/\s+/g, ' ') === 'postialo mailing'
+
+/** Nota de la tarjeta: «Leads de correo: X. Solo N de M leads de Prospekt traen correo». */
+export const notaLeads = ({ deCorreo, conCorreo, total }) => `Leads de correo: ${deCorreo.toLocaleString('es-GT')}. Solo ${conCorreo.toLocaleString('es-GT')} de ${total.toLocaleString('es-GT')} leads de Prospekt traen correo`
+
+/**
  * Mismos filtros de Mailing:
  * - País: el país del lead. Período: día de creación del lead (hora de Guatemala).
  * - Campaña, cargo, asunto (o campañas de prueba): si alguno está puesto, solo los leads asignados a alguna de las

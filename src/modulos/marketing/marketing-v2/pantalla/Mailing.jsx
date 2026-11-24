@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, RefreshCw, X } from 'lucide-react'
 import { contadoresMailing, fechaCorta, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, NOMBRE_CARGO, numero, opcionesFiltros } from '../datos/calculos.js'
 import { textosCampana } from '../datos/campana.js'
-import { filtrarLeads } from '../datos/leads.js'
+import { esLeadMailing, filtrarLeads } from '../datos/leads.js'
 import { cargarHerramientaPdf, chipsFiltros, construirReporteMailing, MODULOS_PDF_MAILING, nombreArchivoPdf } from '../datos/pdfMailing.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
@@ -61,16 +61,27 @@ export function Mailing({ sub, onSub }) {
   // País: solo en las vistas por correo, en Campañas («Por comercial») y en Leads; en las demás se ve desactivado y se conserva.
   const paisActivo = vistaPorCorreo || actual === 'comparar' || actual === 'leads'
   // Leads de Prospekt con los mismos filtros. País y Buscar cliente solo donde el país está activo (como en las demás vistas).
+  // Por defecto SOLO los leads de Mailing (con campaña asignada u origen «PostIAlo Mailing»); el interruptor
+  // «Ver leads de todos los orígenes» (apagado) muestra también Redes, Web, PBX y Manual, para revisión.
+  const [todosOrigenes, setTodosOrigenes] = useState(false)
   const leads = useMemo(() => {
     const todas = datos.leads?.filas ?? []
+    const deCorreo = todas.filter(esLeadMailing)
     const f = paisActivo ? filtros : { ...filtros, pais: '', cliente: '' }
-    return { ...datos.leads, filas: filtrarLeads(todas, f, filtradas), total: todas.length }
-  }, [datos.leads, filtros, filtradas, paisActivo])
+    return {
+      ...datos.leads,
+      filas: filtrarLeads(todosOrigenes ? todas : deCorreo, f, filtradas),
+      total: todas.length,
+      nota: { deCorreo: deCorreo.length, conCorreo: todas.filter((x) => x.tieneCorreo).length, total: todas.length },
+      todosOrigenes,
+      cambiarOrigenes: setTodosOrigenes,
+    }
+  }, [datos.leads, filtros, filtradas, paisActivo, todosOrigenes])
   const cuenta = { corregir: cuentas.corregir, clientes: cuentas.clientes, leads: datos.leads?.fuente === 'prospekt' ? leads.filas.length : null }
   const tituloCuenta = {
     corregir: cuentas.corregir != null ? `${numero(cuentas.corregir)} direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña)` : undefined,
     clientes: cuentas.clientes != null ? `${numero(cuentas.clientes)} filas (correo + campaña)` : undefined,
-    leads: cuenta.leads != null ? `${numero(cuenta.leads)} leads calificados de Prospekt con los filtros` : undefined,
+    leads: cuenta.leads != null ? `${numero(cuenta.leads)} leads ${todosOrigenes ? 'de todos los orígenes' : 'de Mailing'} con los filtros` : undefined,
   }
   const porCliente = Boolean(filtros.cliente) && !paisActivo
 

@@ -7,7 +7,7 @@ import { Bandera } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { numero, ordenarPor, pct } from '../../datos/calculos.js'
 import { CRUCE_ASESOR, leadsPorEjecutivo, SIN_CRUCE } from '../../datos/leads.js'
 import { metricasPorTerritorio, NOMBRE_PAIS } from '../../datos/porEjecutivo.js'
-import { EstadoLeads } from './Leads.jsx'
+import { EstadoLeads, InterruptorOrigenes } from './Leads.jsx'
 import { Aviso, COLOR_MAILING, COLOR_SEMAFORO, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TarjetaBajita } from './piezas.jsx'
 
 const COLUMNAS = [
@@ -83,7 +83,8 @@ export function LeadsPorTerritorio({ leads, filas, filtrar, paisFiltro, reintent
   const vista = col ? [...ordenarPor(lista.filter((x) => !x.sinCruce), col.valor, orden.dir), ...lista.filter((x) => x.sinCruce)] : lista
   const cambiar = (id) => setOrden((o) => ({ col: id, dir: o.col === id && o.dir === 'desc' ? 'asc' : 'desc' }))
   const listo = leads.fuente === 'prospekt' && !leads.cargando
-  return <Tarjeta titulo="Leads por ejecutivo y territorio" sub="Leads de Prospekt atribuidos a campañas (exactos + estimados) · ejecutivo por el nombre del asesor en Cumplimiento · territorio = país del lead">
+  return <Tarjeta titulo="Leads por ejecutivo y territorio" sub="Leads de Prospekt atribuidos a campañas (exactos + estimados) · ejecutivo por el nombre del asesor en Cumplimiento · territorio = país del lead"
+    acciones={listo ? <InterruptorOrigenes leads={leads} /> : undefined}>
     {!listo ? <EstadoLeads leads={leads} reintentar={reintentar} /> : <>
       {territorios.length > 0 && <div className="mkv2-bajitas mkv2-territorios">
         {territorios.map((t) => <TarjetaBajita key={t.pais} valor={numero(t.leads)} color={COLOR_MAILING.clic}

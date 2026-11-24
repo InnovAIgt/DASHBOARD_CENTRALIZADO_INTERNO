@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { Bandera, Insignia } from '../../../flujo-ventas-v2/pantalla/comunes.jsx'
 import { fechaHora, numero, paginar, pct, porcentaje } from '../../datos/calculos.js'
-import { CRUCE_ASESOR, ETAPA_CERRADO, MOTIVO_EXACTA, porEtapa, resumenLeads, STATUS_LEAD, TEXTO_NO_CALIFICADOS, textoCampanaLead, TIPOS_ATRIBUCION } from '../../datos/leads.js'
+import { CRUCE_ASESOR, ETAPA_CERRADO, MOTIVO_EXACTA, notaLeads, porEtapa, resumenLeads, STATUS_LEAD, TEXTO_NO_CALIFICADOS, textoCampanaLead, TIPOS_ATRIBUCION } from '../../datos/leads.js'
 import { Buscador, Paginacion, Selector } from './Correos.jsx'
 import { Aviso, Bloque, COLOR_MAILING, Enfoque, FilaBarra, Numero, Tarjeta, TablaOrdenable, TarjetaBajita } from './piezas.jsx'
 
@@ -21,6 +21,22 @@ export function EstadoLeads({ leads, reintentar }) {
   return null
 }
 
+/**
+ * Interruptor «Ver leads de todos los orígenes» (apagado por defecto): con él apagado, Mailing cuenta SOLO los leads
+ * de Mailing (con campaña asignada u origen «PostIAlo Mailing»). Es el mismo en la tarjeta, la sub-pestaña y Comparar.
+ */
+export function InterruptorOrigenes({ leads }) {
+  if (!leads?.cambiarOrigenes) return null
+  const on = Boolean(leads.todosOrigenes)
+  return <button type="button" role="switch" aria-checked={on} className={`mkv2-interruptor-pill ${on ? 'is-on' : ''}`} onClick={() => leads.cambiarOrigenes(!on)}
+    data-tip={on ? 'Se ven todos los leads de Prospekt (Redes, Web, PBX, Manual…), solo para revisión. Clic para ver solo los de Mailing.' : 'Solo se cuentan los leads de Mailing: con campaña asignada o con origen «PostIAlo Mailing». Clic para ver todos los orígenes (revisión).'}>
+    <i aria-hidden="true" />Ver leads de todos los orígenes
+  </button>
+}
+
+/** Nota corta: «Leads de correo: X. Solo N de M leads de Prospekt traen correo». */
+export const NotaLeads = ({ leads }) => (leads?.nota ? <p className="mkv2-nota"><b>{notaLeads(leads.nota)}.</b>{leads.todosOrigenes ? ' Se están viendo todos los orígenes (revisión).' : ''}</p> : null)
+
 /** Avisos secundarios (copia anterior, Brevo, Supabase o Cumplimiento sin responder). */
 const AvisosLeads = ({ leads }) => (leads.avisos ?? []).map((a) => <Aviso key={a} titulo="Aviso de leads" texto={a} />)
 
@@ -33,13 +49,17 @@ export function TarjetaLeads({ leads, filas, total, abrir, reintentar }) {
   const ver = (tipo, titulo, etapa = null) => () => abrir({ vista: 'leads', tipo, etapa, titulo })
   const estado = <EstadoLeads leads={leads} reintentar={reintentar} />
   const listo = leads.fuente === 'prospekt' && !leads.cargando
+  // Base sin filtros: los de Mailing (o todos, con el interruptor).
+  const base = leads.todosOrigenes ? total : leads.nota?.deCorreo ?? total
   return <>
     <Bloque titulo="Leads" />
-    <Tarjeta titulo="Leads calificados de Prospekt" sub={`Atribuidos a campañas por correo (exacta) o por origen «PostIAlo Mailing» (estimada) · ${listo && filas.length !== total ? `${numero(filas.length)} de ${numero(total)} con los filtros` : 'clic en una cifra para ver la lista'}`}>
+    <Tarjeta titulo={leads.todosOrigenes ? 'Leads calificados de Prospekt (todos los orígenes)' : 'Leads de Mailing'}
+      sub={`Con campaña asignada (exacta o estimada) o con origen «PostIAlo Mailing» · ${listo && filas.length !== base ? `${numero(filas.length)} de ${numero(base)} con los filtros` : 'clic en una cifra para ver la lista'}`}
+      acciones={listo ? <InterruptorOrigenes leads={leads} /> : undefined}>
       {!listo ? estado : <>
         <div className="mkv2-bajitas mkv2-bajitas6">
-          <TarjetaBajita valor={<Numero n={r.total} />} titulo="Leads" sub="calificados" color={COLOR_MAILING.enviados}
-            tip={`Leads calificados de Prospekt: ${numero(r.total)}\nClic para ver la lista`} onClick={ver('', 'Todos los leads')} />
+          <TarjetaBajita valor={<Numero n={r.total} />} titulo="Leads" sub={leads.todosOrigenes ? 'todos los orígenes' : 'de Mailing'} color={COLOR_MAILING.enviados}
+            tip={`Leads calificados ${leads.todosOrigenes ? 'de Prospekt (todos los orígenes)' : 'de Mailing'}: ${numero(r.total)}\nClic para ver la lista`} onClick={ver('', 'Todos los leads')} />
           <TarjetaBajita valor={<Numero n={r.exactas} />} titulo="Exactos" sub={pct(porcentaje(r.exactas, r.total))} color={COLOR_TIPO.exacta}
             tip={`${TIPOS_ATRIBUCION.exacta.tip}\nClic para ver la lista`} onClick={ver('exacta', 'Leads con atribución exacta')} />
           <TarjetaBajita valor={<Numero n={r.estimadas} />} titulo="Estimados" sub={pct(porcentaje(r.estimadas, r.total))} color={COLOR_TIPO.estimada}
@@ -51,7 +71,8 @@ export function TarjetaLeads({ leads, filas, total, abrir, reintentar }) {
           <TarjetaBajita valor="—" titulo="No calificados" sub="pendiente" color={COLOR_MAILING.gris}
             tip={`${TEXTO_NO_CALIFICADOS}.\nSe pidió al administrador de Prospekt agregar el origen y el país a la lista de no calificados.`} />
         </div>
-        <p className="mkv2-nota"><b>Solo {numero(r.conCorreo)} de {numero(r.total)} leads traen correo; la mayoría no se puede cruzar con campañas.</b> {TEXTO_NO_CALIFICADOS}.</p>
+        <NotaLeads leads={leads} />
+        <p className="mkv2-nota">{TEXTO_NO_CALIFICADOS}.</p>
         <AvisosLeads leads={leads} />
       </>}
     </Tarjeta>
@@ -121,7 +142,7 @@ export function LeadsMailing({ campanas, leads, foco, limpiarFoco, volver, reint
                 tip={`${t.label}: ${numero(n)} de ${numero(r.total)}\n${t.tip}`} activa={tipo === k} onClick={() => { setTipo(tipo === k ? '' : k); setPagina(1) }} />
             })}
           </div>
-          <p className="mkv2-nota">Solo {numero(r.conCorreo)} de {numero(r.total)} leads traen correo; la mayoría no se puede cruzar con campañas.</p>
+          <NotaLeads leads={leads} />
         </Tarjeta>
         <Tarjeta titulo="Etapa en Prospekt" sub="opportunity_stage · la 6 es «cerrado» (por confirmar si es venta ganada)" className="mkv2-compacta">
           <div className="mkv2-embudo">
@@ -132,7 +153,8 @@ export function LeadsMailing({ campanas, leads, foco, limpiarFoco, volver, reint
           </div>
         </Tarjeta>
       </div>
-      <Tarjeta titulo={`Leads calificados · ${numero(lista.length)}`} sub="Con los filtros de Mailing: país del lead, período por fecha de creación, campaña / cargo / asunto por la campaña asignada · sin correo ni teléfono"
+      <div className="mkv2-rank-herramientas"><InterruptorOrigenes leads={leads} /></div>
+      <Tarjeta titulo={`${leads.todosOrigenes ? 'Leads calificados (todos los orígenes)' : 'Leads de Mailing'} · ${numero(lista.length)}`} sub="Con los filtros de Mailing: país del lead, período por fecha de creación, campaña / cargo / asunto por la campaña asignada · sin correo ni teléfono"
         acciones={<>
           <Selector etiqueta="Atribución" valor={tipo} onCambio={(v) => { setTipo(v); setPagina(1) }} opciones={Object.entries(TIPOS_ATRIBUCION).map(([k, t]) => [k, t.label])} todos="Todas" />
           <Selector etiqueta="Etapa" valor={etapa} onCambio={(v) => { setEtapa(v); setPagina(1) }} opciones={etapas.map((e) => [String(e.etapa ?? 'sin'), textoEtapa(e.etapa)])} todos="Todas" />

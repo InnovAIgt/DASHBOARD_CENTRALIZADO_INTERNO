@@ -99,3 +99,11 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
 - **Prueba:** los códigos de prospecto son consecutivos y solo cuadran en UTC (un calificado a las 02:08 UTC va antes
   que el código siguiente, no calificado, a las 04:22 UTC).
 - Se compara en UTC con la hora de envío de Brevo y se muestra en hora de Guatemala. Se deja como está.
+
+## 2026-11-24 · En Mailing solo se cuentan los leads de Mailing
+
+- **Decisión de Keily:** la tarjeta Leads, la sub-pestaña Leads y Comparar muestran por defecto **solo** los leads con
+  campaña asignada (exacta o estimada) o con origen «PostIAlo Mailing» (hoy 6 de 291). Redes, Web, PBX y Manual no se
+  cuentan en Mailing.
+- Interruptor **«Ver leads de todos los orígenes»**, apagado por defecto, para revisión.
+- Nota de la tarjeta: «Leads de correo: X. Solo 29 de 291 leads de Prospekt traen correo» (con los números del día).

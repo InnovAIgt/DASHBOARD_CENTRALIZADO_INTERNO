@@ -2,6 +2,13 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Mailing cuenta solo los leads de Mailing
+
+- Pedido de Keily: tarjeta, sub-pestaña Leads y Comparar muestran por defecto solo los leads con campaña asignada o
+  con origen «PostIAlo Mailing» (hoy 6 de 291, todos sin campaña y 2 cerrados). Interruptor «Ver leads de todos los
+  orígenes» apagado por defecto. Nota nueva: «Leads de correo: 6. Solo 29 de 291 leads de Prospekt traen correo».
+  DECISIONES.md y MAILING.md, 11.3.
+
 ## 2026-11-24 · Leads de Prospekt en Mailing
 
 - Pedido del ingeniero: apertura, lectura y leads calificados y no calificados de las campañas, también por territorio.
