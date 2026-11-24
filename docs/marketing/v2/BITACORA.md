@@ -2,6 +2,13 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Detalle por correo: aperturas de Apple
+
+- Antes, `proxy_open` (webhook) no se tomaba en cuenta en la columna Apertura (solo se veía en la ficha) y no había
+  marca cuando un correo tenía apertura real y de Apple. Ahora `proxy_open` cuenta como apertura automática de Apple
+  (igual que `apple_mpp` del historial), la apertura lleva la marca «Apple» y hay un filtro «Tipo de apertura»: solo
+  reales o solo de Apple (también en el Excel). Solo lectura: no cambia nada en Brevo ni en Supabase.
+
 ## 2026-11-23 · Mailing terminado
 
 - **Revisión de todas las vistas:** asunto como título y «#id · nombre real» abajo, Comparar como la maqueta, barra de

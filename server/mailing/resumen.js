@@ -82,7 +82,7 @@ export function resumirCampana(eventos) {
     const tipos = new Set(lista.map((e) => e.evento))
     // Sección 5: con fecha de apertura gana REGISTRADA; sin ella pero con Apple MPP, AUTOMÁTICA.
     if (tipos.has('opened')) r.aperturaRegistrada += 1
-    else if (tipos.has('apple_mpp')) r.aperturaAutomatica += 1
+    else if (tipos.has('apple_mpp') || tipos.has('proxy_open')) r.aperturaAutomatica += 1
     if (tipos.has('proxy_open')) r.proxyOpen += 1
     if (tipos.has('click')) r.clic += 1
     if (tipos.has('spam')) r.spam += 1

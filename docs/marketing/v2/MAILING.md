@@ -144,6 +144,10 @@ No se culpa automáticamente al cliente ni a RED: el mensaje SMTP dice dónde in
 - Si tiene fecha **y** contador automático, gana **APERTURA REGISTRADA** (el contador se guarda aparte).
 - Nunca se inventa una fecha de apertura cuando solo hay contador automático.
 - La apertura automática **no** cuenta en la tasa de apertura.
+- **Señal de Apple** (23/11/2026): cuenta como apertura automática de Apple tanto `apple_mpp` (historial, CSV) como
+  `proxy_open` («cargado por proxy», webhook). En Detalle por correo, la apertura lleva una marca pequeña **«Apple»**
+  si hubo alguna apertura de Apple (también cuando además hubo una apertura real) y el filtro **«Tipo de apertura»**
+  deja ver solo las aperturas reales (APERTURA REGISTRADA) o solo las que tuvieron Apple.
 
 **Clic:**
 

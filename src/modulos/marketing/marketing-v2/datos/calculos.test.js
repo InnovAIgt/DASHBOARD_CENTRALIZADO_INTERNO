@@ -233,3 +233,16 @@ test('lecturaEstimada: aperturas menos Apple MPP por campaña, nunca negativa, y
   assert.equal(t.lecturaEstimada, 34, 'la campaña con más Apple que aperturas queda en 0 y no resta de la otra')
   assert.equal(t.tasaLectura, 17)
 })
+
+test('filtrarDetalle: tipo de apertura, solo reales o solo de Apple', () => {
+  const filas = [
+    { correo: 'a@example.com', campana_id: 1, estado: 'entregado', status: 'MANTENER', apertura: 'APERTURA REGISTRADA', aperturaApple: false },
+    { correo: 'b@example.com', campana_id: 1, estado: 'entregado', status: 'MANTENER', apertura: 'APERTURA AUTOMÁTICA', aperturaApple: true },
+    { correo: 'c@example.com', campana_id: 1, estado: 'entregado', status: 'MANTENER', apertura: 'APERTURA REGISTRADA', aperturaApple: true },
+    { correo: 'd@example.com', campana_id: 1, estado: 'entregado', status: 'MANTENER', apertura: 'NO REGISTRADA', aperturaApple: false },
+  ]
+  const correos = (tipoApertura) => filtrarDetalle(filas, { ...FILTROS_DETALLE, tipoApertura }).map((x) => x.correo)
+  assert.deepEqual(correos('real'), ['a@example.com', 'c@example.com'])
+  assert.deepEqual(correos('apple'), ['b@example.com', 'c@example.com'])
+  assert.equal(correos('').length, 4)
+})

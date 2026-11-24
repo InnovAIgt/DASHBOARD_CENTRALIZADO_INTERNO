@@ -173,3 +173,19 @@ test('responderDetalle: agrega la cartera por ejecutivo (solo conteos); si falla
   assert.equal(e.cruce, 'ok', 'el cruce sigue aunque la cartera falle')
   vaciarCacheDetalle()
 })
+
+test('armarDetalle: proxy_open del webhook es apertura automática de Apple; con apertura real gana REGISTRADA y queda la marca', () => {
+  const filas = armarDetalle([
+    ev(12, 'solo-apple@example.com', 'delivered', '2026-11-23T10:00:00Z', { origen: 'webhook' }),
+    ev(12, 'solo-apple@example.com', 'proxy_open', '2026-11-23T10:01:00Z', { origen: 'webhook' }),
+    ev(12, 'real-y-apple@example.com', 'delivered', '2026-11-23T10:00:00Z', { origen: 'webhook' }),
+    ev(12, 'real-y-apple@example.com', 'proxy_open', '2026-11-23T10:01:00Z', { origen: 'webhook' }),
+    ev(12, 'real-y-apple@example.com', 'opened', '2026-11-23T12:00:00Z', { origen: 'webhook' }),
+    ev(12, 'real@example.com', 'delivered', '2026-11-23T10:00:00Z', { origen: 'webhook' }),
+    ev(12, 'real@example.com', 'opened', '2026-11-23T12:00:00Z', { origen: 'webhook' }),
+  ])
+  const f = (c) => filas.find((x) => x.correo === c)
+  assert.deepEqual([f('solo-apple@example.com').apertura, f('solo-apple@example.com').aperturaApple], ['APERTURA AUTOMÁTICA', true])
+  assert.deepEqual([f('real-y-apple@example.com').apertura, f('real-y-apple@example.com').aperturaApple], ['APERTURA REGISTRADA', true])
+  assert.deepEqual([f('real@example.com').apertura, f('real@example.com').aperturaApple], ['APERTURA REGISTRADA', false])
+})

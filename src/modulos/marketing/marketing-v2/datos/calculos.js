@@ -224,7 +224,9 @@ export function cumpleEstado(fila, estado = 'todos') {
   }
 }
 
-export const FILTROS_DETALLE = { texto: '', estado: 'todos', status: '', apertura: '', clic: '', origen: '', motivo: '' }
+export const FILTROS_DETALLE = { texto: '', estado: 'todos', status: '', apertura: '', tipoApertura: '', clic: '', origen: '', motivo: '' }
+/** Tipo de apertura en Detalle por correo: «real» = hubo una apertura no automática; «apple» = hubo una de Apple. */
+export const TIPOS_APERTURA = { real: 'Solo aperturas reales', apple: 'Solo aperturas de Apple' }
 
 /**
  * Filtra las filas del detalle: solo campañas de los filtros de arriba (ids), estado, CORREGIR/MANTENER, apertura,
@@ -237,6 +239,8 @@ export function filtrarDetalle(filas = [], f = FILTROS_DETALLE, { ids = null, no
     if (!cumpleEstado(x, f.estado)) return false
     if (f.status && x.status !== f.status) return false
     if (f.apertura && x.apertura !== f.apertura) return false
+    if (f.tipoApertura === 'real' && x.apertura !== 'APERTURA REGISTRADA') return false
+    if (f.tipoApertura === 'apple' && !x.aperturaApple) return false
     if (f.clic && x.clic !== f.clic) return false
     if (f.origen && x.origen !== f.origen) return false
     if (f.motivo && x.motivoTecnico !== f.motivo) return false

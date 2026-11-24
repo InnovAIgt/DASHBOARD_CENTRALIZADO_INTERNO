@@ -55,6 +55,8 @@ export function filaDetalle(eventos) {
   const final = estadoFinal(eventos)
   const s = statusCorreo(final)
   const tipos = new Set(eventos.map((e) => e.evento))
+  // Apertura automática de Apple: apple_mpp (historial, CSV) o proxy_open («cargado por proxy», webhook).
+  const apple = tipos.has('apple_mpp') || tipos.has('proxy_open')
   const origenes = new Set(eventos.map((e) => (e.origen === 'historial' ? 'historial' : 'webhook')))
   const tiempos = (filtro) => eventos.filter(filtro).map((e) => Date.parse(e.fecha_evento)).filter(Number.isFinite)
   const rebote = final.estado === 'rebote_temporal' ? 'soft_bounce' : final.estado === 'rebote_permanente' ? 'hard_bounce' : null
@@ -68,7 +70,9 @@ export function filaDetalle(eventos) {
     motivoTecnico: s.motivoTecnico,
     categoria: s.categoria,
     indicacion: indicacion({ estado: final.estado, ...s }),
-    apertura: estadoApertura({ conFecha: tipos.has('opened'), automaticas: tipos.has('apple_mpp') ? 1 : 0 }),
+    apertura: estadoApertura({ conFecha: tipos.has('opened'), automaticas: apple ? 1 : 0 }),
+    // true si hubo alguna apertura automática de Apple (aunque también haya una apertura real).
+    aperturaApple: apple,
     clic: estadoClic(tipos.has('click') ? 1 : 0),
     baja: tipos.has('unsubscribe'),
     spam: tipos.has('spam'),

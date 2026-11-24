@@ -11,7 +11,7 @@ import { PorEjecutivo } from './Ejecutivos.jsx'
 import { Ficha } from './Ficha.jsx'
 import {
   CLASIFICACIONES, clasificarCruce, empresasDe, ESTADOS_DETALLE, estadoDetalle, fechaCorta, fechaHora, filtrarDetalle, FILTROS_DETALLE, numero,
-  paginar, sumarResumen, sumarTotales,
+  paginar, sumarResumen, sumarTotales, TIPOS_APERTURA,
 } from '../../datos/calculos.js'
 import { columnasCampana, textosCampana } from '../../datos/campana.js'
 import { aCsv, descargarCsv } from '../../datos/csv.js'
@@ -259,7 +259,9 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
     { label: 'Status', celda: (x) => <Insignia tono={x.status === 'CORREGIR' ? 'rojo' : 'neutro'}>{x.status}</Insignia>, valor: (x) => `${x.status} CORREO`, ancho: 18 },
     { label: 'Motivo técnico', clase: 'mkv2-celda-media', celda: (x) => <Gris texto={x.motivoTecnico ?? '—'} />, valor: (x) => x.motivoTecnico ?? '', ancho: 30 },
     { label: 'Indicación', clase: 'mkv2-celda-larga', celda: (x) => x.indicacion, valor: (x) => x.indicacion, ancho: 44 },
-    { label: 'Apertura', celda: (x) => x.apertura, valor: (x) => x.apertura, ancho: 22 },
+    { label: 'Apertura', celda: (x) => <span className="fv2-sin-salto">{x.apertura}{x.aperturaApple && <span className="mkv2-marca-apple"
+      data-tip={x.apertura === 'APERTURA REGISTRADA' ? 'También tuvo una apertura automática de Apple (Mail Privacy Protection); la apertura real cuenta igual' : 'Solo apertura automática de Apple (Mail Privacy Protection): no cuenta como apertura real'}>Apple</span>}</span>,
+      valor: (x) => `${x.apertura}${x.aperturaApple ? ' · Apple' : ''}`, ancho: 30 },
     { label: 'Clic', celda: (x) => x.clic, valor: (x) => x.clic, ancho: 20 },
     { label: 'Origen', celda: (x) => ORIGEN[x.origen] ?? x.origen, valor: (x) => ORIGEN[x.origen] ?? x.origen, ancho: 20 },
     { label: 'Fecha de envío', celda: (x) => <span className="fv2-sin-salto">{fechaCorta(x.fechaEnvio)}</span>, valor: (x) => fechaCorta(x.fechaEnvio), ancho: 14 },
@@ -268,7 +270,7 @@ export function DetallePorCorreo({ campanas, resumen, errorResumen, detalle, err
     nombreBase: `detalle-por-correo_${new Date().toISOString().slice(0, 10)}`,
     titulo: 'DETALLE POR CORREO · MAILING', subtitulo: `${numero(lista.length)} filas (correo y campaña) · estado: ${e.label}`,
     columnas: columnasExportar(columnas, nombres), filas: lista,
-    filtros: filtrosTexto(campanas, [['Estado', e.label], ['Status', f.status || 'Todos'], ['Apertura', f.apertura || 'Todas'], ['Clic', f.clic || 'Todos'],
+    filtros: filtrosTexto(campanas, [['Estado', e.label], ['Status', f.status || 'Todos'], ['Apertura', f.apertura || 'Todas'], ['Tipo de apertura', TIPOS_APERTURA[f.tipoApertura] ?? 'Reales y de Apple'], ['Clic', f.clic || 'Todos'],
       ['Origen', ORIGEN[f.origen] ?? 'Todos'], ['Motivo técnico', f.motivo || 'Todos'], ['Búsqueda', f.texto || 'Ninguna']]),
   })
 
@@ -302,6 +304,7 @@ ${f.estado === x.id ? 'Clic para ver todos' : 'Clic para ver solo estos en la ta
           opciones={ESTADOS_DETALLE.filter((x) => x.id !== 'todos').map((x) => [x.id, x.label])} />
         <Selector etiqueta="Status" valor={f.status} onCambio={poner('status')} opciones={[['CORREGIR', 'CORREGIR'], ['MANTENER', 'MANTENER']]} />
         <Selector etiqueta="Apertura" valor={f.apertura} onCambio={poner('apertura')} opciones={['APERTURA REGISTRADA', 'APERTURA AUTOMÁTICA', 'NO REGISTRADA']} todos="Todas" />
+        <Selector etiqueta="Tipo de apertura" valor={f.tipoApertura} onCambio={poner('tipoApertura')} opciones={Object.entries(TIPOS_APERTURA)} todos="Reales y de Apple" />
         <Selector etiqueta="Clic" valor={f.clic} onCambio={poner('clic')} opciones={['CLIC REGISTRADO', 'SIN CLIC REGISTRADO']} />
         <Selector etiqueta="Origen" valor={f.origen} onCambio={poner('origen')} opciones={Object.entries(ORIGEN)} />
         {f.motivo && <button type="button" className="fv2-pildora" onClick={() => poner('motivo')('')}>Quitar motivo «{f.motivo}»</button>}
