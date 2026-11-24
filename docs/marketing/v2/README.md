@@ -29,6 +29,8 @@ con 3 pestañas:
 
 Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
 
+Paso a producción (variables de Vercel, checklist de pruebas y mensaje para Eduardo): [PRODUCCION.md](PRODUCCION.md).
+
 ## Dónde está el código
 
 | Archivo | Para qué |

@@ -35,8 +35,11 @@ la fecha.
 
 ## Eduardo / TI
 
+Borrador del mensaje para Eduardo (qué se sube, riesgos y qué debe aprobar): PRODUCCION.md, sección 4.
+
 | Pendiente | A quién se le pidió | Fecha | Estado |
 |---|---|---|---|
+| **Aprobar la publicación de Mailing**: merge de `feature/marketing-v2` a `main`, correos visibles sin login (o `MKT_MOSTRAR_CORREOS = no`), rutas abiertas y quién cambia las claves expuestas | Eduardo | Antes del merge | Pendiente: borrador del mensaje listo (PRODUCCION.md, sección 4) |
 | Crear usuario de solo lectura en la base de Cumplimiento de Clientes para el dashboard y cambiar la contraseña principal (estaba en un documento). Hoy el cruce usa `CC_DB_PASSWORD` con candados de solo lectura | Keily / Eduardo | — | Pendiente |
 | Informar a Eduardo que los correos se muestran sin inicio de sesión (DECISIONES.md) | Keily → Eduardo | — | Pendiente |
 | Confirmar si las rutas de totales de Mailing pueden quedar abiertas en producción hasta tener inicio de sesión real | Eduardo | Antes de publicar | Pendiente |
@@ -50,9 +53,9 @@ la fecha.
 
 | Pendiente | Quién | Cuándo | Estado |
 |---|---|---|---|
-| Poner en Vercel **Production** `BREVO_API_KEY` (la nueva), `BREVO_WEBHOOK_SECRET`, `MKT_SUPABASE_URL`, `MKT_SUPABASE_SECRET_KEY`, `CC_DB_PASSWORD` (o el usuario de solo lectura) y `MKT_CLAVE_EDICION` (hoy solo están en Preview o en ninguno) | Keily | Al publicar | Pendiente |
+| Variables de Vercel **Production** (lista completa en PRODUCCION.md, sección 2) | Keily | Antes del merge | En curso: 6 puestas (23/11); falta `CRON_SECRET` |
 | Cambiar la dirección del webhook en Brevo a producción (sin bypass) y borrar el código de bypass de Vercel | Keily | Al publicar | Pendiente |
-| Tarea diaria para que el proyecto Supabase Free no se pause (Vercel cron con `CRON_SECRET`; solo corre en producción) | Keily | Al publicar | Pendiente |
+| Tarea diaria para que el proyecto Supabase Free no se pause | Keily | Al publicar | Código listo (cron en vercel.json, /api/marketing/mantener-supabase); falta `CRON_SECRET` y probarlo en producción (PRODUCCION.md, sección 3) |
 | Quitar de Vercel las 4 variables viejas: `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`, `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE` | Keily / TI | Al publicar | Pendiente |
 | Conflicto vite/esbuild en instalación limpia: Vercel instala con **bun** (hay `bun.lock`), que lo tolera; con `npm` limpio falla (vite 8.3.8 pide esbuild 0.27/0.28 y el portal fija 0.25). `bun.lock` ya incluye `pg` | Keily / Eduardo | Antes de publicar | Pendiente |
 | Renovar la llave de Brevo antes del 2027-11-20 | Keily | 2027-11-01 | Pendiente |

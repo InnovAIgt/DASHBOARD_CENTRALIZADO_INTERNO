@@ -2,6 +2,17 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Mailing preparado para producción (sin push)
+
+- Redes sociales: en Vercel Production muestra «Próximamente» y en Preview / local la pantalla de ejemplo; se decide
+  al armar la página con VERCEL_ENV y `MKT_REDES_VISIBLE` (si/no) la fuerza. En Production los datos de ejemplo no
+  entran en la página (comprobado armando la página como Production y como Preview).
+- Cron diario de Vercel (`vercel.json`, 12:00 UTC) → `/api/marketing/mantener-supabase`: exige
+  `Authorization: Bearer CRON_SECRET` y hace una sola lectura mínima en el Supabase de Marketing (no escribe).
+- Nueva guía [PRODUCCION.md](PRODUCCION.md): variables de Production (falta `CRON_SECRET`), checklist de pruebas
+  después del merge (incluye pasar el webhook de Brevo a producción y borrar el bypass) y borrador del mensaje a
+  Eduardo. `.env.example` suma `CRON_SECRET` y `MKT_REDES_VISIBLE` (vacías).
+
 ## 2026-11-23 · Menú lateral escondido en Canales de marketing y ventanas encima del menú
 
 - Como en Flujo de ventas: en Canales de marketing el menú del portal se esconde, se asoma al acercar el mouse al
