@@ -3,13 +3,15 @@
 // barra de filtros, sub-pestañas Resumen · Publicaciones · Anuncios y «Filtrado por».
 // HOY con DATOS DE EJEMPLO (datos/redesEjemplo.js) y aviso visible; con el token de Meta solo cambia la fuente
 // (datos/useRedesDatos.js). Sin leads por ahora.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { cargarHerramientaPdf } from '../datos/pdfMailing.js'
+import { chipsFiltrosRedes, construirReporteRedes, MODULOS_PDF_REDES, nombreArchivoPdfRedes } from '../datos/pdfRedes.js'
 import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, REDES } from '../datos/redes.js'
 import { armarProgramado } from '../datos/redesProgramadas.js'
 import { useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
-import { BarraRedes } from './redes/BarraRedes.jsx'
+import { BarraRedes, ID_BOTON_PDF_REDES } from './redes/BarraRedes.jsx'
 import { PublicacionesRedes } from './redes/Publicaciones.jsx'
 import { ResumenRedes } from './redes/Resumen.jsx'
 
@@ -47,11 +49,37 @@ export function Redes() {
     filtros.estado && { quitar: { estado: '' }, texto: ESTADOS[filtros.estado] ?? filtros.estado },
   ].filter(Boolean)
 
+  // ---- PDF: la misma herramienta compartida que Mailing (dashboard-pdf.js); siempre lee los datos y filtros actuales ----
+  const datosPdf = useRef(null)
+  datosPdf.current = { datos, items, caso, filtros }
+  const [pdfListo, setPdfListo] = useState(false)
+  useEffect(() => {
+    if (datos.cargando) return undefined
+    let activo = true
+    const antes = new Set(document.querySelectorAll('.dashboard-pdf-picker'))
+    cargarHerramientaPdf().then((pdf) => {
+      if (!activo || !document.getElementById(ID_BOTON_PDF_REDES)) return
+      pdf.openModulePicker({
+        buttonId: ID_BOTON_PDF_REDES,
+        modules: MODULOS_PDF_REDES,
+        getFilterChips: () => chipsFiltrosRedes(datosPdf.current.filtros),
+        buildReport: async (seleccion) => construirReporteRedes({ seleccion, ...datosPdf.current, origen: window.location.origin }),
+        filename: () => nombreArchivoPdfRedes(datosPdf.current.filtros),
+      })
+      setPdfListo(true)
+    }).catch((err) => console.error('PDF de Redes:', err))
+    return () => {
+      activo = false
+      setPdfListo(false)
+      document.querySelectorAll('.dashboard-pdf-picker').forEach((el) => { if (!antes.has(el)) el.remove() })
+    }
+  }, [datos.cargando])
+
   return <div className="mkv2-mailing mkv2-redes" {...globo.manejadores}>
     {datos.fuente === 'ejemplo' && <div className="mkv2-redes-ejemplo" role="note">
       <strong>Datos de ejemplo</strong> · todavía no está conectado a Meta. Las cifras son inventadas y solo muestran cómo se verá la pantalla.
     </div>}
-    <BarraRedes filtros={filtros} cambiar={setFiltros} meses={datos.meses} pdfListo={false} />
+    <BarraRedes filtros={filtros} cambiar={setFiltros} meses={datos.meses} pdfListo={pdfListo} />
     <nav className="mkv2-subpestanas" role="tablist" aria-label="Secciones de Redes sociales">
       {SUBPESTANAS_REDES.map((p) => <button type="button" key={p.key} role="tab" aria-selected={sub === p.key}
         className={`mkv2-subpestana ${sub === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>{p.label}

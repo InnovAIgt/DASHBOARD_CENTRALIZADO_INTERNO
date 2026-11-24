@@ -32,7 +32,7 @@ export function BarraRedes({ filtros, cambiar, meses, pdfListo }) {
       <Grupo etiqueta="Mes" valor={filtros.mes} onElegir={poner('mes')}
         opciones={[...meses].reverse().map((m) => [m, nombreMes(m).split(' ')[0], nombreMes(m)])} />
       <button type="button" id={ID_BOTON_PDF_REDES} className="mkv2-boton-barra mkv2-boton-pdf" disabled={!pdfListo}
-        data-tip={pdfListo ? 'Descargar la vista actual en PDF (eliges los módulos)' : 'El PDF de Redes se agrega en la parte 5'}><Download size={15} aria-hidden="true" />PDF</button>
+        data-tip={pdfListo ? 'Descargar la vista actual en PDF (eliges los módulos)' : 'Preparando la herramienta de PDF…'}><Download size={15} aria-hidden="true" />PDF</button>
       <button type="button" className="mkv2-boton-icono mkv2-boton-redondo" onClick={() => cambiar({ ...FILTROS_REDES, mes: filtros.mes })} disabled={!hayFiltros}
         data-tip="Limpiar todos los filtros (el mes se queda)" aria-label="Limpiar todos los filtros"><RotateCcw size={16} /></button>
     </div>
