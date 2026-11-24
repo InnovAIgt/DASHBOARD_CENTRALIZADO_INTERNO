@@ -209,6 +209,7 @@
 
 /* Fila de calidad: tarjetas bajitas (número + título; explicación en el «?») */
 .mkv2 .mkv2-bajitas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-bajitas.mkv2-bajitas6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .mkv2 .mkv2-bajita {
   --mkv2-color: var(--mkv2-gris);
   position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 30px 9px 12px;
@@ -714,7 +715,7 @@
 @media (max-width: 900px) { .mkv2 .mkv2-ejecutivos3 { grid-template-columns: 1fr; } }
 @media (max-width: 1240px) {
   .mkv2 .mkv2-kpis6, .mkv2 .mkv2-minis6, .mkv2 .mkv2-minis5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .mkv2 .mkv2-bajitas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mkv2 .mkv2-bajitas, .mkv2 .mkv2-bajitas.mkv2-bajitas6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mkv2 .mkv2-panel-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 1060px) {
@@ -723,7 +724,7 @@
 }
 @media (max-width: 760px) {
   .mkv2 .mkv2-kpis6, .mkv2 .mkv2-minis6, .mkv2 .mkv2-minis5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mkv2 .mkv2-bajitas, .mkv2 .mkv2-panel-filtros { grid-template-columns: 1fr 1fr; }
+  .mkv2 .mkv2-bajitas, .mkv2 .mkv2-bajitas.mkv2-bajitas6, .mkv2 .mkv2-panel-filtros { grid-template-columns: 1fr 1fr; }
   .mkv2 .mkv2-fecha { min-width: 0; }
   .mkv2 .mkv2-erow, .mkv2 .mkv2-compara .mkv2-erow { grid-template-columns: 96px minmax(0, 1fr) 92px; gap: 8px; }
   .mkv2 .mkv2-dona-area { grid-template-columns: 1fr; }

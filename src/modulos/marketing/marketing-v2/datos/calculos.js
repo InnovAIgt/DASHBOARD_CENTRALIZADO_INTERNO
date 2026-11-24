@@ -84,6 +84,13 @@ export function opcionesFiltros(campanas = [], mostrarPrueba = false) {
 
 const CAMPOS = ['enviados', 'entregados', 'reboteTemporal', 'rebotePermanente', 'sinConfirmacion', 'aperturas', 'aperturasApple', 'clics', 'bajas', 'quejas']
 
+/**
+ * Lectura estimada de UNA campaña: personas que abrieron según Brevo (uniqueViews, incluye automáticas) menos las
+ * aperturas automáticas de Apple MPP (appleMppOpens); nunca baja de 0. Es estimada porque Brevo da Apple MPP como
+ * total de la campaña, no persona por persona (en los CSV del historial, Apple MPP va incluido en el total).
+ */
+export const lecturaEstimada = (totales = {}) => Math.max(0, (Number(totales.aperturas) || 0) - (Number(totales.aperturasApple) || 0))
+
 /** Suma los totales de varias campañas (solo enviadas: las programadas aún no tienen cifras). */
 export function sumarTotales(campanas = []) {
   const t = Object.fromEntries(CAMPOS.map((k) => [k, 0]))
@@ -92,8 +99,12 @@ export function sumarTotales(campanas = []) {
     for (const k of CAMPOS) t[k] += Number(c.totales?.[k]) || 0
   }
   const enviadas = campanas.filter((c) => c.estado === 'enviada')
+  // Se resta campaña por campaña (si en una Apple MPP supera a las aperturas, esa queda en 0 y no resta de otra).
+  const lectura = enviadas.reduce((n, c) => n + lecturaEstimada(c.totales), 0)
   return {
     ...t,
+    lecturaEstimada: lectura,
+    tasaLectura: porcentaje(lectura, t.entregados),
     campanas: enviadas.length,
     // Si en alguna campaña enviados − entregados − rebotes dio negativo, «Sin confirmación» no es exacto.
     sinConfirmacionAjustado: enviadas.some((c) => c.totales?.sinConfirmacionAjustado),

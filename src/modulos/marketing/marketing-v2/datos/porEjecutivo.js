@@ -122,3 +122,66 @@ export function detalleCartera(e) {
     campanas,
   }
 }
+/**
+ * Vista por ejecutivo y territorio: una fila por EJECUTIVO + PAÍS (territorio del cliente en Cumplimiento) y un
+ * subtotal por país. Una fila correo + campaña cuenta en cada (ejecutivo, país) de sus clientes EXACTOS; sin
+ * coincidencia exacta va a «Sin identificar» (país «—»). cartera = clientes de ese ejecutivo en ese país (o null).
+ */
+export function metricasPorTerritorio(filas = [], carteras = null) {
+  const grupos = new Map()
+  const sumar = (clave, base, f, cliente) => {
+    if (!grupos.has(clave)) grupos.set(clave, { ...base, filas: 0, entregados: 0, aperturas: 0, clics: 0, casosCorregir: 0, corregir: new Set(), clientes: new Set(), campanas: new Set() })
+    const g = grupos.get(clave)
+    g.filas += 1
+    if (f.estado === 'entregado') g.entregados += 1
+    if (f.apertura === 'APERTURA REGISTRADA') g.aperturas += 1
+    if (f.clic === 'CLIC REGISTRADO') g.clics += 1
+    if (f.status === 'CORREGIR') { g.casosCorregir += 1; g.corregir.add(String(f.correo).toLowerCase()) }
+    if (cliente) g.clientes.add(cliente)
+    g.campanas.add(f.campana_id)
+  }
+  for (const f of filas) {
+    const pares = new Map()
+    for (const e of f.clientes ?? []) {
+      const clave = `${e.ejecutivo || SIN_IDENTIFICAR}|${e.pais || '—'}`
+      if (!pares.has(clave)) pares.set(clave, { ejecutivo: e.ejecutivo || SIN_IDENTIFICAR, pais: e.pais || '—', cliente: `${e.pais}-${e.codigo}` })
+    }
+    if (!pares.size) pares.set(`${SIN_IDENTIFICAR}|—`, { ejecutivo: SIN_IDENTIFICAR, pais: '—', cliente: null })
+    for (const [clave, p] of pares) sumar(clave, { ejecutivo: p.ejecutivo, pais: p.pais }, f, p.cliente)
+  }
+  const cerrar = (g) => ({
+    ejecutivo: g.ejecutivo,
+    pais: g.pais,
+    sinIdentificar: g.ejecutivo === SIN_IDENTIFICAR,
+    cartera: g.ejecutivo === SIN_IDENTIFICAR || !carteras ? null : carteras.filter((c) => c.ejecutivo === g.ejecutivo && c.pais === g.pais).reduce((n, c) => n + c.clientes, 0),
+    clientesAlcanzados: g.clientes.size,
+    campanas: g.campanas.size,
+    totales: { enviados: g.filas, entregados: g.entregados, aperturas: g.aperturas, clics: g.clics, casosCorregir: g.casosCorregir, corregir: g.corregir.size },
+    tasas: { entrega: porcentaje(g.entregados, g.filas), apertura: porcentaje(g.aperturas, g.entregados), clic: porcentaje(g.clics, g.entregados) },
+    semaforo: semaforoEntrega(g.entregados, g.filas),
+  })
+  const lista = [...grupos.values()].map(cerrar)
+    .sort((a, b) => a.sinIdentificar - b.sinIdentificar || a.pais.localeCompare(b.pais) || b.totales.enviados - a.totales.enviados || a.ejecutivo.localeCompare(b.ejecutivo, 'es'))
+  // Subtotal por país (territorio): filas únicas correo + campaña de ese país, sin contar dos veces.
+  const paises = [...new Set(lista.filter((x) => !x.sinIdentificar).map((x) => x.pais))].sort()
+  const territorios = paises.map((pais) => {
+    const propias = filas.filter((f) => (f.clientes ?? []).some((e) => e.pais === pais))
+    const t = { enviados: propias.length, entregados: 0, aperturas: 0, clics: 0 }
+    const corregir = new Set()
+    for (const f of propias) {
+      if (f.estado === 'entregado') t.entregados += 1
+      if (f.apertura === 'APERTURA REGISTRADA') t.aperturas += 1
+      if (f.clic === 'CLIC REGISTRADO') t.clics += 1
+      if (f.status === 'CORREGIR') corregir.add(String(f.correo).toLowerCase())
+    }
+    return {
+      pais,
+      ejecutivos: lista.filter((x) => x.pais === pais && !x.sinIdentificar).length,
+      cartera: carteras ? carteras.filter((c) => c.pais === pais).reduce((n, c) => n + c.clientes, 0) : null,
+      totales: { ...t, corregir: corregir.size },
+      tasas: { entrega: porcentaje(t.entregados, t.enviados), apertura: porcentaje(t.aperturas, t.entregados), clic: porcentaje(t.clics, t.entregados) },
+      semaforo: semaforoEntrega(t.entregados, t.enviados),
+    }
+  })
+  return { filas: lista, territorios }
+}

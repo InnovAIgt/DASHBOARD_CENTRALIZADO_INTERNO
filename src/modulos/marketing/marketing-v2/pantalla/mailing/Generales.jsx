@@ -6,7 +6,7 @@ import { Fragment, useMemo } from 'react'
 import { AlertTriangle, Check, Download, Eye, MousePointerClick, Send, X } from 'lucide-react'
 import { columnasCampana, textosCampana } from '../../datos/campana.js'
 import { aCsv, descargarCsv } from '../../datos/csv.js'
-import { detalleWebhook, diaGuatemala, fechaCorta, NOMBRE_CARGO, numero, pct, porCargo, porCorregirCampana, porcentaje, sumarTotales } from '../../datos/calculos.js'
+import { detalleWebhook, diaGuatemala, fechaCorta, fechaHora, NOMBRE_CARGO, numero, pct, porCargo, porCorregirCampana, porcentaje, sumarTotales } from '../../datos/calculos.js'
 import {
   Aviso, Bloque, Cifra, COLOR_MAILING, COLOR_SEMAFORO, DonaPartes, FilaBarra, Gris, InsigniaCargo, Kpi, LeyendaSemaforo, MiniBarra,
   Numero, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TarjetaBajita, TEXTO_WEBHOOK, TituloCampana,
@@ -40,8 +40,12 @@ function Calidad({ t, det, cuentas, abrir }) {
     : 'Enviados sin entrega ni rebote informados.'
   const hayCorregir = cuentas?.corregir != null && det.hayDatos
   return <>
-    <Bloque titulo="Entregas, rebotes y calidad de contactos" />
-    <div className="mkv2-bajitas">
+    <Bloque titulo="Lectura, entregas, rebotes y calidad de contactos" />
+    <div className="mkv2-bajitas mkv2-bajitas6">
+      <TarjetaBajita valor={<Pct n={t.tasaLectura} />} titulo="Lectura estimada" sub={`${numero(t.lecturaEstimada)} personas`} color={COLOR_MAILING.apertura}
+        tip={`Lectura estimada: ${numero(t.lecturaEstimada)} de ${numero(t.entregados)} entregados (${pct(t.tasaLectura)})
+Aperturas sin las automáticas de Apple: personas que abrieron según Brevo (${numero(t.aperturas)}) menos aperturas Apple MPP (${numero(t.aperturasApple)}), campaña por campaña.
+Es estimada: Brevo da Apple MPP como total, no por persona. No confirma lectura humana.`} />
       <TarjetaBajita valor={<Pct n={t.tasas.entrega} />} titulo="Tasa de entrega" sub={t.semaforo ? `semáforo: ${t.semaforo}` : undefined}
         color={COLOR_SEMAFORO[t.semaforo] ?? COLOR_MAILING.gris}
         tip={`Tasa de entrega: ${numero(t.entregados)} de ${numero(t.enviados)} enviados (${pct(t.tasas.entrega)})\nSemáforo: 100 % verde · 90 a 99,9 % amarillo · menos de 90 % rojo.\nClic para comparar campañas.`}
@@ -189,6 +193,25 @@ function PorCampana({ campanas, resumen, abrir, filtrar }) {
   </Tarjeta>
 }
 
+/**
+ * Campañas programadas en Brevo (estado «en cola», solo lectura): asunto, nombre, cargo y cuándo salen.
+ * Todavía no tienen cifras. Clic en una para filtrar todo el dashboard por esa campaña.
+ */
+function Programadas({ campanas, filtrar }) {
+  const lista = useMemo(() => campanas.filter((c) => c.estado === 'programada')
+    .sort((a, b) => String(a.fecha ?? '').localeCompare(String(b.fecha ?? ''))), [campanas])
+  const columnas = [
+    { id: 'campana', label: 'Campaña', clase: 'mkv2-celda-campana', celda: (c) => <TituloCampana campana={c} fecha={false} /> },
+    { id: 'cargo', label: 'Cargo', celda: (c) => <InsigniaCargo cargo={c.cargo} /> },
+    { id: 'fecha', label: 'Programada para', celda: (c) => <span className="fv2-sin-salto">{c.fecha ? fechaHora(c.fecha) : 'Sin fecha'}</span> },
+  ]
+  return <Tarjeta titulo={`Programadas en Brevo · ${numero(lista.length)}`} sub="Campañas en cola de envío · se leen de Brevo (solo lectura) cada 10 minutos · clic para ver solo esa campaña">
+    {lista.length
+      ? <TablaOrdenable columnas={columnas} filas={lista} clave={(c) => c.id} onFila={(c) => filtrar({ campana: String(c.id) })} tituloFila={() => 'Ver solo esta campaña en todo el dashboard'} vacio="" />
+      : <Aviso icono="info" titulo="No hay campañas programadas" texto="Con los filtros actuales no hay campañas en cola en Brevo. Cuando Marketing programe una, aparece aquí con su fecha de envío." />}
+  </Tarjeta>
+}
+
 export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, abrir, filtrar, reintentar }) {
   const t = useMemo(() => sumarTotales(campanas), [campanas])
   const det = useMemo(() => detalleWebhook(campanas, resumen), [campanas, resumen])
@@ -208,6 +231,8 @@ export function ResultadosGenerales({ campanas, resumen, errorResumen, cuentas, 
     <Bloque titulo="Cargos y campañas" />
     <PorCargo campanas={campanas} abrir={abrir} filtrar={filtrar} />
     <PorCampana campanas={campanas} resumen={resumen} abrir={abrir} filtrar={filtrar} />
+    <Bloque titulo="Campañas programadas" />
+    <Programadas campanas={campanas} filtrar={filtrar} />
     <Tarjeta titulo="Leads" sub="Bot de WhatsApp → CRM">
       <Aviso icono="info" titulo="Pendiente: acceso al CRM o al bot de leads" texto="Se mostrarán los leads calificados (75 puntos o más) y no calificados de cada campaña." />
     </Tarjeta>

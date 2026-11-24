@@ -1,7 +1,7 @@
 // Pruebas de «Por comercial» (datos inventados).
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { metricasPorEjecutivo, SIN_IDENTIFICAR, textoPaises } from './porEjecutivo.js'
+import { metricasPorEjecutivo, metricasPorTerritorio, SIN_IDENTIFICAR, textoPaises } from './porEjecutivo.js'
 
 const ana = { pais: 'SV', codigo: '1', cliente: 'Empresa A', ejecutivo: 'Ana Ejemplo' }
 const bruno = { pais: 'GT', codigo: '2', cliente: 'Empresa B', ejecutivo: 'Bruno Ficticio' }
@@ -62,4 +62,23 @@ test('detalleCartera: interesados (clic o 2+ aperturas), no reciben, nunca abren
   assert.deepEqual(d.noReciben, [{ nombre: 'Empresa Tres', motivo: 'Cuenta inexistente', correos: 1 }])
   assert.deepEqual(d.nuncaAbren, [{ nombre: 'Empresa Cuatro', de: 2 }])
   assert.deepEqual(d.campanas.map((x) => [x.id, x.enviados, x.entrega]), [[75, 2, 100], [74, 4, 75]])
+})
+
+test('metricasPorTerritorio: una fila por ejecutivo y país, subtotal por país sin repetir y «Sin identificar» al final', () => {
+  const carla = { pais: 'GT', codigo: '3', cliente: 'Empresa C', ejecutivo: 'Ana Ejemplo' }
+  const filas = [...FILAS, fila('doble@example.com', 74, 'entregado', { clientes: [ana, carla] })]
+  const { filas: r, territorios } = metricasPorTerritorio(filas, [{ ejecutivo: 'Ana Ejemplo', pais: 'SV', clientes: 45 }, { ejecutivo: 'Ana Ejemplo', pais: 'GT', clientes: 7 }])
+  const de = (e, p) => r.find((x) => x.ejecutivo === e && x.pais === p)
+  assert.equal(de('Ana Ejemplo', 'SV').totales.enviados, 5)
+  assert.equal(de('Ana Ejemplo', 'SV').cartera, 45)
+  assert.equal(de('Ana Ejemplo', 'GT').totales.enviados, 1, 'el correo con clientes en dos países cuenta en cada uno')
+  assert.equal(de('Ana Ejemplo', 'GT').cartera, 7)
+  assert.equal(de('Bruno Ficticio', 'GT').totales.enviados, 1)
+  assert.equal(r.at(-1).ejecutivo, SIN_IDENTIFICAR)
+  assert.equal(r.at(-1).totales.enviados, 2, 'posible por dominio y sin base')
+  const gt = territorios.find((t) => t.pais === 'GT')
+  assert.equal(gt.totales.enviados, 2, 'subtotal GT: b1 + doble')
+  assert.equal(gt.ejecutivos, 2)
+  assert.equal(gt.cartera, 7)
+  assert.equal(territorios.find((t) => t.pais === 'SV').totales.corregir, 1)
 })

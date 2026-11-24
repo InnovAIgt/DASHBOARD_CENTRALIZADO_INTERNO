@@ -14,6 +14,7 @@ import { limpiarCampo, textosCampana } from '../../datos/campana.js'
 import { metricasPorEjecutivo, SIN_IDENTIFICAR, textoPaises } from '../../datos/porEjecutivo.js'
 import { DetalleCampana } from './DetalleCampana.jsx'
 import { DetalleEjecutivo } from './DetalleEjecutivo.jsx'
+import { PorTerritorio } from './Territorio.jsx'
 import { Aviso, COLOR_MAILING, COLOR_SEMAFORO, Enfoque, FilaBarra, LeyendaSemaforo, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TituloCampana } from './piezas.jsx'
 
 const VISIBLES = 10
@@ -235,7 +236,7 @@ function Detallada({ lista, verCampana }) {
   </Tarjeta>
 }
 
-export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco, abrir, limpiarFoco, volver, filtrar }) {
+export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco, abrir, limpiarFoco, volver, filtrar, filtros }) {
   const verCampana = (c) => { filtrar({ campana: String(c.id) }); volver() }
   const verCorreos = (c) => { filtrar({ campana: String(c.id) }); abrir({ vista: 'detalle', estado: 'todos', titulo: `Correos de ${textosCampana(c).corto}` }) }
   // Detalle de una campaña: sus filas por correo SIN filtro de país (la gráfica «Por campaña» no se separa por país).
@@ -252,10 +253,10 @@ export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco
   const [incluir, setIncluir] = useState(false)
   const { lista, pequenas } = useMemo(() => campanasComparables(campanas, incluir), [campanas, incluir])
   // «Por comercial»: filas por correo de las campañas filtradas (ya con País y Cliente aplicados arriba).
-  const { ejecutivos, campanasConDetalle } = useMemo(() => {
+  const { ejecutivos, campanasConDetalle, filasComercial } = useMemo(() => {
     const ids = new Set(campanas.map((c) => c.id))
     const filas = (detalle?.mostrarCorreos ? detalle.filas : []).filter((f) => ids.has(f.campana_id))
-    return { ejecutivos: metricasPorEjecutivo(filas, detalle?.carteras ?? null), campanasConDetalle: new Set(filas.map((f) => f.campana_id)).size }
+    return { ejecutivos: metricasPorEjecutivo(filas, detalle?.carteras ?? null), campanasConDetalle: new Set(filas.map((f) => f.campana_id)).size, filasComercial: filas }
   }, [campanas, detalle])
   return <>
     {foco && <Enfoque titulo={foco.titulo ?? 'Comparar campañas'} detalle={`${numero(campanas.length)} campañas según los filtros de arriba`} onTodos={limpiarFoco} onVolver={volver} />}
@@ -270,6 +271,7 @@ export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco
     </div>
     <Rendimiento key={foco?.metrica ?? 'entrega'} lista={lista} pequenas={pequenas} incluir={incluir} setIncluir={setIncluir} resumen={resumen} metricaInicial={foco?.metrica}
       verCampana={verCampana} verCorreos={verCorreos} filasDe={filasDe} campanaDe={campanaDe} verCartera={verCartera} ejecutivos={ejecutivos} campanasConDetalle={campanasConDetalle} cruce={detalle?.cruce} hayCartera={Array.isArray(detalle?.carteras)} />
+    <PorTerritorio filas={filasComercial} carteras={detalle?.carteras ?? null} cruce={detalle?.cruce} filtrar={filtrar} paisFiltro={filtros?.pais ?? ''} verCartera={verCartera} />
     <PorCargo campanas={campanas} filtrar={filtrar} />
     <Detallada lista={lista} verCampana={verCampana} />
   </>

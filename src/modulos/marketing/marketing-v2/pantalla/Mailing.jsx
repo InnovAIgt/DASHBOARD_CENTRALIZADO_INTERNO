@@ -153,7 +153,7 @@ export function Mailing({ sub, onSub }) {
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
         detalle={detalle} detalleTodo={datos.detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}
         edicionHabilitada={datos.edicionHabilitada} actualizarCampana={datos.actualizarCampana}
-        foco={focoActual} abrir={abrir} filtrar={filtrar} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} reintentar={datos.reintentar} />
+        foco={focoActual} abrir={abrir} filtrar={filtrar} filtros={filtros} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} reintentar={datos.reintentar} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">
         Datos de Brevo de las {new Date(datos.actualizado).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit' })} · se actualizan cada 10 minutos.
       </p>}

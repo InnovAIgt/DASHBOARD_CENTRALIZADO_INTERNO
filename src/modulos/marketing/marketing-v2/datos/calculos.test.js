@@ -2,7 +2,7 @@
 // Correr con: node --test src/modulos/marketing/marketing-v2/datos/calculos.test.js
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { aplicarManual, campanasComparables, contadoresMailing, fechaHora, MINIMO_ENVIOS, pocosDatos, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
+import { lecturaEstimada, aplicarManual, campanasComparables, contadoresMailing, fechaHora, MINIMO_ENVIOS, pocosDatos, conteoClasificaciones, detalleWebhook, diaGuatemala, direccionesCorregir, empresasDe, filtrarPorCliente, gruposPorEjecutivo, relacionClientes, ESTADOS_DETALLE, estadoDetalle, filtrarCampanas, filtrarDetalle, FILTROS_DETALLE, opcionesDe, paginar, FILTROS_INICIALES, opcionesFiltros, ordenarPor, pct, porCargo, porCorregirCampana, sumarResumen, sumarTotales } from './calculos.js'
 
 const tot = (enviados, entregados, extra = {}) => ({ enviados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas: 0, aperturasApple: 0, clics: 0, ...extra })
 const CAMPANAS = [
@@ -222,4 +222,14 @@ test('aplicarManual: lo guardado gana (cargo, objetivo, quién) y «volver a lo 
   assert.equal(solo.cargo, 'GG', 'sin cargo elegido, queda el sugerido')
   const v = aplicarManual(g, null)
   assert.deepEqual([v.cargo, v.cargoManual, v.objetivoManual, v.asignadoPor], ['GG', null, null, null])
+})
+
+test('lecturaEstimada: aperturas menos Apple MPP por campaña, nunca negativa, y tasa sobre entregados', () => {
+  assert.equal(lecturaEstimada({ aperturas: 45, aperturasApple: 11 }), 34)
+  assert.equal(lecturaEstimada({ aperturas: 3, aperturasApple: 5 }), 0)
+  const campana = (id, entregados, aperturas, aperturasApple) => ({ id, nombre: 'X', asunto: 'Y', cargo: 'GG', esPrueba: false, estado: 'enviada', fecha: '2026-11-01T09:00:00.000-06:00',
+    totales: { enviados: entregados, entregados, reboteTemporal: 0, rebotePermanente: 0, sinConfirmacion: 0, aperturas, aperturasApple, clics: 0, bajas: 0, quejas: 0 } })
+  const t = sumarTotales([campana(1, 100, 45, 11), campana(2, 100, 3, 5)])
+  assert.equal(t.lecturaEstimada, 34, 'la campaña con más Apple que aperturas queda en 0 y no resta de la otra')
+  assert.equal(t.tasaLectura, 17)
 })
