@@ -212,14 +212,14 @@
 .mkv2 .mkv2-bajitas.mkv2-bajitas6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .mkv2 .mkv2-bajita {
   --mkv2-color: var(--mkv2-gris);
-  position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 30px 9px 12px;
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; min-width: 0; min-height: 84px; padding: 10px 30px 10px 12px;
   background: linear-gradient(100deg, color-mix(in srgb, var(--mkv2-color) 12%, var(--fv2-tarjeta)), var(--fv2-tarjeta) 70%);
   border: 1px solid var(--fv2-borde); border-left: 3px solid var(--mkv2-color); border-radius: 11px;
   transition: transform .15s; animation: mkv2-sube .4s ease both;
 }
 .mkv2 .mkv2-bajita.is-clic:hover { transform: translateY(-2px); }
-.mkv2 .mkv2-bajita-num { min-width: 52px; font-family: var(--fv2-mono); font-size: 21px; font-weight: 800; color: color-mix(in srgb, var(--mkv2-color) 68%, #fff); white-space: nowrap; }
-.mkv2 .mkv2-bajita-titulo { min-width: 0; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; line-height: 1.3; text-transform: uppercase; color: var(--mkv2-suave); }
+.mkv2 .mkv2-bajita-num { max-width: 100%; overflow: hidden; font-family: var(--fv2-mono); font-size: 22px; font-weight: 800; line-height: 1.1; color: color-mix(in srgb, var(--mkv2-color) 68%, #fff); white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-bajita-titulo { width: 100%; min-width: 0; overflow-wrap: break-word; hyphens: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; line-height: 1.3; text-transform: uppercase; color: var(--mkv2-suave); }
 .mkv2 .mkv2-bajita-titulo small { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--fv2-tenue); }
 .mkv2 .mkv2-bajita .mkv2-ayuda { position: absolute; top: 8px; right: 8px; }
 .mkv2 .mkv2-marca-apple { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid rgba(183, 189, 202, .35); border-radius: 99px; font-size: 10px; font-weight: 700; line-height: 16px; color: var(--mkv2-suave); vertical-align: 1px; }
@@ -483,9 +483,12 @@
 .mkv2 .mkv2-ejecutivo-abrir { justify-self: end; font-size: 11px; font-weight: 800; color: #7fb0f0; white-space: nowrap; }
 
 /* Ventana emergente del ejecutivo */
-.mkv2 .mkv2-ventana-ejecutivo { width: min(920px, 100%); padding: 0 0 20px; animation: mkv2-abre .2s ease both; }
+.mkv2 .mkv2-ventana-ejecutivo { width: min(1040px, 100%); padding: 0 0 20px; overflow-x: hidden; animation: mkv2-abre .2s ease both; }
 @keyframes mkv2-abre { from { opacity: 0; transform: translateY(14px); } }
-.mkv2 .mkv2-ventana-ejecutivo > *:not(.mkv2-ventana-cabeza) { margin-left: 22px; margin-right: 22px; }
+.mkv2 .mkv2-ventana-ejecutivo > *:not(.mkv2-ventana-cabeza) { width: auto; margin-left: 22px; margin-right: 22px; }
+.mkv2 .mkv2-ventana-ejecutivo .fv2-tabla-caja { max-height: none; overflow-x: auto; }
+.mkv2 .mkv2-ventana-ejecutivo .mkv2-celda-correo { min-width: 170px; }
+.mkv2 .mkv2-ventana-ejecutivo .mkv2-celda-campana { min-width: 180px; }
 .mkv2 .mkv2-ventana-cabeza {
   position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 16px 22px;
   background: var(--fv2-tarjeta); border-bottom: 1px solid var(--fv2-borde);
