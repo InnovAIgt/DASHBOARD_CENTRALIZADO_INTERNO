@@ -3,6 +3,7 @@
 // (datos/useRedesDatos.js):
 //   /api/marketing/redes/cuentas        → respuestaCuentas
 //   /api/marketing/redes/publicaciones  → respuestaPublicaciones
+//   /api/marketing/redes/programadas    → respuestaProgramadas
 //   /api/marketing/redes/anuncios       → respuestaAnuncios
 // Nada de esto es real: títulos, cifras y campañas son inventados. La pantalla muestra «Datos de ejemplo».
 
@@ -54,6 +55,8 @@ const actualizado = `${HOY}T08:00:00.000-06:00`
 export const respuestaCuentas = { actualizado, fuente: 'ejemplo', cuentas: CUENTAS }
 export const respuestaPublicaciones = { actualizado, fuente: 'ejemplo', hoy: HOY, meses: [...MESES].reverse(),
   publicaciones: [...publicacionesDelMes('2026-10', 11), ...publicacionesDelMes('2026-11', 7)] }
+// Programadas de Facebook (scheduled_posts). En la parte (4) se arman los 3 casos de «¿Cumplimos lo programado?».
+export const respuestaProgramadas = { actualizado, fuente: 'ejemplo', programadas: [] }
 export const respuestaAnuncios = { actualizado, fuente: 'ejemplo',
   anuncios: Object.entries(ANUNCIOS).flatMap(([mes, lista]) => lista.map(([campana, marca, presupuesto, gastado, alcance, visualizaciones, clics, mensajes], i) => ({
     id: `${mes}-ad-${i + 1}`, mes, campana, marca, pais: marca === 'gt' ? 'GT' : 'SV', moneda: 'USD', presupuesto, gastado, alcance, visualizaciones, clics, mensajes,

@@ -10,6 +10,7 @@ import { responderCampanas } from './server/mailing/campanas.js';
 import { responderResumen } from './server/mailing/resumen.js';
 import { responderCargo } from './server/mailing/cargoEditar.js';
 import { responderDetalle } from './server/mailing/detalle.js';
+import { responderRedes } from './server/redes/rutas.js';
 import { obtenerPreofertas } from './server/flashPreofertas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
@@ -87,6 +88,15 @@ app.all('/api/marketing/mailing/cargo', async (req, res) => {
 app.all('/api/marketing/mailing/detalle', async (req, res) => {
   const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
   const resultado = await responderDetalle({ method: req.method, query: { campanas } });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Redes sociales (solo lectura de Meta; sin META_TOKEN responde «sin_token» y la pantalla usa
+// datos de ejemplo). En Vercel: api/marketing/redes/{cuentas,publicaciones,programadas,anuncios}.js.
+app.all('/api/marketing/redes/:recurso(cuentas|publicaciones|programadas|anuncios)', async (req, res) => {
+  const mes = typeof req.query.mes === 'string' ? req.query.mes : '';
+  const resultado = await responderRedes({ recurso: req.params.recurso, method: req.method, query: { mes } });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });

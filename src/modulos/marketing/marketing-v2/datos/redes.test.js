@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { alcancePorSemana, dinero, filtrarRedes, FILTROS_REDES, MARCAS, mesesDe, nombreMes, porMarca, porRedFormato, resumenPublicaciones, semaforoCumplimiento, serieSemanal, totalesAnuncios } from './redes.js'
-import { respuestaAnuncios, respuestaCuentas, respuestaPublicaciones } from './redesEjemplo.js'
+import { respuestaAnuncios, respuestaProgramadas, respuestaCuentas, respuestaPublicaciones } from './redesEjemplo.js'
 import { armarEstado } from './useRedesDatos.js'
 
 const pub = (id, marca, red, fecha, estado, alcance = 0, interacciones = 0, formato = 'foto') => ({ id, marca, pais: MARCAS[marca].pais, red, formato, fecha, estado, alcance, interacciones })
@@ -66,7 +66,7 @@ test('anuncios: el dinero NUNCA se suma entre monedas; lo demás sí', () => {
 })
 
 test('datos de ejemplo: misma forma que las rutas futuras, en US$ y marcados como ejemplo', () => {
-  const e = armarEstado(respuestaCuentas, respuestaPublicaciones, respuestaAnuncios)
+  const e = armarEstado(respuestaCuentas, respuestaPublicaciones, respuestaProgramadas, respuestaAnuncios)
   assert.equal(e.fuente, 'ejemplo')
   assert.deepEqual(e.meses, ['2026-11', '2026-10'])
   assert.equal(e.cuentas.length, 6)

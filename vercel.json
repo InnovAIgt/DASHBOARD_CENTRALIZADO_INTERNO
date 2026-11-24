@@ -9,6 +9,9 @@
     "api/marketing/mailing/*.js": {
       "maxDuration": 60
     },
+    "api/marketing/redes/*.js": {
+      "maxDuration": 60
+    },
     "api/bodega-despachos.js": {
       "maxDuration": 300
     }
