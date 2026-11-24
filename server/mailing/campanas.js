@@ -139,6 +139,15 @@ export async function idsCampanasConocidas({ env = process.env, fetchFn = fetch,
   return new Set(copia.datos.campanas.map((c) => c.id))
 }
 
+/** Lista de campañas usando la misma copia en memoria (la usa la ruta de leads para atribuir a campañas). */
+export async function obtenerCampanas({ env = process.env, fetchFn = fetch, ahora = Date.now() } = {}) {
+  if (!copia || copia.vence <= ahora) {
+    const datos = await cargarCampanas({ env, fetchFn })
+    copia = { datos, vence: ahora + CAMPANAS_CACHE_MS }
+  }
+  return copia.datos.campanas
+}
+
 function respuesta(status, datos, cache = 'no-store') {
   return { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': cache }, body: JSON.stringify(datos) }
 }

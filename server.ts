@@ -10,6 +10,7 @@ import { responderCampanas } from './server/mailing/campanas.js';
 import { responderResumen } from './server/mailing/resumen.js';
 import { responderCargo } from './server/mailing/cargoEditar.js';
 import { responderDetalle } from './server/mailing/detalle.js';
+import { responderLeads } from './server/mailing/leads.js';
 import { responderRedes } from './server/redes/rutas.js';
 import { obtenerPreofertas } from './server/flashPreofertas.js';
 
@@ -88,6 +89,14 @@ app.all('/api/marketing/mailing/cargo', async (req, res) => {
 app.all('/api/marketing/mailing/detalle', async (req, res) => {
   const campanas = typeof req.query.campanas === 'string' ? req.query.campanas : '';
   const resultado = await responderDetalle({ method: req.method, query: { campanas } });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Mailing: leads calificados de Prospekt atribuidos a campañas (solo lectura, sin correo ni
+// teléfono del lead). En Vercel: api/marketing/mailing/leads.js.
+app.all('/api/marketing/mailing/leads', async (req, res) => {
+  const resultado = await responderLeads({ method: req.method });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });
