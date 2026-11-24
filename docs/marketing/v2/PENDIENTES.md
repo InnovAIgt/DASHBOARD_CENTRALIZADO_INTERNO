@@ -10,8 +10,7 @@ la fecha.
 | Pendiente | A quién se le pidió | Fecha | Estado |
 |---|---|---|---|
 | Exportar a mano en Brevo la campaña 74 (solo rebotes temporales) y pasar solo los nombres de las columnas, sin valores | Ismael | Por confirmar | Pendiente |
-| Confirmar si se ocultan las campañas de prueba (TEST, VALIDACIÓN o PRUEBA en el nombre) | Ismael | Por confirmar | Pendiente |
-| ¿Las campañas 77, 78 y 79 («2da Campaña Validación – GG/GF/GO – Nov19») se enviaron a clientes reales? Si sí, sacarlas del filtro de prueba e incluirlas en el historial | Ismael | Por confirmar | Pendiente |
+| ¿La campaña 70 («DASHBOARD CAMPAIGN OCT 23», 36 destinatarios, 23/10) fue real o de prueba? Su CSV está listo pero no se cargó; si fue real, se carga | Ismael | 2026-11-24 | Pendiente |
 | ¿La campaña #74 fue solo para El Salvador? (de 169 destinatarios, 146 son de clientes de SV y solo 2 de GT) | Ismael | 2026-11-23 | Pendiente |
 | Revisar la lista de objetivos y sus reglas (8 objetivos creados por Keily el 23/11/2026; DECISIONES.md) | Ismael | 2026-11-23 | Pendiente |
 | Confirmar quién puede editar el cargo y el objetivo (y recibir la clave de Marketing) | Ismael | Por confirmar | Pendiente |

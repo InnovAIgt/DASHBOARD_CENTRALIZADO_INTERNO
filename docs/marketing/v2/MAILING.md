@@ -217,7 +217,7 @@ se vea «100,0 %»).
 | País | País del cliente identificado |
 | Cliente | Busca por empresa, código, contacto, correo o ejecutivo |
 | Desde / Hasta | Fechas de envío |
-| Campañas de prueba | Ocultas por defecto las campañas con **TEST, VALIDACIÓN o PRUEBA** en el nombre (también en plural, sin importar mayúsculas ni tildes), con un interruptor para verlas. Por confirmar con Ismael. |
+| Campañas de prueba | Ocultas por defecto las campañas con **[VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes**, o con la palabra **TEST** o **PRUEBA** sola (también en plural, sin importar mayúsculas ni tildes), con un interruptor para verlas. «Validación» sin corchetes no oculta (77, 78 y 79 son reales). Decisión del 24/11/2026 (DECISIONES.md). |
 
 **Las 6 sub-pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
 
@@ -501,6 +501,12 @@ Para las campañas enviadas **antes** del webhook, el detalle por persona sale d
 - Se deshace con un solo borrado de `origen = 'historial'` de las campañas cargadas.
 - **Hueco conocido:** aperturas y clics entre la exportación del CSV y la activación del webhook no están en ninguna
   fuente (no cambia el estado final ni CORREGIR).
+
+**Cargadas (24/11/2026):** campañas 77, 78, 79, 71, 68 y 66 desde CSV exportados «por contacto» el 24/11 (2 686
+nuevos de 2 707 eventos: en 77, 78 y 79 se saltaron 8, 7 y 6 que ya habían llegado por el webhook, por la huella).
+Entregas y rebotes coinciden con Brevo (salvo 1 rebote temporal de la 77 que después se entregó); aperturas un poco
+menores y **clics bastante menores en 77–79** (el propio CSV trae menos personas con clic que `clickers` de Brevo).
+La 70 no se cargó (PENDIENTES).
 
 **Cargadas (23/11/2026):** campañas 74, 75 y 76 (1 076 eventos). El estado final coincide exacto con `globalStats`
 (74: 157 / 12 / 0 · 75: 308 / 37 / 26 · 76: 254 / 33 / 27) y dan **101 correos por corregir** (6 + 49 + 46). Las

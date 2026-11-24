@@ -65,3 +65,17 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
 - **Cuidados que se mantienen:** nunca se muestra el texto original del motivo del rebote (puede traer correos), la
   respuesta no se guarda en la caché de Vercel (`no-store`) y pide no indexarse.
 - **Seguimiento:** informar a Eduardo (PENDIENTES). El inicio de sesión para Marketing (opción B) queda para después.
+
+## 2026-11-24 · Campañas de prueba: solo con corchetes o explícitamente de prueba
+
+- **Decisión de Keily:** la 77, 78 y 79 («2da Campaña Validación – GG/GF/GO – Nov19») **no son pruebas**: se enviaron a la
+  base real. Se muestran siempre, con sus correos por corregir.
+- **Regla nueva** (`esCampanaPrueba` en server/mailing/reglas.js), sin importar mayúsculas ni tildes y también en plural.
+  Se oculta por defecto una campaña solo si su nombre tiene:
+  - **[VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes**, o
+  - la palabra **TEST** o **PRUEBA** sola (explícitamente de prueba, por ejemplo «MARKETING TEST 1»).
+  - «Validación» **sin** corchetes ya no oculta la campaña.
+- **Ocultas con la regla nueva (24/11/2026): 21 de 55:** 80 («[PRUEBA] Webhook dashboard»), 72 («MARKETING TEST 1») y
+  66, 64 a 48 y 45 («[VALIDACIÓN] … Test Entregabilidad»). Se ven con el interruptor «Campañas de prueba».
+- La 70 («DASHBOARD CAMPAIGN OCT 23», 36 destinatarios) **no** queda oculta por la regla, pero su historial no se cargó
+  hasta confirmar con Ismael si fue real (PENDIENTES).

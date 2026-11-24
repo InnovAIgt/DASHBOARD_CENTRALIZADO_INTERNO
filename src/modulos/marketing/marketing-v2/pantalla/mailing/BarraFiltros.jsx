@@ -75,7 +75,7 @@ export function BarraFiltros({ filtros, cambiar, opciones, ocultas, pdfListo, pa
         <span>Buscar empresa / cliente</span>
         <input className="mkv2-control" type="search" value={filtros.cliente} onChange={poner('cliente')} placeholder="Empresa, código o ejecutivo" />
       </label>
-      <label className="mkv2-interruptor mkv2-panel-prueba" data-tip="Campañas con TEST, VALIDACIÓN o PRUEBA en el nombre">
+      <label className="mkv2-interruptor mkv2-panel-prueba" data-tip="Campañas con [VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes, o con TEST o PRUEBA en el nombre">
         <input type="checkbox" className="fv2-casilla" checked={filtros.mostrarPrueba}
           onChange={(e) => cambiar({ ...filtros, mostrarPrueba: e.target.checked, campana: '' })} />
         <span>Mostrar campañas de prueba{!filtros.mostrarPrueba && ocultas > 0 ? ` (${ocultas} ocultas)` : ''}</span>

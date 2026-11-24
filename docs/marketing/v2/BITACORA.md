@@ -2,6 +2,15 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Historial 77, 78, 79, 71, 68 y 66 cargado y nueva regla de campañas de prueba
+
+- Prueba en seco y carga (con el «sí» de Keily) de los CSV «por contacto»: nuevos 809 de 817 (77), 574 de 581 (78),
+  523 de 529 (79), 313 de 313 (71), 317 de 317 (68) y 350 de 350 (66). Los que se saltaron ya habían llegado por el
+  webhook: la huella evita duplicados entre webhook e historial. Detalle y diferencias con Brevo en MAILING.md, 10.3.
+- La 70 no se cargó (parece prueba interna): se confirma con Ismael (PENDIENTES).
+- Regla de campañas de prueba cambiada (DECISIONES.md): solo [VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes, o TEST /
+  PRUEBA sola. La 77, 78 y 79 ahora se ven siempre, con sus correos por corregir. Ocultas: 21 de 55.
+
 ## 2026-11-24 · Redes sociales: partes (2) a (5) y Anuncios, con datos de ejemplo (sin token)
 
 - **(2) Rutas** `/api/marketing/redes/{cuentas,publicaciones,programadas,anuncios}` (server/redes/): solo lectura de Meta,

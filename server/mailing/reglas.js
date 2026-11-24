@@ -56,9 +56,16 @@ export function cargoFinal(manual, sugerido) {
 
 // --- Sección 7: campañas de prueba (ocultas por defecto, con opción para verlas) ---
 
-/** Nombre con TEST, VALIDACIÓN o PRUEBA (también en plural), sin importar mayúsculas ni tildes. */
+/**
+ * Campaña de prueba (oculta por defecto). Decisión de Keily del 24/11/2026 (DECISIONES.md), sin importar mayúsculas ni
+ * tildes y también en plural:
+ *  - [VALIDACIÓN], [TEST] o [PRUEBA] ENTRE CORCHETES (por ejemplo «[VALIDACIÓN] Gerentes - Test Entregabilidad»), o
+ *  - explícitamente de prueba: la palabra TEST o PRUEBA sola (por ejemplo «MARKETING TEST 1»).
+ * «Validación» SIN corchetes NO es prueba: «2da Campaña Validación - GG - Nov19» (77, 78 y 79) se envió a la base real.
+ */
 export function esCampanaPrueba(nombre) {
-  return /\b(TESTS?|VALIDACION(ES)?|PRUEBAS?)\b/.test(normalizar(nombre))
+  const n = normalizar(nombre)
+  return /\[\s*(VALIDACION(ES)?|TESTS?|PRUEBAS?)\s*\]/.test(n) || /\b(TESTS?|PRUEBAS?)\b/.test(n)
 }
 
 // --- Sección 3: estado final de cada destinatario ---
