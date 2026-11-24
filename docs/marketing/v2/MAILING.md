@@ -156,8 +156,13 @@ No se culpa automáticamente al cliente ni a RED: el mensaje SMTP dice dónde in
 **Ni una apertura ni un clic prueban actividad humana:** un sistema de seguridad puede abrir el correo o revisar los
 enlaces. Se muestran como «actividad detectada», no como «interés confirmado».
 
-**Lectura:** **por confirmar con el ingeniero.** Ojo: con los datos de Brevo no se puede confirmar una lectura humana
-(ver arriba).
+**Lectura estimada** (23/11/2026; falta que el ingeniero confirme la definición): **aperturas sin contar las
+automáticas de Apple**. Por campaña: `uniqueViews` (personas que abrieron, incluye automáticas) − `appleMppOpens`
+(aperturas automáticas de Apple MPP), nunca menos de 0; se suma campaña por campaña y se divide entre los entregados.
+Es **estimada** porque Brevo da Apple MPP como total de la campaña, no persona por persona. En los CSV del historial
+(74, 75 y 76) se comprobó, solo con conteos, que Apple MPP va **incluido** en el total de aperturas y que la fecha de
+apertura solo aparece cuando hubo una apertura no automática. Igual que la apertura, no confirma una lectura humana.
+Se ve en Resultados generales (tarjeta «Lectura estimada»).
 
 ## 6. Indicadores
 
@@ -170,7 +175,7 @@ enlaces. Se muestran como «actividad detectada», no como «interés confirmado
 | Tasa de apertura registrada | Destinatarios con apertura registrada ÷ Entregados × 100 |
 | Tasa de clic | Destinatarios con clic registrado ÷ Entregados × 100 |
 | % por corregir | Destinatarios con CORREGIR CORREO ÷ Enviados × 100 |
-| Lectura | Por confirmar con el ingeniero |
+| Lectura estimada | Σ por campaña de máx(0, `uniqueViews` − `appleMppOpens`) ÷ Entregados × 100 (sección 5) |
 
 - **Campañas con solo totales** (`globalStats` de Brevo):
   - **«Aperturas (incluye automáticas)»** = `uniqueViews`. Confirmado por Keily el 23/11/2026 con la campaña 74: la
@@ -214,10 +219,10 @@ se vea «100,0 %»).
 
 | Pestaña | Qué tiene |
 |---|---|
-| **Resultados generales** | Indicadores (enviados, entregados, apertura, clic, rebote temporal y permanente), recorrido envío → entrega → apertura → clic, gráfico de incidencias de entrega (4 estados), tasa de entrega con semáforo, correos por corregir, análisis por cargo y tabla por campaña. |
-| **Comparar campañas** | Código y asunto, cargo, envíos y entregados, tasa de apertura, tasa de clic, rebotes, % por corregir y fecha. La comparación por asunto es descriptiva: no prueba que el asunto sea la causa (las audiencias cambian). |
+| **Resultados generales** | Indicadores (enviados, entregados, apertura, clic, rebote temporal y permanente), lectura estimada (sección 5), tasa de entrega con semáforo, correos por corregir, recorrido envío → entrega → apertura → clic, gráfico de incidencias de entrega (4 estados), análisis por cargo, tabla por campaña y **campañas programadas** (estado en cola de Brevo, solo lectura: asunto, nombre, cargo y fecha de envío). |
+| **Comparar campañas** | «Por campaña» y «Por comercial» lado a lado (con acordeón de detalle), **por ejecutivo y territorio** (sección 8), resultados por cargo y la comparación detallada: código y asunto, cargo, envíos y entregados, tasa de apertura, tasa de clic, rebotes, % por corregir y fecha. La comparación por asunto es descriptiva: no prueba que el asunto sea la causa (las audiencias cambian). |
 | **Correos por corregir** | Correo, cliente, ejecutivo, status (CORREGIR), motivo técnico, estado final, campaña y asunto, fecha de rebote; agrupado por ejecutivo con direcciones únicas; aviso al ejecutivo (sección 8) y descarga CSV global o por ejecutivo. **Muestra correos: requiere inicio de sesión** (sección 10). |
-| **Detalle por correo** | Correo, cliente y país, ejecutivo, campaña, cargo, estado final, status, apertura, clic, motivo técnico, fecha de envío y «Ver eventos». Búsqueda, filtros por estado y descarga CSV. **Muestra correos: requiere inicio de sesión.** |
+| **Detalle por correo** | Tarjetas por estado (clic = filtro), **motivos técnicos** de CORREGIR y de MANTENER (clic = filtro por motivo) y la tabla: correo, cliente y país, ejecutivo, campaña, cargo, estado final, status, motivo técnico, indicación, apertura, clic, origen, fecha de envío y ficha. Búsqueda, filtros y descarga a Excel. Muestra correos sin inicio de sesión (DECISIONES.md). |
 | **Relación con clientes** | Correo, campaña y cargo objetivo, clasificación del cruce (sección 8), cliente(s), ejecutivo(s), código(s), cargo(s) en la base y estado del mailing; detalle clicable y descarga CSV. **Muestra correos: requiere inicio de sesión.** |
 | **Cargo y objetivo** | Para Marketing: cada campaña de Brevo con su cargo y su objetivo (sugeridos o elegidos a mano) y un botón Guardar protegido con la clave de Marketing. Ver sección 7.1. |
 
@@ -299,6 +304,15 @@ del destinatario.
 | Mismo correo en varias empresas | Todos sus ejecutivos (no se elige uno) |
 | Cliente sin ejecutivo | Sin identificar |
 | Correo sin coincidencia | Sin identificar |
+
+**Vista por ejecutivo y territorio** (pedido del ingeniero; en «Comparar campañas», 23/11/2026):
+- Una tarjeta por **territorio** (país del cliente en Cumplimiento): tasa de entrega con semáforo, destinatarios y
+  ejecutivos; clic = filtro País de arriba.
+- Una fila por **ejecutivo + país**: cartera (clientes asignados en ese país), clientes alcanzados, destinatarios
+  (correo + campaña), entrega con semáforo, apertura registrada, clic y direcciones por corregir. Ordenable; clic en
+  una fila abre su cartera en Relación con clientes.
+- Solo coincidencia **exacta**; lo demás va a «Sin identificar» (al final). Un correo con clientes de dos ejecutivos o
+  países cuenta en cada uno; el subtotal por país no lo repite. Cálculo: `metricasPorTerritorio` (datos/porEjecutivo.js).
 
 **Aviso a los ejecutivos** (desde «Correos por corregir»):
 - Correos **CORREGIR CORREO** agrupados por ejecutivo, **direcciones únicas** (sin repetir entre campañas), con
@@ -488,9 +502,21 @@ Para las campañas enviadas **antes** del webhook, el detalle por persona sale d
 (74: 157 / 12 / 0 · 75: 308 / 37 / 26 · 76: 254 / 33 / 27) y dan **101 correos por corregir** (6 + 49 + 46). Las
 aperturas y clics del CSV son menores que los de Brevo hoy porque el CSV se exportó el 16/11.
 
-**Cómo exportar las demás:** en Brevo, abrir cada campaña **enviada**, ir a su informe y exportar los destinatarios con
-todos sus datos (CSV), igual que se hizo con 74, 75 y 76; guardar el archivo en `Descargas\datos-marketing\brevo\`
-sin cambiar la parte `campaign-[ID]` del nombre. Lista de campañas en PENDIENTES.
+**Cómo exportar las demás (siguen 1, 2, 3, 68 y 71):**
+
+1. En Brevo: Campañas → Email → abrir la campaña **enviada** → su **informe** → exportar los **destinatarios con
+   todos sus datos** en **CSV**, igual que con 74, 75 y 76. Un archivo por campaña.
+2. El archivo trae estas columnas (las de 74, 75 y 76): `Campaign ID`, `Campaign Name`, `Email_ID`, `Send_Date`,
+   `Delivered_Date`, `Open_Date`, `Total Opens`, `Total Apple MPP Opens`, `Unsubscribe_Date`, `Hard_Bounce_Date`,
+   `Hard_Bounce_Reason`, `Soft_Bounce_Date`, `Soft_Bounce_Reason`, `Open_IP`, `Click_IP`, `Unsubscribe_IP`,
+   `Clicked_Links_Count`, `Complaint_date` y una columna por enlace. Las IP no se guardan.
+3. Guardarlo en `C:\Users\KeilyGarcia\Downloads\datos-marketing\brevo\` (fuera del repo, junto a los de 74, 75 y
+   76) **sin cambiar** la parte `campaign-[ID]` del nombre (por ejemplo `… campaign-[68]….csv`): el importador busca
+   el archivo por esa parte.
+4. Avisar a Claude: primero la prueba en seco (`--campanas 1,2,3,68,71`, sin `--cargar`), que muestra solo conteos;
+   con el «sí» de Keily, la carga.
+
+Después siguen 70, 42, 41, 40, 39, 38, 37, 36, 35, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 y 20.
 
 ## 11. Leads
 

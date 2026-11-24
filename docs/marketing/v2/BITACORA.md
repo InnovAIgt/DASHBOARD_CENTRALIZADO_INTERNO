@@ -2,6 +2,43 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Mailing terminado
+
+- **Revisión de todas las vistas:** asunto como título y «#id · nombre real» abajo, Comparar como la maqueta, barra de
+  filtros tipo Facturación con PDF y tarjetas compactas ya estaban en Resultados generales y Comparar. Faltaban las
+  tarjetas compactas en Detalle por correo, Relación con clientes y Cargo y objetivo: listas (la tarjeta marca el
+  filtro puesto).
+- **Paso 5 del rediseño:** Detalle por correo y Relación con clientes con títulos de bloque y tarjetas como el resto.
+  Los **motivos técnicos** pasaron a Detalle por correo: «Motivos de CORREGIR» y «Motivos de MANTENER», cada motivo
+  filtra la tabla y el Excel dice qué motivo se eligió.
+- **Pedido del ingeniero:**
+  - **Por ejecutivo y territorio** (en Comparar campañas): una tarjeta por país (clic = filtro País) y una fila por
+    ejecutivo + país del cliente en Cumplimiento de Clientes (solo lectura), con cartera, clientes alcanzados,
+    destinatarios, entrega con semáforo, apertura registrada, clic y por corregir. Clic en una fila abre su cartera.
+  - **Campañas programadas** (Resultados generales): las campañas en cola de Brevo (solo lectura), con asunto,
+    nombre, cargo y fecha de envío; hoy no hay ninguna.
+  - **Lectura estimada** (Resultados generales): aperturas de Brevo (incluyen automáticas) menos aperturas Apple MPP,
+    campaña por campaña y nunca menos de 0, ÷ entregados. En los CSV del historial se comprobó (solo conteos) que
+    Apple MPP va incluido en el total de aperturas y que la fecha de apertura solo aparece cuando hubo una apertura
+    no automática. Falta que el ingeniero confirme la definición.
+- **SQL 005** (`sql/005_borrar_campana_prueba_80.sql`): primero un SELECT con el conteo de la campaña [PRUEBA] 80 y
+  después el borrado, que solo se hace si el total coincide. Lo corre Keily después de la segunda revisión.
+- **PENDIENTES** quedó solo con lo que depende de otros o de producción. Salieron:
+  - Resueltos (ya anotados en esta bitácora): código de Brevo, programadas en la API, motivo del rebote, dónde se
+    guardan los eventos, webhook creado, SQL 001, 002 y 004, prueba local, proyecto de Vercel, error 429, encabezado
+    del webhook, `CC_DB_PASSWORD` y `BREVO_API_KEY` en Preview, `globalStats`, permiso de Cumplimiento, enlace «IR A
+    CORREGIR», dónde se guarda el cargo (`mkt_campana_cargo`) y el rediseño de Mailing.
+  - **Tareas de Keily** (ya no dependen de otros):
+    - Segunda revisión de la campaña [PRUEBA] 80 (clics y `proxy_open`) y luego correr el SQL 005.
+    - Exportar los CSV de las campañas 1, 2, 3, 68 y 71 (MAILING.md, 10.3) y después 70, 42, 41, 40, 39, 38, 37,
+      36, 35, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 y 20.
+    - Poner `MKT_CLAVE_EDICION` en `.env.local` y en Vercel Preview (Production va en PENDIENTES, al publicar).
+    - Revisar el borrador del aviso por correo a cada ejecutivo (ventana y correo con diseño, sin envío automático).
+    - Decidir más adelante: respaldo de los eventos del webhook, limpieza de eventos de más de 12 meses, inicio de
+      sesión real del portal y la opción B (sesión para Marketing).
+    - Borrar `.git/worktrees/wt` con `git worktree prune` cuando OneDrive lo libere (no afecta la rama).
+  - Informativo (queda en MAILING.md, 10.3): el hueco de aperturas y clics entre el CSV (16/11) y el webhook (23/11).
+
 ## 2026-11-23 · Redes: DATA RED es de El Salvador
 
 - Confirmado: DATA RED es de El Salvador (país SV en filtros y resúmenes); se quitó de pendientes.
