@@ -17,7 +17,7 @@ import { Anillo, BarrasProgramado, BarrasSemana, DonaRedes, PildoraImportante, T
 
 const TEXTO_SEMAFORO = { verde: 'Cumplió', amarillo: 'Casi', rojo: 'Bajo' }
 const COLOR_ESTADO = { publicada: COLOR_MAILING.entregados, no_publicada: COLOR_MAILING.duro, programada: '#5b6b84' }
-const ETIQUETA_ESTADO = { publicada: 'Publicadas', no_publicada: 'No salieron', programada: 'Por venir' }
+const ETIQUETA_ESTADO = { publicada: 'Salieron', no_publicada: 'No salieron', programada: 'Por venir' }
 const TONOS = { rojo: COLOR_MAILING.duro, verde: COLOR_MAILING.entregados, amarillo: COLOR_MAILING.temporal, morado: '#9085e9' }
 const ICONOS = { cumplimiento: AlertTriangle, formato: Sparkles, top: Trophy, pauta: Wallet }
 const colorSem = (s) => COLOR_SEMAFORO[s] ?? COLOR_MAILING.gris
@@ -69,9 +69,9 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso }) {
   return <>
     <div className="mkv2-redes-kpis">
       <TarjetaRedes titulo="Publicaciones" icono={FileText} color={conPlan ? colorSem(r.semaforo) : COLOR_MAILING.apertura} serie={serieSemanal(base, filtros.mes)}
-        valor={<><Numero n={r.publicadas} />{conPlan && r.aFecha > 0 && <small> de {numero(r.aFecha)}</small>}</>}
+        valor={<><Numero n={conPlan ? r.cumplidas : r.publicadas} />{conPlan && r.aFecha > 0 && <small> de {numero(r.aFecha)}</small>}</>}
         sub={conPlan ? <><PildoraSem semaforo={r.semaforo} cumplimiento={r.cumplimiento} /> · {numero(r.programadas)} por venir</> : 'publicadas · sin programadas'}
-        tip={conPlan ? `Publicadas contra programadas hasta hoy: ${numero(r.publicadas)} de ${numero(r.aFecha)} (${pct(r.cumplimiento)})\n${numero(r.programadas)} programadas por venir\nSemáforo: 100 % verde · 90–99 % amarillo · menos de 90 % rojo`
+        tip={conPlan ? `Programadas que salieron hasta hoy: ${numero(r.cumplidas)} de ${numero(r.aFecha)} (${pct(r.cumplimiento)})\n${numero(r.programadas)} programadas por venir\n${numero(r.publicadas - r.cumplidas)} publicadas fuera de lo programado (cuentan en alcance e interacciones)\nSemáforo: 100 % verde · 90–99 % amarillo · menos de 90 % rojo`
           : `Publicadas en el mes: ${numero(r.publicadas)}\nNo hay programadas para comparar.`}
         onClick={() => irA('publicaciones')} />
       <TarjetaRedes titulo="Alcance" icono={Eye} color="#2fb8c4" serie={serieSemanal(base, filtros.mes, 'alcance')} valor={<Numero n={r.alcance} />}
@@ -101,7 +101,7 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso }) {
       <Tarjeta titulo="¿Cumplimos lo programado?" sub={caso === 'C' ? 'Sin programadas para comparar' : caso === 'B' ? 'Programadas de Facebook (API) · hasta hoy' : 'Plan del mes · hasta hoy'}>
         {conPlan
           ? <DonaRedes activo={filtros.estado} centro={r.cumplimiento === null ? '—' : <Numero n={r.cumplimiento} formato={(x) => `${Math.round(x)} %`} />} sub="cumplido"
-            items={['publicada', 'no_publicada', 'programada'].map((k) => ({ k, l: ETIQUETA_ESTADO[k], v: k === 'publicada' ? r.publicadas : k === 'no_publicada' ? r.noPublicadas : r.programadas, c: COLOR_ESTADO[k] }))}
+            items={['publicada', 'no_publicada', 'programada'].map((k) => ({ k, l: ETIQUETA_ESTADO[k], v: k === 'publicada' ? r.cumplidas : k === 'no_publicada' ? r.noPublicadas : r.programadas, c: COLOR_ESTADO[k] }))}
             onElegir={(k) => { filtrar({ estado: filtros.estado === k ? '' : k }); irA('publicaciones') }} />
           : <p className="mkv2-redes-nota-caso">No hay plan de publicaciones cargado ni programadas de Facebook: se muestra solo lo publicado por marca, red y semana, sin semáforo. Instagram no da programadas.</p>}
       </Tarjeta>
@@ -142,7 +142,7 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso }) {
               <span className="mkv2-redes-marca-datos">
                 <span className="mkv2-redes-marca-cabeza"><b>{MARCAS[m].corto}</b><em>{MARCAS[m].pais}</em></span>
                 <span className="mkv2-redes-marca-cifras">
-                  <span><b>{conPlan ? `${numero(s.publicadas)}/${numero(s.aFecha)}` : numero(s.publicadas)}</b><small>publicadas</small></span>
+                  <span><b>{conPlan ? `${numero(s.cumplidas)}/${numero(s.aFecha)}` : numero(s.publicadas)}</b><small>publicadas</small></span>
                   <span><b>{numero(s.alcance)} {a && <Variacion v={variacion(s.alcance, a.alcance)} />}</b><small>alcance</small></span>
                   <span><b>{pct(s.tasa)}</b><small>tasa</small></span>
                 </span>

@@ -51,7 +51,7 @@ export function calendarioMes(items = [], mes) {
 /** Programado vs publicado por marca (solo lo que ya debía salir): [{marca, programadas, publicadas, cumplimiento}]. */
 export const programadoVsPublicado = (items = [], marcas = Object.keys(MARCAS)) => marcas.map((marca) => {
   const r = resumenPublicaciones(items.filter((p) => p.marca === marca))
-  return { marca, programadas: r.aFecha, publicadas: r.publicadas, cumplimiento: r.cumplimiento, semaforo: r.semaforo }
+  return { marca, programadas: r.aFecha, publicadas: r.cumplidas, cumplimiento: r.cumplimiento, semaforo: r.semaforo }
 })
 
 /** Top de publicaciones por interacciones. */

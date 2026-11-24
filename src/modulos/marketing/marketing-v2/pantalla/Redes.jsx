@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, REDES } from '../datos/redes.js'
+import { armarProgramado } from '../datos/redesProgramadas.js'
 import { useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 import { BarraRedes } from './redes/BarraRedes.jsx'
@@ -31,8 +32,9 @@ export function Redes() {
   const filtrar = (cambio) => setFiltros((f) => ({ ...f, ...cambio }))
   const globo = useGlobo()
   // Publicaciones del mes con su estado (publicada / no_publicada / programada) y el caso de programadas (A, B o C).
-  const items = datos.publicaciones
-  const caso = 'A'
+  const programado = useMemo(() => armarProgramado(datos, datos.hoy), [datos])
+  const items = programado.items
+  const caso = programado.casos[filtros.mes] ?? 'C'
   const cuenta = useMemo(() => ({
     publicaciones: filtrarRedes(items, filtros).length,
     anuncios: filtrarRedes(datos.anuncios, { ...filtros, red: '', formato: '', estado: '' }).length,

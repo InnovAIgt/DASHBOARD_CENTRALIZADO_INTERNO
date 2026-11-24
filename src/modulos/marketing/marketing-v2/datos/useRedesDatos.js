@@ -31,7 +31,7 @@ export const armarEstado = (cuentas, publicaciones, programadas, anuncios) => ({
   cuentas: cuentas?.cuentas ?? [],
   publicaciones: publicaciones?.publicaciones ?? [],
   programadas: programadas?.programadas ?? [],
-  plan: publicaciones?.plan ?? [],
+  plan: programadas?.plan ?? [],
   anuncios: anuncios?.anuncios ?? [],
 })
 

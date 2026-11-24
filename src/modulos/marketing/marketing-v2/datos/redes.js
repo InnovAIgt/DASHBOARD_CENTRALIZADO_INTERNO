@@ -52,11 +52,14 @@ export function resumenPublicaciones(pubs = []) {
   const publicadas = pubs.filter((p) => p.estado === 'publicada')
   const noPublicadas = pubs.filter((p) => p.estado === 'no_publicada').length
   const programadas = pubs.filter((p) => p.estado === 'programada').length
-  const aFecha = publicadas.length + noPublicadas
+  // Cumplidas = publicadas que estaban programadas (las que llevan fueraDePlan salieron sin estar programadas: suman en
+  // publicadas, alcance e interacciones, pero no en el cumplimiento). Ver datos/redesProgramadas.js.
+  const cumplidas = publicadas.filter((p) => !p.fueraDePlan).length
+  const aFecha = cumplidas + noPublicadas
   const alcance = publicadas.reduce((n, p) => n + (Number(p.alcance) || 0), 0)
   const interacciones = publicadas.reduce((n, p) => n + (Number(p.interacciones) || 0), 0)
-  const cumplimiento = pctDe(publicadas.length, aFecha)
-  return { publicadas: publicadas.length, noPublicadas, programadas, aFecha, cumplimiento, semaforo: semaforoCumplimiento(cumplimiento), alcance, interacciones, tasa: pctDe(interacciones, alcance) }
+  const cumplimiento = pctDe(cumplidas, aFecha)
+  return { publicadas: publicadas.length, cumplidas, noPublicadas, programadas, aFecha, cumplimiento, semaforo: semaforoCumplimiento(cumplimiento), alcance, interacciones, tasa: pctDe(interacciones, alcance) }
 }
 
 /** Programado vs publicado por marca (para las barras y las tarjetas con anillo). */
