@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { getDispatchData } from './server/bodega-despachos.mjs';
 import { obtenerPaginaReuniones } from './server/marketingReuniones.js';
 import { reenviarSac } from './server/sacProxy.js';
 import { procesarWebhookBrevo } from './server/brevoWebhook.js';
@@ -9,6 +10,7 @@ import { responderCampanas } from './server/mailing/campanas.js';
 import { responderResumen } from './server/mailing/resumen.js';
 import { responderCargo } from './server/mailing/cargoEditar.js';
 import { responderDetalle } from './server/mailing/detalle.js';
+import { obtenerPreofertas } from './server/flashPreofertas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -87,6 +89,23 @@ app.all('/api/marketing/mailing/detalle', async (req, res) => {
   const resultado = await responderDetalle({ method: req.method, query: { campanas } });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
+});
+
+// Ventas · Flash de Altas: proxy seguro para consultar preofertas de Workflow.
+app.all('/api/ventas/flash-preofertas', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const resultado = await obtenerPreofertas({ method: req.method });
+  if (resultado.status === 405) res.setHeader('Allow', 'GET');
+  res.status(resultado.status).json(resultado.body);
+});
+
+app.get('/api/bodega/despachos', async (req, res) => {
+  const country = String(req.query.pais || 'combined');
+  if (!['combined','GT','SV'].includes(country)) { res.status(400).json({ error: 'País inválido' }); return; }
+  res.setHeader('Cache-Control', 'no-store');
+  try { const data = await getDispatchData({ country }); res.status(data.paises.some(pais => pais.ok) ? 200 : 502).json(data); }
+  catch (error: any) { res.status(503).json({ error: error.message }); }
 });
 
 // Health Check Endpoint

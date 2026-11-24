@@ -18,6 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../../assets/js/bodega-excel-export.js?v=20261021tokens"></script>
   <script src="../../assets/js/bodega-months.js"></script>
+<link rel="stylesheet" href="../../assets/css/bodega-operacion.css?v=20261120">
 </head>
 
 <body>
@@ -40,10 +41,10 @@
 
     <section class="oc-redesign" aria-label="Seguimiento operativo de órdenes de compra">
       <div class="oc-redesign-head">
-        <div><span class="oc-kicker">Abastecimiento</span><h2>Seguimiento de órdenes</h2><p>Avance según los hitos registrados en SAP. Los atrasos se calculan con la entrega prevista cuando existe. El plazo y la fecha de inicio de cada etapa aún no están disponibles.</p></div>
+        <div><span class="oc-kicker">Abastecimiento</span><h2>Seguimiento de órdenes</h2><p>Recepción, factura y pago según SAP. El seguimiento de vencimientos por etapa está pendiente de API.</p></div>
         <div class="oc-redesign-actions"><button type="button" class="oc-redesign-country active" data-oc-country="combined">GT + SV</button><button type="button" class="oc-redesign-country" data-oc-country="GT">GT</button><button type="button" class="oc-redesign-country" data-oc-country="SV">SV</button></div>
       </div>
-      <div class="oc-redesign-filters">
+      <section class="operation-overview"><div class="operation-heading"><h2>Compras nacionales e internacionales</h2><p>Seguimiento por etapa, con prioridad a las etapas vencidas. Los flujos mostrados son la estructura de seguimiento propuesta; su definición oficial y los plazos requieren la API.</p></div><div class="operation-grid operation-grid-two"><article class="operation-card purchase-flow"><h3>Nacionales</h3><span class="api-pending">API pendiente</span><ol><li><strong>Orden de compra</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Recepción en bodega</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Pago</strong><small>API pendiente · fecha y plazo</small></li></ol></article><article class="operation-card purchase-flow"><h3>Internacionales</h3><span class="api-pending">API pendiente</span><ol><li><strong>Orden de compra</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Producto listo</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Transporte y embarque</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Llegada y nacionalización</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Recepción en bodega</strong><small>API pendiente · fecha y plazo</small></li><li><strong>Pago</strong><small>API pendiente · fecha y plazo</small></li></ol></article></div><div class="operation-grid"><article class="operation-card"><h3>Etapas vencidas</h3><span class="api-pending">API pendiente</span><p>Rojo cuando la fecha de vencimiento de la etapa haya pasado.</p></article><article class="operation-card"><h3>Etapas próximas a vencer</h3><span class="api-pending">API pendiente</span><p>Amarillo según el plazo de advertencia definido para cada etapa.</p></article><article class="operation-card"><h3>Etapas en tiempo</h3><span class="api-pending">API pendiente</span><p>Verde cuando la etapa esté dentro de su plazo confirmado.</p></article></div><p class="operation-note">Tipo de compra y cumplimiento por etapa: API pendiente. Las órdenes sin tipo informado se mantienen en el listado sin asignarlas a un flujo.</p></section><div class="operation-heading"><h3>Órdenes registradas en SAP</h3><p>Hitos documentales disponibles. Tipo de compra y plazos por etapa: API pendiente.</p></div><div class="oc-redesign-filters">
         <label>Buscar OC<input id="ocTimelineSearch" type="search" placeholder="Número o proveedor"></label>
         <label>Estado<select id="ocTimelineState"><option value="">Todos</option></select></label>
         <label>EstadoProceso<select id="ocTimelineStage"><option value="">Todos</option></select></label>
@@ -132,10 +133,8 @@
         <div class="op-group" role="group" aria-label="Operaciones">
           <span class="op-label">Operaciones</span>
           <button class="op-btn active" type="button" data-oc-country="combined">Todos</button>
-          <button class="op-btn" type="button" data-oc-country="GT" title="Guatemala"><span class="op-flag op-flag-gt"
-              aria-hidden="true"></span>GT</button>
-          <button class="op-btn" type="button" data-oc-country="SV" title="El Salvador"><span class="op-flag op-flag-sv"
-              aria-hidden="true"></span>SV</button>
+          <button class="op-btn" type="button" data-oc-country="GT" title="Guatemala"><img class="country-flag" src="../../assets/flags/gt.svg" alt="Guatemala">GT</button>
+          <button class="op-btn" type="button" data-oc-country="SV" title="El Salvador"><img class="country-flag" src="../../assets/flags/sv.svg" alt="El Salvador">SV</button>
         </div>
         <input type="hidden" id="ocCountry" value="combined">
         <div class="fx-control" id="ocFxControl" title="Tipo de cambio oficial · Banco de Guatemala">
@@ -382,7 +381,7 @@
         const fieldSet = new Set(reportFields);
         state.records.forEach(item => Object.keys(item.raw || {}).forEach(field => fieldSet.add(field)));
         const fields = [...fieldSet];
-        state.reportFiltered = state.records.filter(item => {
+        state.reportFiltered = (state.timelineRows || filteredRows()).filter(item => {
           const raw = item.raw || {};
           if (query && !Object.entries(raw).some(([key, value]) => `${key} ${rawApiValue(value)}`.toLocaleLowerCase().includes(query))) return false;
           if (orderQuery && !String(raw.PedidoCompra ?? '').toLocaleLowerCase().includes(orderQuery)) return false;
@@ -423,12 +422,23 @@
       }
       function filteredRows() { const start = months.start($('ocStart').value), end = months.end($('ocEnd').value, ocCutoff), sap = $('ocSap').value.toLowerCase(), f = ocFilters; return state.records.filter(item => { const key = dateKey(item.date); const itemYear = dateYear(item.date); return inSel(f.year, itemYear) && ((!start || key >= start) || ($('ocIncludeBacklog')?.checked && $('ocPendingOnly')?.checked && !isClosedOrder(item.state))) && (!end || key <= end) && inSel(f.stage, item.stage) && inSel(f.state, item.state) && inSel(f.clientName, item.clientName) && (!sap || item.sap.toLowerCase().includes(sap)); }).sort((a, b) => { const av = a[state.sort] ?? '', bv = b[state.sort] ?? ''; const result = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), 'es'); return result * state.direction; }); }
       function render() { state.filtered = filteredRows(); const total = state.records.reduce((sum, item) => sum + totalForView(item), 0), closed = state.records.filter(item => isClosedOrder(item.state)).length; document.querySelectorAll('.oc-combined-only').forEach(element => element.hidden = !combined()); $('ocKpiOrders').textContent = number(state.records.length); $('ocKpiQuantity').textContent = number(state.records.reduce((sum, item) => sum + item.quantity, 0)); $('ocKpiAmount').textContent = primaryMoney(total); $('ocKpiPending').textContent = number(state.records.length - closed); $('ocKpiClosed').textContent = number(closed); $('ocKpiAverage').textContent = primaryMoney(state.records.length ? total / state.records.length : 0); $('ocKpiCompletion').textContent = `${state.records.length ? number((closed / state.records.length) * 100) : 0}%`; $('ocCount').textContent = `${number(state.filtered.length)} registros`; const pages = Math.ceil(state.filtered.length / PAGE_SIZE); state.page = Math.min(Math.max(state.page, 1), Math.max(pages, 1)); const rows = state.filtered.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE); $('ocRows').innerHTML = rows.map(item => { const expanded = expandedOrders.has(item.rowKey); const hasAmount = getMoneyEntries(item.raw).length > 0; return `<tr class="oc-order-row${expanded ? ' is-expanded' : ''}"><td>${text(item.sap || '-')}</td><td>${text(item.clientName || '-')}</td><td class="oc-table-money">${hasAmount ? text(money(totalForView(item))) : '-'}</td><td><button type="button" class="oc-btn oc-details-toggle" data-order-key="${text(item.rowKey)}" aria-expanded="${expanded}"><span>${expanded ? 'Ocultar detalles' : 'Ver detalles'}</span><span class="oc-chevron" aria-hidden="true"></span></button></td></tr>${expanded ? renderOrderDetails(item) : ''}`; }).join('') || '<tr><td colspan="4" class="oc-empty">No hay registros con estos filtros.</td></tr>'; $('ocPageInfo').textContent = `Página ${pages ? state.page : 0} de ${pages}`; $('ocPrev').disabled = state.page <= 1; $('ocNext').disabled = state.page >= pages; syncCurrencyHeaders(); renderPurchaseTimeline(); }
+      function syncPurchaseTable(rows) {
+        const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+        state.page = Math.max(1, Math.min(state.page, pages));
+        $('ocCount').textContent = number(rows.length) + ' registros según los filtros de seguimiento';
+        $('ocRows').innerHTML = rows.slice((state.page-1)*PAGE_SIZE,state.page*PAGE_SIZE).map(item => {
+          const expanded=expandedOrders.has(item.rowKey);
+          return '<tr><td>'+text(item.sap)+'</td><td>'+text(item.clientName)+'</td><td>'+text(getMoneyEntries(item.raw).length ? primaryMoney(totalForView(item)) : 'API pendiente')+'</td><td><button type="button" class="oc-btn oc-details-toggle" data-order-key="'+text(item.rowKey)+'" aria-expanded="'+expanded+'">'+(expanded?'Ocultar detalles':'Ver detalles')+'</button></td></tr>'+(expanded?renderOrderDetails(item):'');
+        }).join('') || '<tr><td colspan="4" class="oc-empty">No hay órdenes para estos filtros.</td></tr>';
+        $('ocPageInfo').textContent='Página '+(rows.length?state.page:0)+' de '+(rows.length?pages:0);
+        $('ocPrev').disabled=state.page<=1;$('ocNext').disabled=state.page>=pages;
+      }
       const hasMilestone = value => {
         if (value === null || value === undefined || value === '' || value === false || value === 0) return false;
         const normalized = String(value).trim().toUpperCase();
         return !['', 'NO', 'N', 'FALSE', '0', 'SIN PAGO', 'SIN REGISTRAR', 'NO DISPONIBLE'].includes(normalized);
       };
-      const TIMELINE_PREVIEW_COUNT = 5;
+      const TIMELINE_PREVIEW_COUNT = 20;
       let timelineExpanded = false;
       function renderPurchaseTimeline() {
         const values = {
@@ -450,7 +460,7 @@
         const priority = item => {
           if (isClosedOrder(item.state)) return { rank: 4, label: 'Cerrada', color: '#2f8f76' };
           const due = deliveryKey(item);
-          if (!due) return { rank: 3, label: 'Sin plazo confirmado', color: '#8992a3' };
+          if (!due) return { rank: 3, label: 'API pendiente · plazo', color: '#8992a3' };
           const days = Math.round((Date.parse(due) - Date.parse(today)) / 86400000);
           if (days < 0) return { rank: 0, label: 'Vencida · ' + Math.abs(days) + ' días de atraso', color: '#c43c50' };
           if (days <= 3) return { rank: 1, label: 'Por vencer · ' + days + ' días', color: '#c59600' };
@@ -473,7 +483,7 @@
         const older = rows.filter(item => periodStart && dateKey(item.date) < periodStart).length;
         const scope = 'Período ' + $('ocStart').value + ' a ' + $('ocEnd').value + (older ? ' · incluye ' + older + ' pendientes anteriores por opción activada. ' : ' · hasta ' + ocCutoff + '. ');
         $('ocMonthScope').textContent = scope + 'Cantidad de órdenes por mes de creación.';
-        $('ocPrioritySummary').textContent = scope + pendingRows.filter(item => priority(item).rank === 0).length + ' vencidas · ' + pendingRows.filter(item => priority(item).rank === 1).length + ' por vencer · ' + pendingRows.filter(item => priority(item).rank === 3).length + ' sin plazo confirmado. Prioridad roja según entrega prevista; sin fecha no se calcula atraso por etapa.';
+        $('ocPrioritySummary').textContent = scope + pendingRows.filter(item => priority(item).rank === 0).length + ' vencidas · ' + pendingRows.filter(item => priority(item).rank === 1).length + ' por vencer · ' + pendingRows.filter(item => priority(item).rank === 3).length + ' sin plazo confirmado. Cumplimiento por etapa: API pendiente. Los hitos indican documentos registrados, no cumplimiento de plazos.';
         const setOptions = (id, source, selected) => {
           const select = $(id);
           if (!select || !select.options) return;
@@ -485,6 +495,11 @@
         setOptions('ocTimelineStage', state.records.map(item => item.stage), values.stage);
         setOptions('ocTimelineProvider', state.records.map(item => item.clientName), values.provider);
         setOptions('ocTimelineType', state.records.map(item => item.purchaseType), values.type);
+        if (!state.records.some(item=>item.raw?.tipo_compra)) { $('ocTimelineType').innerHTML='<option value="">API pendiente · nacional / internacional</option>'; $('ocTimelineType').disabled=true; } else $('ocTimelineType').disabled=false;
+        state.timelineRows = rows;
+        state.filtered = rows;
+        syncPurchaseTable(rows);
+        renderDetailedReport();
         renderCharts(rows);
         const receiptRows = rows.filter(item => hasMilestone(item.raw?.EntradaMercancia));
         const entries = receiptRows.length;
@@ -504,20 +519,20 @@
         toggle.hidden = rows.length <= TIMELINE_PREVIEW_COUNT;
         const expanded = !toggle.hidden && timelineExpanded;
         toggle.setAttribute('aria-expanded', String(expanded));
-        toggle.textContent = expanded ? 'Mostrar solo 5 órdenes' : `Ver las ${number(rows.length)} órdenes`;
+        toggle.textContent = expanded ? 'Mostrar solo 20 órdenes' : `Ver las ${number(rows.length)} órdenes`;
         const visibleRows = expanded ? rows : rows.slice(0, TIMELINE_PREVIEW_COUNT);
         const openDetails = new Set(Array.from(list.querySelectorAll('details[open][data-oc-timeline-key]'), detail => detail.dataset.ocTimelineKey));
         list.innerHTML = visibleRows.length ? visibleRows.map(item => {
           const raw = item.raw || {};
           const milestones = [
             { label: 'Orden creada', value: item.date, active: hasMilestone(item.sap) && hasMilestone(item.date), detail: dateLabel(item.date), tone: 'green' },
-            { label: 'Proceso', value: item.stage, active: item.stage !== 'No disponible en API' && hasMilestone(item.stage), detail: item.stage, tone: 'blue' },
+
             { label: 'Entrada mercancía', value: raw.EntradaMercancia, active: hasMilestone(raw.EntradaMercancia), detail: raw.fechaEntrada ? dateLabel(raw.fechaEntrada) : raw.EntradaMercancia, tone: 'green' },
             { label: 'Factura proveedor', value: raw.FacturaProveedor, active: hasMilestone(raw.FacturaProveedor), detail: raw.FechaFactura ? dateLabel(raw.FechaFactura) : raw.FacturaProveedor, tone: 'green' },
             { label: 'Pago', value: raw.pagoEfectuado, active: hasMilestone(raw.pagoEfectuado), detail: raw.fechaPago ? dateLabel(raw.fechaPago) : raw.pagoEfectuado, tone: 'green' }
           ];
           const lastConfirmed = milestones.filter(node => node.active).at(-1);
-          return `<article class="oc-timeline-card" style="border-left:4px solid ${priority(item).color}"><header><div><span class="oc-timeline-order">OC ${text(item.sap || 'sin número')}</span><h3>${text(item.clientName || 'Proveedor sin registrar')}</h3></div><div class="oc-timeline-summary"><strong>${getMoneyEntries(item.raw).length ? text(primaryMoney(totalForView(item))) : 'Monto no disponible'}</strong><span>${text(dateLabel(item.date))} · ${text(item.country)}</span></div></header><div class="oc-timeline-meta"><span>${text(item.purchaseType)}</span><span class="oc-timeline-state" style="color:${priority(item).color}">${text(priority(item).label)}</span><span>${text(item.state)}</span><span>Proceso: ${text(item.stage)}</span><span>Entrega prevista: ${deliveryKey(item) ? text(dateLabel(item.delivery)) : 'Sin fecha'}${deliveryLate(item) ? ' · Atrasada ' + number(daysFrom(deliveryKey(item))) + ' días' : ''}</span>${dateKey(item.date) && daysFrom(dateKey(item.date)) >= 0 && !isClosedOrder(item.state) ? `<span>${number(daysFrom(dateKey(item.date)))} días desde la creación</span>` : ''}<span>Último hito confirmado: ${text(lastConfirmed?.label || 'Sin registro en SAP')}</span></div><div class="oc-process-line">${milestones.map(node => `<div class="oc-process-node ${node.active ? `is-active is-${node.tone}` : 'is-pending'}"><i></i><strong>${node.label}</strong><small>${text(node.active ? node.detail : isClosedOrder(item.state) ? 'Sin registro en SAP' : 'Sin confirmar')}</small></div>`).join('')}</div><details class="oc-inline-detail" data-oc-timeline-key="${text(item.rowKey)}" ${openDetails.has(item.rowKey) ? 'open' : ''}><summary class="oc-timeline-detail">Detalle de la orden</summary><div></div></details></article>`;
+          return `<article class="oc-timeline-card" style="border-left:4px solid ${priority(item).color}"><header><div><span class="oc-timeline-order">OC ${text(item.sap || 'sin número')}</span><h3>${text(item.clientName || 'Proveedor sin registrar')}</h3></div><div class="oc-timeline-summary"><strong>${getMoneyEntries(item.raw).length ? text(primaryMoney(totalForView(item))) : 'Monto no disponible'}</strong><span>${text(dateLabel(item.date))} · ${text(item.country)}</span></div></header><div class="oc-timeline-meta"><span>${item.raw?.tipo_compra ? text(item.purchaseType) : 'Tipo de compra: API pendiente'}</span><span class="oc-timeline-state" style="color:${priority(item).color}">${text(priority(item).label)}</span><span>${text(item.state)}</span><span>Proceso: ${text(item.stage)}</span><span>Entrega prevista: ${deliveryKey(item) ? text(dateLabel(item.delivery)) : 'API pendiente'}${deliveryLate(item) ? ' · Atrasada ' + number(daysFrom(deliveryKey(item))) + ' días' : ''}</span>${dateKey(item.date) && daysFrom(dateKey(item.date)) >= 0 && !isClosedOrder(item.state) ? `<span>${number(daysFrom(dateKey(item.date)))} días desde la creación · antigüedad para revisión</span>` : ''}<span>Último hito confirmado: ${text(lastConfirmed?.label || 'Sin registro en SAP')}</span><span>Documentos sin registro: ${text([['recepción',raw.EntradaMercancia],['factura',raw.FacturaProveedor],['pago',raw.pagoEfectuado]].filter(([,value])=>!hasMilestone(value)).map(([name])=>name).join(', ') || 'ninguno')}</span></div><div class="oc-process-line">${milestones.map(node => `<div class="oc-process-node ${node.active ? `is-active is-${node.tone}` : 'is-pending'}"><i></i><strong>${node.label}</strong><small>${text(node.active ? node.detail : isClosedOrder(item.state) ? 'Sin registro en SAP' : 'Sin confirmar')}</small></div>`).join('')}</div><details class="oc-inline-detail" data-oc-timeline-key="${text(item.rowKey)}" ${openDetails.has(item.rowKey) ? 'open' : ''}><summary class="oc-timeline-detail">Detalle de la orden</summary><div></div></details></article>`;
         }).join('') : '<div class="oc-timeline-empty">No hay órdenes para los filtros seleccionados.</div>';
       }
       const stateLabels = { C: 'Cerradas', O: 'Pendientes' };
@@ -550,6 +565,9 @@
               y: { grid: { display: false }, border: { display: false }, ticks: { color: GP.muted, padding: 6, font: { family: 'Segoe UI', size: 10, weight: '700' } } }
             }
           : { x: ejes, y: ejes };
+        if (id === 'ocChartMonth') {
+          escalas.y = {...escalas.y, beginAtZero:true, min:0, suggestedMax:Math.max(1,...data), ticks:{...escalas.y?.ticks, precision:0, stepSize:1, callback:value=>Number.isInteger(Number(value))?String(value):''}};
+        }
         state.charts[id] = new Chart($(id), {
           type: type,
           data: { labels: labels, datasets: [{ label: label, data: data, ...dataset }] },
@@ -831,6 +849,7 @@
   <script src="../../assets/js/bodega-pdf.js?v=20261021tokens"></script>
   <!-- Estándar visual (Ingresos / SIMs): va al final para prevalecer sobre los estilos propios -->
   <link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+<script src="../../assets/js/bodega-pending-view.js?v=20261120"></script>
 </body>
 
 </html>

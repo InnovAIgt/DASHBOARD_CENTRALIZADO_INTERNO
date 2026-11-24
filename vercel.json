@@ -8,6 +8,9 @@
     },
     "api/marketing/mailing/*.js": {
       "maxDuration": 60
+    },
+    "api/bodega-despachos.js": {
+      "maxDuration": 300
     }
   },
   "crons": [
@@ -17,6 +20,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/bodega/despachos",
+      "destination": "/api/bodega-despachos"
+    },
     {
       "source": "/api/(.*)",
       "destination": "/api"
