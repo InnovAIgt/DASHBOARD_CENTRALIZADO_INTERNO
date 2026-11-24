@@ -79,3 +79,23 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
   66, 64 a 48 y 45 («[VALIDACIÓN] … Test Entregabilidad»). Se ven con el interruptor «Campañas de prueba».
 - La 70 («DASHBOARD CAMPAIGN OCT 23», 36 destinatarios) **no** queda oculta por la regla, pero su historial no se cargó
   hasta confirmar con Ismael si fue real (PENDIENTES).
+
+## 2026-11-24 · Leads de Prospekt: cómo se atribuyen a las campañas
+
+- **Decisión de Keily** (MAILING.md, sección 11.1):
+  - **Exacta:** el correo del lead recibió la campaña, enviada antes del lead y **como máximo 30 días antes**. Si hay
+    varias: clic > apertura > la más reciente. **Solo por correo**: no hay fuente de teléfonos de los destinatarios.
+  - **Estimada:** origen «PostIAlo Mailing» sin exacta → la última campaña enviada antes, **dentro de 7 días**.
+  - Varias campañas el mismo día: el lead va al **grupo**, en **una fila aparte** en Comparar campañas, **sin
+    repartirlo** (opción a).
+  - Las campañas de prueba no reciben leads. Cerrado = etapa 6 (por confirmar si es venta ganada).
+- La tarjeta se muestra **aunque hoy dé 0 exactos y 0 estimados** (291 sin campaña): se llena con los leads nuevos.
+- Nunca se muestran el correo ni el teléfono del lead.
+
+## 2026-11-24 · Prospekt guarda la fecha y hora de creación en UTC
+
+- **Confirmado por Keily:** `fecha_creado` y `hora_creado` están en **UTC** (así lo dice la API: «lead creado en
+  UTC»; `fecha_agendada` y `hora_agendada` sí vienen en hora local del país).
+- **Prueba:** los códigos de prospecto son consecutivos y solo cuadran en UTC (un calificado a las 02:08 UTC va antes
+  que el código siguiente, no calificado, a las 04:22 UTC).
+- Se compara en UTC con la hora de envío de Brevo y se muestra en hora de Guatemala. Se deja como está.

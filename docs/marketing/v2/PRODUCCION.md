@@ -33,6 +33,7 @@ van en el repo ni en la conversación. Preparado el 2026-11-23; **todavía sin p
 | `MKT_MOSTRAR_CORREOS` | Opcional. Vacía = se muestran correos sin inicio de sesión; `no` = solo conteos | Opcional: depende de lo que apruebe Eduardo |
 | `CC_DB_HOST` | Opcional. Otro servidor para Cumplimiento; vacía = el pooler de siempre | No ponerla |
 | `MKT_REDES_VISIBLE` | Opcional. `si` muestra Redes en Production; vacía = «Próximamente» | No ponerla todavía |
+| `PROSPEKT_API_KEY` | Leer los leads calificados de Prospekt IA para Mailing (solo GET, encabezado `X-API-Key`). Aparte de `RED_API_KEY`, aunque pueda tener el mismo valor | **Falta.** Tipo Secret. Sin ella, Mailing funciona y la parte de leads avisa |
 
 **Ya existen y no cambian:** las de los otros dashboards (`RED_API_KEY`, `SAC_*`, Workflow, SAP, Firebase, etc.).
 
@@ -62,6 +63,7 @@ van en el repo ni en la conversación. Preparado el 2026-11-23; **todavía sin p
 - [ ] Detalle por correo tiene filas → `MKT_SUPABASE_URL` y `MKT_SUPABASE_SECRET_KEY` bien.
 - [ ] Cliente, País y Ejecutivo llenos, sin el aviso «no disponibles» → `CC_DB_PASSWORD` bien.
 - [ ] Comparar: «Por campaña», «Por comercial» y «Por ejecutivo y territorio».
+- [ ] Leads: la tarjeta de Resultados generales y la sub-pestaña Leads muestran los leads, sin el aviso «falta configurar la llave» → `PROSPEKT_API_KEY` bien.
 - [ ] Correos por corregir: ventana del ejecutivo completa, correo con diseño y exportar CSV.
 - [ ] Cargo y objetivo: con la clave de Marketing, guardar el cargo de una campaña de **prueba** y luego «Volver a lo
       sugerido» → `MKT_CLAVE_EDICION` y escritura en `mkt_campana_cargo` bien.

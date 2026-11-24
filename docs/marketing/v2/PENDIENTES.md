@@ -19,7 +19,12 @@ la fecha.
 | Acceso al CRM o bot de leads | Ismael | Por confirmar | Pendiente |
 | Acceso a G24 para la calificación de leads (¿quién lo administra?) | Ismael | Por confirmar | Pendiente |
 | Códigos por publicación para unir cada lead con su publicación (Redes) | Ismael + equipo Prospekt IA | Por confirmar | Pendiente |
-| Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
+| Leads · pedir que **Prospekt guarde el correo del lead siempre que exista**, para poder cruzarlo con las campañas (hoy solo 29 de 291 calificados lo traen) | Ismael → equipo Prospekt IA | 2026-11-24 | Pendiente |
+| Leads · hay leads «PostIAlo Mailing» de **junio y julio de 2026**, antes de las campañas de esta cuenta de Brevo (empiezan en agosto). ¿Hubo otra cuenta o herramienta de correo, o el origen está mal anotado? | Ismael | 2026-11-24 | Pendiente |
+| Leads · hay **contactos que fueron leads antes de recibir campañas** (4 leads con correo en campañas enviadas 126 a 163 días después). ¿Se agregan los leads a la base de correos? Si es así, esos casos no cuentan como leads de campaña | Ismael | 2026-11-24 | Pendiente |
+| Leads · **fuente de teléfonos** de los destinatarios de las campañas (sin ella, el cruce exacto es solo por correo) | Ismael / Marketing | 2026-11-24 | Pendiente |
+| Leads · agregar `validator_source` y `pais` a `/api/audit/leads-no-calificados` (sin eso, los no calificados no se pueden mostrar por campaña) | Administrador de Prospekt IA | 2026-11-24 | Pendiente |
+| Leads · confirmar si el status «cerrado» / etapa 6 es **venta ganada** | Administrador de Prospekt IA / Ismael | 2026-11-24 | Pendiente |
 | Redes · acceso total de Keily a «Negocio de Red Intelfon» (Administradora) **o** los códigos de la cuenta de Laura; y la lista marca → país → página de Facebook → Instagram → cuenta publicitaria (REDES.md, sección 3) | Erick (o Laura) | 2026-11-20 | Pendiente |
 | Redes · crear la app de Meta (tipo Empresa), el usuario del sistema de solo lectura y su token; poner `META_TOKEN`, `META_APP_SECRET` y `META_API_VERSION` en .env.local y en Vercel (Secret). Las partes (1), (2) con datos reales, (4) Facebook y (6) esperan este token | Keily, cuando Erick (o Laura) dé el acceso | — | Esperando el acceso |
 | Redes · ¿Marketing tiene un **plan de publicaciones programadas**? ¿En qué formato (Excel, calendario, Meta Business Suite)? Si no hay plan, no se hace «Plan del mes» (REDES.md, secciones 4 y 8) | Ismael | 2026-11-24 | Pendiente |
@@ -59,7 +64,7 @@ Borrador del mensaje para Eduardo (qué se sube, riesgos y qué debe aprobar): P
 
 | Pendiente | Quién | Cuándo | Estado |
 |---|---|---|---|
-| Variables de Vercel **Production** (lista completa en PRODUCCION.md, sección 2) | Keily | Antes del merge | En curso: 6 puestas (23/11); falta `CRON_SECRET` |
+| Variables de Vercel **Production** (lista completa en PRODUCCION.md, sección 2) | Keily | Antes del merge | En curso: 6 puestas (23/11); faltan `CRON_SECRET` y `PROSPEKT_API_KEY` |
 | Cambiar la dirección del webhook en Brevo a producción (sin bypass) y borrar el código de bypass de Vercel | Keily | Al publicar | Pendiente |
 | Tarea diaria para que el proyecto Supabase Free no se pause | Keily | Al publicar | Código listo (cron en vercel.json, /api/marketing/mantener-supabase); falta `CRON_SECRET` y probarlo en producción (PRODUCCION.md, sección 3) |
 | Quitar de Vercel las 4 variables viejas: `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`, `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE` | Keily / TI | Al publicar | Pendiente |

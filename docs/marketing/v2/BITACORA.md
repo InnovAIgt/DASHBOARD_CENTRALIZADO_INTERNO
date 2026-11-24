@@ -2,6 +2,22 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Leads de Prospekt en Mailing
+
+- Pedido del ingeniero: apertura, lectura y leads calificados y no calificados de las campañas, también por territorio.
+  Plan aprobado por Keily; reglas de atribución en DECISIONES.md y MAILING.md, sección 11.
+- Parte 1 (servidor): lectura de `/api/external/leads-calificados` con `PROSPEKT_API_KEY` (solo GET), sin repetidos por
+  código; atribución exacta / estimada / sin campaña; cruce asesor ↔ ejecutivo; ruta `GET /api/marketing/mailing/leads`
+  con caché y errores que no detienen Mailing. Nunca devuelve correo ni teléfono.
+- Prueba de lectura (solo conteos, con permiso para leer Prospekt y `mkt_brevo_eventos`): 291 leads únicos, 0 exactos,
+  0 estimados, 291 sin campaña, 186 cerrados. Solo 29 traen correo; los que coinciden se crearon antes de las campañas;
+  los «PostIAlo Mailing» de junio y julio son anteriores a las campañas de esta cuenta. Preguntas a Ismael en PENDIENTES.
+- Keily confirmó que la hora de creación de Prospekt está en UTC (DECISIONES.md).
+- Partes 3 y 4 (pantalla): tarjeta Leads en Resultados generales, columnas Leads / Cerrados / Conversión y grupos en
+  Comparar campañas, «Leads por ejecutivo y territorio» y la sub-pestaña Leads, con los filtros de Mailing.
+  Cruce de asesores con Cumplimiento (solo lectura, con permiso): 110 exactos, 135 posibles y 46 sin cruce.
+- Parte 5: MAILING.md (sección 11), DECISIONES, PENDIENTES, PRODUCCION (`PROSPEKT_API_KEY`), README y OTROS.md (nuevo).
+
 ## 2026-11-24 · Historial 77, 78, 79, 71, 68 y 66 cargado y nueva regla de campañas de prueba
 
 - Prueba en seco y carga (con el «sí» de Keily) de los CSV «por contacto»: nuevos 809 de 817 (77), 574 de 581 (78),

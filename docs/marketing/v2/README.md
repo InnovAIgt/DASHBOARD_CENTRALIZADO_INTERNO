@@ -25,7 +25,7 @@ con 3 pestañas:
 | **Brevo** (correo) | API de Brevo, consultada desde **nuestro servidor**. | `BREVO_API_KEY` (solo servidor) |
 | **Meta** (Facebook / Instagram) | API de Meta, consultada desde **nuestro servidor**. | Por definir (solo servidor) |
 | **Cumplimiento de Clientes** | Base de la app CumplimientoClientes (Supabase): correos GG / GF / GO y ejecutivo de cada cliente. | Por definir (solo servidor) |
-| **Leads** | Bot de WhatsApp → CRM. Los calificados también llegan a Prospekt IA (Flujo de ventas). | Por definir (CRM) · `RED_API_KEY` (Prospekt) |
+| **Leads** | Bot de WhatsApp → CRM. Los calificados llegan a Prospekt IA: Mailing los lee de `/api/external/leads-calificados` (MAILING.md, sección 11; OTROS.md). | `PROSPEKT_API_KEY` (Mailing) · `RED_API_KEY` (Flujo de ventas) |
 
 Estado de cada acceso: [PENDIENTES.md](PENDIENTES.md).
 
@@ -79,4 +79,5 @@ Se quitaron del portal el 20/11/2026 (commit `9d08356`, ver [BITACORA.md](BITACO
 - [REDES.md](REDES.md) — borrador de la pestaña Redes sociales.
 - [PENDIENTES.md](PENDIENTES.md) — lo que falta, a quién se le pidió y su estado.
 - [DECISIONES.md](DECISIONES.md) — decisiones tomadas, con fecha y quién decidió.
+- [OTROS.md](OTROS.md) — lo que se sabe de las APIs de Prospekt IA (leads calificados y no calificados) y el reparto por canal.
 - [sql/](sql/) — SQL de las tablas del proyecto Supabase «Dashboard Canales de marketing» (se corre a mano).

@@ -219,7 +219,7 @@ se vea «100,0 %»).
 | Desde / Hasta | Fechas de envío |
 | Campañas de prueba | Ocultas por defecto las campañas con **[VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes**, o con la palabra **TEST** o **PRUEBA** sola (también en plural, sin importar mayúsculas ni tildes), con un interruptor para verlas. «Validación» sin corchetes no oculta (77, 78 y 79 son reales). Decisión del 24/11/2026 (DECISIONES.md). |
 
-**Las 6 sub-pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
+**Las 7 sub-pestañas** (dentro de Mailing). Todas las cifras son clicables y llevan al detalle de los destinatarios.
 
 | Pestaña | Qué tiene |
 |---|---|
@@ -228,6 +228,7 @@ se vea «100,0 %»).
 | **Correos por corregir** | Correo, cliente, ejecutivo, status (CORREGIR), motivo técnico, estado final, campaña y asunto, fecha de rebote; agrupado por ejecutivo con direcciones únicas; aviso al ejecutivo (sección 8) y descarga CSV global o por ejecutivo. **Muestra correos: requiere inicio de sesión** (sección 10). |
 | **Detalle por correo** | Tarjetas por estado (clic = filtro), **motivos técnicos** de CORREGIR y de MANTENER (clic = filtro por motivo) y la tabla: correo, cliente y país, ejecutivo, campaña, cargo, estado final, status, motivo técnico, indicación, apertura, clic, origen, fecha de envío y ficha. Búsqueda, filtros y descarga a Excel. Muestra correos sin inicio de sesión (DECISIONES.md). |
 | **Relación con clientes** | Correo, campaña y cargo objetivo, clasificación del cruce (sección 8), cliente(s), ejecutivo(s), código(s), cargo(s) en la base y estado del mailing; detalle clicable y descarga CSV. **Muestra correos: requiere inicio de sesión.** |
+| **Leads** | Leads calificados de Prospekt: código, fecha, país, asesor, etapa, campaña asignada y tipo de atribución (exacta, estimada o sin campaña), con los filtros de Mailing. Ver sección 11. |
 | **Cargo y objetivo** | Para Marketing: cada campaña de Brevo con su cargo y su objetivo (sugeridos o elegidos a mano) y un botón Guardar protegido con la clave de Marketing. Ver sección 7.1. |
 
 ### 7.1 Cargo y objetivo (antes «Asignar cargo a campañas»)
@@ -528,10 +529,90 @@ aperturas y clics del CSV son menores que los de Brevo hoy porque el CSV se expo
 
 Después siguen 70, 42, 41, 40, 39, 38, 37, 36, 35, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 y 20.
 
-## 11. Leads
+## 11. Leads (Prospekt IA)
 
 - Un lead es **calificado** si el bot de WhatsApp le da **75 puntos o más**, y **no calificado** si le da **menos de 75**.
 - Después pasa a un **CRM**. Los **calificados** alimentan el embudo de **Flujo de ventas**.
-- Leads por campaña: hay que cruzar el lead con los correos de la campaña. La API de Prospekt IA **no trae el correo**
-  del lead (revisado el 18/11/2026), por eso se pidió el acceso al CRM o bot (Ismael).
-- **Pendiente:** acceso al CRM o bot de leads (Ismael).
+- Pedido del ingeniero: «De las hechas, ver resultados de apertura, lectura y generación de leads no calificados y
+  calificados», también por territorio de cada comercial.
+
+**Fuente (24/11/2026):** API de Prospekt IA, solo lectura (GET), solo desde nuestro servidor:
+`https://prospektia.red.com.sv/api/external/leads-calificados?limite=5000` con la llave en el encabezado `X-API-Key`
+(variable `PROSPEKT_API_KEY`, sin `VITE_`, aparte de `RED_API_KEY` de Flujo de ventas aunque pueda tener el mismo
+valor). No tiene páginas. Trae cada lead **dos veces** (en `leads` y en `por_pais`): se juntan y se quitan los
+repetidos por `codigo_prospecto`. Lo que se sabe de la API está en [OTROS.md](OTROS.md).
+
+**Ruta nuestra:** `GET /api/marketing/mailing/leads` (server/mailing/leads.js y server/mailing/prospekt.js; en Vercel
+api/marketing/mailing/leads.js). **Nunca devuelve el correo ni el teléfono del lead**: solo código, fecha de creación,
+país, asesor, ejecutivo cruzado, etapa, status, origen, si trae correo (sí / no) y la atribución.
+
+### 11.1 Atribución a campañas (reglas de Keily, 24/11/2026)
+
+Se cruza con los destinatarios de `mkt_brevo_eventos` (historial importado y webhook).
+
+1. **Exacta:** el correo del lead (en minúsculas y sin espacios) es destinatario de una campaña enviada **antes** de
+   la creación del lead y **como máximo 30 días antes**. Si hay varias: la que tuvo **clic** > la que tuvo **apertura**
+   real (la automática de Apple no cuenta) > la **más reciente**. El cruce es **solo por correo**: no hay una fuente de
+   teléfonos de los destinatarios (PENDIENTES).
+2. **Estimada:** origen (`validator_source`) «PostIAlo Mailing» sin coincidencia exacta → la **última campaña enviada
+   antes** de la creación del lead, **dentro de 7 días**. Si ese mismo día (hora de Guatemala) se enviaron varias, el
+   lead va al **grupo** (ej. «19 nov (77–79)»), sin repartirlo.
+3. **Sin campaña:** todo lo demás.
+
+- Las **campañas de prueba** (sección 7) y las **programadas** no reciben leads.
+- `fecha_creado` y `hora_creado` vienen en **UTC** y se comparan en UTC con la hora de envío de Brevo
+  (DECISIONES.md).
+- **Cerrado** = `opportunity_stage` 6 (status «cerrado»). Pendiente confirmar si es venta ganada.
+
+### 11.2 Asesor de Prospekt ↔ ejecutivo de Cumplimiento
+
+El `asesor_nombre` de Prospekt se cruza con los ejecutivos de Cumplimiento de Clientes (solo lectura):
+
+- Los dos nombres se pasan **sin tildes**, en **mayúsculas**, solo letras y **un espacio** entre palabras.
+- **Exacta:** iguales, o con **las mismas palabras en otro orden** («PEREZ JUAN» = «JUAN PEREZ»).
+- **Posible** (en ámbar): todas las palabras del asesor (2 o más) están dentro del nombre de **un solo** ejecutivo
+  («JUAN PEREZ» en «JUAN CARLOS PEREZ LOPEZ»). Si encaja en dos o más, no se asigna.
+- Lo demás: **«Asesor sin cruce»**. Nunca se adivina por parecido.
+- El **territorio** de los leads es el **país del lead** en Prospekt.
+
+### 11.3 En la pantalla
+
+- **Resultados generales → Leads:** total, exactos, estimados, sin campaña, cerrados (etapa 6) y el espacio
+  «No calificados: pendiente — Prospekt no envía origen ni correo». Nota: «Solo N de M leads traen correo; la mayoría
+  no se puede cruzar con campañas». Cada cifra abre la sub-pestaña Leads ya filtrada.
+- **Comparar campañas:** en la comparación detallada, columnas **Leads** (exactos + estimados de esa campaña),
+  **Cerrados** y **Conversión** (leads ÷ clics de Brevo). Los **grupos** del mismo día van en su propia tabla, con los
+  clics sumados del grupo. Tarjeta **«Leads por ejecutivo y territorio»**: una fila por ejecutivo y país con leads,
+  exactos, estimados y cerrados, más el conteo del cruce de asesores.
+- **Sub-pestaña «Leads»:** código, fecha (hora de Guatemala), país, asesor, etapa, campaña asignada, tipo de
+  atribución y origen; barras por tipo y por etapa (clic = filtro), buscar y paginación. Sin correo ni teléfono.
+- **Filtros de Mailing:** País = país del lead; Período = fecha de creación del lead; Campaña, Cargo y Asunto = la
+  campaña asignada (con alguno puesto, los «sin campaña» no salen); Buscar = código, asesor o ejecutivo. Como en las
+  demás vistas, País y Buscar solo aplican donde el país está activo (Comparar y Leads).
+
+### 11.4 Errores y caché
+
+- El servidor guarda la lectura **10 minutos** (2 minutos si hubo avisos); al navegador, sin copia (`no-store`).
+- **Sin llave:** responde «sin llave» y la pantalla dice «Leads no disponibles: falta configurar la llave de Prospekt».
+- **Llave rechazada (401 / 403), Prospekt caído, más de 10 s sin responder o respuesta rara:** si hay una lectura
+  anterior, se usa con el aviso «se muestran los leads de hace N min»; si no, la parte de leads muestra el aviso.
+- Si fallan Brevo, Supabase o Cumplimiento, los leads se muestran igual con un aviso (sin campaña o sin cruce).
+- **El resto de Mailing nunca se detiene** por los leads: se piden aparte.
+- Prueba de lectura que solo imprime conteos: `node scripts/probar-leads.mjs`.
+
+### 11.5 Primera lectura (24/11/2026, solo conteos)
+
+- 582 registros = **291 leads únicos** (177 SV, 114 GT), creados de abril a noviembre de 2026; 186 en etapa 6.
+- **0 exactos, 0 estimados, 291 sin campaña.** Por qué:
+  - Solo **29 de 291** traen correo.
+  - Los 4 leads cuyo correo sí está entre los destinatarios se crearon **126 a 163 días antes** de esas campañas
+    (primero fueron leads y después entraron a la base de correos).
+  - 5 de los 6 «PostIAlo Mailing» son de **junio y julio**, antes de las campañas de 2026 de esta cuenta de Brevo
+    (empiezan en agosto; antes solo hay 3 de 2024). El de octubre quedó a unas horas de una campaña enviada después.
+  - Preguntas para Ismael en PENDIENTES.
+- Cruce de asesores: 110 leads con el mismo nombre, 135 posibles y 46 sin cruce (4 de 14 asesores sin cruce).
+
+### 11.6 No calificados
+
+Pendiente. `/api/audit/leads-no-calificados` no trae origen, país ni correo (OTROS.md): no se pueden atribuir a
+campañas. Se pidió al administrador de Prospekt agregar `validator_source` y `pais` (PENDIENTES).
