@@ -37,6 +37,9 @@ que alguien abre el dashboard. Es la misma API y la misma lógica que usa el rep
 **Por qué así:** la llave de Prospekt IA nunca llega al navegador (nadie la puede ver
 con F12) y no hace falta un robot ni una base de datos para lo básico.
 
+El panel no sustituye errores de conexión con registros ficticios. Solo muestra datos recibidos de
+la API; si la consulta falla, presenta el error y permite reintentar.
+
 ## Archivos de este módulo
 
 | Archivo | Qué hace |

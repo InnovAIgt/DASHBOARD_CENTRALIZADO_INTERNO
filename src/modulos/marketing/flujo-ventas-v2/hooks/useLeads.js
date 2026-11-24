@@ -1,7 +1,6 @@
 // Copiado de InnovAIgt/DashboardLeads (Dashboard-Leds/src/hooks/useLeads.js)
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchLeads } from '../services/api.js'
-import { createDemoLeads } from '../utils/demoLeads.js'
 
 const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000
 
@@ -10,7 +9,6 @@ export function useLeads({ enabled = true } = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [isDemo, setIsDemo] = useState(false)
   const requestInFlight = useRef(false)
   const lastSuccessfulRefresh = useRef(null)
 
@@ -24,15 +22,11 @@ export function useLeads({ enabled = true } = {}) {
       const updatedAt = new Date()
       setLeads(nextLeads)
       setLastUpdated(updatedAt)
-      setIsDemo(false)
       lastSuccessfulRefresh.current = updatedAt
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === 'AbortError') return
+      setLeads([])
       setError(cause instanceof Error ? cause.message : 'Error desconocido al cargar los leads.')
-      if (import.meta.env.DEV) {
-        setLeads(createDemoLeads())
-        setIsDemo(true)
-      }
     } finally {
       requestInFlight.current = false
       if (!signal?.aborted) setLoading(false)
@@ -62,5 +56,5 @@ export function useLeads({ enabled = true } = {}) {
     }
   }, [reload, enabled])
 
-  return { leads, loading, error, lastUpdated, isDemo, reload: () => reload() }
+  return { leads, loading, error, lastUpdated, reload: () => reload() }
 }

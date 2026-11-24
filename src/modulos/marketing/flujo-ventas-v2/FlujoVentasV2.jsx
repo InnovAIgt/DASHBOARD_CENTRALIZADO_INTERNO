@@ -48,7 +48,7 @@ const horaFormato = new Intl.DateTimeFormat('es-SV', { hour: '2-digit', minute: 
  * estandar.css, la de SIMs): "Consultando la API…" con spinner y, si tarda más de 2.5 s,
  * "Consultando la API… puede tardar hasta un minuto". Al terminar: "Actualizado: HH:MM" o el error.
  */
-function EstadoConsulta({ cargando, error, actualizado, isDemo }) {
+function EstadoConsulta({ cargando, error, actualizado }) {
   const [lento, setLento] = useState(false)
   useEffect(() => {
     if (!cargando) { setLento(false); return undefined }
@@ -61,14 +61,13 @@ function EstadoConsulta({ cargando, error, actualizado, isDemo }) {
       {lento ? 'Consultando la API… puede tardar hasta un minuto' : 'Consultando la API…'}
     </p>
   }
-  if (isDemo) return <div className="fv2-estado is-demo" role="status">Modo demostración · datos ficticios</div>
   if (error) return <div className="fv2-estado is-error" role="status">Sin conexión con Prospekt IA</div>
   return <div className="fv2-estado" role="status">Actualizado: <b>{actualizado ? horaFormato.format(actualizado) : '—'}</b></div>
 }
 
 function FlujoVentasV2Contenido() {
   const api = useLeads()
-  const { leads, loading, error, isDemo } = api
+  const { leads, loading, error } = api
   const filters = useFilters()
   // Por defecto: todos los países, Tipo de lead = Calificado (4.0) y del día 1 del mes actual hasta hoy (R11).
   const [periodo, setPeriodo] = useState(() => periodoPorDefecto())
@@ -131,12 +130,9 @@ function FlujoVentasV2Contenido() {
     <header className="fv2-encabezado">
       <div>
         <div className="fv2-eyebrow">Marketing · Flujo de ventas</div>
-        <h1 className="fv2-titulo">
-          Flujo de ventas
-          {isDemo && <span className="fv2-etiqueta-prueba">Datos ficticios</span>}
-        </h1>
+        <h1 className="fv2-titulo">Flujo de ventas</h1>
         <p className="fv2-subtitulo">Cómo avanzan los leads asignados a cada ejecutivo, de la asignación al cierre · Guatemala y El Salvador.</p>
-        <EstadoConsulta cargando={loading} error={error} actualizado={api.lastUpdated} isDemo={isDemo} />
+        <EstadoConsulta cargando={loading} error={error} actualizado={api.lastUpdated} />
       </div>
       <button type="button" className="fv2-btn-actualizar" onClick={api.reload} disabled={loading} title="Actualizar datos" aria-label="Actualizar datos">
         <RefreshCw size={16} />
@@ -163,12 +159,7 @@ function FlujoVentasV2Contenido() {
       </nav>
     </div>}
 
-    {isDemo && <div className="fv2-aviso-demo" role="status">
-      <strong>Vista de demostración</strong>
-      <span>Prospekt IA no está disponible. Estos registros son ficticios y solo sirven para revisar el diseño; no representan ventas reales.</span>
-      <button type="button" className="fv2-pildora" onClick={api.reload} disabled={loading}>Reintentar conexión</button>
-    </div>}
-    {error && !isDemo && <AvisoError mensaje={error} onReintentar={api.reload} />}
+    {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
     {leads.length > 0 && pestana === 'panel' && <VistaGeneral leads={filtrados} filters={filters} paisFiltro={paisFiltro}
       leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonteForecast} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo}

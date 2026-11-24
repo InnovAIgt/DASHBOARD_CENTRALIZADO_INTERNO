@@ -59,7 +59,6 @@
   }
   .fv2-eyebrow { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .15em; color: var(--fv2-rojo); margin-bottom: 4px; }
   .fv2-titulo { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -.02em; line-height: 1.15; }
-  .fv2-etiqueta-prueba { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--fv2-amarillo); background: rgba(197, 150, 0, .12); border: 1px solid rgba(197, 150, 0, .35); border-radius: 6px; padding: 2px 8px; }
   .fv2-subtitulo { margin: 4px 0 0; font-size: 13px; color: var(--fv2-tenue); }
 
   .fv2-estado {
@@ -86,8 +85,6 @@
   }
   .fv2-estado.is-error { color: var(--fv2-rosa); background: rgba(196, 60, 80, .1); border-color: rgba(196, 60, 80, .35); }
   .fv2-estado.is-error::before { background: var(--fv2-rojo); }
-  .fv2-estado.is-demo { color: var(--fv2-amarillo); background: rgba(197, 150, 0, .1); border-color: rgba(197, 150, 0, .35); }
-  .fv2-estado.is-demo::before { background: var(--fv2-amarillo); }
 
   /* ---------- Filtros ---------- */
   .fv2-filtros-caja {
@@ -426,9 +423,6 @@
   .fv2-aviso-error strong { color: #fff; }
   .fv2-aviso-error p { margin: 2px 0; font-size: 12px; color: var(--fv2-texto); word-break: break-word; }
   .fv2-aviso-error small { font-size: 11px; color: var(--fv2-tenue); }
-  .fv2-aviso-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 16px; background: rgba(197, 150, 0, .09); border: 1px solid rgba(197, 150, 0, .35); border-radius: 12px; color: var(--fv2-amarillo); font-size: 12px; }
-  .fv2-aviso-demo strong { color: #fff; }
-  .fv2-aviso-demo span { flex: 1; min-width: 220px; color: var(--fv2-texto); }
   .fv2-nota { margin: 8px 0 0; font-size: 11px; color: var(--fv2-tenue); }
 
   /* ---------- Ventanas (modal de Activaciones) ---------- */

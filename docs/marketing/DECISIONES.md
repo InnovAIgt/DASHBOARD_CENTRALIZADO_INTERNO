@@ -330,3 +330,9 @@ ganados, unidades y conversión, con acceso al detalle por país. No se agrega e
 
 **Decisión:** retirar la tarjeta de alerta que describía dónde se frena el recorrido. Se conserva el
 resaltado amarillo del tramo y las leyendas de conversión y SLA; el resto del recorrido no cambia.
+
+## D24 · 24/11/2026 · Solo datos de la API
+
+**Decisión:** retirar el fallback de datos de demostración. El panel solo muestra los leads recibidos
+de Prospekt IA; ante una falla muestra el error y la opción de reintentar, sin sustituirlos por datos
+ficticios.
