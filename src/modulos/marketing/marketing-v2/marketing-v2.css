@@ -146,7 +146,7 @@
 
 /* Globo con el valor exacto (sigue al mouse) */
 .mkv2 .mkv2-globo {
-  position: fixed; z-index: 80; max-width: 290px; padding: 7px 10px; pointer-events: none;
+  position: fixed; z-index: 120; /* encima de las ventanas (110 y 115) */ max-width: 290px; padding: 7px 10px; pointer-events: none;
   background: #05070b; border: 1px solid rgba(255, 255, 255, .16); border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
   font-size: 11.5px; font-weight: 600; line-height: 1.45; color: var(--fv2-texto); white-space: pre-line;
 }
@@ -383,7 +383,7 @@
 .mkv2 .mkv2-subtitulo-bloque { margin: 14px 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--fv2-tenue); }
 
 /* Ficha de cada correo (ventana) */
-.mkv2 .mkv2-modal-fondo { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .62); backdrop-filter: blur(3px); }
+.mkv2 .mkv2-modal-fondo { position: fixed; inset: 0; z-index: 110; /* encima del menú lateral del portal (100) */ display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, .62); backdrop-filter: blur(3px); }
 .mkv2 .mkv2-modal {
   width: min(780px, 100%); max-height: 90vh; overflow: auto; padding: 22px 24px; outline: none;
   background: var(--fv2-tarjeta); border: 1px solid var(--fv2-borde-fuerte); border-radius: 14px; box-shadow: 0 24px 65px rgba(0, 0, 0, .55);
@@ -510,7 +510,7 @@
 .mkv2 .mkv2-correo-aviso { margin: 8px 0 0; font-size: 11.5px; font-weight: 650; line-height: 1.5; color: #6fd3a6; }
 
 /* Vista previa del correo con diseño */
-.mkv2 .mkv2-modal-correo { z-index: 65; background: rgba(0, 0, 0, .75); }
+.mkv2 .mkv2-modal-correo { z-index: 115; background: rgba(0, 0, 0, .75); }
 .mkv2 .mkv2-correo-dialogo {
   display: flex; flex-direction: column; gap: 10px; width: min(760px, 100%); max-height: 94vh; overflow: auto; padding: 20px 22px;
   background: var(--fv2-tarjeta); border: 1px solid rgba(255, 255, 255, .14); border-radius: 16px; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);

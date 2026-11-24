@@ -2,6 +2,14 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-23 · Menú lateral escondido en Canales de marketing y ventanas encima del menú
+
+- Como en Flujo de ventas: en Canales de marketing el menú del portal se esconde, se asoma al acercar el mouse al
+  borde izquierdo (marca discreta) y el dashboard usa todo el ancho. Cambio de una línea en PortalLayout.tsx (solo
+  para la página marketing-v2); no se tocaron los archivos de Flujo de ventas ni los demás dashboards.
+- Las ventanas de Mailing (ejecutivo, correo con diseño, ficha) quedan por encima del menú: antes el menú las
+  tapaba por la izquierda. El globo de valores también va encima de las ventanas.
+
 ## 2026-11-23 · Detalle por correo: aperturas de Apple
 
 - Antes, `proxy_open` (webhook) no se tomaba en cuenta en la columna Apertura (solo se veía en la ficha) y no había
