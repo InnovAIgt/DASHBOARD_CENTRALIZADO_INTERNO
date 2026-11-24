@@ -94,7 +94,8 @@ test('armarLeads no devuelve correo ni teléfono y cuenta por tipo y cerrados', 
   })
   for (const f of filas) { assert.ok(!('correo' in f)); assert.ok(!('telefono' in f)) }
   assert.ok(!JSON.stringify(filas).includes('@'))
-  assert.deepEqual(resumen, { total: 3, exactas: 1, estimadas: 1, sinCampana: 1, cerrados: 1, sinFecha: 0 })
+  assert.deepEqual(resumen, { total: 3, exactas: 1, estimadas: 1, sinCampana: 1, cerrados: 1, conCorreo: 3, sinFecha: 0 })
+  assert.equal(filas[0].tieneCorreo, true)
   assert.equal(filas[0].ejecutivo, 'Asesor Uno')
   assert.equal(filas[0].cruceEjecutivo, 'exacta')
 })

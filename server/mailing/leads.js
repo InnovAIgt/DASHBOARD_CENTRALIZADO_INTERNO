@@ -169,6 +169,8 @@ export function armarLeads({ leads = [], campanas = [], eventos = [], ejecutivos
       etapa: l.etapa,
       cerrado: l.etapa === ETAPA_CERRADO,
       origen: l.origen || null,
+      // Solo si Prospekt trae correo (sí / no), nunca el correo: para la nota «N de M leads traen correo».
+      tieneCorreo: l.correo.includes('@'),
       atribucion: a.tipo,
       campanas: a.campanas,
       grupo: a.grupo,
@@ -187,6 +189,7 @@ export function resumirLeads(filas = []) {
     estimadas: contar((f) => f.atribucion === 'estimada'),
     sinCampana: contar((f) => f.atribucion === 'sin_campana'),
     cerrados: contar((f) => f.cerrado),
+    conCorreo: contar((f) => f.tieneCorreo),
     sinFecha: contar((f) => !f.fecha),
   }
 }
