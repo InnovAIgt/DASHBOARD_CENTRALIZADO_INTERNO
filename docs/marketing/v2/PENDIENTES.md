@@ -21,8 +21,11 @@ la fecha.
 | Acceso a G24 para la calificación de leads (¿quién lo administra?) | Ismael | Por confirmar | Pendiente |
 | Códigos por publicación para unir cada lead con su publicación (Redes) | Ismael + equipo Prospekt IA | Por confirmar | Pendiente |
 | Correo del lead en la API de Prospekt | Equipo Prospekt IA | Por confirmar | Pendiente |
-| Acceso a Meta: agregar a Keily como administradora del Business Manager y pasar la lista marca → país → página de Facebook → Instagram → cuenta publicitaria (REDES.md, sección 2) | Erick / Ismael | 2026-11-20 | Pendiente |
-| Crear la app de Meta (tipo Empresa), el usuario del sistema de solo lectura y su token; poner META_TOKEN, META_APP_SECRET y META_API_VERSION en .env.local y en Vercel (Secret). La parte (1) de Redes espera este token | Keily, cuando Erick dé el acceso | — | Esperando a Erick |
+| Redes · acceso total de Keily a «Negocio de Red Intelfon» (Administradora) **o** los códigos de la cuenta de Laura; y la lista marca → país → página de Facebook → Instagram → cuenta publicitaria (REDES.md, sección 3) | Erick (o Laura) | 2026-11-20 | Pendiente |
+| Redes · crear la app de Meta (tipo Empresa), el usuario del sistema de solo lectura y su token; poner `META_TOKEN`, `META_APP_SECRET` y `META_API_VERSION` en .env.local y en Vercel (Secret). Las partes (1), (2) con datos reales, (4) Facebook y (6) esperan este token | Keily, cuando Erick (o Laura) dé el acceso | — | Esperando el acceso |
+| Redes · ¿Marketing tiene un **plan de publicaciones programadas**? ¿En qué formato (Excel, calendario, Meta Business Suite)? Si no hay plan, no se hace «Plan del mes» (REDES.md, secciones 4 y 8) | Ismael | 2026-11-24 | Pendiente |
+| Redes · ¿Programan desde Meta Business Suite? (para saber si la API de Facebook `scheduled_posts` las verá; se prueba en la parte (1)) | Ismael | 2026-11-24 | Pendiente |
+| Redes · fase 2 (solo anotado): lo de Ismael (edad, sexo, horarios, CTR, segmentaciones y presupuestos) y leads; se planea después de publicar la fase 1 | Ismael | 2026-11-24 | Para después |
 | Confirmar si hay anuncios pagados fuera del Business Manager (agencia o cuenta personal) y quién programa las publicaciones y con qué herramienta | Marketing (Erick / Ismael) | Por confirmar | Pendiente |
 | Confirmar la lista de páginas, cuentas de Instagram y cuentas de anuncios que vea el token de Meta (la parte (1) las lista primero) | Marketing, con Keily | Cuando exista el token | Pendiente |
 
@@ -31,7 +34,7 @@ la fecha.
 | Pendiente | A quién se le pidió | Fecha | Estado |
 |---|---|---|---|
 | Confirmar la definición de «Lectura estimada» (aperturas de Brevo menos las automáticas de Apple MPP, campaña por campaña, sobre entregados; MAILING.md, sección 5) y los indicadores de Redes; meta de costo por mensaje y de costo por clic para el semáforo | Ingeniero | 2026-11-23 | Pendiente: la lectura estimada ya se muestra con esa regla |
-| Redes · «Plan del mes»: pantallita donde Marketing carga lo programado (fecha, marca, red, título) con la clave de Marketing; falta definir el umbral del amarillo y el SQL de la tabla (REDES.md, sección 7) | Ingeniero, con Keily | Después de las partes 1 a 6 de Redes | Pendiente |
+| Redes · umbral del semáforo «¿Cumplimos lo programado?» (propuesta: 100 % verde, 90–99 % amarillo, menos de 90 % rojo; REDES.md, sección 4) y meta de costo por mensaje y por clic | Ingeniero | 2026-11-24 | Pendiente |
 
 ## Eduardo / TI
 

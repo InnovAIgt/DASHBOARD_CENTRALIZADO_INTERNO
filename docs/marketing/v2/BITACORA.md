@@ -2,6 +2,15 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Redes sociales: plan v2 (como Mailing)
+
+- REDES.md reescrito por partes: objetivo (fase 1: hechas y programadas por marca y país; leads y lo de Ismael en
+  fase 2), fuentes con las consultas y campos exactos de Meta que se pedirán, qué no da Meta, programadas en 3 casos
+  (Facebook por API, Instagram no existe, «Plan del mes» solo si Marketing tiene plan), cómo se ve «¿Cumplimos lo
+  programado?» en cada caso, moneda por cuenta y tasas calculadas en el dashboard, rutas con errores de Meta y las 6
+  partes. Se conserva lo válido del plan del 23/11 (acceso, permisos, leads).
+- Falta el mockup v4 en `Descargasdatos-marketingplantilla` (solo está el v3). Sin código todavía: espera el «sí».
+
 ## 2026-11-23 · Mailing preparado para producción (sin push)
 
 - Redes sociales: en Vercel Production muestra «Próximamente» y en Preview / local la pantalla de ejemplo; se decide
