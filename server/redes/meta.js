@@ -7,8 +7,8 @@
  */
 import { createHmac } from 'node:crypto'
 
-/** Versión de la API si no se fija META_API_VERSION (se confirma en la parte (1) de REDES.md). */
-export const VERSION_META = 'v23.0'
+/** Versión de la API si no se fija META_API_VERSION (probada en la parte (1) de REDES.md, 24/11/2026). */
+export const VERSION_META = 'v25.0'
 export const META_ESPERA_MS = 12_000
 export const MAX_PAGINAS = 10
 
@@ -52,7 +52,17 @@ export function configuracionMeta(env = process.env, tokenPagina = null) {
  * GET a la Graph API. ruta = «/{id}/published_posts», parametros = { fields, since, … }.
  * Devuelve el JSON de Meta; si Meta responde con error, lanza ErrorMeta.
  */
-export async function llamarMeta(ruta, parametros = {}, { env = process.env, fetchFn = fetch, esperaMs = META_ESPERA_MS, tokenPagina = null } = {}) {
+export async function llamarMeta(ruta, parametros = {}, opciones = {}) {
+  try {
+    return await llamarMetaUnaVez(ruta, parametros, opciones)
+  } catch (err) {
+    // Si Meta tardó demasiado, se reintenta UNA vez (pasa cuando se piden muchas cuentas a la vez).
+    if (err?.tipo === 'otro' && err.espera) return llamarMetaUnaVez(ruta, parametros, opciones)
+    throw err
+  }
+}
+
+async function llamarMetaUnaVez(ruta, parametros = {}, { env = process.env, fetchFn = fetch, esperaMs = META_ESPERA_MS, tokenPagina = null } = {}) {
   if (!String(env?.META_TOKEN ?? '').trim()) throw new ErrorMeta('sin_token', 'Todavía no hay token de Meta (META_TOKEN).')
   const { token, prueba, version } = configuracionMeta(env, tokenPagina)
   const url = new URL(`https://graph.facebook.com/${version}${ruta.startsWith('/') ? ruta : `/${ruta}`}`)
@@ -68,18 +78,18 @@ export async function llamarMeta(ruta, parametros = {}, { env = process.env, fet
     return datos ?? {}
   } catch (err) {
     if (err instanceof ErrorMeta) throw err
-    if (err?.name === 'AbortError') throw new ErrorMeta('otro', `Meta no respondió en ${esperaMs / 1000} s.`)
+    if (err?.name === 'AbortError') throw Object.assign(new ErrorMeta('otro', `Meta no respondió en ${esperaMs / 1000} s.`), { espera: true })
     throw new ErrorMeta('otro', 'No se pudo llamar a Meta.')
   } finally {
     clearTimeout(reloj)
   }
 }
 
-/** Todas las páginas de una lista de Meta (data + paging.cursors.after), hasta MAX_PAGINAS. */
+/** Todas las páginas de una lista de Meta (data + paging.cursors.after), hasta MAX_PAGINAS (u opciones.maxPaginas). */
 export async function llamarMetaTodo(ruta, parametros = {}, opciones = {}) {
   const filas = []
   let despues = null
-  for (let i = 0; i < MAX_PAGINAS; i++) {
+  for (let i = 0; i < (opciones.maxPaginas ?? MAX_PAGINAS); i++) {
     const datos = await llamarMeta(ruta, { limit: 100, ...parametros, ...(despues ? { after: despues } : {}) }, opciones)
     filas.push(...(Array.isArray(datos.data) ? datos.data : []))
     despues = datos.paging?.next ? datos.paging?.cursors?.after ?? null : null
