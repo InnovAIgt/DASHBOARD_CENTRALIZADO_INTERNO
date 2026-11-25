@@ -25,6 +25,18 @@ export const FILTROS_REDES = { pais: '', marca: '', red: '', mes: '', formato: '
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 /** '2026-11' → 'Noviembre 2026'. */
 export const nombreMes = (mes) => { const [a, m] = String(mes).split('-').map(Number); return m ? `${MESES[m - 1].replace(/^./, (l) => l.toUpperCase())} ${a}` : String(mes) }
+/** Primer mes del filtro de Mes (enero 2026). */
+export const PRIMER_MES = '2026-01'
+/** Mes actual en hora de Guatemala/El Salvador (UTC−6), AAAA-MM. */
+export const mesActualGt = (ahora = new Date()) => new Date(ahora.getTime() - 6 * 3600 * 1000).toISOString().slice(0, 7)
+/** '2026-01' → '2025-12'. */
+export const mesAnteriorDe = (mes) => { const [a, m] = String(mes).split('-').map(Number); return new Date(Date.UTC(a, m - 2, 1)).toISOString().slice(0, 7) }
+/** Meses del filtro: del mes «hasta» (el actual) hacia atrás, hasta PRIMER_MES. El más reciente primero. */
+export function mesesDisponibles(hasta = mesActualGt()) {
+  const salida = []
+  for (let m = hasta; m >= PRIMER_MES && salida.length < 120; m = mesAnteriorDe(m)) salida.push(m)
+  return salida
+}
 /** Meses que traen los datos ('AAAA-MM'), del más reciente al más viejo. */
 export const mesesDe = (items = []) => [...new Set(items.map((x) => String(x.fecha ?? x.mes ?? '').slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort().reverse()
 

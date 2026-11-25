@@ -2,6 +2,28 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-25 · Redes: PDF con leads y tarjetas compactas
+
+- El PDF de Redes incluye el bloque Leads de Redes (embudo y tarjetas), la columna de leads por país y marca, los leads
+  estimados por campaña y las 3 tarjetas compactas de Anuncios con su lectura. Sin datos de clientes. Revisado al ancho
+  de carta; la herramienta compartida descarga en A4 horizontal (no se tocó). REDES.md, 7.9.
+
+## 2026-11-25 · Redes: leads estimados por campaña
+
+- Tabla de campañas y ventana de cada campaña: leads estimados (mismo país y día; varias campañas a la vez → según sus
+  mensajes) y costo por lead, con etiqueta «estimado» y la regla en el globo. Consulta nueva a Meta por campaña y día.
+  Se quitó la columna de leads por anuncio. Guatemala: «sin campaña conectada». Noviembre: 13 de SV repartidos, 7 de GT
+  sin campaña. REDES.md, 7.8.
+
+## 2026-11-25 · Redes: todos los meses de 2026 y vista «Año»
+
+- Filtro de Mes de enero 2026 al actual; cada mes se pide al elegirlo; caché 24 h meses cerrados y 30 min el actual
+  (2 min si hubo aviso o vino vacío). Cada consulta falla sola. «Sin datos para este mes». Comparación con el mes
+  anterior solo si tiene datos. «Año 2026» en Resumen (ruta liviana nueva, solo al elegirla).
+- Arreglo: Instagram no filtra por fecha; enero salía sin las publicaciones de Instagram de RED SV (ahora 62 = año).
+- Tiempos: enero 12.2 s, junio 9.4 s, noviembre 9.7 s la primera vez; 0.03 s desde caché. Año: ~20 s y luego al
+  instante. REDES.md, 7.7.
+
 ## 2026-11-25 · Redes: tarjetas compactas en Anuncios
 
 - Presupuestos, ¿Dónde se vieron y escribieron? y Segmentaciones ganadoras rediseñadas como el

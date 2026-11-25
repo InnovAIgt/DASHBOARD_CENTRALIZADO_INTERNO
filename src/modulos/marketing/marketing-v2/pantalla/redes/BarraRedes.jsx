@@ -29,8 +29,13 @@ export function BarraRedes({ filtros, cambiar, meses, pdfListo }) {
         opciones={[['', 'Todas'], ...marcas.map(([k, m]) => [k, <><i className="mkv2-redes-punto" style={{ background: m.color }} />{m.corto}</>, `${m.nombre} · ${m.pais}`])]} />
       <Grupo etiqueta="Red" valor={filtros.red} onElegir={poner('red')}
         opciones={[['', 'Ambas'], ...Object.entries(REDES).map(([k, n]) => [k, n])]} />
-      <Grupo etiqueta="Mes" valor={filtros.mes} onElegir={poner('mes')}
-        opciones={[...meses].reverse().map((m) => [m, nombreMes(m).split(' ')[0], nombreMes(m)])} />
+      {/* Mes: lista de enero 2026 al actual (el más reciente arriba); cada mes se pide a Meta solo al elegirlo. */}
+      <label className="mkv2-barra-grupo">
+        <span className="mkv2-barra-etiqueta">Mes</span>
+        <select className="mkv2-control mkv2-redes-mes" value={filtros.mes} onChange={(e) => poner('mes')(e.target.value)} aria-label="Mes">
+          {meses.map((m) => <option key={m} value={m}>{nombreMes(m)}</option>)}
+        </select>
+      </label>
       <button type="button" id={ID_BOTON_PDF_REDES} className="mkv2-boton-barra mkv2-boton-pdf" disabled={!pdfListo}
         data-tip={pdfListo ? 'Descargar la vista actual en PDF (eliges los módulos)' : 'Preparando la herramienta de PDF…'}><Download size={15} aria-hidden="true" />PDF</button>
       <button type="button" className="mkv2-boton-icono mkv2-boton-redondo" onClick={() => cambiar({ ...FILTROS_REDES, mes: filtros.mes })} disabled={!hayFiltros}

@@ -12,6 +12,7 @@ import {
 import { dinero, filtrarRedes, MARCAS, nombreCampana, separarReclutamiento, totalesAnuncios } from '../../datos/redes.js'
 import { detalleCampana, detalleCostoLead, detalleListaLeads } from '../../datos/redesDetalle.js'
 import { costoPorLead, leadsDelMes, leadsDePublicacion } from '../../datos/redesLeads.js'
+import { campanasConDias, leadsDeFila, leadsPorCampana, REGLA_LEADS_CAMPANA, textoLeadsEst } from '../../datos/leadsCampana.js'
 import { DIAS, META_COSTO_MENSAJE } from '../../datos/redesVista.js'
 import { useDetalleAnuncios } from '../../datos/useRedesDatos.js'
 import { Aviso, COLOR_MAILING, Tarjeta } from '../mailing/piezas.jsx'
@@ -201,6 +202,12 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
   const leads = listos ? leadsDelMes(leadsRedes.leads, filtros.mes, { pais: filtros.pais, marca: filtros.marca }) : []
   // La pauta es solo de la cuenta USD (El Salvador): costo por lead = inversión ÷ leads de SV; en GT, «sin pauta».
   const cpl = costoPorLead({ gasto: k.gastado, leads, filtros })
+  // Leads ESTIMADOS por campaña: todos los leads del mes (sin filtro de marca) repartidos entre las campañas del mismo
+  // país activas ese día, según sus mensajes (datos/leadsCampana.js). Con TODAS las campañas del detalle (sin filtros).
+  const presTodas = det.detalle?.presupuestos ?? []
+  const est = listos && det.detalle && !det.detalle.errores?.leadsCampana ? leadsPorCampana(campanasConDias(presTodas), leadsDelMes(leadsRedes.leads, filtros.mes, {})) : null
+  const gastoCampana = (id) => presTodas.filter((x) => x.campanaId === String(id)).reduce((n, x) => n + x.gastado, 0)
+  const leadsEstDe = (id, gasto) => leadsDeFila(est, id, gasto, gastoCampana(id))
 
   // Texto de la publicación promocionada: el de la creatividad o, si es una publicación existente, su título.
   const textoDe = (a) => a.texto || (a.publicacion ? datos.publicaciones.find((p) => p.id === `fb-${a.publicacion}`)?.titulo : null) || null
@@ -213,7 +220,7 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
     const m = q.reduce((n, a) => n + a.mensajes, 0)
     return m > 0 ? g / m : null
   }
-  const ventanaDe = (p) => ventanaCampana({ c: p, todas: pres, moneda: monedaDet, meta: metaDet, leadsDePub: (id) => leadsDePublicacion(leads, id),
+  const ventanaDe = (p) => ventanaCampana({ c: p, todas: pres, moneda: monedaDet, meta: metaDet, leadsEst: leadsEstDe(p.campanaId, p.gastado),
     mes: filtros.mes, hoy: datos.hoy, anterior: costoAnterior(p.campanaId, p.marca), textoDe })
   const abrirCampana = (p) => abrir(ventanaDe(p))
   // Fila de la tabla de campañas (ruta /anuncios, id «ad-<campaña>-<marca>-<mes>») → su campaña del detalle del mes.
@@ -276,20 +283,39 @@ Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar
 
     <Tarjeta titulo={`Campañas · ${numero(new Set(campanas.map((c) => c.campana)).size)}`} sub={`En ${moneda} · debajo del nombre, el objetivo y el texto promocionado · clic en una campaña para ver su detalle`}>
       <div className="fv2-tabla-caja"><table className="fv2-tabla mkv2-tabla mkv2-redes-campanas">
-        <thead><tr>{['Campaña', 'Marca', 'Gastado', 'Alcance', 'Clics', 'CPC', 'Mensajes', 'Costo c/u'].map((h, i) => <th key={h} className={i > 1 ? 'num' : ''}>{h}</th>)}</tr></thead>
+        <thead><tr>{['Campaña', 'Marca', 'Gastado', 'Alcance', 'Clics', 'CPC', 'Mensajes', 'Costo c/u'].map((h, i) => <th key={h} className={i > 1 ? 'num' : ''}>{h}</th>)}
+          <th className="num" data-tip={REGLA_LEADS_CAMPANA}>Leads <em className="mkv2-redes-estimado">estimado</em></th>
+          <th className="num" data-tip={`Costo por lead = gastado ÷ leads estimados.
+${REGLA_LEADS_CAMPANA}`}>Costo por lead</th></tr></thead>
         <tbody>{[...campanas].sort((a, b) => b.gastado - a.gastado).map((a) => {
           const costo = a.mensajes > 0 ? a.gastado / a.mensajes : null
           const pocos = a.mensajes < MIN_MENSAJES
           const nom = nombreConTexto({ texto: textoDe(a), campana: a.campana, objetivo: a.objetivo })
+          const nLeads = leadsEstDe(String(a.id).split('-')[1], a.gastado)
           return <tr key={a.id} className={`mkv2-redes-clic ${pocos ? 'is-pocos' : ''}`} tabIndex={0} onClick={() => abrirFila(a)} onKeyDown={(e) => { if (e.key === 'Enter') abrirFila(a) }}>
             <td className="mkv2-celda-campana"><b className="mkv2-una-linea" data-tip={nom.tip}>{nom.titulo}</b>
               {nom.sub && <small className="mkv2-una-linea mkv2-redes-campana-sub" data-tip={a.campana}>{nom.sub}</small>}</td>
             <td>{MARCAS[a.marca]?.corto ?? 'Sin página'}</td><td className="num">{d(a.gastado)}</td>
             <td className="num">{numero(a.alcance)}</td><td className="num">{numero(a.clics)}</td>
             <td className="num">{d(a.clics ? a.gastado / a.clics : null)}</td><td className="num">{numero(a.mensajes)}</td>
-            <td className="num">{pocos ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${costo !== null && meta ? (costo <= meta ? 'is-verde' : 'is-amarillo') : ''}`}>{d(costo)}</span>}</td></tr>
+            <td className="num">{pocos ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${costo !== null && meta ? (costo <= meta ? 'is-verde' : 'is-amarillo') : ''}`}>{d(costo)}</span>}</td>
+            <td className="num mkv2-redes-rosa" data-tip={REGLA_LEADS_CAMPANA}>{est ? textoLeadsEst(nLeads) : '—'}</td>
+            <td className="num">{nLeads > 0 ? d(a.gastado / nLeads) : '—'}</td></tr>
         })}</tbody>
       </table></div>
+      <NotaLeadsCampana est={est} listos={listos} filtros={filtros} cargando={leadsRedes?.cargando} />
     </Tarjeta>
   </>
+}
+
+/** Debajo de la tabla: la regla del estimado, los leads de GT «sin campaña conectada» y los de días sin campaña activa. */
+function NotaLeadsCampana({ est, listos, filtros, cargando }) {
+  if (!listos) return <p className="mkv2-nota">Leads por campaña: {cargando ? 'cargando leads de Prospekt…' : 'leads de Prospekt por conectar'}.</p>
+  if (!est) return <p className="mkv2-nota">Leads por campaña: Meta no dio el gasto día por día de las campañas; se reintenta en unos minutos.</p>
+  const ver = (pais) => !filtros.pais || filtros.pais === pais
+  const gt = ver('GT') ? est.sinCampanaConectada.GT ?? 0 : 0
+  const sv = ver('SV') ? est.sinCampanaActiva.SV ?? 0 : 0
+  return <p className="mkv2-nota"><b>Leads por campaña:</b> {REGLA_LEADS_CAMPANA}
+    {gt > 0 && <> <b>Guatemala:</b> {numero(gt)} {gt === 1 ? 'lead' : 'leads'} · sin campaña conectada (su cuenta publicitaria no se puede leer).</>}
+    {sv > 0 && <> <b>El Salvador:</b> {numero(sv)} {sv === 1 ? 'lead' : 'leads'} en días sin campaña activa.</>}</p>
 }

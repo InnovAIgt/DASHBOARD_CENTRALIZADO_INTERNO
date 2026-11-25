@@ -140,7 +140,9 @@ test('rutas: publicaciones de Facebook e Instagram del mes y del anterior, con a
   const fetchFn = metaFalsa({
     '/111': { access_token: 'token-pagina-inventado' },
     '/111/published_posts': { data: [{ id: 'p1', created_time: '2026-11-05T15:00:00+0000', message: 'Hola' }] },
-    '/222/media': { data: [{ id: 'm1', timestamp: '2026-10-20T15:00:00+0000', media_type: 'IMAGE', media_product_type: 'FEED', like_count: 3, comments_count: 1 }] },
+    // Instagram: primero la lista liviana (más nueva primero, sin filtro de fecha); luego las estadísticas por ?ids=.
+    '/222/media': { data: [{ id: 'm0', timestamp: '2026-12-02T15:00:00+0000' }, { id: 'm1', timestamp: '2026-10-20T15:00:00+0000' }, { id: 'm2', timestamp: '2026-08-01T15:00:00+0000' }] },
+    '/': (u) => Object.fromEntries(u.searchParams.get('ids').split(',').map((id) => [id, { id, timestamp: '2026-10-20T15:00:00+0000', media_type: 'IMAGE', media_product_type: 'FEED', like_count: 3, comments_count: 1 }])),
     '/444': { error: { code: 10, message: 'sin acceso inventado' }, status: 403 },
   }, llamadas)
   const r = await responderRedes({ recurso: 'publicaciones', method: 'GET', query: { mes: '2026-11' }, env: ENV, fetchFn, ahora: AHORA, cuadro: CUADRO })
@@ -148,6 +150,7 @@ test('rutas: publicaciones de Facebook e Instagram del mes y del anterior, con a
   assert.equal(r.status, 200)
   assert.deepEqual(c.meses, ['2026-11', '2026-10'])
   assert.deepEqual(c.publicaciones.map((p) => [p.red, p.fecha]).sort(), [['fb', '2026-11-05'], ['ig', '2026-10-20']])
+  assert.equal(llamadas.find((u) => u.pathname.endsWith('/v25.0/') || u.searchParams.has('ids'))?.searchParams.get('ids'), 'm1', 'solo se piden estadísticas de las del rango (no la de diciembre ni la de agosto)')
   assert.equal(c.avisos.length, 1)
   assert.match(c.avisos[0], /RED Intelfon El Salvador \(Facebook\)/)
   assert.ok(llamadas.filter((u) => u.pathname.endsWith('/published_posts')).every((u) => u.searchParams.get('access_token') === 'token-pagina-inventado'), 'las métricas de página van con el token de la página')
@@ -258,4 +261,53 @@ test('rutas: el token, la clave, el appsecret_proof y las URLs firmadas nunca sa
   } finally {
     console.error = original
   }
+})
+
+test('caché por mes: 24 h si el mes ya cerró, 30 min el actual; meses del año', async () => {
+  const { vidaCache, mesesDelAnio, CACHE_CERRADO_MS, CACHE_MS } = await import('./rutas.js')
+  const ahora = AHORA().getTime()
+  assert.deepEqual([vidaCache('2026-10', ahora), vidaCache('2026-11', ahora), vidaCache('2025-12', ahora)], [CACHE_CERRADO_MS, CACHE_MS, CACHE_CERRADO_MS])
+  assert.deepEqual(mesesDelAnio('2026-03'), ['2026-01', '2026-02', '2026-03'])
+})
+
+test('año: publicaciones y alcance por mes de cada cuenta, en pocas consultas; la parte cerrada se guarda aparte', async () => {
+  vaciarCacheRedes()
+  const llamadas = []
+  const fetchFn = metaFalsa({
+    '/111': { access_token: 'token-pagina-inventado' },
+    '/111/published_posts': { data: [{ id: 'a', created_time: '2026-01-10T15:00:00+0000' }, { id: 'b', created_time: '2026-02-03T15:00:00+0000' }] },
+    '/111/insights': { data: [{ name: 'page_total_media_view_unique', values: [{ value: 40, end_time: '2026-01-11T08:00:00+0000' }, { value: 60, end_time: '2026-02-04T08:00:00+0000' }] }] },
+    '/222/media': { data: [{ id: 'c', timestamp: '2026-02-05T15:00:00+0000', media_product_type: 'FEED' }, { id: 'd', timestamp: '2026-02-06T15:00:00+0000', media_product_type: 'STORY' }] },
+    '/222/insights': { data: [] },
+    '/444': { access_token: 'token-pagina-inventado' },
+    '/444/published_posts': { data: [] },
+    '/444/insights': { data: [] },
+    '/act_333': { name: 'Cuenta inventada', currency: 'USD' },
+    '/act_333/campaigns': { data: [] },
+    '/act_333/ads': { data: [] },
+    '/act_333/insights': { data: [] },
+  }, llamadas)
+  const ahora = () => new Date('2026-02-20T15:00:00Z')
+  const r = await responderRedes({ recurso: 'anio', method: 'GET', query: { mes: '2026-02' }, env: ENV, fetchFn, ahora, cuadro: CUADRO })
+  const d = JSON.parse(r.body)
+  assert.equal(r.status, 200)
+  assert.deepEqual(d.meses, ['2026-01', '2026-02'])
+  const gtFb = d.anio.filas.filter((f) => f.marca === 'gt' && f.red === 'fb').map((f) => [f.mes, f.publicaciones, f.alcance])
+  assert.deepEqual(gtFb, [['2026-01', 1, 40], ['2026-02', 1, 60]])
+  assert.deepEqual(d.anio.filas.filter((f) => f.red === 'ig').map((f) => [f.mes, f.publicaciones]), [['2026-01', 0], ['2026-02', 1]], 'las historias no cuentan')
+  assert.ok(llamadas.every((u) => !u.searchParams.get('fields')?.includes('insights.metric')), 'liviano: sin estadísticas por publicación')
+  vaciarCacheRedes()
+})
+
+test('caché: si Meta responde vacío, la copia dura poco aunque el mes ya haya cerrado', async () => {
+  vaciarCacheRedes()
+  const llamadas = []
+  const cuadro = { ...CUADRO, gt: { ...CUADRO.gt, paginaFacebook: '', instagram: '' } }
+  const fetchFn = metaFalsa({ '/act_333': { name: 'Cuenta inventada', currency: 'USD' }, '/act_333/campaigns': { data: [] }, '/act_333/ads': { data: [] }, '/act_333/insights': { data: [] } }, llamadas)
+  await responderRedes({ recurso: 'anuncios', method: 'GET', query: { mes: '2026-01' }, env: ENV, fetchFn, ahora: AHORA, cuadro })
+  const n = llamadas.length
+  const despues = () => new Date(AHORA().getTime() + 5 * 60 * 1000)
+  await responderRedes({ recurso: 'anuncios', method: 'GET', query: { mes: '2026-01' }, env: ENV, fetchFn, ahora: despues, cuadro })
+  assert.ok(llamadas.length > n, 'a los 5 min se vuelve a pedir (no se guardó 24 h vacío)')
+  vaciarCacheRedes()
 })

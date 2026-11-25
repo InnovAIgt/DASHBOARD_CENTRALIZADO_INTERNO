@@ -67,7 +67,7 @@ export function publicoDe(t = {}) {
  * Arma el detalle con las respuestas de Meta. marcaDe: Map página/Instagram → marca. Quita el reclutamiento por el
  * nombre de la campaña.
  */
-export function armarDetalle({ ads = [], porAnuncio = [], edadSexo = [], ubicaciones = [], horas = [], conjuntos = [], campanas = [], porConjunto = [], horasConjunto = [], porSemana = [], marcaDe = new Map(), moneda = 'USD', zonaHoraria = null }) {
+export function armarDetalle({ ads = [], porAnuncio = [], edadSexo = [], ubicaciones = [], horas = [], conjuntos = [], campanas = [], porConjunto = [], horasConjunto = [], porSemana = [], porDia = [], marcaDe = new Map(), moneda = 'USD', zonaHoraria = null }) {
   const marcaAd = new Map(ads.map((a) => [String(a.id), marcaDe.get(paginaDelAnuncio(a)) ?? '']))
   const marca = (f) => marcaAd.get(String(f.ad_id)) ?? ''
   const adPorId = new Map(ads.map((a) => [String(a.id), a]))
@@ -127,6 +127,10 @@ export function armarDetalle({ ads = [], porAnuncio = [], edadSexo = [], ubicaci
       ...lista,
       porSemana: porSemana.filter((w) => String(w.campaign_id) === x.campanaId).map((w) => ({ desde: w.date_start, hasta: w.date_stop,
         gastado: Math.round((Number(w.spend) || 0) * 100) / 100, mensajes: mensajesDe(w) })).sort((a, b) => String(a.desde).localeCompare(String(b.desde))),
+      // Día por día (gasto y mensajes): para repartir los leads de Redes entre las campañas activas ese día.
+      porDia: porDia.filter((w) => String(w.campaign_id) === x.campanaId).map((w) => ({ fecha: w.date_start,
+        gastado: Math.round((Number(w.spend) || 0) * 100) / 100, mensajes: mensajesDe(w) })).filter((w) => w.gastado > 0 || w.mensajes > 0)
+        .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))),
     }
   }
   // Marca de una campaña (para las horas, que se piden por campaña): la de sus anuncios si todos son de la misma marca.
@@ -182,6 +186,8 @@ const CAMPOS_FILA = 'ad_id,adset_id,adset_name,campaign_id,campaign_name,spend,i
 export const LIMITE_DETALLE_MS = 45_000
 export const LIMITE_HORAS_MS = 20_000
 export const CACHE_CONSULTA_MS = 30 * 60 * 1000
+/** Mes ya cerrado: la copia de cada consulta dura 24 h. */
+export const CACHE_CONSULTA_CERRADO_MS = 24 * 3600 * 1000
 /** De cuántas consultas a la vez se piden (no todas en paralelo: Meta responde código 2 con consultas pesadas juntas). */
 export const CONSULTAS_A_LA_VEZ = 2
 
@@ -191,6 +197,8 @@ export const RECUADROS = {
   // Solo para la ventana de una segmentación: si fallan, la ventana dice «sin datos» en esa parte.
   porConjunto: [],
   porSemana: [],
+  // Leads por campaña (estimados): si falla, la tabla y la ventana dicen «sin dato» en esa columna.
+  porDia: ['leadsCampana'],
   horasConjunto: [],
   conjuntos: ['presupuestos', 'segmentos'],
   campanas: ['presupuestos'],
@@ -236,6 +244,8 @@ export async function leerDetalle({ cuentaId, mes, hoy, llamar, llamarUno, op, m
     porConjunto: () => llamar(`${act}/insights`, { level: 'adset', time_range, limit: 500, fields: 'adset_id,campaign_name,spend,reach,frequency,impressions,clicks,actions' }, opT),
     // Por campaña y semana del mes (1–7, 8–14…): para ver si los mensajes bajan con el mismo gasto.
     porSemana: () => llamar(`${act}/insights`, { level: 'campaign', time_range, limit: 500, time_increment: 7, fields: 'campaign_id,campaign_name,spend,actions' }, opT),
+    // Por campaña y día: gasto y mensajes de cada día (para repartir los leads de Redes entre campañas activas).
+    porDia: () => llamar(`${act}/insights`, { level: 'campaign', time_range, limit: 500, time_increment: 1, fields: 'campaign_id,campaign_name,spend,actions' }, opT),
     horasConjunto: () => llamar(`${act}/insights`, { level: 'adset', time_range, limit: 500, breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
       fields: 'adset_id,campaign_name,spend,actions' }, { ...opT, maxPaginas: 10 }),
     edadSexo: () => insights({ breakdowns: 'age,gender' }),
@@ -250,7 +260,8 @@ export async function leerDetalle({ cuentaId, mes, hoy, llamar, llamarUno, op, m
   const tareas = Object.entries(consultas).map(([k, f]) => [k, async () => {
     const clave = `${act}|${mes}|${k}`
     const copia = cacheConsultas.get(clave)
-    if (copia && ahora() - copia.en < CACHE_CONSULTA_MS) return { ok: true, valor: copia.valor }
+    // Mes cerrado (antes del mes de «hoy»): 24 h; mes actual: 30 min.
+    if (copia && ahora() - copia.en < (mes < String(hoy).slice(0, 7) ? CACHE_CONSULTA_CERRADO_MS : CACHE_CONSULTA_MS)) return { ok: true, valor: copia.valor }
     try {
       const valor = await f()
       cacheConsultas.set(clave, { en: ahora(), valor })
@@ -268,7 +279,7 @@ export async function leerDetalle({ cuentaId, mes, hoy, llamar, llamarUno, op, m
   const cuenta = datos.cuenta ?? {}
   return {
     ...armarDetalle({ ads: datos.ads ?? [], porAnuncio: datos.porAnuncio ?? [], edadSexo: datos.edadSexo ?? [], ubicaciones: datos.ubicaciones ?? [], horas: datos.horas ?? [],
-      porConjunto: datos.porConjunto ?? [], horasConjunto: datos.horasConjunto ?? [], porSemana: datos.porSemana ?? [],
+      porConjunto: datos.porConjunto ?? [], horasConjunto: datos.horasConjunto ?? [], porSemana: datos.porSemana ?? [], porDia: datos.porDia ?? [],
       conjuntos: datos.conjuntos ?? [], campanas: datos.campanas ?? [], marcaDe, moneda: String(cuenta.currency ?? '').toUpperCase() || 'USD', zonaHoraria: cuenta.timezone_name ?? null }),
     errores,
     guardados: [...new Set(guardados.flatMap((k) => RECUADROS[k] ?? []))],

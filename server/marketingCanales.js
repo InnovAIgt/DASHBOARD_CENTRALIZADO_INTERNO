@@ -7,7 +7,7 @@
  *   GET  /api/marketing/mantener-supabase        → server/mktMantener.js (cron de vercel.json, CRON_SECRET)
  *   GET  /api/marketing/mailing/{campanas,resumen,detalle,leads}
  *   POST/DELETE /api/marketing/mailing/cargo
- *   GET  /api/marketing/redes/{cuentas,publicaciones,programadas,anuncios,anuncios-detalle,leads}
+ *   GET  /api/marketing/redes/{cuentas,publicaciones,programadas,anuncios,anuncios-detalle,anio,leads}
  *
  * vercel.json manda esas URLs a api/marketing/canales.js con ?ruta=… (rewrite). /api/marketing/reuniones (Flujo de
  * ventas) NO pasa por aquí: sigue en su propia función.
@@ -22,7 +22,7 @@ import { responderMantener } from './mktMantener.js'
 import { responderLeadsRedes } from './redes/leads.js'
 import { responderRedes } from './redes/rutas.js'
 
-const RECURSOS_REDES = ['cuentas', 'publicaciones', 'programadas', 'anuncios', 'anuncios-detalle']
+const RECURSOS_REDES = ['cuentas', 'publicaciones', 'programadas', 'anuncios', 'anuncios-detalle', 'anio']
 
 /** Las rutas y su manejador: (request, query) → { status, headers, body }. */
 export const RUTAS_CANALES = {
