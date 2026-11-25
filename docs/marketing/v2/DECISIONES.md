@@ -107,3 +107,14 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
   cuentan en Mailing.
 - Interruptor **«Ver leads de todos los orígenes»**, apagado por defecto, para revisión.
 - Nota de la tarjeta: «Leads de correo: X. Solo 29 de 291 leads de Prospekt traen correo» (con los números del día).
+
+## 2026-11-24 · Redes: cuentas publicitarias y reclutamiento aparte
+
+- **Cuentas (Keily):** solo `act_2035747430056013` (USD, «Negocio de Red Intelfon»). El gasto se reparte **por la
+  página del anuncio** (Red Intelfon El Salvador → RED SV; DATA RED → DATA RED). RED GT se muestra «sin pauta en las
+  cuentas que ve el token». El gasto sin página identificada va aparte. La cuenta GTQ (personal, sin anuncios de RED)
+  queda fuera.
+- **Reclutamiento (Keily):** las campañas cuyo nombre tenga `vacante`, `plaza`, `empleo`, `RH`, `reclutamiento`,
+  `trabajo`, `contratación`, `contratando`, «ejecutivo de ventas» o «únete» (palabras y frases completas, sin
+  mayúsculas ni tildes, también en plural; lista fácil de editar) se marcan **«Reclutamiento»**. **No
+  cuentan** en inversión, mensajes ni costo por mensaje de marketing; se muestran aparte con su gasto.

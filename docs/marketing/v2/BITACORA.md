@@ -2,6 +2,71 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Redes: Anuncios fase 2 con datos reales
+
+- Ruta nueva /api/marketing/redes/anuncios-detalle (por anuncio, sin reclutamiento, mes del filtro): edad y sexo,
+  plataforma y ubicación, horarios (zona de la cuenta America/El_Salvador, UTC−6), segmentaciones, presupuestos y
+  conteo de formularios (4 en noviembre, 5 en octubre).
+- Pantalla sin etiquetas «Ejemplo»; «pocos datos» con menos de 5 mensajes, nunca ganador. Detalle en REDES.md, 7.4.
+
+## 2026-11-24 · Redes, Tarea 2: pantalla conectada a Meta
+
+- Servidor: cuadro de marcas lleno, métricas v25 de cuenta y de publicación, anuncios por página del anuncio,
+  reclutamiento aparte, fechas en UTC−6, caché y errores; prueba de que no se filtran secretos.
+- Pantalla: siempre Meta (error con «Reintentar»), tabla de hechas y programadas por país y marca, «Instagram no
+  permite ver programadas», alcance como suma de alcance diario, vistas y clics en Publicaciones, PDF igual.
+- Con datos reales: 25 publicaciones en noviembre, 0 programadas, inversión de marketing US$ 142.84 y reclutamiento
+  US$ 77.25. Detalle en REDES.md, 7.3. Pendiente nuevo: permiso para comentarios de Facebook.
+
+## 2026-11-24 · Redes: consultas 10 y 11 con el token nuevo
+
+- `ads_posts` sigue con 403. `promotion_status` dice `inactive` en casi todo, también en publicaciones que sí están en
+  anuncios de la cuenta USD: no sirve. No se puede confirmar con el token si RED GT pauta desde otra cuenta.
+
+## 2026-11-24 · Redes: token nuevo con read_insights
+
+- Keily agregó el caso de uso «Administrar todos los aspectos de tu página» y generó un token nuevo (7 permisos).
+  `/me/permissions` confirma read_insights concedido.
+- Las estadísticas de Facebook de página y de publicación ya responden en las 3 páginas (REDES.md, 7.2 y tabla 2.1).
+  Se quita el pendiente de «Facebook vacío».
+
+## 2026-11-24 · Redes: consulta 10 (ads_posts)
+
+- `ads_posts` da error 403 (código 200, falta permiso) en las 3 páginas: no se puede saber con el token si RED GT
+  pauta desde otra cuenta. Queda la pregunta a Marketing en PENDIENTES.
+
+## 2026-11-24 · Redes: consulta 9 y lista de reclutamiento
+
+- El usuario del token tiene ANALYZE en las 3 páginas, pero las estadísticas de Facebook (página y publicación)
+  siguen vacías en RED SV y DATA RED, también con fechas de hace más de 3 días: no es demora; falta revisar
+  read_insights o el token del usuario del sistema.
+- Reclutamiento: se agregan «ejecutivo de ventas», «contratación», «contratando» y «únete» (frase completa).
+
+## 2026-11-24 · Redes: cuentas aprobadas y reclutamiento aparte
+
+- Keily aprueba la propuesta de cuentas (solo la USD, gasto por página del anuncio, RED GT «sin pauta», GTQ fuera).
+- Reclutamiento se separa por palabras en el nombre de la campaña (DECISIONES.md; REDES.md, 7.2).
+- PENDIENTES: de dónde sale la pauta de RED GT (cuenta del negocio GT o cuenta personal que el token no ve).
+
+## 2026-11-24 · Redes: cuentas publicitarias y estadísticas con el token
+
+- Cuenta USD (act_2035747430056013): del «Negocio de Red Intelfon», US$ 1,697.67 en total y US$ 666.55 en 90 días,
+  78 campañas; promociona RED SV (81 anuncios) y DATA RED (2). Ningún anuncio de RED GT. Hay campañas de reclutamiento.
+- Cuenta GTQ (act_1657231285337963): personal, sin anuncios de RED (sin gasto ni campañas): queda fuera.
+- Negocio «RED Intelfon Guatemala»: sin cuentas publicitarias ni páginas; sin error de permiso.
+- Estadísticas v25: Instagram (publicación y cuenta) responde; Facebook (página y publicación) responde vacío.
+- Propuesta de cuentas y detalle en REDES.md, 7.2 (y tabla 2.1 con los nombres de v25); pendientes nuevos.
+
+## 2026-11-24 · Redes, parte (1): qué ve el token de Meta
+
+- Token de usuario (app «Automatizacion RRSS RED»), API v25.0. Siete consultas GET firmadas con appsecret_proof.
+  El primer intento falló (código 190, token mal formado: faltaba la «E» inicial); Keily lo corrigió en .env.local.
+- Ve las 3 páginas (DATA RED, RED SV, RED GT) con sus 3 Instagram, 2 negocios y 2 cuentas publicitarias (USD y GTQ).
+- `scheduled_posts` se puede leer en las 3 páginas (hoy 0 programadas). Las estadísticas de página de prueba
+  responden sin error pero vacías. Detalle en REDES.md, 7.1; pendientes nuevos en PENDIENTES.md. Pantalla sin cambios.
+- Decisión de Keily: por ahora solo la cuenta publicitaria act_2035747430056013 (USD); la GTQ queda fuera hasta que
+  Marketing confirme si es de la empresa.
+
 ## 2026-11-24 · Mailing cuenta solo los leads de Mailing
 
 - Pedido de Keily: tarjeta, sub-pestaña Leads y Comparar muestran por defecto solo los leads con campaña asignada o
