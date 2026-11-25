@@ -1,22 +1,27 @@
-// Canales de marketing · Redes sociales · ANUNCIOS (fase 2, pedido de Ismael): cálculos y DATOS DE EJEMPLO de lo que
-// la fase 1 todavía no pide a Meta.
-//   Con forma real (rutas de la fase 1): impresiones, alcance, clics, gasto y mensajes por campaña → indicadores,
-//   presupuestos (inversión vs mensajes) y tabla.
-//   SOLO EJEMPLO hasta conectarlos (PENDIENTES): horarios (breakdown por hora), edad y sexo (breakdowns age, gender),
-//   segmentaciones (por conjunto de anuncios), plataforma y ubicación (publisher_platform, platform_position) y
-//   formularios (leads de Meta). Se generan proporcionales a los totales filtrados, con semilla fija, y la pantalla los
-//   marca «Ejemplo». Nada de esto es real.
+// Canales de marketing · Redes sociales · ANUNCIOS (fase 2, pedido de Ismael): cálculos con DATOS REALES de Meta.
+//   Ruta /api/marketing/redes/anuncios (por campaña): indicadores y tabla.
+//   Ruta /api/marketing/redes/anuncios-detalle?mes= (por anuncio, sin reclutamiento): edad y sexo, plataforma y
+//   ubicación, horarios (día y franja de 2 h, zona de la cuenta = UTC−6), segmentaciones (conjuntos de anuncios),
+//   presupuestos y formularios (solo el conteo).
+// Regla de Keily (24/11/2026): un grupo con MENOS DE 5 MENSAJES se marca «pocos datos» y nunca sale como ganador.
+// Sin pantalla ni red; se prueba con node --test.
 import { semaforoCosto } from './redesVista.js'
 
-export const EDADES = ['18–24', '25–34', '35–44', '45–54', '55–64', '65+']
-const PESO_EDAD = [0.08, 0.27, 0.31, 0.21, 0.1, 0.03]
-const SEGMENTOS = [['Empresas logística GT 30–55', 'gt'], ['Dueños de flotas GT', 'gt'], ['Seguridad privada GT', 'gt'], ['Empresas SV 25–55', 'sv'],
-  ['Transporte SV', 'sv'], ['Pymes tecnología SV', 'dr'], ['Gerentes TI SV', 'dr']]
-export const UBICACIONES = [['fb-feed', 'FB · Feed', 'fb', 0.34, 1.3], ['fb-stories', 'FB · Stories', 'fb', 0.08, 1.9], ['fb-reels', 'FB · Reels', 'fb', 0.1, 1.6],
-  ['ig-feed', 'IG · Feed', 'ig', 0.2, 1.7], ['ig-stories', 'IG · Stories', 'ig', 0.16, 1.4], ['ig-reels', 'IG · Reels', 'ig', 0.12, 1.2]]
+export const MIN_MENSAJES = 5
+export const EDADES = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+']
+const PLATAFORMA = { facebook: 'Facebook', instagram: 'Instagram', messenger: 'Messenger', audience_network: 'Audience Network', whatsapp: 'WhatsApp', threads: 'Threads' }
+const RED_DE = { facebook: 'fb', instagram: 'ig' }
+const POSICION = { feed: 'Feed', story: 'Stories', facebook_stories: 'Stories', instagram_stories: 'Stories', facebook_reels: 'Reels', instagram_reels: 'Reels',
+  reels: 'Reels', marketplace: 'Marketplace', video_feeds: 'Videos', instagram_explore: 'Explorar', instagram_explore_grid_home: 'Explorar', search: 'Búsqueda',
+  right_hand_column: 'Columna derecha', an_classic: 'Clásico', rewarded_video: 'Video con premio', messenger_inbox: 'Bandeja', profile_feed: 'Perfil',
+  instagram_profile_feed: 'Perfil', facebook_profile_feed: 'Perfil', whatsapp_status: 'Estados', unknown: 'Sin dato',
+  facebook_reels_overlay: 'Reels (anuncio sobre el reel)', instream_video: 'Video in-stream', instagram_search: 'Búsqueda', notification: 'Notificaciones',
+  biz_disco_feed: 'Descubrir negocios', facebook_groups_feed: 'Grupos', instagram_profile_reels: 'Reels del perfil' }
 
-function azar(semilla) { let s = semilla; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280 } }
-const semillaDe = (texto) => [...String(texto)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 233280, 7)
+const div = (a, b) => (b > 0 ? a / b : null)
+const conCosto = (g) => ({ ...g, costo: div(g.gastado, g.mensajes), pocos: g.mensajes < MIN_MENSAJES })
+/** El más barato entre los que tienen 5 o más mensajes (nunca uno con «pocos datos»). */
+export const masBarato = (grupos = []) => grupos.filter((g) => !g.pocos && g.costo !== null).reduce((a, b) => (!a || b.costo < a.costo ? b : a), null)
 
 /** Totales con forma real: impresiones, alcance, frecuencia, clics, CTR, CPC y costo por mensaje (una moneda). */
 export function indicadoresAnuncios(anuncios = []) {
@@ -26,7 +31,6 @@ export function indicadoresAnuncios(anuncios = []) {
   const clics = suma('clics')
   const gastado = suma('gastado')
   const mensajes = suma('mensajes')
-  const div = (a, b) => (b > 0 ? a / b : null)
   return { impresiones, alcance, frecuencia: div(impresiones, alcance), clics, ctr: div(clics * 100, impresiones), gastado, cpc: div(gastado, clics), mensajes, costoMensaje: div(gastado, mensajes) }
 }
 
@@ -38,36 +42,67 @@ export function monedaPrincipal(anuncios = []) {
   return { moneda, campanas: anuncios.filter((a) => a.moneda === moneda), otras: [...cuenta.keys()].filter((m) => m !== moneda) }
 }
 
-/** Presupuestos: cada campaña con gasto, mensajes y si rinde mejor o peor que la meta de su moneda. */
-export const presupuestos = (anuncios = []) => anuncios.map((a) => {
-  const costo = a.mensajes > 0 ? a.gastado / a.mensajes : null
-  return { id: a.id, campana: a.campana, marca: a.marca, moneda: a.moneda, gastado: a.gastado, mensajes: a.mensajes, costo, semaforo: semaforoCosto(costo, a.moneda) }
+/**
+ * Filtra el detalle por marca y país (las filas «sin página» solo salen sin esos filtros) y, en ubicaciones, por red.
+ * @param {object} detalle respuesta de /anuncios-detalle (una cuenta)
+ */
+export function filtrarDetalle(detalle, filtros = {}, paisDe = {}) {
+  if (!detalle) return null
+  const pasa = (x) => (!filtros.marca || x.marca === filtros.marca) && (!filtros.pais || paisDe[x.marca] === filtros.pais)
+  const f = (lista) => (lista ?? []).filter(pasa)
+  return { ...detalle, edadSexo: f(detalle.edadSexo), horas: f(detalle.horas), segmentos: f(detalle.segmentos), presupuestos: f(detalle.presupuestos), formularios: f(detalle.formularios),
+    ubicaciones: f(detalle.ubicaciones).filter((u) => !filtros.red || RED_DE[u.plataforma] === filtros.red) }
+}
+
+/** Edad y sexo: por rango de edad, mensajes de hombres y mujeres, gasto, costo por mensaje y «pocos datos». */
+export function edadesDe(edadSexo = []) {
+  const rangos = [...new Set([...EDADES, ...edadSexo.map((x) => x.edad)])].filter((e) => e && e !== 'Unknown')
+  return rangos.map((edad) => {
+    const q = edadSexo.filter((x) => x.edad === edad)
+    const m = (s) => q.filter((x) => x.sexo === s).reduce((n, x) => n + x.mensajes, 0)
+    return conCosto({ edad: edad.replace('-', '–'), hombres: m('hombres'), mujeres: m('mujeres'), sinDato: m('sin dato'),
+      gastado: q.reduce((n, x) => n + x.gastado, 0), mensajes: q.reduce((n, x) => n + x.mensajes, 0) })
+  }).filter((e) => e.gastado > 0 || e.mensajes > 0)
+}
+
+/** Plataforma y ubicación: agrupadas, con impresiones, mensajes, costo por mensaje y «pocos datos». */
+export function ubicacionesDe(ubicaciones = []) {
+  const m = new Map()
+  for (const u of ubicaciones) {
+    const clave = `${u.plataforma}|${u.posicion}`
+    const g = m.get(clave) ?? { clave, nombre: `${PLATAFORMA[u.plataforma] ?? u.plataforma} · ${POSICION[u.posicion] ?? String(u.posicion ?? '').replace(/_/g, ' ')}`,
+      red: RED_DE[u.plataforma] ?? 'otra', impresiones: 0, gastado: 0, mensajes: 0 }
+    g.impresiones += u.impresiones ?? 0
+    g.gastado += u.gastado
+    g.mensajes += u.mensajes
+    m.set(clave, g)
+  }
+  return [...m.values()].map(conCosto).sort((a, b) => b.impresiones - a.impresiones)
+}
+
+/** Horarios: matriz 7 días (lunes primero) × 12 franjas de 2 h con mensajes; el mejor solo si tiene 5+ mensajes. */
+export function horasDe(horas = []) {
+  const matriz = Array.from({ length: 7 }, () => Array(12).fill(0))
+  for (const h of horas) if (h.dia >= 0 && h.dia < 7 && h.franja >= 0 && h.franja < 12) matriz[h.dia][h.franja] += h.mensajes
+  let mejor = null
+  matriz.forEach((fila, d) => fila.forEach((v, b) => { if (v >= MIN_MENSAJES && (!mejor || v > mejor.mensajes)) mejor = { dia: d, franja: b, mensajes: v } }))
+  return { matriz, mejor, total: matriz.flat().reduce((n, v) => n + v, 0) }
+}
+
+/** Segmentaciones: conjuntos con su público y costo por mensaje; ganadores primero, «pocos datos» al final. */
+export const segmentosDe = (segmentos = [], moneda) => segmentos.map((s) => ({ ...conCosto(s), semaforo: semaforoCosto(div(s.gastado, s.mensajes), moneda) }))
+  .sort((a, b) => (a.pocos - b.pocos) || ((a.costo ?? Infinity) - (b.costo ?? Infinity)))
+
+/** Texto corto del público de un conjunto. */
+export const textoPublico = (p = {}) => [p.edad && `Edad ${p.edad}`, p.sexo, p.ubicaciones === 'Automáticas' ? 'ubicaciones automáticas' : p.ubicaciones,
+  p.paises?.length ? p.paises.join(', ') : null, p.intereses?.length ? `intereses: ${p.intereses.slice(0, 3).join(', ')}${p.intereses.length > 3 ? ` (+${p.intereses.length - 3})` : ''}` : null]
+  .filter(Boolean).join(' · ')
+
+/** Presupuestos: cada campaña con su presupuesto (diario o total), gasto, mensajes, costo, semáforo y «pocos datos». */
+export const presupuestosDe = (presupuestos = [], moneda) => presupuestos.map((p) => {
+  const g = conCosto(p)
+  return { ...g, moneda, semaforo: g.pocos ? null : semaforoCosto(g.costo, moneda) }
 })
 
-/** DATOS DE EJEMPLO de la fase 2, proporcionales a los totales filtrados. marcas = las que pasan el filtro. */
-export function ejemploFase2({ mes, mensajes = 0, gastado = 0, impresiones = 0, marcas = ['gt', 'sv', 'dr'], redes = ['fb', 'ig'] }) {
-  const r = azar(semillaDe(`${mes}|${marcas.join()}|${redes.join()}`))
-  // Horarios: 7 días × 12 bloques de 2 horas (mensajes).
-  const horas = Array.from({ length: 7 }, (_, d) => Array.from({ length: 12 }, (_, b) => {
-    const h = b * 2
-    let v = (h >= 8 && h <= 18 ? 1 : h >= 19 && h <= 21 ? 0.7 : 0.15) * (d < 5 ? 1 : 0.55) * (0.6 + r() * 0.8) * (mensajes / 40)
-    if (d === 1 && (h === 10 || h === 12)) v *= 1.8
-    if (d === 3 && h === 16) v *= 1.6
-    return Math.round(v)
-  }))
-  const edades = EDADES.map((rango, i) => {
-    const total = mensajes * PESO_EDAD[i]
-    const hombres = Math.round(total * (0.58 + r() * 0.1))
-    const gasto = gastado * PESO_EDAD[i] * (i === 0 || i === 5 ? 1.5 : i === 2 ? 0.8 : 1)
-    return { rango, hombres, mujeres: Math.max(0, Math.round(total) - hombres), costo: total > 0 ? gasto / total : null }
-  })
-  const segs = SEGMENTOS.filter(([, m]) => marcas.includes(m))
-  const segmentos = segs.map(([nombre, marca]) => {
-    const g = (gastado / Math.max(1, segs.length)) * (0.6 + r() * 0.8)
-    const m = Math.max(1, Math.round(g / (0.9 + r() * 2.4)))
-    return { nombre, marca, gastado: g, mensajes: m, costo: g / m }
-  }).sort((a, b) => a.costo - b.costo)
-  const ubicaciones = UBICACIONES.filter(([, , red]) => redes.includes(red))
-    .map(([clave, nombre, red, peso, costo]) => ({ clave, nombre, red, impresiones: Math.round(impresiones * peso), costoMensaje: costo }))
-  return { fuente: 'ejemplo', horas, edades, segmentos, ubicaciones, formularios: Math.round(mensajes * 0.18) }
-}
+/** Formularios (solo el conteo de Meta) de las filas filtradas. */
+export const formulariosDe = (formularios = []) => formularios.reduce((n, f) => n + (Number(f.formularios) || 0), 0)
