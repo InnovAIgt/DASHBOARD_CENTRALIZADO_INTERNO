@@ -1,63 +1,72 @@
 // Canales de marketing · Redes sociales · ANUNCIOS (pedido de Ismael; mockup_redes_completo). Todo con DATOS REALES de
 // Meta: indicadores y tabla por campaña (/anuncios, con el objetivo y el texto promocionado) y, del mes elegido,
-// presupuestos (barras de costo por mensaje con la meta), ¿dónde se vieron?, segmentaciones, ¿cuándo nos escriben? y
+// presupuestos (barras de costo por mensaje con la meta), ¿dónde se vieron y dónde escribieron? (Plataformas.jsx), segmentaciones, ¿cuándo nos escriben? y
 // edad y sexo (/anuncios-detalle, por anuncio). Sin reclutamiento (va aparte). Un grupo con menos de 5 mensajes dice
 // «pocos datos» y nunca sale como ganador. Todo lo que se puede tocar abre la ventana de detalle. Nunca se mezclan monedas.
 import { Fragment, useMemo } from 'react'
 import { numero, pct } from '../../datos/calculos.js'
 import {
-  filtrarDetalle, formulariosDe, horariosAnuncios, horasDe, indicadoresAnuncios, masBarato, MIN_MENSAJES, monedaPrincipal, objetivoTexto, piramideEdadSexo,
-  plataformasDe, presupuestosDe, recomendacionHorario, segmentosDe, textoDias, ubicacionesDe,
+  filtrarDetalle, formulariosDe, horariosAnuncios, horasDe, indicadoresAnuncios, MIN_MENSAJES, monedaPrincipal, objetivoTexto, piramideEdadSexo,
+  nombreConTexto, plataformasDe, presupuestosDe, recomendacionHorario, segmentosDe, textoDias,
 } from '../../datos/anunciosFase2.js'
-import { dinero, filtrarRedes, MARCAS, nombreCampana, separarReclutamiento, tituloLimpio, totalesAnuncios } from '../../datos/redes.js'
+import { dinero, filtrarRedes, MARCAS, nombreCampana, separarReclutamiento, totalesAnuncios } from '../../datos/redes.js'
 import { detalleCampana, detalleCostoLead, detalleListaLeads } from '../../datos/redesDetalle.js'
-import { costoPorLead, leadsDelMes } from '../../datos/redesLeads.js'
+import { costoPorLead, leadsDelMes, leadsDePublicacion } from '../../datos/redesLeads.js'
 import { DIAS, META_COSTO_MENSAJE } from '../../datos/redesVista.js'
 import { useDetalleAnuncios } from '../../datos/useRedesDatos.js'
-import { Aviso, COLOR_MAILING, COLOR_SEMAFORO, Tarjeta } from '../mailing/piezas.jsx'
+import { Aviso, COLOR_MAILING, Tarjeta } from '../mailing/piezas.jsx'
 import { clicDetalle, useDetalle } from './Detalle.jsx'
-import { BarrasCosto, DonaRedes, TarjetaRedes } from './piezasRedes.jsx'
+import { ventanaSegmento } from './DetalleSegmento.jsx'
+import { TarjetaPresupuestos, ventanaCampana } from './Presupuestos.jsx'
+import { PildoraCosto, TarjetaCompacta, TarjetaRedes } from './piezasRedes.jsx'
+import { TarjetaPlataformas } from './Plataformas.jsx'
+import { Target } from 'lucide-react'
+import { chipsCompactos, lecturaSegmentaciones } from '../../datos/anunciosCompacto.js'
 
-const colorSem = (s) => COLOR_SEMAFORO[s] ?? COLOR_MAILING.gris
 const PAIS_DE = Object.fromEntries(Object.entries(MARCAS).map(([k, v]) => [k, v.pais]))
-const COLOR_PLATAFORMA = { facebook: '#3987e5', instagram: '#d6589b', whatsapp: '#18935f', otras: '#5b6b84' }
 const ROSA = '#d6589b'
 
-/** Chips del público de un conjunto: marca · edad · sexo · ubicaciones · país. */
-const chipsPublico = (s) => [MARCAS[s.marca]?.corto ?? 'Sin página', s.publico?.edad && `Edad ${s.publico.edad}`, s.publico?.sexo,
-  s.publico?.ubicaciones === 'Automáticas' ? 'Ubicaciones automáticas' : s.publico?.ubicaciones, s.publico?.paises?.length ? s.publico.paises.join(', ') : null].filter(Boolean)
-
-/** Una segmentación: nombre y costo · chips del público · intereses (1 línea) · mensajes y gasto. */
-function FilaSegmento({ s, n, oro, moneda }) {
-  const intereses = s.publico?.intereses ?? []
-  return <li className={`mkv2-seg ${s.pocos ? 'is-pocos' : ''}`}>
-    <div className="mkv2-seg-l1">
-      <span className={`mkv2-redes-li-n ${oro ? 'is-oro' : ''}`}>{n}</span>
-      <b className="mkv2-una-linea" data-tip={`${s.nombre}\nCampaña: ${s.campana}`}>{nombreCampana(s.nombre)}</b>
-      {s.pocos ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${s.semaforo ? `is-${s.semaforo}` : ''}`}>{dinero(s.costo, moneda)}</span>}
-    </div>
-    <div className="mkv2-seg-chips">{chipsPublico(s).map((c) => <span key={c} className="mkv2-seg-chip">{c}</span>)}</div>
-    {intereses.length > 0 && <div className="mkv2-seg-intereses mkv2-una-linea" data-tip={`Intereses (${intereses.length}):\n${intereses.join('\n')}`}>
-      Intereses: {intereses.slice(0, 2).join(', ')}{intereses.length > 2 ? ` +${intereses.length - 2}` : ''}</div>}
-    <div className="mkv2-seg-l3">{numero(s.mensajes)} {s.mensajes === 1 ? 'mensaje' : 'mensajes'} · {dinero(s.gastado, moneda)}</div>
-  </li>
-}
-
-/** Segmentaciones: arriba solo las ganadoras (5+ mensajes); las de pocos datos, plegadas abajo. */
-function Segmentaciones({ segmentos, moneda }) {
+/**
+ * Segmentaciones ganadoras compacta: cada público en una cajita (medalla discreta: aro dorado el 1, plateado el 2;
+ * nombre; chips en una línea; costo y mensajes a la derecha). Pocos datos plegados. Intereses completos y conjunto:
+ * solo en la ventana de detalle (clic).
+ */
+function Segmentaciones({ segmentos, moneda, meta, textoDe, abrir, armar, aviso = null, nota = null }) {
+  const d = (v) => dinero(v, moneda)
   const ganadoras = segmentos.filter((s) => !s.pocos)
   const pocas = segmentos.filter((s) => s.pocos)
-  if (!segmentos.length) return <p className="mkv2-redes-vacio is-gris">Sin conjuntos con resultados en este mes</p>
-  return <div className="mkv2-seg-caja">
-    {ganadoras.length
-      ? <ol className="mkv2-seg-lista">{ganadoras.map((s, i) => <FilaSegmento key={s.id} s={s} n={i + 1} oro={i === 0} moneda={moneda} />)}</ol>
-      : <p className="mkv2-redes-vacio is-gris">Aún no hay suficientes datos este mes</p>}
-    {pocas.length > 0 && <details className="mkv2-seg-pocos">
-      <summary>Ver {pocas.length} con pocos datos <small>(menos de {MIN_MENSAJES} mensajes)</small></summary>
-      <ol className="mkv2-seg-lista">{pocas.map((s, i) => <FilaSegmento key={s.id} s={s} n={ganadoras.length + i + 1} moneda={moneda} />)}</ol>
-    </details>}
-  </div>
+  const nombre = (s) => nombreConTexto({ texto: textoDe(s), campana: s.campana, objetivo: s.campanaInfo?.objetivo })
+  const fila = (s, n) => {
+    const nom = nombre(s)
+    const chips = chipsCompactos(s, MARCAS[s.marca]?.corto)
+    return <div key={s.id} className={`mkv2-tc-seg mkv2-redes-clic ${s.pocos ? 'is-tenue' : ''}`} {...clicDetalle(abrir, () => armar(s, n))}
+      data-tip={`${nom.tip}\n${nom.sub ?? ''}\n${chips.join(' · ')}\nClic para ver el detalle`}>
+      <span className={`mkv2-tc-medalla ${!s.pocos && n === 1 ? 'is-oro' : !s.pocos && n === 2 ? 'is-plata' : ''}`}>{n}</span>
+      <span className="mkv2-tc-seg-nom"><b className="mkv2-una-linea">{nom.titulo}</b>
+        <span className="mkv2-tc-chips">{chips.map((c) => <span key={c}>{c}</span>)}</span></span>
+      <span className="mkv2-tc-seg-der"><PildoraCosto costo={s.costo} mensajes={s.mensajes} pocos={s.pocos} meta={meta} formato={d} />
+        <small>{numero(s.mensajes)} {s.mensajes === 1 ? 'mensaje' : 'mensajes'}</small></span>
+    </div>
+  }
+  return <TarjetaCompacta aviso={aviso} nota={nota} color="#3fcf8e" icono={<Target size={15} />} titulo="Segmentaciones ganadoras" sub={`Públicos con ${MIN_MENSAJES}+ mensajes · clic para ver el detalle`}
+    lectura={lecturaSegmentaciones(segmentos, (s) => nombre(s).titulo, d)}>
+    {!segmentos.length ? <p className="mkv2-redes-vacio is-gris">Sin conjuntos con resultados en este mes</p> : <>
+      {ganadoras.length ? ganadoras.map((s, i) => fila(s, i + 1)) : <p className="mkv2-redes-vacio is-gris">Aún no hay suficientes datos este mes</p>}
+      {pocas.length > 0 && <details className="mkv2-tc-pocos">
+        <summary>{numero(pocas.length)} {pocas.length === 1 ? 'público' : 'públicos'} con pocos datos <small>(menos de {MIN_MENSAJES} mensajes)</small></summary>
+        {pocas.map((s, i) => fila(s, ganadoras.length + i + 1))}
+      </details>}
+    </>}
+  </TarjetaCompacta>
 }
+
+/** Aviso de un recuadro del detalle: «Cargando…» o el error de Meta con «Reintentar» (null si está listo). */
+const avisoDe = (det, recuadro) => {
+  if (det.cargando) return <p className="mkv2-redes-vacio is-gris">Cargando datos de Meta…</p>
+  const error = det.error || det.detalle?.errores?.[recuadro]
+  return error ? <Aviso titulo="No se pudo leer este recuadro de Meta" texto={error} onReintentar={det.reintentar} /> : null
+}
+const notaDe = (det, recuadro) => (det.detalle?.guardados?.includes(recuadro) ? <p className="mkv2-nota">Meta no respondió ahora: se muestran los datos guardados.</p> : null)
 
 /**
  * Recuadros del detalle: cargando, error con «Reintentar» o el contenido. «recuadro» = cuál es; si SOLO su consulta falló,
@@ -181,8 +190,6 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
   const dt = filtrarDetalle(det.detalle, filtros, PAIS_DE)
   const monedaDet = dt?.moneda ?? moneda
   const dd = (v) => dinero(v, monedaDet)
-  const ubic = ubicacionesDe(dt?.ubicaciones)
-  const ubicBarata = masBarato(ubic)
   const plataformas = plataformasDe(dt?.ubicaciones)
   const segmentos = segmentosDe(dt?.segmentos, monedaDet)
   const pres = presupuestosDe(dt?.presupuestos, monedaDet)
@@ -197,7 +204,24 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
 
   // Texto de la publicación promocionada: el de la creatividad o, si es una publicación existente, su título.
   const textoDe = (a) => a.texto || (a.publicacion ? datos.publicaciones.find((p) => p.id === `fb-${a.publicacion}`)?.titulo : null) || null
-  const detCampana = (a) => detalleCampana(a, { moneda, objetivo: objetivoTexto(a.objetivo), texto: textoDe(a), meta })
+  // Ventana de una campaña: la completa (Presupuestos) si el detalle del mes la trae; si no, la sencilla.
+  const metaDet = META_COSTO_MENSAJE[monedaDet] ?? null
+  const mesAnt = datos.meses[datos.meses.indexOf(filtros.mes) + 1]
+  const costoAnterior = (campanaId, marca) => {
+    const q = datos.anuncios.filter((a) => a.mes === mesAnt && !a.reclutamiento && String(a.id).split('-')[1] === String(campanaId) && (a.marca || '') === (marca || ''))
+    const g = q.reduce((n, a) => n + a.gastado, 0)
+    const m = q.reduce((n, a) => n + a.mensajes, 0)
+    return m > 0 ? g / m : null
+  }
+  const ventanaDe = (p) => ventanaCampana({ c: p, todas: pres, moneda: monedaDet, meta: metaDet, leadsDePub: (id) => leadsDePublicacion(leads, id),
+    mes: filtros.mes, hoy: datos.hoy, anterior: costoAnterior(p.campanaId, p.marca), textoDe })
+  const abrirCampana = (p) => abrir(ventanaDe(p))
+  // Fila de la tabla de campañas (ruta /anuncios, id «ad-<campaña>-<marca>-<mes>») → su campaña del detalle del mes.
+  const detCampana = (a) => {
+    const p = pres.find((x) => x.campanaId === String(a.id).split('-')[1] && (x.marca || 'sin') === (a.marca || 'sin'))
+    return p ? ventanaDe(p) : detalleCampana(a, { moneda, objetivo: objetivoTexto(a.objetivo), texto: textoDe(a), meta })
+  }
+  const abrirFila = (a) => abrir(detCampana(a))
 
   // Marca filtrada (o la única marca del país filtrado) sin NINGÚN anuncio en la cuenta conectada, en ningún mes.
   const marcasFiltro = Object.keys(MARCAS).filter((m) => (!filtros.marca || m === filtros.marca) && (!filtros.pais || MARCAS[m].pais === filtros.pais))
@@ -230,34 +254,15 @@ Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar
       <TarjetaRedes titulo="Inversión" color="#5b6b84" valor={d(k.gastado)} sub={`${numero(new Set(campanas.map((c) => c.campana)).size)} campañas`} tip={`Gasto total en ${moneda} (sin reclutamiento) · clic para ver el detalle`} onClick={() => abrir(porCampana(`Inversión · ${d(k.gastado)}`, 'gastado', d))} />
     </div>
 
-    <div className="mkv2-redes-tres mkv2-redes-fila-ads">
-      <Tarjeta titulo="Presupuestos más efectivos" sub="Cuánto costó cada mensaje · barra más corta = más barato · meta por confirmar">
-        <Estado det={det} recuadro="presupuestos">
-          <BarrasCosto meta={META_COSTO_MENSAJE[monedaDet] ?? null} formato={dd} colorDe={(x) => (x.semaforo ? colorSem(x.semaforo) : COLOR_MAILING.gris)}
-            filas={[...pres].sort((a, b) => (a.costo ?? Infinity) - (b.costo ?? Infinity)).map((p) => ({ id: p.id, nombre: nombreCampana(p.campana), tip: p.campana,
-              sub: `${dd(p.gastado)} → ${numero(p.mensajes)} msj${p.presupuestoDiario ? ` · ${dd(p.presupuestoDiario)} diario` : p.presupuestoTotal ? ` · ${dd(p.presupuestoTotal)} total` : ''}`,
-              costo: p.costo, pocos: p.pocos, semaforo: p.semaforo,
-              onClick: () => abrir(detalleCampana({ ...p, presupuesto: p.presupuestoTotal, moneda: monedaDet }, { moneda: monedaDet, meta: META_COSTO_MENSAJE[monedaDet] })) }))} />
-          <p className="mkv2-redes-lectura"><b>Cómo leerla:</b> si la barra no pasa la línea punteada, la campaña está en meta.</p>
-        </Estado>
-      </Tarjeta>
-      <Tarjeta titulo="¿Dónde se vieron?" sub="Impresiones por plataforma · clic para ver sus ubicaciones">
-        <Estado det={det} recuadro="ubicaciones">
-          {plataformas.length ? <>
-            <DonaRedes centro={`${numero(Math.round(plataformas.reduce((n, p) => n + p.impresiones, 0) / 1000))}k`} sub="impresiones"
-              items={plataformas.map((p) => ({ k: p.k, l: p.nombre, v: p.impresiones, c: COLOR_PLATAFORMA[p.k] }))}
-              onElegir={(kk) => { const p = plataformas.find((x) => x.k === kk); if (p) abrir({ etiqueta: '¿Dónde se vieron?', titulo: `${p.nombre} · ${numero(p.impresiones)} impresiones`,
-                kpis: [{ t: 'Mensajes', v: numero(p.mensajes), c: '#18935f' }, { t: 'Costo por mensaje', v: p.pocos ? 'pocos datos' : dd(p.costo), c: '#d98b1f' }, { t: 'Gasto', v: dd(p.gastado), c: '#5b6b84' }],
-                bloques: [{ t: 'Ubicaciones', filas: p.ubicaciones.map((u) => ({ l: u.nombre, v: numero(u.impresiones), n: u.impresiones, c: COLOR_PLATAFORMA[kk], sub: `${numero(u.mensajes)} msj · ${u.pocos ? 'pocos datos' : `${dd(u.costo)} c/u`}` })) }] }) }} />
-            {ubicBarata
-              ? <p className="mkv2-redes-importante" style={{ '--c': COLOR_MAILING.entregados, marginTop: 8 }}><b>{ubicBarata.nombre}</b> <span>es la más barata: {dd(ubicBarata.costo)} por mensaje</span></p>
-              : <p className="mkv2-redes-esc"><span className="mkv2-redes-pocos">pocos datos</span> para elegir la ubicación más barata</p>}
-          </> : <p className="mkv2-redes-vacio is-gris">Sin impresiones en este mes</p>}
-        </Estado>
-      </Tarjeta>
-      <Tarjeta titulo="Segmentaciones ganadoras" sub="Públicos con 5+ mensajes · por costo por mensaje">
-        <Estado det={det} recuadro="segmentos"><Segmentaciones segmentos={segmentos} moneda={monedaDet} /></Estado>
-      </Tarjeta>
+    <div className="mkv2-redes-tres mkv2-redes-fila-ads mkv2-tc-fila">
+      <TarjetaPresupuestos pres={pres} moneda={monedaDet} meta={metaDet} textoDe={textoDe} alAbrir={abrirCampana} abrir={abrir}
+        aviso={avisoDe(det, 'presupuestos')} nota={notaDe(det, 'presupuestos')} />
+      <TarjetaPlataformas plataformas={plataformas} moneda={monedaDet} meta={metaDet} mes={filtros.mes} abrir={abrir}
+        aviso={avisoDe(det, 'ubicaciones')} nota={notaDe(det, 'ubicaciones')} />
+      <Segmentaciones segmentos={segmentos} moneda={monedaDet} meta={metaDet} textoDe={textoDe} abrir={abrir}
+        aviso={avisoDe(det, 'segmentos')} nota={notaDe(det, 'segmentos')}
+        armar={(s, n) => ventanaSegmento({ seg: s, n, ganadora: !s.pocos, todos: segmentos, moneda: monedaDet, meta: metaDet,
+          leadsDePub: (id) => leadsDePublicacion(leads, id), mes: filtros.mes, hoy: datos.hoy, textoDe })} />
     </div>
 
     <div className="mkv2-duo mkv2-redes-duo-ads">
@@ -275,10 +280,10 @@ Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar
         <tbody>{[...campanas].sort((a, b) => b.gastado - a.gastado).map((a) => {
           const costo = a.mensajes > 0 ? a.gastado / a.mensajes : null
           const pocos = a.mensajes < MIN_MENSAJES
-          const texto = textoDe(a)
-          return <tr key={a.id} className={`mkv2-redes-clic ${pocos ? 'is-pocos' : ''}`} tabIndex={0} onClick={() => abrir(detCampana(a))} onKeyDown={(e) => { if (e.key === 'Enter') abrir(detCampana(a)) }}>
-            <td className="mkv2-celda-campana"><b className="mkv2-una-linea" data-tip={a.campana}>{nombreCampana(a.campana)}</b>
-              <small className="mkv2-una-linea mkv2-redes-campana-sub" data-tip={texto ?? undefined}>{[objetivoTexto(a.objetivo), texto ? `«${tituloLimpio(texto)}»` : null].filter(Boolean).join(' · ') || 'Sin objetivo ni texto en Meta'}</small></td>
+          const nom = nombreConTexto({ texto: textoDe(a), campana: a.campana, objetivo: a.objetivo })
+          return <tr key={a.id} className={`mkv2-redes-clic ${pocos ? 'is-pocos' : ''}`} tabIndex={0} onClick={() => abrirFila(a)} onKeyDown={(e) => { if (e.key === 'Enter') abrirFila(a) }}>
+            <td className="mkv2-celda-campana"><b className="mkv2-una-linea" data-tip={nom.tip}>{nom.titulo}</b>
+              {nom.sub && <small className="mkv2-una-linea mkv2-redes-campana-sub" data-tip={a.campana}>{nom.sub}</small>}</td>
             <td>{MARCAS[a.marca]?.corto ?? 'Sin página'}</td><td className="num">{d(a.gastado)}</td>
             <td className="num">{numero(a.alcance)}</td><td className="num">{numero(a.clics)}</td>
             <td className="num">{d(a.clics ? a.gastado / a.clics : null)}</td><td className="num">{numero(a.mensajes)}</td>

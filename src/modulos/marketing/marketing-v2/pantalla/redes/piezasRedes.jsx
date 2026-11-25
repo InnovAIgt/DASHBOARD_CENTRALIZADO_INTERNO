@@ -1,7 +1,8 @@
 // Canales de marketing · Redes sociales: piezas visuales propias (no se cambian las de Mailing).
 // Tarjeta compacta con mini gráfica (como las compactas de Mailing), dona que se puede tocar, anillo de
 // cumplimiento y barras de alcance por semana (Facebook e Instagram lado a lado). Clases mkv2-redes-…
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { Lightbulb } from 'lucide-react'
 import { numero } from '../../datos/calculos.js'
 import { COLOR_RED } from '../../datos/redes.js'
 
@@ -42,7 +43,7 @@ export function TarjetaRedes({ titulo, color, valor, sub, serie, tip, onClick })
  * Dona que se puede tocar: items [{k, l, v, c}]; el clic en un sector o en su fila llama onElegir(k).
  * activo = clave resaltada (filtro puesto). formato = cómo se escribe cada valor.
  */
-export function DonaRedes({ items = [], centro, sub, onElegir, activo = '', formato = numero, tipDe }) {
+export function DonaRedes({ items = [], centro, sub, onElegir, activo = '', formato = numero, tipDe, sinLista = false }) {
   const [sobre, setSobre] = useState(null)
   const total = items.reduce((n, i) => n + (Number(i.v) || 0), 0)
   const R = 56
@@ -71,12 +72,12 @@ export function DonaRedes({ items = [], centro, sub, onElegir, activo = '', form
       </svg>
       <span className="mkv2-redes-dona-centro"><strong>{centro}</strong><small>{sub}</small></span>
     </div>
-    <div className="mkv2-redes-dona-lista">
+    {!sinLista && <div className="mkv2-redes-dona-lista">
       {items.map((i) => <button type="button" key={i.k} className={`${marcado === i.k ? 'is-marcado' : ''} ${activo === i.k ? 'is-activo' : ''}`} disabled={!onElegir}
         onMouseEnter={() => setSobre(i.k)} onMouseLeave={() => setSobre(null)} onClick={onElegir ? () => onElegir(i.k) : undefined} data-tip={tip(i)}>
         <i style={{ background: i.c }} /><span>{i.l}</span><b>{formato(i.v)}</b><em>{pct(i.v)} %</em>
       </button>)}
-    </div>
+    </div>}
   </div>
 }
 
@@ -142,23 +143,23 @@ ${f.publicadas} de ${f.programadas} programadas · ${f.cumplimiento === null ? '
  * filas = [{id, nombre, tip, sub, costo, pocos, semaforo, onClick}]. Las de «pocos datos» van plegadas abajo.
  * Barra más corta = más barato; si no pasa la línea punteada, está en meta.
  */
-export function BarrasCosto({ filas = [], meta = null, formato, colorDe }) {
+export function BarrasCosto({ filas = [], meta = null, formato, colorDe, resumenPocos = null, mostrarCosto = false }) {
   const buenas = filas.filter((f) => !f.pocos && f.costo !== null)
   const pocas = filas.filter((f) => f.pocos || f.costo === null)
   const max = Math.max(meta ?? 0, ...buenas.map((f) => f.costo), 0.01) * 1.12
   const fila = (f) => <div key={f.id} className={`mkv2-redes-costo-fila ${f.pocos ? 'is-pocos' : ''} ${f.onClick ? 'mkv2-redes-clic' : ''}`} data-tip={f.tip}
     {...(f.onClick ? { role: 'button', tabIndex: 0, onClick: f.onClick, onKeyDown: (e) => { if (e.key === 'Enter') f.onClick() } } : {})}>
-    <span className="mkv2-redes-costo-nombre"><b className="mkv2-una-linea">{f.nombre}</b><small className="mkv2-una-linea">{f.sub}</small></span>
+    <span className="mkv2-redes-costo-nombre"><b className="mkv2-una-linea" data-tip={f.tipNombre}>{f.nombre}</b>{f.sub2 && <small className="mkv2-una-linea">{f.sub2}</small>}<small className="mkv2-redes-costo-sub">{f.sub}</small></span>
     <span className="mkv2-redes-costo-barra">
       {!f.pocos && f.costo !== null && <i style={{ width: `${(f.costo / max) * 100}%`, background: colorDe(f) }} />}
       {meta && <em style={{ left: `${(meta / max) * 100}%` }} aria-hidden="true" />}
     </span>
-    {f.pocos || f.costo === null ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${f.semaforo ? `is-${f.semaforo}` : ''}`}>{formato(f.costo)}</span>}
+    <span className="mkv2-redes-costo-valor">{f.pocos || f.costo === null ? (mostrarCosto && f.costo !== null ? <span className="mkv2-redes-sem">{formato(f.costo)}</span> : <span className="mkv2-redes-pocos">pocos datos</span>) : <span className={`mkv2-redes-sem ${f.semaforo ? `is-${f.semaforo}` : ''}`}>{formato(f.costo)}</span>}{f.estado && <small className={f.enMeta ? 'is-verde' : 'is-ambar'}>{f.estado}</small>}</span>
   </div>
   return <div className="mkv2-redes-costos">
     {meta && <div className="mkv2-redes-costo-meta"><span /><span><em style={{ left: `${(meta / max) * 100}%` }}>Meta {formato(meta)}</em></span><span /></div>}
     {buenas.length ? buenas.map(fila) : <p className="mkv2-redes-vacio is-gris">Aún no hay suficientes datos este mes</p>}
-    {pocas.length > 0 && <details className="mkv2-seg-pocos"><summary>Ver {pocas.length} con pocos datos <small>(menos de 5 mensajes)</small></summary>{pocas.map(fila)}</details>}
+    {pocas.length > 0 && <details className="mkv2-seg-pocos"><summary>{resumenPocos ?? <>Ver {pocas.length} con pocos datos <small>(menos de 5 mensajes)</small></>}</summary>{pocas.map(fila)}</details>}
   </div>
 }
 
@@ -168,4 +169,48 @@ export function PildoraImportante({ color, texto, detalle, tip, onClick }) {
   return <Caja {...(onClick ? { type: 'button', onClick } : {})} className="mkv2-redes-importante" style={{ '--c': color }} data-tip={tip}>
     <b>{texto}</b>{detalle && <span>{detalle}</span>}
   </Caja>
+}
+
+/**
+ * Tarjeta compacta de Anuncios (mockup_anuncios_compacto): línea de color arriba que se desvanece, ícono, título,
+ * subtítulo corto, enlace «Ver reparto ›» opcional, contenido y la lectura abajo (siempre pegada al pie, para que las
+ * tarjetas de la fila tengan la misma altura sin huecos). color = el de la tarjeta. aviso = «Cargando…» o el error de
+ * Meta: se muestra en lugar del contenido (sin enlace ni lectura). nota = aviso chico abajo (por ejemplo, datos guardados).
+ */
+export function TarjetaCompacta({ color, icono, titulo, sub, enlace = null, lectura = '', aviso = null, nota = null, children }) {
+  return <section className="mkv2-tarjeta mkv2-tc" style={{ '--c': color }}>
+    <header className="mkv2-tc-cabeza">
+      <span className="mkv2-tc-ico" aria-hidden="true">{icono}</span>
+      <div className="mkv2-tc-tit"><h2>{titulo}</h2>{sub && <p>{sub}</p>}</div>
+      {enlace && !aviso && <button type="button" className="mkv2-tc-enlace" onClick={enlace.alHacer}>{enlace.texto} ›</button>}
+    </header>
+    <div className="mkv2-tc-cuerpo">{aviso ?? children}{!aviso && nota}</div>
+    {lectura && !aviso && <LecturaCorta texto={lectura} />}
+  </section>
+}
+
+/** Lectura en 1 línea con ícono; «Ver más» la despliega completa (solo aparece si no cabe). */
+export function LecturaCorta({ texto }) {
+  const [abierta, setAbierta] = useState(false)
+  const [corta, setCorta] = useState(false)
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const medir = () => { const el = ref.current; if (el && !abierta) setCorta(el.scrollWidth > el.clientWidth + 1) }
+    medir()
+    window.addEventListener('resize', medir)
+    return () => window.removeEventListener('resize', medir)
+  }, [texto, abierta])
+  return <div className={`mkv2-tc-lectura ${abierta ? 'is-abierta' : ''}`}>
+    <i aria-hidden="true"><Lightbulb size={11} /></i>
+    <span ref={ref}>{texto}</span>
+    {(corta || abierta) && <button type="button" onClick={() => setAbierta((a) => !a)}>{abierta ? 'Ver menos' : 'Ver más'}</button>}
+  </div>
+}
+
+/** Costo por mensaje en píldora suave: verde en meta, ámbar sobre la meta; «pocos datos» con menos de 5; — sin mensajes. */
+export function PildoraCosto({ costo, mensajes, pocos, meta, formato }) {
+  if (!mensajes) return <span className="mkv2-tc-pildora is-nada">—</span>
+  if (pocos) return <span className="mkv2-tc-pildora is-pocos">pocos datos</span>
+  // Se compara el costo redondeado a centavos (el que se ve): US$ 1.50 con meta US$ 1.50 es «en meta».
+  return <span className={`mkv2-tc-pildora ${meta ? (Math.round(costo * 100) / 100 <= meta ? 'is-verde' : 'is-ambar') : ''}`}>{formato(costo)}</span>
 }

@@ -1319,3 +1319,207 @@
   .mkv2 .mkv2-redes-leads-mes, .mkv2 .mkv2-redes-pir-totales { grid-template-columns: 1fr; }
 }
 .mkv2 .mkv2-redes-pir .mkv2-redes-esc i { display: inline-block; width: 10px; height: 10px; margin: 0 3px 0 6px; vertical-align: -1px; border-radius: 2px; }
+
+/* ---------- Ventana de una segmentación (mockup_detalle_segmentacion) ---------- */
+.mkv2 .mkv2-redes-det.is-ancha { width: min(1000px, 100%); max-height: 92vh; border-top-color: #18935f; }
+.mkv2 .mkv2-sd .mkv2-redes-esc i { display: inline-block; width: 10px; height: 10px; margin: 0 3px 0 6px; vertical-align: -1px; border-radius: 2px; }
+.mkv2 .mkv2-sd .mkv2-redes-pocos { padding: 1px 6px; font-size: 9.5px; }
+.mkv2 .mkv2-redes-det.is-ancha .mkv2-redes-det-etiqueta { color: #3fcf8e; }
+.mkv2 .mkv2-redes-det-sub { margin: 0; font-size: 12px; color: var(--fv2-tenue); overflow-wrap: anywhere; }
+.mkv2 .mkv2-redes-det-pie { margin: 14px 0 0; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-sd { display: grid; gap: 14px; min-width: 0; }
+.mkv2 .mkv2-sd-seccion { display: grid; gap: 8px; min-width: 0; }
+.mkv2 .mkv2-sd-seccion > h4 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-sd-seccion > h4::after { content: ""; flex: 1; height: 1px; background: var(--fv2-borde); }
+.mkv2 .mkv2-sd-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: 0; }
+.mkv2 .mkv2-redes-det-bloque h5 { margin: 0 0 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-sd-lectura { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mkv2 .mkv2-sd-lect { min-width: 0; padding: 9px 11px; background: rgba(255, 255, 255, .03); border: 1px solid var(--fv2-borde); border-top: 2px solid var(--c, #5b6b84); border-radius: 8px; }
+.mkv2 .mkv2-sd-lect.is-funciono { --c: #18935f; }
+.mkv2 .mkv2-sd-lect.is-vigilar { --c: #d9a520; }
+.mkv2 .mkv2-sd-lect.is-vigilar.is-alerta { --c: #c9364b; background: rgba(201, 54, 75, .07); }
+.mkv2 .mkv2-sd-lect.is-respondio { --c: #9085e9; }
+.mkv2 .mkv2-sd-lect small { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.mkv2 .mkv2-sd-lect p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--mkv2-suave); }
+.mkv2 .mkv2-sd-lect p b { color: var(--fv2-texto); }
+.mkv2 .mkv2-sd-dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-sd-tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mkv2 .mkv2-sd-config { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 0; margin: 0; font-size: 12px; }
+.mkv2 .mkv2-sd-config dt, .mkv2 .mkv2-sd-config dd { margin: 0; padding: 5px 0; border-bottom: 1px solid var(--fv2-borde); }
+.mkv2 .mkv2-sd-config dt { color: var(--fv2-tenue); }
+.mkv2 .mkv2-sd-config dd { min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.mkv2 .mkv2-sd-fila, .mkv2 .mkv2-sd-comp { display: grid; grid-template-columns: minmax(0, 72px) minmax(0, 1fr) 30px 78px; gap: 8px; align-items: center; padding: 3px 0; font-size: 12px; }
+.mkv2 .mkv2-sd-comp { grid-template-columns: minmax(0, 120px) minmax(0, 1fr) 70px; }
+.mkv2 .mkv2-sd-comp.is-este span:first-child { font-weight: 800; color: var(--fv2-texto); }
+.mkv2 .mkv2-sd-fila > b, .mkv2 .mkv2-sd-comp > b { text-align: right; }
+.mkv2 .mkv2-sd-fila > small, .mkv2 .mkv2-sd-fila > .mkv2-redes-pocos { justify-self: end; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-sd-barra { position: relative; display: flex; height: 9px; overflow: visible; background: rgba(255, 255, 255, .05); border-radius: 99px; }
+.mkv2 .mkv2-sd-barra i { display: block; height: 100%; }
+.mkv2 .mkv2-sd-barra i:first-child { border-radius: 99px 0 0 99px; }
+.mkv2 .mkv2-sd-barra i:last-child { border-radius: 0 99px 99px 0; }
+.mkv2 .mkv2-sd-barra i:only-child { border-radius: 99px; }
+.mkv2 .mkv2-sd-barra em { position: absolute; top: -3px; bottom: -3px; border-left: 2px dashed #f0c15a; }
+.mkv2 .mkv2-sd-anuncios .mkv2-celda-campana { max-width: 300px; }
+.mkv2 .mkv2-sd-reco { padding: 10px 14px; background: linear-gradient(135deg, rgba(24, 147, 95, .12), rgba(24, 147, 95, .03)); border: 1px solid rgba(24, 147, 95, .35); border-left: 3px solid #18935f; border-radius: 9px; }
+.mkv2 .mkv2-sd-reco small { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #3fcf8e; }
+.mkv2 .mkv2-sd-reco ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.6; color: var(--mkv2-suave); }
+.mkv2 .mkv2-sd-reco b { color: var(--fv2-texto); }
+@media (max-width: 1000px) {
+  .mkv2 .mkv2-sd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mkv2 .mkv2-sd-tres { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .mkv2 .mkv2-sd-lectura, .mkv2 .mkv2-sd-dos { grid-template-columns: 1fr; }
+  .mkv2 .mkv2-sd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Presupuestos más efectivos (mockup_presupuestos): tarjeta y ventana de una campaña ---------- */
+.mkv2 .mkv2-pres-resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.mkv2 .mkv2-pres-resumen > div { display: grid; gap: 1px; min-width: 0; padding: 8px 10px; background: rgba(255, 255, 255, .03); border-left: 3px solid var(--c); border-radius: 7px; }
+.mkv2 .mkv2-pres-resumen small { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-pres-resumen b { font-size: 15px; }
+.mkv2 .mkv2-pres-resumen span { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-redes-costo-fila, .mkv2 .mkv2-redes-costo-meta { grid-template-columns: minmax(0, 44%) minmax(0, 1fr) 96px; }
+.mkv2 .mkv2-redes-costo-sub { font-size: 10.5px; color: var(--fv2-tenue); white-space: normal; }
+.mkv2 .mkv2-redes-costo-valor { display: grid; justify-items: end; gap: 1px; }
+.mkv2 .mkv2-redes-costo-valor small { font-size: 10px; line-height: 1.2; text-align: right; }
+.mkv2 .mkv2-redes-costo-valor small.is-verde { color: #3fcf8e; }
+.mkv2 .mkv2-redes-costo-valor small.is-ambar { color: #f0c15a; }
+.mkv2 .mkv2-redes-costo-fila.is-pocos .mkv2-redes-sem { color: var(--fv2-tenue); background: rgba(255, 255, 255, .05); }
+.mkv2 .mkv2-pres-dinero { margin-top: 10px; padding: 10px 12px; background: rgba(255, 255, 255, .02); border: 1px solid var(--fv2-borde); border-radius: 9px; }
+.mkv2 .mkv2-pres-dinero h5 { margin: 0 0 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--fv2-tenue); }
+.mkv2 .mkv2-pres-dinero-fila { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; align-items: center; margin: 4px 0; font-size: 12px; }
+.mkv2 .mkv2-pres-apilada { display: flex; height: 12px; overflow: hidden; background: rgba(255, 255, 255, .05); border-radius: 4px; }
+.mkv2 .mkv2-pres-apilada i { display: block; height: 100%; }
+.mkv2 .mkv2-pres-dinero .mkv2-redes-esc i { display: inline-block; width: 10px; height: 10px; margin: 0 3px 0 6px; vertical-align: -1px; border-radius: 2px; }
+.mkv2 .mkv2-pres-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0; }
+.mkv2 .mkv2-pres-uso { display: grid; gap: 6px; }
+.mkv2 .mkv2-pres-uso-fila { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 12px; color: var(--mkv2-suave); }
+.mkv2 .mkv2-pres-uso-fila b { color: var(--fv2-texto); }
+.mkv2 .mkv2-pres-uso-barra { height: 14px; overflow: hidden; background: rgba(255, 255, 255, .05); border-radius: 99px; }
+.mkv2 .mkv2-pres-uso-barra i { display: block; height: 100%; background: linear-gradient(90deg, #18935f, #3fcf8e); border-radius: 99px; }
+.mkv2 .mkv2-pres-semanas { display: flex; align-items: flex-end; gap: 10px; height: 110px; padding-top: 6px; }
+.mkv2 .mkv2-pres-semana { display: grid; flex: 1; grid-template-rows: 1fr auto; gap: 4px; height: 100%; text-align: center; }
+.mkv2 .mkv2-pres-semana small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-pres-cols { display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.mkv2 .mkv2-pres-cols i { display: block; width: 40%; max-width: 22px; min-height: 2px; border-radius: 3px 3px 0 0; }
+.mkv2 .mkv2-pres-cols i.is-gasto { background: #d9a520; }
+.mkv2 .mkv2-pres-cols i.is-msj { background: #3fcf8e; }
+.mkv2 .mkv2-redes-lectura.is-alerta { background: rgba(201, 54, 75, .08); border-left-color: #c9364b; }
+@media (max-width: 1000px) { .mkv2 .mkv2-pres-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .mkv2 .mkv2-pres-resumen { grid-template-columns: 1fr; } }
+.mkv2 .mkv2-redes-costos .mkv2-seg-pocos summary { white-space: normal; line-height: 1.4; }
+.mkv2 .mkv2-pres-dinero .mkv2-redes-esc { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.mkv2 .mkv2-pres-dinero .mkv2-redes-esc > span { display: inline-block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* ---------- ¿Dónde se vieron y dónde escribieron? (mockup_plataformas): tarjeta y ventana de una plataforma ---------- */
+.mkv2 .mkv2-tenue { color: var(--fv2-tenue); }
+.mkv2 .mkv2-plat-ubic tr.is-tenue td { opacity: .6; }
+.mkv2 .mkv2-plat-cuadro { display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 2px; vertical-align: 0; }
+.mkv2 .mkv2-plat-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 0; }
+.mkv2 .mkv2-plat-ubic td:nth-child(2) { white-space: normal; }
+@media (max-width: 1000px) { .mkv2 .mkv2-plat-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- Tarjetas compactas de Anuncios (mockup_anuncios_compacto): Presupuestos, Plataformas, Segmentaciones ----------
+   Línea de color arriba que se desvanece, tono muy suave en el encabezado, sin brillos ni sombras de color. --c = color
+   de la tarjeta. La lectura va pegada al pie: las 3 tarjetas quedan de la misma altura, sin huecos. */
+.mkv2 .mkv2-tc-fila { align-items: stretch; }
+.mkv2 .mkv2-tc {
+  position: relative; display: flex; flex-direction: column; padding: 16px 18px 14px; overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 6%, var(--fv2-panel)) 0, var(--fv2-panel) 90px);
+  border: 1px solid rgba(255, 255, 255, .07); border-radius: 14px; box-shadow: 0 8px 24px -16px rgba(0, 0, 0, .6);
+  font-variant-numeric: tabular-nums;
+}
+.mkv2 .mkv2-tc::after { content: ""; position: absolute; top: 0; right: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--c), transparent 70%); }
+.mkv2 .mkv2-tc-cabeza { display: flex; align-items: center; gap: 10px; }
+.mkv2 .mkv2-tc-ico { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); border-radius: 8px; }
+.mkv2 .mkv2-tc-tit { flex: 1; min-width: 0; }
+.mkv2 .mkv2-tc-tit h2 { margin: 0; overflow: hidden; font-size: 13.5px; font-weight: 650; color: var(--fv2-texto); white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-tc-tit p { margin: 1px 0 0; overflow: hidden; font-size: 11px; color: var(--fv2-tenue); white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-tc-enlace { flex: none; padding: 0; font: inherit; font-size: 11px; font-weight: 600; color: var(--c); white-space: nowrap; background: none; border: 0; cursor: pointer; }
+.mkv2 .mkv2-tc-enlace:hover { text-decoration: underline; }
+.mkv2 .mkv2-tc-cuerpo { display: flex; flex: 1; flex-direction: column; min-width: 0; margin-top: 12px; }
+.mkv2 .mkv2-tc-cuerpo > .mkv2-redes-vacio { margin: auto 0; }
+
+/* Píldoras de costo */
+.mkv2 .mkv2-tc-pildora { flex: none; padding: 2px 9px; font-size: 11.5px; font-weight: 650; color: var(--fv2-texto); white-space: nowrap; background: rgba(255, 255, 255, .06); border-radius: 999px; }
+.mkv2 .mkv2-tc-pildora.is-verde { color: #4fd197; background: rgba(69, 192, 138, .12); }
+.mkv2 .mkv2-tc-pildora.is-ambar { color: #e6b94a; background: rgba(217, 173, 60, .13); }
+.mkv2 .mkv2-tc-pildora.is-pocos { font-size: 10px; font-weight: 600; color: #aab1bf; background: none; box-shadow: inset 0 0 0 1px rgba(140, 147, 163, .4); }
+.mkv2 .mkv2-tc-pildora.is-nada { padding: 2px 6px; color: var(--fv2-tenue); background: none; }
+
+/* Lectura en 1 línea */
+.mkv2 .mkv2-tc-lectura { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 12px; padding-top: 10px; font-size: 11.5px; color: #b9bfcc; border-top: 1px solid rgba(255, 255, 255, .06); }
+.mkv2 .mkv2-tc-lectura > i { display: grid; flex: none; place-items: center; width: 18px; height: 18px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); border-radius: 50%; }
+.mkv2 .mkv2-tc-lectura > span { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-tc-lectura.is-abierta { align-items: flex-start; }
+.mkv2 .mkv2-tc-lectura.is-abierta > span { white-space: normal; line-height: 1.5; }
+.mkv2 .mkv2-tc-lectura > button { flex: none; padding: 0; font: inherit; font-weight: 600; color: var(--c); white-space: nowrap; background: none; border: 0; cursor: pointer; }
+
+/* Plegados de «pocos datos» */
+.mkv2 .mkv2-tc-pocos { margin-top: 6px; }
+.mkv2 .mkv2-tc-pocos > summary { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--fv2-tenue); list-style: none; cursor: pointer; }
+.mkv2 .mkv2-tc-pocos > summary::-webkit-details-marker { display: none; }
+.mkv2 .mkv2-tc-pocos > summary::before { content: "›"; display: grid; flex: none; place-items: center; width: 16px; height: 16px; font-weight: 700; color: #b9bfcc; background: var(--fv2-elevado); border-radius: 5px; transition: transform .15s; }
+.mkv2 .mkv2-tc-pocos[open] > summary::before { transform: rotate(90deg); }
+.mkv2 .mkv2-tc-pocos > summary small { font-size: 10.5px; }
+
+/* Presupuestos: número grande y barras finas con la meta punteada */
+.mkv2 .mkv2-tc-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.mkv2 .mkv2-tc-hero > div:first-child { display: grid; gap: 4px; }
+.mkv2 .mkv2-tc-grande { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -.02em; color: var(--fv2-texto); white-space: nowrap; }
+.mkv2 .mkv2-tc-grande small { margin-left: 3px; font-size: 12px; font-weight: 600; letter-spacing: 0; color: var(--fv2-tenue); }
+.mkv2 .mkv2-tc-hero span { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-tc-lado { font-size: 11px; line-height: 1.5; color: var(--fv2-tenue); text-align: right; }
+.mkv2 .mkv2-tc-lado b { color: var(--fv2-texto); }
+.mkv2 .mkv2-tc-barras { display: grid; }
+.mkv2 .mkv2-tc-barra { display: grid; gap: 6px; width: 100%; min-width: 0; padding: 7px 0; font: inherit; color: inherit; text-align: left; background: none; border: 0; cursor: pointer; }
+.mkv2 .mkv2-tc-barra-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.mkv2 .mkv2-tc-barra-top b { font-size: 12.5px; font-weight: 600; }
+.mkv2 .mkv2-tc-barra:hover .mkv2-tc-barra-top b { color: #fff; }
+.mkv2 .mkv2-tc-pista { position: relative; display: block; height: 7px; background: #1b1f29; border-radius: 999px; }
+.mkv2 .mkv2-tc-pista i { display: block; height: 100%; border-radius: 999px; }
+.mkv2 .mkv2-tc-pista i.is-verde { background: linear-gradient(90deg, #2f9e6e, #4fd197); }
+.mkv2 .mkv2-tc-pista i.is-ambar { background: linear-gradient(90deg, #b98c22, #e6b94a); }
+.mkv2 .mkv2-tc-pista em { position: absolute; top: -4px; bottom: -4px; left: var(--x); border-left: 1.5px dashed rgba(230, 185, 74, .75); }
+
+/* Plataformas: pestañas en píldora, dona pequeña y lista */
+.mkv2 .mkv2-tc-vistas { display: inline-flex; align-self: flex-start; gap: 2px; padding: 3px; background: #0e1117; border: 1px solid rgba(255, 255, 255, .06); border-radius: 999px; }
+.mkv2 .mkv2-tc-vistas button { padding: 3px 10px; font: inherit; font-size: 10.5px; font-weight: 600; color: var(--fv2-tenue); background: none; border: 0; border-radius: 999px; cursor: pointer; }
+.mkv2 .mkv2-tc-vistas button.is-activo { color: #fff; background: color-mix(in srgb, var(--c) 22%, #1f2430); }
+.mkv2 .mkv2-tc-plat { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 12px; }
+.mkv2 .mkv2-tc-plat .mkv2-redes-dona { display: block; margin: 0; }
+.mkv2 .mkv2-tc-plat .mkv2-redes-dona-figura { width: 104px; height: 104px; }
+.mkv2 .mkv2-tc-plat .mkv2-redes-dona-centro strong { font-size: 18px; }
+.mkv2 .mkv2-tc-lista { display: grid; gap: 4px; min-width: 0; }
+.mkv2 .mkv2-tc-item { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto auto; gap: 9px; align-items: center; padding: 5px 6px 5px 0; font: inherit; color: inherit; text-align: left; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+.mkv2 .mkv2-tc-item:hover { background: rgba(255, 255, 255, .04); }
+.mkv2 .mkv2-tc-item.is-tenue { opacity: .6; }
+.mkv2 .mkv2-tc-item-color { width: 4px; height: 24px; border-radius: 3px; }
+.mkv2 .mkv2-tc-item-nom { min-width: 0; }
+.mkv2 .mkv2-tc-item-nom b { display: block; overflow: hidden; font-size: 12.5px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-tc-item-nom small { font-size: 10.5px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-tc-item-n { min-width: 22px; font-size: 12.5px; font-weight: 700; text-align: right; }
+
+/* Segmentaciones: cajitas con medalla discreta */
+.mkv2 .mkv2-tc-seg { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-bottom: 8px; padding: 9px 11px; background: rgba(255, 255, 255, .02); border: 1px solid rgba(255, 255, 255, .06); border-radius: 10px; cursor: pointer; }
+.mkv2 .mkv2-tc-seg:hover { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .12); }
+.mkv2 .mkv2-tc-seg.is-tenue { opacity: .7; }
+.mkv2 .mkv2-tc-pocos .mkv2-tc-seg:first-of-type { margin-top: 8px; }
+.mkv2 .mkv2-tc-medalla { display: grid; place-items: center; width: 24px; height: 24px; font-size: 11px; font-weight: 700; color: var(--fv2-tenue); background: rgba(255, 255, 255, .04); border-radius: 50%; }
+.mkv2 .mkv2-tc-medalla.is-oro { color: #e6b94a; background: rgba(230, 185, 74, .12); box-shadow: inset 0 0 0 1px rgba(230, 185, 74, .45); }
+.mkv2 .mkv2-tc-medalla.is-plata { color: #cfd4de; background: rgba(185, 191, 204, .1); box-shadow: inset 0 0 0 1px rgba(185, 191, 204, .38); }
+.mkv2 .mkv2-tc-seg-nom { display: grid; gap: 5px; min-width: 0; }
+.mkv2 .mkv2-tc-seg-nom b { font-size: 12.5px; font-weight: 600; }
+.mkv2 .mkv2-tc-chips { display: flex; gap: 4px; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.mkv2 .mkv2-tc-chips span { flex: none; padding: 1px 7px; font-size: 10px; color: #aab1bf; background: rgba(255, 255, 255, .05); border-radius: 999px; }
+.mkv2 .mkv2-tc-seg-der { display: grid; justify-items: end; gap: 3px; }
+.mkv2 .mkv2-tc-seg-der small { font-size: 10px; color: var(--fv2-tenue); white-space: nowrap; }
+/* La 3.ª tarjeta sola en su fila (pantallas medianas) ocupa todo el ancho */
+@media (max-width: 1250px) { .mkv2 .mkv2-tc-fila { grid-template-columns: 1fr 1fr; } .mkv2 .mkv2-tc-fila > .mkv2-tc:last-child { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .mkv2 .mkv2-tc-fila { grid-template-columns: 1fr; } }
+
+/* Tablas dentro de la ventana de detalle de Redes («Ver reparto», ubicaciones, anuncios): números con la misma letra que
+   el resto y dígitos del mismo ancho (tabular-nums), sin letra monoespaciada. Solo Redes: Mailing no usa esta ventana. */
+.mkv2-redes-det .fv2-tabla { font-variant-numeric: tabular-nums; }
+.mkv2-redes-det .fv2-tabla .num, .mkv2-redes-det .fv2-tabla .num * { font-family: inherit; }

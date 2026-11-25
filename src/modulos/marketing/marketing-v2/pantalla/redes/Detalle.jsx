@@ -5,7 +5,9 @@
 //
 // Un detalle es un objeto con datos (lo arman las funciones de datos/redesDetalle.js):
 //   { etiqueta, titulo, chips: [texto], kpis: [{t, v, c, sub}], bloques: [{t, filas: [{l, v, n, c, sub, ir}]}],
-//     tabla: {columnas: [texto], filas: [{celdas: [nodo], ir}]}, nota, acciones: [{texto, alHacer}] }
+//     tabla: {columnas: [texto], filas: [{celdas: [nodo], ir}]}, nota, acciones: [{texto, alHacer}],
+//     sub (línea bajo el título), cuerpo (contenido propio, por ejemplo la ventana de una segmentación; si es una
+//     función, recibe { ir } para abrir otro detalle con «Volver»), ancho, pie }
 // «ir» = otro detalle que se abre al hacer clic (con «Volver»).
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
@@ -51,16 +53,18 @@ export function VentanaDetalle({ d, puedeVolver, onVolver, onIr, onCerrar }) {
   }, [onCerrar, d])
   const maxDe = (filas) => Math.max(1, ...filas.map((f) => Number(f.n) || 0))
   return <div className="mkv2-modal-fondo" onMouseDown={(e) => { if (e.target === e.currentTarget) onCerrar() }}>
-    <div className="mkv2-modal mkv2-redes-det" role="dialog" aria-modal="true" aria-labelledby="mkv2-redes-det-titulo" tabIndex={-1} ref={caja}>
+    <div className={`mkv2-modal mkv2-redes-det ${d.ancho ? 'is-ancha' : ''}`} role="dialog" aria-modal="true" aria-labelledby="mkv2-redes-det-titulo" tabIndex={-1} ref={caja}>
       <div className="mkv2-modal-cabeza">
         <div className="mkv2-redes-det-cabeza">
           {puedeVolver && <button type="button" className="mkv2-redes-det-volver" onClick={onVolver}>‹ Volver</button>}
           {d.etiqueta && <span className="mkv2-redes-det-etiqueta">{d.etiqueta}</span>}
           <h3 id="mkv2-redes-det-titulo">{d.titulo}</h3>
+          {d.sub && <p className="mkv2-redes-det-sub">{d.sub}</p>}
           {d.chips?.length > 0 && <div className="mkv2-seg-chips is-det">{d.chips.filter(Boolean).map((c) => <span key={c} className="mkv2-seg-chip">{c}</span>)}</div>}
         </div>
         <button type="button" className="mkv2-redes-det-cerrar" onClick={onCerrar} aria-label="Cerrar"><X size={15} /></button>
       </div>
+      {typeof d.cuerpo === 'function' ? d.cuerpo({ ir: onIr }) : d.cuerpo}
       {d.kpis?.length > 0 && <div className="mkv2-redes-det-kpis">
         {d.kpis.map((k) => <div key={k.t} className={`mkv2-redes-det-kpi ${k.ir ? 'mkv2-redes-clic' : ''}`} style={{ '--c': k.c ?? 'var(--fv2-borde-fuerte)' }}
           {...(k.ir ? { role: 'button', tabIndex: 0, onClick: () => onIr(k.ir), onKeyDown: (e) => { if (e.key === 'Enter') onIr(k.ir) } } : {})}>
@@ -90,6 +94,7 @@ export function VentanaDetalle({ d, puedeVolver, onVolver, onIr, onCerrar }) {
         {d.acciones.map((a) => <button key={a.texto} type="button" className="fv2-pildora" onClick={() => { a.alHacer(); onCerrar() }}>{a.texto}</button>)}
       </div>}
       {d.nota && <p className="mkv2-redes-det-nota">{d.nota}</p>}
+      {d.pie && <p className="mkv2-redes-det-pie">{d.pie}</p>}
     </div>
   </div>
 }

@@ -2,6 +2,52 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-25 · Redes: tarjetas compactas en Anuncios
+
+- Presupuestos, ¿Dónde se vieron y escribieron? y Segmentaciones ganadoras rediseñadas como el
+  mockup_anuncios_compacto: compactas, con línea de color, ícono, píldoras de costo, barras finas, lectura en 1 línea
+  con «Ver más» y la misma altura. Lo secundario pasó a «Ver reparto» y a las ventanas de detalle. WhatsApp y Otras van
+  juntas si las dos tienen menos de 5 mensajes (su fila abre «Ver reparto»). Lectura nueva en Segmentaciones.
+- Títulos en mayúsculas y minúsculas normales, con la lista editable `datos/palabrasTalCual.js` (siglas y nombres que
+  se quedan como están). Sin consultas nuevas a Meta. Revisado a 1050, 1366 y 1920 px. REDES.md, 7.4.
+- Ajustes: «Black Friday», «Cyber Monday» y «RH» agregados a la lista; las tablas de las ventanas de Redes usan la
+  misma letra que el resto con tabular-nums (Mailing sin cambios).
+
+## 2026-11-25 · Redes: ¿dónde se vieron y dónde escribieron?
+
+- Igual al mockup_plataformas: pestañas para la dona (Mensajes, Impresiones, Inversión), tabla por plataforma
+  (impresiones, CTR, mensajes y costo por mensaje en verde/ámbar o «pocos datos»), «¿Lo que se vio trajo mensajes?»
+  (barras apiladas) y lectura calculada. Clic en una plataforma = ventana con resultado (inversión, impresiones, CTR y
+  CPC, mensajes, costo vs promedio), ubicaciones con «qué es» y recomendación (solo si hay una ubicación con 5+
+  mensajes). Sin consultas nuevas a Meta: se suman los clics que ya traía la consulta de ubicaciones. Sin desglose
+  por campaña ni por edad (ya están en otras tarjetas) y sin el top 5 de ubicaciones en la tarjeta. Noviembre: 4
+  plataformas, 15 ubicaciones (12 con clics). REDES.md, 7.4.
+
+## 2026-11-25 · Redes: presupuestos más efectivos y campañas nombradas por su texto
+
+- Igual al mockup_presupuestos: resumen arriba (total, mejor campaña 5+, promedio y meta), barras con inversión →
+  mensajes, costo y estado frente a la meta, pocos datos plegados, «¿A dónde fue el dinero y qué trajo?» y lectura
+  calculada. Clic = ventana de la campaña (resultado, presupuesto del mes, por semana con aviso de cansancio,
+  comparación, anuncios y recomendación). Una consulta nueva a Meta (por semana), solo GET, con caché, sin
+  reclutamiento. Noviembre: 5 campañas, 2 con 5+ mensajes, 3 con pocos datos.
+- Cada campaña se nombra por su texto promocionado; debajo «Campaña: … · objetivo». Se quitan los comodines de Meta
+  (`{{user_first_name}}`). REDES.md, 7.4.
+
+## 2026-11-25 · Redes: ventana de detalle de cada segmentación
+
+- Igual al mockup_detalle_segmentacion: encabezado (campaña, conjunto, marca, objetivo, estado, fechas, presupuesto),
+  resultados del público (inversión y mensajes con su parte del mes, costo vs promedio, alcance, frecuencia, CTR, CPC,
+  leads estimados y costo por lead), lectura para Marketing (3 frases calculadas), público configurado y comparación
+  con los otros públicos y la meta, mensajes por edad y sexo, plataforma y momento del día, anuncios del conjunto y
+  recomendación calculada (solo con 5+ mensajes). Dos consultas nuevas a Meta por conjunto (resultados y horas del
+  mes), solo GET, con caché. REDES.md, 7.4.
+
+## 2026-11-25 · Redes: segmentaciones con el nombre de la campaña
+
+- Cada fila de «Segmentaciones ganadoras» dice la campaña (nombre limpio); debajo, «Conjunto: …» si se llama distinto,
+  el público, el texto de la publicación promocionada y mensajes y gasto. Clic = detalle con campaña, conjunto, público y
+  sus anuncios. Noviembre: 5 segmentaciones, 8 anuncios, 4 con texto, 2 con conjunto de nombre distinto.
+
 ## 2026-11-25 · Redes: detalle de anuncios más liviano y resistente
 
 - En producción, /anuncios-detalle daba error de Meta código 2 («error inesperado, reintente») y TODOS los recuadros
