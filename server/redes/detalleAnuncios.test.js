@@ -17,11 +17,11 @@ test('detalle: edad y sexo, ubicaciones, horas (UTC−6 de la cuenta), sin reclu
       { ad_id: 'a3', campaign_name: 'Promo', age: '25-34', gender: 'male', spend: '5', actions: [MSJ(2)] },
       { ad_id: 'a1', campaign_name: 'Nueva vacante RH', age: '25-34', gender: 'male', spend: '99', actions: [MSJ(50)] },
     ],
-    ubicaciones: [{ ad_id: 'a2', campaign_name: 'Promo', publisher_platform: 'facebook', platform_position: 'feed', spend: '3', impressions: '100', actions: [] }],
+    ubicaciones: [{ ad_id: 'a2', campaign_name: 'Promo', publisher_platform: 'facebook', platform_position: 'feed', spend: '3', impressions: '100', clicks: '4', actions: [] }],
     horas: [{ ad_id: 'a1', campaign_name: 'Promo', date_start: '2026-11-23', hourly_stats_aggregated_by_advertiser_time_zone: '13:00:00 - 13:59:59', spend: '1', actions: [MSJ(1)] }],
   })
   assert.deepEqual(d.edadSexo, [{ marca: 'sv', edad: '25-34', sexo: 'hombres', gastado: 15, mensajes: 6 }], 'se suman los anuncios; el reclutamiento no entra')
-  assert.deepEqual(d.ubicaciones[0], { marca: '', plataforma: 'facebook', posicion: 'feed', gastado: 3, mensajes: 0, impresiones: 100 }, 'página que no es de RED → sin marca')
+  assert.deepEqual(d.ubicaciones[0], { marca: '', plataforma: 'facebook', posicion: 'feed', gastado: 3, mensajes: 0, impresiones: 100, clics: 4 }, 'página que no es de RED → sin marca')
   assert.deepEqual(d.horas[0], { marca: 'sv', dia: 0, franja: 6, gastado: 1, mensajes: 1 }, '23/11/2026 es lunes; 13 h → franja 12–14')
   assert.equal(franjaDe('00:00:00 - 00:59:59'), 0)
 })
@@ -42,7 +42,7 @@ test('detalle: segmentos con su público, presupuestos (campaña o suma de conju
     campanas: [{ id: 'c1', lifetime_budget: '30000' }, { id: 'c2' }],
   })
   const s1 = d.segmentos.find((s) => s.nombre === 'Conjunto A')
-  assert.deepEqual(s1.publico, { edad: '25–65+', sexo: 'Ambos', ubicaciones: 'Automáticas', intereses: ['Logística', 'Transporte'], paises: ['SV'] })
+  assert.deepEqual(s1.publico, { edad: '25–65+', sexo: 'Ambos', ubicaciones: 'Automáticas', intereses: ['Logística', 'Transporte'], paises: ['SV'], lugares: [], idiomas: 0, publicos: [], posiciones: [] })
   assert.equal(d.segmentos.find((s) => s.nombre === 'Conjunto B').publico.sexo, 'Mujeres')
   assert.equal(d.segmentos.length, 2, 'sin el conjunto de reclutamiento')
   const c1 = d.presupuestos.find((p) => p.campana === 'Promo')
@@ -75,7 +75,9 @@ test('detalle: el rango no pasa de hoy; la ruta pide solo GET por anuncio y resp
   assert.deepEqual(c.meses, ['2026-11'])
   assert.equal(c.detalle[0].zonaHoraria, 'America/El_Salvador')
   const ins = llamadas.filter((u) => u.pathname.endsWith('/insights'))
-  assert.equal(ins.length, 4)
+  assert.equal(ins.length, 7)
+  assert.equal(ins.filter((u) => u.searchParams.get('time_increment') === '7').length, 1, 'por campaña y semana del mes')
+  assert.equal(ins.filter((u) => u.searchParams.get('level') === 'adset').length, 2, 'por conjunto: resultados y horas del mes')
   assert.equal(ins.filter((u) => u.searchParams.get('level') === 'ad').length, 3, 'edad y sexo, ubicaciones y por anuncio: por anuncio')
   assert.equal(ins.filter((u) => u.searchParams.get('level') === 'campaign' && u.searchParams.get('breakdowns')?.startsWith('hourly')).length, 1, 'horarios: por campaña')
   assert.ok(ins.every((u) => JSON.parse(u.searchParams.get('time_range')).until === '2026-11-24'))
@@ -133,4 +135,19 @@ test('detalle: con Meta colgada, responde antes del límite y marca los recuadro
   const d = await leerDetalle({ cuentaId: '333', mes: '2026-11', hoy: '2026-11-24', llamar: colgada, llamarUno: colgada, op: {}, marcaDe: MARCA, limiteMs: 300 })
   assert.ok(Date.now() - t0 < 1500, `tardó ${Date.now() - t0} ms`)
   assert.deepEqual(Object.keys(d.errores).sort(), ['edadSexo', 'formularios', 'horas', 'presupuestos', 'segmentos', 'ubicaciones'])
+})
+
+test('detalle: cada segmentación trae sus anuncios (nombre, gasto, mensajes) y el texto promocionado del que más gastó', () => {
+  const d = armarDetalle({
+    ads: [{ id: 'a1', name: 'Anuncio uno', creative: { actor_id: '444', body: 'Radios en cuotas' } }, { id: 'a3', name: 'Anuncio tres', creative: { actor_id: '444', effective_object_story_id: '444_7' } }],
+    marcaDe: MARCA,
+    porAnuncio: [
+      { ad_id: 'a1', adset_id: 's1', campaign_id: 'c1', campaign_name: 'Promo', spend: '5', actions: [MSJ(2)] },
+      { ad_id: 'a3', adset_id: 's1', campaign_id: 'c1', campaign_name: 'Promo', spend: '9', actions: [MSJ(4)] },
+    ],
+    conjuntos: [{ id: 's1', name: 'Público A', campaign_id: 'c1' }],
+  })
+  const [s] = d.segmentos
+  assert.deepEqual(s.anuncios.map((a) => [a.nombre, a.gastado, a.mensajes]), [['Anuncio tres', 9, 4], ['Anuncio uno', 5, 2]], 'del que más gastó al que menos')
+  assert.deepEqual([s.texto, s.publicacion, s.campana, s.nombre], [null, '444_7', 'Promo', 'Público A'], 'el que más gastó promociona una publicación (su texto sale de la publicación)')
 })

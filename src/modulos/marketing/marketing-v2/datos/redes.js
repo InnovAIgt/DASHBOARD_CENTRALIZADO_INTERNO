@@ -6,6 +6,7 @@
 // Las fechas ya vienen en hora de Guatemala/El Salvador (UTC−6): el servidor las convierte antes de agrupar.
 // «estado» de una publicación: 'publicada' | 'no_publicada' | 'programada' (lo programado saldrá del «Plan del mes»).
 // Dinero: cada cuenta de anuncios trae su moneda (campo currency de Meta); NUNCA se suman monedas distintas.
+import { textoNormal } from './palabrasTalCual.js'
 
 /** Marcas (DATA RED es de El Salvador, confirmado el 23/11/2026). El orden es el de la pantalla. */
 export const MARCAS = {
@@ -139,24 +140,13 @@ function alcanceHasta(cuenta, mes, corte) {
 export const alcancePorMarca = (cuentas = [], mes, corte = null, marcas = Object.keys(MARCAS)) =>
   Object.fromEntries(marcas.map((m) => [m, metricasCuentas(cuentas.filter((c) => c.marca === m), mes, corte)?.alcanceDiario ?? 0]))
 
-const MINUSCULAS = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'en', 'y', 'a', 'al', 'con', 'por', 'para', 'tu', 'su',
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'])
 /**
  * Nombre de campaña para la pantalla: sin el año al inicio («2026 - », «2026 ») y, si viene TODO EN MAYÚSCULAS, en
- * formato normal (siglas cortas como RH, BF o PTT se quedan en mayúsculas). El nombre original va en el tooltip.
+ * mayúsculas y minúsculas normales (las siglas y nombres de datos/palabrasTalCual.js se quedan como están).
  */
 export function nombreCampana(nombre) {
-  let t = String(nombre ?? '').trim().replace(/^\d{4}\s*[-–—]?\s*/, '').trim() || String(nombre ?? '').trim()
-  if (/[A-ZÁÉÍÓÚÑ]/.test(t) && !/[a-záéíóúñ]/.test(t)) {
-    t = t.split(/(\s+)/).map((p, i) => {
-      if (/^\s+$/.test(p) || !p) return p
-      const letras = p.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, '')
-      if (letras.length >= 2 && letras.length <= 3 && !MINUSCULAS.has(p.toLowerCase())) return p
-      const l = p.toLowerCase()
-      return i === 0 ? l.charAt(0).toUpperCase() + l.slice(1) : l
-    }).join('')
-  }
-  return t
+  const t = String(nombre ?? '').trim().replace(/^\d{4}\s*[-–—]?\s*/, '').trim() || String(nombre ?? '').trim()
+  return textoNormal(t)
 }
 
 const EMOJI_BORDE = /^[\s\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}‍️]+|[\s\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}‍️]+$/gu

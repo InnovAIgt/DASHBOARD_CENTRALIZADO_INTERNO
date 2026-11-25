@@ -217,11 +217,14 @@ export function cuentaDashboard(datos = {}, cuenta, nombre, metricas = {}) {
 export const ESTADOS_ANUNCIO = ['ACTIVE', 'PAUSED', 'PENDING_REVIEW', 'DISAPPROVED', 'PREAPPROVED', 'PENDING_BILLING_INFO',
   'CAMPAIGN_PAUSED', 'ARCHIVED', 'ADSET_PAUSED', 'IN_PROCESS', 'WITH_ISSUES']
 
-/** Texto del anuncio (de la creatividad), recortado; null si Meta no lo da (anuncios de una publicación existente). */
+/**
+ * Texto del anuncio (de la creatividad), recortado; null si Meta no lo da (anuncios de una publicación existente) o si
+ * solo trae comodines de Meta como «{{user_first_name}}» (se reemplazan por el nombre de cada persona: no son texto).
+ */
 export function textoDelAnuncio(ad = {}) {
   const c = ad?.creative ?? {}
-  const t = c.body ?? c.object_story_spec?.link_data?.message ?? c.object_story_spec?.video_data?.message ?? ''
-  return t ? tituloDe(t) : null
+  const t = String(c.body ?? c.object_story_spec?.link_data?.message ?? c.object_story_spec?.video_data?.message ?? '').replace(/\{\{[^}]*\}\}/g, ' ').replace(/\s+/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim()
+  return t.replace(/[\s,.:;!¡?¿-]/g, '') ? tituloDe(t) : null
 }
 
 /** Página (o Instagram) que publica un anuncio, según su creatividad. */

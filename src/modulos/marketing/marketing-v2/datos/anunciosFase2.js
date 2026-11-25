@@ -6,12 +6,14 @@
 // Regla de Keily (24/11/2026): un grupo con MENOS DE 5 MENSAJES se marca «pocos datos» y nunca sale como ganador.
 // Sin pantalla ni red; se prueba con node --test.
 import { semaforoCosto } from './redesVista.js'
+import { nombreCampana, tituloLimpio } from './redes.js'
+import { textoNormal } from './palabrasTalCual.js'
 
 export const MIN_MENSAJES = 5
 export const EDADES = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+']
-const PLATAFORMA = { facebook: 'Facebook', instagram: 'Instagram', messenger: 'Messenger', audience_network: 'Audience Network', whatsapp: 'WhatsApp', threads: 'Threads' }
+export const PLATAFORMA = { facebook: 'Facebook', instagram: 'Instagram', messenger: 'Messenger', audience_network: 'Audience Network', whatsapp: 'WhatsApp', threads: 'Threads' }
 const RED_DE = { facebook: 'fb', instagram: 'ig' }
-const POSICION = { feed: 'Feed', story: 'Stories', facebook_stories: 'Stories', instagram_stories: 'Stories', facebook_reels: 'Reels', instagram_reels: 'Reels',
+export const POSICION = { feed: 'Feed', story: 'Stories', facebook_stories: 'Stories', instagram_stories: 'Stories', facebook_reels: 'Reels', instagram_reels: 'Reels',
   reels: 'Reels', marketplace: 'Marketplace', video_feeds: 'Videos', instagram_explore: 'Explorar', instagram_explore_grid_home: 'Explorar', search: 'Búsqueda',
   right_hand_column: 'Columna derecha', an_classic: 'Clásico', rewarded_video: 'Video con premio', messenger_inbox: 'Bandeja', profile_feed: 'Perfil',
   instagram_profile_feed: 'Perfil', facebook_profile_feed: 'Perfil', whatsapp_status: 'Estados', unknown: 'Sin dato',
@@ -19,7 +21,7 @@ const POSICION = { feed: 'Feed', story: 'Stories', facebook_stories: 'Stories', 
   biz_disco_feed: 'Descubrir negocios', facebook_groups_feed: 'Grupos', instagram_profile_reels: 'Reels del perfil' }
 
 const div = (a, b) => (b > 0 ? a / b : null)
-const conCosto = (g) => ({ ...g, costo: div(g.gastado, g.mensajes), pocos: g.mensajes < MIN_MENSAJES })
+export const conCosto = (g) => ({ ...g, costo: div(g.gastado, g.mensajes), pocos: g.mensajes < MIN_MENSAJES })
 /** El más barato entre los que tienen 5 o más mensajes (nunca uno con «pocos datos»). */
 export const masBarato = (grupos = []) => grupos.filter((g) => !g.pocos && g.costo !== null).reduce((a, b) => (!a || b.costo < a.costo ? b : a), null)
 
@@ -71,8 +73,9 @@ export function ubicacionesDe(ubicaciones = []) {
   for (const u of ubicaciones) {
     const clave = `${u.plataforma}|${u.posicion}`
     const g = m.get(clave) ?? { clave, nombre: `${PLATAFORMA[u.plataforma] ?? u.plataforma} · ${POSICION[u.posicion] ?? String(u.posicion ?? '').replace(/_/g, ' ')}`,
-      red: RED_DE[u.plataforma] ?? 'otra', impresiones: 0, gastado: 0, mensajes: 0 }
+      red: RED_DE[u.plataforma] ?? 'otra', plataforma: u.plataforma, posicion: u.posicion, impresiones: 0, clics: 0, gastado: 0, mensajes: 0 }
     g.impresiones += u.impresiones ?? 0
+    g.clics += u.clics ?? 0
     g.gastado += u.gastado
     g.mensajes += u.mensajes
     m.set(clave, g)
@@ -210,7 +213,7 @@ export function plataformasDe(ubicaciones = []) {
   const nombres = { facebook: 'Facebook', instagram: 'Instagram', whatsapp: 'WhatsApp', otras: 'Otras' }
   return ['facebook', 'instagram', 'whatsapp', 'otras'].map((k) => {
     const q = ubicaciones.filter((u) => grupoDe(u.plataforma) === k)
-    return { k, nombre: nombres[k], ...conCosto({ impresiones: q.reduce((n, u) => n + (u.impresiones ?? 0), 0), mensajes: q.reduce((n, u) => n + u.mensajes, 0), gastado: q.reduce((n, u) => n + u.gastado, 0) }),
+    return { k, nombre: nombres[k], marcas: [...new Set(q.map((u) => u.marca).filter(Boolean))], ...conCosto({ impresiones: q.reduce((n, u) => n + (u.impresiones ?? 0), 0), clics: q.reduce((n, u) => n + (u.clics ?? 0), 0), mensajes: q.reduce((n, u) => n + u.mensajes, 0), gastado: q.reduce((n, u) => n + u.gastado, 0) }),
       ubicaciones: ubicacionesDe(q) }
   }).filter((p) => p.impresiones > 0 || p.mensajes > 0)
 }
@@ -222,3 +225,18 @@ export const OBJETIVOS = {
   LEAD_GENERATION: 'Clientes potenciales', REACH: 'Alcance', BRAND_AWARENESS: 'Reconocimiento', VIDEO_VIEWS: 'Reproducciones de video', CONVERSIONS: 'Conversiones', PAGE_LIKES: 'Me gusta de la página',
 }
 export const objetivoTexto = (o) => (o ? OBJETIVOS[o] ?? String(o).replace(/^OUTCOME_/, '').toLowerCase().replace(/_/g, ' ') : null)
+
+/**
+ * Cómo se nombra una campaña en Anuncios (Presupuestos, Segmentaciones, tabla y ventanas): el TÍTULO es el texto
+ * promocionado (de la publicación o del anuncio que más gastó); debajo, «Campaña: <nombre limpio> · <objetivo>». Sin texto
+ * promocionado, el título es el nombre de la campaña. tip = el texto completo (o el nombre en Meta).
+ * @returns {{titulo: string, sub: string|null, tip: string}}
+ */
+export function nombreConTexto({ texto, campana, objetivo }) {
+  // Sin comodines de Meta («{{user_first_name}}»): no son texto; si no queda nada, se usa el nombre de la campaña.
+  const limpio = String(texto ?? '').replace(/\{\{[^}]*\}\}/g, ' ').replace(/\s+/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim()
+  const t = limpio.replace(/[\s,.:;!¡?¿-]/g, '') ? textoNormal(tituloLimpio(limpio)) : ''
+  const obj = objetivoTexto(objetivo)
+  if (t) return { titulo: t, sub: [`Campaña: ${nombreCampana(campana)}`, obj].filter(Boolean).join(' · '), tip: texto }
+  return { titulo: nombreCampana(campana), sub: obj ? `Campaña · ${obj}` : null, tip: campana }
+}

@@ -355,7 +355,7 @@ por la página de cada anuncio) y el rango del **mes elegido en el filtro**, sin
 | Edad y sexo | `breakdowns=age,gender` | Mensajes de hombres y mujeres por edad; costo por mensaje |
 | Plataforma y ubicación | `breakdowns=publisher_platform,platform_position` | Facebook, Instagram, WhatsApp, Audience Network |
 | Horarios | `breakdowns=hourly_stats_aggregated_by_advertiser_time_zone`, `time_increment=1` | Día de la semana × franja de 2 h. **Zona de la cuenta: America/El_Salvador (UTC−6)**, la misma del dashboard |
-| Segmentaciones | insights por anuncio + `/act_…/adsets` (`targeting`) | Público del conjunto: edad, sexo (ninguno lo fija: «Ambos»), ubicaciones («Automáticas» si no se eligen), países e intereses (nombres de categorías, no personas) |
+| Segmentaciones | insights por anuncio y por conjunto (`level=adset`: alcance, frecuencia, clics y horas del mes) + `/act_…/adsets` (`targeting`, estado, fechas, presupuesto) + `/act_…/campaigns` (objetivo, estado) + `/act_…/ads` (nombre, título, texto y formato) | Fila = conjunto de anuncios con el nombre de su **campaña**; «Conjunto: …» si se llama distinto; texto promocionado (del anuncio que más gastó); detalle con sus anuncios. Público del conjunto: edad, sexo (ninguno lo fija: «Ambos»), ubicaciones («Automáticas» si no se eligen), países e intereses (nombres de categorías, no personas) |
 | Presupuestos | `/act_…/campaigns` y `/act_…/adsets` | Presupuesto de la campaña o, si está en los conjuntos, la suma de ellos (÷ 100) |
 | Formularios | acciones `lead` / `onsite_conversion.lead_grouped` de los insights | **Solo el conteo** (se toma el mayor de los dos: son el mismo envío). No se usa `leads_retrieval` ni se lee el contenido. Si es 0, Conversiones muestra solo mensajes |
 
@@ -363,6 +363,52 @@ por la página de cada anuncio) y el rango del **mes elegido en el filtro**, sin
   4 y 17) se reintentan con espera de 1 s y 3 s; los horarios se piden por **campaña** día por día (menos filas, con
   límite de 20 s); el detalle tiene un límite total de 45 s (la función corta a los 60 s); cada consulta tiene su caché
   de 30 min y, si una falla, solo su recuadro muestra el error (o la copia guardada).
+- **Ventana de una segmentación** (`pantalla/redes/DetalleSegmento.jsx`, cálculos en `datos/segmentoDetalle.js`): encabezado,
+  resultados del público, lectura para Marketing (qué funcionó, qué vigilar: frecuencia > 3, quién respondió), público
+  configurado y comparación con los otros públicos y la meta, mensajes por edad y sexo, plataforma y momento del día,
+  anuncios del conjunto (leads estimados: los de la publicación que promociona) y recomendación calculada (solo con
+  5+ mensajes; si no hay datos, no se muestra).
+- **Presupuestos más efectivos (25/11/2026)** (`pantalla/redes/Presupuestos.jsx`, cálculos en
+  `datos/presupuestoDetalle.js`): resumen (total invertido, mejor campaña con 5+ mensajes, promedio del mes y la meta),
+  barras con «US$ X → N mensajes», costo y estado («en meta» o «N % sobre la meta»), pocos datos plegados con su total,
+  «¿A dónde fue el dinero y qué trajo?» y frase de lectura. Clic = ventana de la campaña: encabezado, resultado,
+  presupuesto del mes (diario × días activos o total; % usado y promedio por día), por semana (Meta no da las semanas
+  sin gasto: se muestran en 0; aviso «el anuncio se está cansando» si los mensajes bajan 30 % o más con gasto parecido,
+  ±25 %), comparación con las demás, el promedio, la meta y el mes pasado, anuncios y recomendación calculada. Consulta
+  nueva a Meta: insights por campaña con `time_increment=7` (solo GET, con caché).
+- **Tarjetas compactas (25/11/2026, mockup_anuncios_compacto)** — Presupuestos, Plataformas y Segmentaciones
+  (`TarjetaCompacta` en `pantalla/redes/piezasRedes.jsx`, cálculos en `datos/anunciosCompacto.js`): línea de color arriba
+  que se desvanece (amarillo, azul, verde), ícono, subtítulo corto, «Ver reparto ›», costos en píldoras (verde en meta,
+  ámbar sobre la meta, comparando el costo redondeado a centavos; «pocos datos» con menos de 5), barras finas, números
+  con `tabular-nums` y lectura en 1 línea con «Ver más». Las 3 con la misma altura (revisado a 1050, 1366 y 1920 px).
+  - Presupuestos: costo promedio por mensaje en grande, invertido y meta al lado, barras con la meta punteada, pocos
+    datos plegados con su total. «Ver reparto» = «¿A dónde fue el dinero y qué trajo?» y la lectura completa.
+  - Plataformas: pestañas en píldora, dona pequeña y lista (% de mensajes, mensajes, costo). WhatsApp y Otras van juntas
+    si las dos tienen menos de 5 mensajes; esa fila abre «Ver reparto» (tabla completa con impresiones, CTR, inversión,
+    mensajes y costo; «¿Lo que se vio trajo mensajes?»; clic en una plataforma = su ventana, con «Volver»).
+  - Segmentaciones: cada público en una cajita con medalla (aro dorado 1, plateado 2), chips en una línea (marca, edad,
+    sexo, ubicaciones, primer interés «+N»), costo y mensajes. Intereses completos y conjunto solo en la ventana. Lectura:
+    cuánto más barato escribió el primer público que el segundo (solo con 5+ mensajes).
+  - **Títulos en mayúsculas y minúsculas normales:** si un texto llega TODO EN MAYÚSCULAS se pasa a normal; las siglas y
+    nombres de `datos/palabrasTalCual.js` (lista fácil de editar: RED, Intelfon, DATA RED, SV, GT, PTToC, PTT, GPS, PBX,
+    LTE, 4G, 5G, IA, B2B, BF, WhatsApp, Facebook, Instagram, Black Friday, Cyber Monday, RH) se quedan como están.
+    Aplica a campañas y anuncios.
+  - Las tablas de la ventana de detalle de Redes («Ver reparto», ubicaciones, anuncios) usan la misma letra que el resto
+    con tabular-nums (antes, letra monoespaciada). Solo Redes; Mailing no cambia.
+- **¿Dónde se vieron y dónde escribieron? (25/11/2026)** (`pantalla/redes/Plataformas.jsx`, cálculos en
+  `datos/plataformasDetalle.js`): dona con pestañas Mensajes (por defecto), Impresiones e Inversión; tabla por
+  plataforma (Facebook, Instagram, WhatsApp, Otras) con impresiones, CTR, mensajes (y su %) y costo por mensaje (verde
+  en meta, ámbar sobre la meta, «pocos datos» con menos de 5); «¿Lo que se vio trajo mensajes?» con el % de
+  impresiones, inversión y mensajes; lectura (qué plataforma trae más mensajes y cuáles se llevan más inversión de la
+  que rinden). Clic en una fila o en la dona = ventana: «la más barata del mes» si lo es, mes, marcas, «Sin
+  reclutamiento»; resultado (inversión % de la pauta, impresiones % del total, CTR y CPC, mensajes % del mes, costo vs
+  promedio); ubicaciones con una descripción corta de qué es cada una; recomendación (priorizar la más barata con 5+
+  mensajes, las que están en meta o sobre ella, y las que gastaron y traen menos de 5). Los clics salen de la misma
+  consulta de ubicaciones (`publisher_platform,platform_position`, campo `clicks`): no hay consulta nueva.
+- **Nombre de cada campaña (25/11/2026)** en Presupuestos, Segmentaciones, tabla de campañas y ventanas: título = texto
+  promocionado (título de la publicación o del anuncio que más gastó), una línea con «…» y completo al pasar el mouse;
+  debajo, tenue, «Campaña: <nombre limpio> · <objetivo>». Sin texto, el título es el nombre de la campaña. Los
+  comodines de Meta (por ejemplo `{{user_first_name}}`) se quitan y no cuentan como texto.
 - **«Pocos datos»** (regla de Keily): un grupo con **menos de 5 mensajes** lo dice y **nunca** sale como el mejor
   (horario, edad, ubicación, segmentación, presupuesto).
 - Ya no queda nada de ejemplo en Anuncios: se quitaron todas las etiquetas «Ejemplo».
