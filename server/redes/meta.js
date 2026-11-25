@@ -53,14 +53,26 @@ export function configuracionMeta(env = process.env, tokenPagina = null) {
  * Devuelve el JSON de Meta; si Meta responde con error, lanza ErrorMeta.
  */
 export async function llamarMeta(ruta, parametros = {}, opciones = {}) {
-  try {
-    return await llamarMetaUnaVez(ruta, parametros, opciones)
-  } catch (err) {
-    // Si Meta tardó demasiado, se reintenta UNA vez (pasa cuando se piden muchas cuentas a la vez).
-    if (err?.tipo === 'otro' && err.espera) return llamarMetaUnaVez(ruta, parametros, opciones)
-    throw err
+  const esperas = opciones.esperasReintento ?? ESPERAS_REINTENTO
+  for (let intento = 0; ; intento++) {
+    // Con un límite de tiempo (opciones.hasta, en ms), cada intento solo usa lo que queda.
+    const queda = opciones.hasta ? opciones.hasta - Date.now() : Infinity
+    if (queda <= 500) throw new ErrorMeta('otro', 'Meta tardó demasiado: se acabó el tiempo de esta consulta.')
+    try {
+      return await llamarMetaUnaVez(ruta, parametros, { ...opciones, esperaMs: Math.min(opciones.esperaMs ?? META_ESPERA_MS, queda) })
+    } catch (err) {
+      // Reintento con espera (1 s, 3 s) cuando Meta da un error pasajero (códigos 1, 2, 4, 17) o tarda demasiado.
+      const pasajero = err instanceof ErrorMeta && (CODIGOS_REINTENTO.has(Number(err.codigo)) || err.espera)
+      const espera = esperas[intento]
+      if (!pasajero || espera === undefined || (opciones.hasta && Date.now() + espera + 500 > opciones.hasta)) throw err
+      await new Promise((listo) => setTimeout(listo, espera))
+    }
   }
 }
+
+/** Errores pasajeros de Meta que se reintentan: 1 (error desconocido), 2 (servicio no disponible), 4 y 17 (límite). */
+export const CODIGOS_REINTENTO = new Set([1, 2, 4, 17])
+export const ESPERAS_REINTENTO = [1000, 3000]
 
 async function llamarMetaUnaVez(ruta, parametros = {}, { env = process.env, fetchFn = fetch, esperaMs = META_ESPERA_MS, tokenPagina = null } = {}) {
   if (!String(env?.META_TOKEN ?? '').trim()) throw new ErrorMeta('sin_token', 'Todavía no hay token de Meta (META_TOKEN).')

@@ -2,6 +2,14 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-25 · Redes: detalle de anuncios más liviano y resistente
+
+- En producción, /anuncios-detalle daba error de Meta código 2 («error inesperado, reintente») y TODOS los recuadros
+  fallaban: las 8 consultas iban a la vez y, si una fallaba, se perdía todo el detalle.
+- Ahora: consultas de a 2; reintento con espera (1 s y 3 s) para los códigos 1, 2, 4 y 17; horarios por campaña día
+  por día (menos filas) con límite de 20 s; límite total de 45 s; caché por consulta (lo que cargó se reusa); si una
+  consulta falla, solo su recuadro muestra el error. Con Meta real: 10.7 s la primera vez, 4 ms desde la caché.
+
 ## 2026-11-24 · Vercel: una sola función para Canales de marketing
 
 - El deploy fallaba: el plan Hobby permite máximo 12 funciones y había 19. Las 13 de Mailing, Redes, webhook de Brevo

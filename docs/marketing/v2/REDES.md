@@ -359,6 +359,10 @@ por la página de cada anuncio) y el rango del **mes elegido en el filtro**, sin
 | Presupuestos | `/act_…/campaigns` y `/act_…/adsets` | Presupuesto de la campaña o, si está en los conjuntos, la suma de ellos (÷ 100) |
 | Formularios | acciones `lead` / `onsite_conversion.lead_grouped` de los insights | **Solo el conteo** (se toma el mayor de los dos: son el mismo envío). No se usa `leads_retrieval` ni se lee el contenido. Si es 0, Conversiones muestra solo mensajes |
 
+- **Resistente (25/11/2026):** las consultas van de a 2 (no todas a la vez); los errores pasajeros de Meta (códigos 1, 2,
+  4 y 17) se reintentan con espera de 1 s y 3 s; los horarios se piden por **campaña** día por día (menos filas, con
+  límite de 20 s); el detalle tiene un límite total de 45 s (la función corta a los 60 s); cada consulta tiene su caché
+  de 30 min y, si una falla, solo su recuadro muestra el error (o la copia guardada).
 - **«Pocos datos»** (regla de Keily): un grupo con **menos de 5 mensajes** lo dice y **nunca** sale como el mejor
   (horario, edad, ubicación, segmentación, presupuesto).
 - Ya no queda nada de ejemplo en Anuncios: se quitaron todas las etiquetas «Ejemplo».

@@ -1,7 +1,8 @@
 // Pruebas de Anuncios fase 2 con respuestas INVENTADAS de Meta (nunca se llama a Meta).
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { armarDetalle, formulariosDe, franjaDe, leerDetalle, publicoDe, rangoDias } from './detalleAnuncios.js'
+import { armarDetalle, formulariosDe, franjaDe, leerDetalle, publicoDe, rangoDias, vaciarCacheDetalle } from './detalleAnuncios.js'
+import { ErrorMeta, llamarMeta } from './meta.js'
 import { responderRedes, vaciarCacheRedes } from './rutas.js'
 
 const MSJ = (v) => ({ action_type: 'onsite_conversion.messaging_conversation_started_7d', value: String(v) })
@@ -57,6 +58,7 @@ test('detalle: el rango no pasa de hoy; la ruta pide solo GET por anuncio y resp
   assert.deepEqual(rangoDias('2026-11', '2026-11-24'), { since: '2026-11-01', until: '2026-11-24' })
   assert.deepEqual(rangoDias('2026-10', '2026-11-24'), { since: '2026-10-01', until: '2026-10-31' })
   vaciarCacheRedes()
+  vaciarCacheDetalle()
   const llamadas = []
   const fetchFn = async (url) => {
     const u = new URL(url)
@@ -74,8 +76,61 @@ test('detalle: el rango no pasa de hoy; la ruta pide solo GET por anuncio y resp
   assert.equal(c.detalle[0].zonaHoraria, 'America/El_Salvador')
   const ins = llamadas.filter((u) => u.pathname.endsWith('/insights'))
   assert.equal(ins.length, 4)
-  assert.ok(ins.every((u) => u.searchParams.get('level') === 'ad'))
+  assert.equal(ins.filter((u) => u.searchParams.get('level') === 'ad').length, 3, 'edad y sexo, ubicaciones y por anuncio: por anuncio')
+  assert.equal(ins.filter((u) => u.searchParams.get('level') === 'campaign' && u.searchParams.get('breakdowns')?.startsWith('hourly')).length, 1, 'horarios: por campaña')
   assert.ok(ins.every((u) => JSON.parse(u.searchParams.get('time_range')).until === '2026-11-24'))
   assert.ok(!r.body.includes('token-inventado') && !r.body.includes('appsecret_proof'))
   assert.equal((await leerDetalle({ cuentaId: '1', mes: '2026-12', hoy: '2026-11-24', llamar: async () => [], llamarUno: async () => ({}), op: {}, marcaDe: new Map() })).edadSexo.length, 0, 'mes futuro: sin consultas')
+})
+
+test('meta: reintenta con espera los códigos pasajeros (1, 2, 4, 17) y no los demás; respeta el límite de tiempo', async () => {
+  const env = { META_TOKEN: 'token-inventado', META_APP_SECRET: 'secreto-inventado' }
+  let n = 0
+  const falla2luego = async () => (++n < 3 ? { ok: false, status: 500, json: async () => ({ error: { code: 2 } }) } : { ok: true, status: 200, json: async () => ({ id: 'x' }) })
+  assert.deepEqual(await llamarMeta('/x', {}, { env, fetchFn: falla2luego, esperasReintento: [0, 0] }), { id: 'x' })
+  assert.equal(n, 3, 'dos reintentos')
+  let m = 0
+  const token = async () => { m++; return { ok: false, status: 400, json: async () => ({ error: { code: 190 } }) } }
+  await assert.rejects(llamarMeta('/x', {}, { env, fetchFn: token, esperasReintento: [0, 0] }), (e) => e.tipo === 'token')
+  assert.equal(m, 1, 'un token vencido no se reintenta')
+  await assert.rejects(llamarMeta('/x', {}, { env, fetchFn: falla2luego, hasta: Date.now() + 100 }), (e) => e instanceof ErrorMeta, 'sin tiempo no se intenta')
+})
+
+test('detalle: consultas de a 2, si una falla solo su recuadro da error; lo que cargó queda en caché', async () => {
+  vaciarCacheDetalle()
+  let activas = 0
+  let maxActivas = 0
+  let fallarEdad = true
+  const llamadas = []
+  const llamar = async (ruta, p) => {
+    activas++; maxActivas = Math.max(maxActivas, activas); llamadas.push(p.breakdowns ?? ruta)
+    await new Promise((r) => setTimeout(r, 5))
+    activas--
+    if (p.breakdowns === 'age,gender' && fallarEdad) throw new ErrorMeta('otro', 'Meta respondió con un error (código 2).', 2)
+    if (ruta.endsWith('/ads')) return ADS.map((a) => ({ ...a, campaign_id: a.id === 'a2' ? 'c2' : 'c1' }))
+    if (p.level === 'campaign') return [{ campaign_id: 'c1', campaign_name: 'Promo', date_start: '2026-11-23', hourly_stats_aggregated_by_advertiser_time_zone: '13:00:00 - 13:59:59', spend: '2', actions: [MSJ(3)] }]
+    if (p.breakdowns) return [{ ad_id: 'a1', campaign_name: 'Promo', publisher_platform: 'facebook', platform_position: 'feed', spend: '1', impressions: '10', actions: [MSJ(1)] }]
+    return []
+  }
+  const llamarUno = async () => ({ currency: 'USD', timezone_name: 'America/El_Salvador' })
+  const base = { cuentaId: '333', mes: '2026-11', hoy: '2026-11-24', llamar, llamarUno, op: {}, marcaDe: MARCA }
+  const d = await leerDetalle(base)
+  assert.ok(maxActivas <= 2, `consultas a la vez: ${maxActivas}`)
+  assert.deepEqual(Object.keys(d.errores), ['edadSexo'], 'solo edad y sexo falla')
+  assert.equal(d.ubicaciones.length, 1)
+  assert.deepEqual([d.horas[0].marca, d.horas[0].mensajes], ['sv', 3], 'horas por campaña, con la marca de sus anuncios')
+  const antes = llamadas.length
+  fallarEdad = false
+  const d2 = await leerDetalle(base)
+  assert.deepEqual(d2.errores, {})
+  assert.equal(llamadas.length - antes, 1, 'la segunda vez solo se repite la consulta que falló')
+})
+
+test('detalle: con Meta colgada, responde antes del límite y marca los recuadros como error', async () => {
+  vaciarCacheDetalle()
+  const colgada = (ruta, p, o) => new Promise((_, no) => setTimeout(() => no(new ErrorMeta('otro', 'Meta tardó demasiado: se acabó el tiempo de esta consulta.')), Math.max(0, o.hasta - Date.now())))
+  const t0 = Date.now()
+  const d = await leerDetalle({ cuentaId: '333', mes: '2026-11', hoy: '2026-11-24', llamar: colgada, llamarUno: colgada, op: {}, marcaDe: MARCA, limiteMs: 300 })
+  assert.ok(Date.now() - t0 < 1500, `tardó ${Date.now() - t0} ms`)
+  assert.deepEqual(Object.keys(d.errores).sort(), ['edadSexo', 'formularios', 'horas', 'presupuestos', 'segmentos', 'ubicaciones'])
 })
