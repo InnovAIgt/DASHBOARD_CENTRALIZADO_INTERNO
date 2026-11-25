@@ -19,12 +19,14 @@ export function MiniGrafica({ serie = [], color }) {
   </svg>
 }
 
-/** Tarjeta compacta: ícono + título + «?», número grande con la mini gráfica a la derecha y UNA línea de subtítulo. */
-export function TarjetaRedes({ titulo, icono: Icono, color, valor, sub, serie, tip, onClick }) {
+/**
+ * Tarjeta compacta: título + «?», número grande con la mini gráfica a la derecha y una línea de subtítulo. Sin íconos
+ * (versión profesional del mockup); el color va solo en el borde de arriba. Clic = ventana de detalle (onClick).
+ */
+export function TarjetaRedes({ titulo, color, valor, sub, serie, tip, onClick }) {
   const Caja = onClick ? 'button' : 'div'
   return <Caja {...(onClick ? { type: 'button', onClick } : {})} className={`mkv2-redes-kpi ${onClick ? 'is-clic' : ''}`} style={{ '--mkv2-acento': color }} data-tip={tip}>
     <span className="mkv2-redes-kpi-cabeza">
-      {Icono && <span className="mkv2-redes-kpi-icono" aria-hidden="true"><Icono size={11} strokeWidth={2.8} /></span>}
       <span className="mkv2-redes-kpi-titulo">{titulo}</span>
       <span className="mkv2-ayuda" aria-hidden="true">?</span>
     </span>
@@ -95,11 +97,12 @@ export function Anillo({ pct, color }) {
  * Alcance por semana: columnas de Facebook e Instagram lado a lado (solo las redes que pasan el filtro).
  * corte = día de hoy si el mes está en curso: las semanas que empiezan después dicen «por venir».
  */
-export function BarrasSemana({ semanas = [], redes = ['fb', 'ig'], corte = null }) {
+export function BarrasSemana({ semanas = [], redes = ['fb', 'ig'], corte = null, onElegir }) {
   const max = Math.max(...semanas.flatMap((s) => redes.map((r) => s[r])), 1)
   return <div className="mkv2-redes-semanas">
     <div className="mkv2-redes-semanas-graf">
-      {semanas.map((s) => <div key={s.semana} className="mkv2-redes-semana">
+      {semanas.map((s) => <div key={s.semana} className={`mkv2-redes-semana ${onElegir ? 'mkv2-redes-clic' : ''}`}
+        {...(onElegir ? { role: 'button', tabIndex: 0, onClick: () => onElegir(s), onKeyDown: (e) => { if (e.key === 'Enter') onElegir(s) } } : {})}>
         <div className="mkv2-redes-semana-barras">
           {redes.map((r) => <span key={r} className="mkv2-redes-columna" style={{ '--alto': `${(s[r] / max) * 100}%`, '--c': COLOR_RED[r] }}
             data-tip={`${r === 'fb' ? 'Facebook' : 'Instagram'} · días ${s.desde}–${s.hasta}: ${numero(s[r])} de alcance`} />)}
@@ -134,10 +137,35 @@ ${f.publicadas} de ${f.programadas} programadas · ${f.cumplimiento === null ? '
   </div>
 }
 
-/** Píldora de «Lo importante del mes» (una línea; la explicación va en el globo). */
-export function PildoraImportante({ icono: Icono, color, texto, detalle, tip, onClick }) {
+/**
+ * Barras horizontales de COSTO POR MENSAJE con la línea de la meta (Pauta del Resumen y Presupuestos de Anuncios).
+ * filas = [{id, nombre, tip, sub, costo, pocos, semaforo, onClick}]. Las de «pocos datos» van plegadas abajo.
+ * Barra más corta = más barato; si no pasa la línea punteada, está en meta.
+ */
+export function BarrasCosto({ filas = [], meta = null, formato, colorDe }) {
+  const buenas = filas.filter((f) => !f.pocos && f.costo !== null)
+  const pocas = filas.filter((f) => f.pocos || f.costo === null)
+  const max = Math.max(meta ?? 0, ...buenas.map((f) => f.costo), 0.01) * 1.12
+  const fila = (f) => <div key={f.id} className={`mkv2-redes-costo-fila ${f.pocos ? 'is-pocos' : ''} ${f.onClick ? 'mkv2-redes-clic' : ''}`} data-tip={f.tip}
+    {...(f.onClick ? { role: 'button', tabIndex: 0, onClick: f.onClick, onKeyDown: (e) => { if (e.key === 'Enter') f.onClick() } } : {})}>
+    <span className="mkv2-redes-costo-nombre"><b className="mkv2-una-linea">{f.nombre}</b><small className="mkv2-una-linea">{f.sub}</small></span>
+    <span className="mkv2-redes-costo-barra">
+      {!f.pocos && f.costo !== null && <i style={{ width: `${(f.costo / max) * 100}%`, background: colorDe(f) }} />}
+      {meta && <em style={{ left: `${(meta / max) * 100}%` }} aria-hidden="true" />}
+    </span>
+    {f.pocos || f.costo === null ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${f.semaforo ? `is-${f.semaforo}` : ''}`}>{formato(f.costo)}</span>}
+  </div>
+  return <div className="mkv2-redes-costos">
+    {meta && <div className="mkv2-redes-costo-meta"><span /><span><em style={{ left: `${(meta / max) * 100}%` }}>Meta {formato(meta)}</em></span><span /></div>}
+    {buenas.length ? buenas.map(fila) : <p className="mkv2-redes-vacio is-gris">Aún no hay suficientes datos este mes</p>}
+    {pocas.length > 0 && <details className="mkv2-seg-pocos"><summary>Ver {pocas.length} con pocos datos <small>(menos de 5 mensajes)</small></summary>{pocas.map(fila)}</details>}
+  </div>
+}
+
+/** Píldora de «Lo importante del mes» (una línea, sin ícono: el color va en el borde; la explicación va en el globo). */
+export function PildoraImportante({ color, texto, detalle, tip, onClick }) {
   const Caja = onClick ? 'button' : 'span'
   return <Caja {...(onClick ? { type: 'button', onClick } : {})} className="mkv2-redes-importante" style={{ '--c': color }} data-tip={tip}>
-    {Icono && <Icono size={14} aria-hidden="true" />}<b>{texto}</b>{detalle && <span>{detalle}</span>}
+    <b>{texto}</b>{detalle && <span>{detalle}</span>}
   </Caja>
 }

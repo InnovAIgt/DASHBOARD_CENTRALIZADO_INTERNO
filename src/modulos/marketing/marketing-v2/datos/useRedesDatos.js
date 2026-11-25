@@ -71,6 +71,30 @@ export function useRedesDatos() {
 }
 
 /**
+ * Leads de Redes (Prospekt): se piden aparte; si fallan, solo lo de leads dice «por conectar» o el aviso.
+ * Estado: { cargando, fuente ('prospekt' | 'sin_llave' | 'error'), error, leads, noCalificados, avisos }.
+ */
+export function useLeadsRedes() {
+  const [estado, setEstado] = useState({ cargando: true, fuente: null, error: null, leads: [], noCalificados: null, avisos: [] })
+  const [vuelta, setVuelta] = useState(0)
+  const reintentar = useCallback(() => setVuelta((v) => v + 1), [])
+  useEffect(() => {
+    const control = new AbortController()
+    setEstado((e) => ({ ...e, cargando: true, error: null }))
+    fetch('/api/marketing/redes/leads', { headers: { Accept: 'application/json' }, signal: control.signal })
+      .then(async (r) => {
+        const d = await r.json().catch(() => null)
+        if (control.signal.aborted) return
+        if (!r.ok || !d) throw new Error(d?.error || (r.status === 404 ? TEXTO_SIN_SERVIDOR : `El servidor respondió HTTP ${r.status}.`))
+        setEstado({ cargando: false, fuente: d.fuente, error: d.fuente === 'sin_llave' ? d.aviso : null, leads: d.leads ?? [], noCalificados: d.noCalificados ?? null, avisos: d.avisos ?? [] })
+      })
+      .catch((err) => { if (!control.signal.aborted) setEstado({ cargando: false, fuente: 'error', error: err instanceof TypeError ? TEXTO_SIN_SERVIDOR : err.message, leads: [], noCalificados: null, avisos: [] }) })
+    return () => control.abort()
+  }, [vuelta])
+  return { ...estado, reintentar }
+}
+
+/**
  * Anuncios fase 2 (edad y sexo, ubicaciones, horarios, segmentaciones, presupuestos y formularios) del MES ELEGIDO en
  * el filtro. Se pide aparte: si falla, solo esos recuadros muestran el aviso con «Reintentar».
  */

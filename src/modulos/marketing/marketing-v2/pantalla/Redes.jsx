@@ -2,17 +2,20 @@
 // Mismo estilo que Mailing (usa la clase mkv2-mailing para el tema negro y las piezas compartidas, sin cambiarlas):
 // barra de filtros, sub-pestañas Resumen · Publicaciones · Anuncios y «Filtrado por».
 // Datos reales de Meta por el servidor (datos/useRedesDatos.js); si fallan, error con «Reintentar». Los datos de
-// ejemplo quedan solo para pruebas. Sin leads por ahora.
+// ejemplo quedan solo para pruebas. Leads de Redes: Prospekt (datos/useRedesDatos.js, useLeadsRedes), pedidos aparte.
+// Todo lo que se puede tocar abre la ventana de detalle (redes/Detalle.jsx).
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { cargarHerramientaPdf } from '../datos/pdfMailing.js'
 import { chipsFiltrosRedes, construirReporteRedes, MODULOS_PDF_REDES, nombreArchivoPdfRedes } from '../datos/pdfRedes.js'
 import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, REDES } from '../datos/redes.js'
 import { armarProgramado } from '../datos/redesProgramadas.js'
-import { useRedesDatos } from '../datos/useRedesDatos.js'
+import { estimarLeads } from '../datos/redesLeads.js'
+import { useLeadsRedes, useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 import { AnunciosRedes } from './redes/Anuncios.jsx'
 import { BarraRedes, ID_BOTON_PDF_REDES } from './redes/BarraRedes.jsx'
+import { ProveedorDetalle } from './redes/Detalle.jsx'
 import { PublicacionesRedes } from './redes/Publicaciones.jsx'
 import { ResumenRedes } from './redes/Resumen.jsx'
 
@@ -37,6 +40,9 @@ export function Redes() {
   const programado = useMemo(() => armarProgramado(datos, datos.hoy), [datos])
   const items = programado.items
   const caso = programado.casos[filtros.mes] ?? 'C'
+  // Leads de Redes con su publicación estimada (la más reciente de su país en los 7 días anteriores).
+  const leadsCrudos = useLeadsRedes()
+  const leadsRedes = useMemo(() => (leadsCrudos.fuente === 'prospekt' ? { ...leadsCrudos, leads: estimarLeads(leadsCrudos.leads, datos.publicaciones) } : leadsCrudos), [leadsCrudos, datos.publicaciones])
   const cuenta = useMemo(() => ({
     publicaciones: filtrarRedes(items, filtros).length,
     anuncios: filtrarRedes(datos.anuncios, { ...filtros, red: '', formato: '', estado: '' }).length,
@@ -75,7 +81,7 @@ export function Redes() {
     }
   }, [datos.cargando])
 
-  return <div className="mkv2-mailing mkv2-redes" {...globo.manejadores}>
+  return <ProveedorDetalle><div className="mkv2-mailing mkv2-redes" {...globo.manejadores}>
     {datos.fuente === 'ejemplo' && <div className="mkv2-redes-ejemplo" role="note">
       <strong>Datos de ejemplo</strong> · todavía no está conectado a Meta. Las cifras son inventadas y solo muestran cómo se verá la pantalla.
     </div>}
@@ -94,10 +100,10 @@ export function Redes() {
     {!datos.cargando && datos.error && <Aviso titulo="No se pudieron leer los datos de Meta" texto={datos.error} onReintentar={datos.reintentar} />}
     {!datos.cargando && !datos.error && <>
       {datos.avisos?.map((a) => <Aviso key={a} titulo="Aviso de Meta" texto={a} />)}
-      {sub === 'resumen' && <ResumenRedes datos={datos} items={items} caso={caso} filtros={filtros} filtrar={filtrar} irA={irA} />}
-      {sub === 'publicaciones' && <PublicacionesRedes datos={datos} items={items} filtros={filtros} />}
-      {sub === 'anuncios' && <AnunciosRedes datos={datos} filtros={filtros} />}
+      {sub === 'resumen' && <ResumenRedes datos={datos} items={items} caso={caso} filtros={filtros} filtrar={filtrar} irA={irA} leadsRedes={leadsRedes} />}
+      {sub === 'publicaciones' && <PublicacionesRedes datos={datos} items={items} filtros={filtros} leadsRedes={leadsRedes} />}
+      {sub === 'anuncios' && <AnunciosRedes datos={datos} filtros={filtros} leadsRedes={leadsRedes} />}
     </>}
     {globo.nodo}
-  </div>
+  </div></ProveedorDetalle>
 }
