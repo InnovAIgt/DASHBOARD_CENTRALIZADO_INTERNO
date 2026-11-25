@@ -59,9 +59,16 @@ function Segmentaciones({ segmentos, moneda }) {
   </div>
 }
 
-/** Recuadros del detalle: cargando, error con «Reintentar» o el contenido. */
-const Estado = ({ det, children }) => (det.cargando ? <p className="mkv2-redes-vacio is-gris">Cargando datos de Meta…</p>
-  : det.error ? <Aviso titulo="No se pudo leer este detalle de Meta" texto={det.error} onReintentar={det.reintentar} /> : children)
+/**
+ * Recuadros del detalle: cargando, error con «Reintentar» o el contenido. «recuadro» = cuál es; si SOLO su consulta falló,
+ * solo él muestra el error (los demás cargan). Si sale de una copia anterior, lo dice abajo.
+ */
+function Estado({ det, recuadro, children }) {
+  if (det.cargando) return <p className="mkv2-redes-vacio is-gris">Cargando datos de Meta…</p>
+  const error = det.error || det.detalle?.errores?.[recuadro]
+  if (error) return <Aviso titulo="No se pudo leer este recuadro de Meta" texto={error} onReintentar={det.reintentar} />
+  return <>{children}{det.detalle?.guardados?.includes(recuadro) && <p className="mkv2-nota">Meta no respondió ahora: se muestran los datos guardados.</p>}</>
+}
 
 
 /** ¿Cuándo nos escriben?: recomendación, 4 momentos del día, días de la semana, top 3 y el mapa por hora plegado. */
@@ -225,7 +232,7 @@ Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar
 
     <div className="mkv2-redes-tres mkv2-redes-fila-ads">
       <Tarjeta titulo="Presupuestos más efectivos" sub="Cuánto costó cada mensaje · barra más corta = más barato · meta por confirmar">
-        <Estado det={det}>
+        <Estado det={det} recuadro="presupuestos">
           <BarrasCosto meta={META_COSTO_MENSAJE[monedaDet] ?? null} formato={dd} colorDe={(x) => (x.semaforo ? colorSem(x.semaforo) : COLOR_MAILING.gris)}
             filas={[...pres].sort((a, b) => (a.costo ?? Infinity) - (b.costo ?? Infinity)).map((p) => ({ id: p.id, nombre: nombreCampana(p.campana), tip: p.campana,
               sub: `${dd(p.gastado)} → ${numero(p.mensajes)} msj${p.presupuestoDiario ? ` · ${dd(p.presupuestoDiario)} diario` : p.presupuestoTotal ? ` · ${dd(p.presupuestoTotal)} total` : ''}`,
@@ -235,7 +242,7 @@ Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar
         </Estado>
       </Tarjeta>
       <Tarjeta titulo="¿Dónde se vieron?" sub="Impresiones por plataforma · clic para ver sus ubicaciones">
-        <Estado det={det}>
+        <Estado det={det} recuadro="ubicaciones">
           {plataformas.length ? <>
             <DonaRedes centro={`${numero(Math.round(plataformas.reduce((n, p) => n + p.impresiones, 0) / 1000))}k`} sub="impresiones"
               items={plataformas.map((p) => ({ k: p.k, l: p.nombre, v: p.impresiones, c: COLOR_PLATAFORMA[p.k] }))}
@@ -249,16 +256,16 @@ Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar
         </Estado>
       </Tarjeta>
       <Tarjeta titulo="Segmentaciones ganadoras" sub="Públicos con 5+ mensajes · por costo por mensaje">
-        <Estado det={det}><Segmentaciones segmentos={segmentos} moneda={monedaDet} /></Estado>
+        <Estado det={det} recuadro="segmentos"><Segmentaciones segmentos={segmentos} moneda={monedaDet} /></Estado>
       </Tarjeta>
     </div>
 
     <div className="mkv2-duo mkv2-redes-duo-ads">
       <Tarjeta titulo="¿Cuándo nos escriben?" sub={`Mensajes de la pauta por momento del día y día de la semana · hora de ${zona}`}>
-        <Estado det={det}><CuandoEscriben horasDet={dt?.horas ?? []} dd={dd} zona={zona} abrir={abrir} /></Estado>
+        <Estado det={det} recuadro="horas"><CuandoEscriben horasDet={dt?.horas ?? []} dd={dd} zona={zona} abrir={abrir} /></Estado>
       </Tarjeta>
       <Tarjeta titulo="Público: edad y sexo" sub="Mensajes por grupo · costo por mensaje · clic en una fila para ver el detalle">
-        <Estado det={det}><Piramide edadSexo={dt?.edadSexo ?? []} dd={dd} abrir={abrir} /></Estado>
+        <Estado det={det} recuadro="edadSexo"><Piramide edadSexo={dt?.edadSexo ?? []} dd={dd} abrir={abrir} /></Estado>
       </Tarjeta>
     </div>
 

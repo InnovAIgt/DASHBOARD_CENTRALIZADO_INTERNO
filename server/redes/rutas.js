@@ -132,7 +132,10 @@ const LECTORES = {
     const hoy = new Date(op.ahoraMs - 6 * 3600 * 1000).toISOString().slice(0, 10)
     const unicas = [...new Map(cuentas.filter((c) => c.red === 'ads').map((c) => [c.id, c])).values()]
     const llamar = (ruta, p, o) => llamarMetaTodo(ruta, ruta.endsWith('/ads') ? { ...p, effective_status: ESTADOS_ANUNCIO } : p, o)
-    return porCuenta(unicas, async (c) => [await leerDetalle({ cuentaId: c.id, mes, hoy, llamar, llamarUno: llamarMeta, op, marcaDe })])
+    const r = await porCuenta(unicas, async (c) => [await leerDetalle({ cuentaId: c.id, mes, hoy, llamar, llamarUno: llamarMeta, op, marcaDe })])
+    // Si un recuadro no cargó, va un aviso (la copia completa dura 2 min; lo que sí cargó queda en la caché de cada consulta).
+    const fallidos = [...new Set(r.datos.flatMap((d) => Object.keys(d.errores ?? {})))]
+    return fallidos.length ? { ...r, avisos: [...r.avisos, `Algunos recuadros de Anuncios no cargaron (${fallidos.join(', ')}); se reintenta en unos minutos.`] } : r
   },
 }
 
