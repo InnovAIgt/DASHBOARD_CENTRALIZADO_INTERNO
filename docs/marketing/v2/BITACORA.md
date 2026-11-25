@@ -2,6 +2,12 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Vercel: una sola función para Canales de marketing
+
+- El deploy fallaba: el plan Hobby permite máximo 12 funciones y había 19. Las 13 de Mailing, Redes, webhook de Brevo
+  y tarea diaria de Supabase quedan en una sola (api/marketing/canales.js → server/marketingCanales.js), con un rewrite
+  en vercel.json; las URLs no cambian. Reuniones (Flujo de ventas) y los otros dashboards no se tocaron. Quedan 7.
+
 ## 2026-11-24 · Redes: costo por lead de El Salvador y cerrados
 
 - Costo por lead = inversión ÷ leads de SV (noviembre US$ 12.40); en Guatemala, «sin pauta». En Anuncios, Leads de

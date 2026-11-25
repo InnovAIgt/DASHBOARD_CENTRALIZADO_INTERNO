@@ -11,6 +11,8 @@ van en el repo ni en la conversación. Preparado el 2026-11-23; **todavía sin p
 - **Redes sociales:** en Production muestra **«Próximamente»**; en Preview y en local, la pantalla con datos de ejemplo.
   Se decide al armar la página con `VERCEL_ENV` (`datos/bandera.js`); `MKT_REDES_VISIBLE` = `si` / `no` la fuerza. En
   Production los datos de ejemplo ni siquiera entran en la página.
+- **Funciones de Vercel (plan Hobby, máximo 12):** todas las rutas de Mailing, Redes, el webhook y la tarea diaria van
+  en UNA función, `api/marketing/canales.js` (rewrite en `vercel.json`; las URLs no cambian). Hoy hay 7 funciones en total.
 - **Webhook de Brevo:** `POST /api/marketing/brevo-webhook`.
 - **Tarea diaria** para que Supabase Free no se pause: cron de Vercel (`vercel.json`), `GET
   /api/marketing/mantener-supabase` a las 12:00 UTC (6:00 Guatemala), solo en Production, con `CRON_SECRET`.
