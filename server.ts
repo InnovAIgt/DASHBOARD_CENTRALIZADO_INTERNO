@@ -12,6 +12,7 @@ import { responderCargo } from './server/mailing/cargoEditar.js';
 import { responderDetalle } from './server/mailing/detalle.js';
 import { responderLeads } from './server/mailing/leads.js';
 import { responderRedes } from './server/redes/rutas.js';
+import { responderLeadsRedes } from './server/redes/leads.js';
 import { obtenerPreofertas } from './server/flashPreofertas.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
@@ -97,6 +98,13 @@ app.all('/api/marketing/mailing/detalle', async (req, res) => {
 // teléfono del lead). En Vercel: api/marketing/mailing/leads.js.
 app.all('/api/marketing/mailing/leads', async (req, res) => {
   const resultado = await responderLeads({ method: req.method });
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
+  res.status(resultado.status).send(resultado.body);
+});
+
+// Canales de marketing · Redes sociales · leads de Prospekt (solo lectura). En Vercel: api/marketing/redes/leads.js.
+app.all('/api/marketing/redes/leads', async (req, res) => {
+  const resultado = await responderLeadsRedes({ method: req.method });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);
   res.status(resultado.status).send(resultado.body);
 });

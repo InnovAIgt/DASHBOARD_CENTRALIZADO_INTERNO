@@ -217,6 +217,13 @@ export function cuentaDashboard(datos = {}, cuenta, nombre, metricas = {}) {
 export const ESTADOS_ANUNCIO = ['ACTIVE', 'PAUSED', 'PENDING_REVIEW', 'DISAPPROVED', 'PREAPPROVED', 'PENDING_BILLING_INFO',
   'CAMPAIGN_PAUSED', 'ARCHIVED', 'ADSET_PAUSED', 'IN_PROCESS', 'WITH_ISSUES']
 
+/** Texto del anuncio (de la creatividad), recortado; null si Meta no lo da (anuncios de una publicación existente). */
+export function textoDelAnuncio(ad = {}) {
+  const c = ad?.creative ?? {}
+  const t = c.body ?? c.object_story_spec?.link_data?.message ?? c.object_story_spec?.video_data?.message ?? ''
+  return t ? tituloDe(t) : null
+}
+
 /** Página (o Instagram) que publica un anuncio, según su creatividad. */
 export function paginaDelAnuncio(ad = {}) {
   const c = ad.creative ?? {}
@@ -235,6 +242,8 @@ export function anunciosPorPagina({ insights = [], ads = [], campanas = [], cuen
   const moneda = String(cuentaAds.currency ?? '').toUpperCase() || 'SIN_MONEDA'
   const campanaPorId = new Map(campanas.map((c) => [String(c.id), c]))
   const marcaPorAnuncio = new Map(ads.map((a) => [String(a.id), marcaDe.get(paginaDelAnuncio(a)) ?? '']))
+  const adPorId = new Map(ads.map((a) => [String(a.id), a]))
+  const gastoTexto = new Map() // clave de fila → gasto del anuncio cuyo texto se muestra (el de más gasto)
   const filas = new Map()
   for (const f of insights) {
     const mes = String(f.date_start).slice(0, 7)
@@ -249,8 +258,16 @@ export function anunciosPorPagina({ insights = [], ads = [], campanas = [], cuen
         presupuesto: c.lifetime_budget ? Number(c.lifetime_budget) / 100 : null,
         presupuestoDiario: c.daily_budget ? Number(c.daily_budget) / 100 : null,
         gastado: 0, alcance: 0, visualizaciones: 0, clics: 0, mensajes: 0, reclutamiento: esReclutamiento(campana),
+        objetivo: c.objective ?? null, texto: null, publicacion: null,
       }
       filas.set(clave, fila)
+    }
+    const ad = adPorId.get(String(f.ad_id))
+    const txt = textoDelAnuncio(ad)
+    if ((txt || ad?.creative?.effective_object_story_id) && (Number(f.spend) || 0) >= (gastoTexto.get(clave) ?? -1)) {
+      gastoTexto.set(clave, Number(f.spend) || 0)
+      fila.texto = txt || fila.texto
+      fila.publicacion = ad?.creative?.effective_object_story_id ?? fila.publicacion
     }
     fila.gastado += Number(f.spend) || 0
     fila.alcance += Number(f.reach) || 0

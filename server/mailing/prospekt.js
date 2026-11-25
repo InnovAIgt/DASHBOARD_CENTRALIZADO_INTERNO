@@ -52,7 +52,7 @@ export function fechaCreadoUtc(fecha, hora) {
 }
 
 /** Todas las listas de registros con codigo_prospecto dentro de la respuesta (leads, por_pais como objeto o lista). */
-function registrosDe(valor, salida = [], profundidad = 0) {
+export function registrosDe(valor, salida = [], profundidad = 0) {
   if (profundidad > 4 || valor == null || typeof valor !== 'object') return salida
   if (Array.isArray(valor)) {
     for (const v of valor) {
@@ -102,7 +102,15 @@ export function unirLeads(json) {
  * Lee Prospekt una vez (sin caché). Lanza ErrorProspekt si falta la llave, la rechaza, no responde o responde algo
  * que no se entiende.
  */
-export async function leerLeadsCalificados({ env = process.env, fetchFn = fetch, esperaMs = PROSPEKT_ESPERA_MS } = {}) {
+export async function leerLeadsCalificados(opciones = {}) {
+  return unirLeads(await leerProspektCrudo(opciones))
+}
+
+/**
+ * La respuesta COMPLETA de leads calificados (JSON tal cual), para quien necesita más campos que Mailing (Redes:
+ * nombre y gestiones). Mismos errores que leerLeadsCalificados.
+ */
+export async function leerProspektCrudo({ env = process.env, fetchFn = fetch, esperaMs = PROSPEKT_ESPERA_MS } = {}) {
   const llave = String(env?.PROSPEKT_API_KEY ?? '').trim()
   if (!llave) throw new ErrorProspekt('sin_llave', 'Falta configurar PROSPEKT_API_KEY en el servidor.')
   const control = new AbortController()
@@ -121,5 +129,5 @@ export async function leerLeadsCalificados({ env = process.env, fetchFn = fetch,
   let json
   try { json = await r.json() } catch { throw new ErrorProspekt('formato', 'Prospekt respondió algo que no es JSON.') }
   if (!json || typeof json !== 'object') throw new ErrorProspekt('formato', 'Prospekt respondió un formato inesperado.')
-  return unirLeads(json)
+  return json
 }

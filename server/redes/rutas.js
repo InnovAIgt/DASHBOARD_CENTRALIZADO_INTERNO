@@ -114,9 +114,9 @@ const LECTORES = {
     const r = await porCuenta(unicas, async (c) => {
       const [cuenta, campanas, ads, insights] = await Promise.all([
         llamarMeta(`/act_${c.id}`, { fields: 'name,currency' }, op),
-        llamarMetaTodo(`/act_${c.id}/campaigns`, { fields: 'id,name,daily_budget,lifetime_budget,effective_status' }, op),
+        llamarMetaTodo(`/act_${c.id}/campaigns`, { fields: 'id,name,objective,daily_budget,lifetime_budget,effective_status' }, op),
         // Incluye anuncios archivados y borrados, para saber la página de todo lo que gastó.
-        llamarMetaTodo(`/act_${c.id}/ads`, { fields: 'id,creative{actor_id,object_story_spec{page_id,instagram_user_id},effective_object_story_id,instagram_user_id}',
+        llamarMetaTodo(`/act_${c.id}/ads`, { fields: 'id,campaign_id,creative{actor_id,body,object_story_spec{page_id,instagram_user_id,link_data{message},video_data{message}},effective_object_story_id,instagram_user_id}',
           effective_status: ESTADOS_ANUNCIO }, op),
         llamarMetaTodo(`/act_${c.id}/insights`, { level: 'ad', time_increment: 'monthly', time_range: { since, until }, limit: 500,
           fields: 'ad_id,campaign_id,campaign_name,spend,reach,impressions,clicks,actions' }, op),
