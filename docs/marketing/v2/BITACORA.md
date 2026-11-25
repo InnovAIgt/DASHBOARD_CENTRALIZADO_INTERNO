@@ -2,6 +2,20 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Redes: costo por lead de El Salvador y cerrados
+
+- Costo por lead = inversión ÷ leads de SV (noviembre US$ 12.40); en Guatemala, «sin pauta». En Anuncios, Leads de
+  Redes y la ventana de detalle.
+- Prospekt no separa ganados de perdidos: «Cerrados (ganados o perdidos)»; pregunta en PENDIENTES.
+
+## 2026-11-24 · Redes: rediseño completo y leads de Prospekt
+
+- Estilo compacto y profesional (mejoras de redes-mejoras.css + capa compacta), ventana de detalle en todo lo que se
+  puede tocar, Resumen en el orden del mockup con Leads de Redes, Anuncios con barras de costo y meta, ¿Dónde se
+  vieron?, ¿Cuándo nos escriben?, pirámide de edad y sexo y campañas con objetivo y texto.
+- Leads de Redes desde Prospekt (exacto por origen, estimado por publicación, ficha del cliente con datos completos
+  por decisión de Keily; confirmar con Eduardo antes de producción). REDES.md 7.5 y 7.6; PENDIENTES actualizado.
+
 ## 2026-11-24 · Redes: Anuncios fase 2 con datos reales
 
 - Ruta nueva /api/marketing/redes/anuncios-detalle (por anuncio, sin reclutamiento, mes del filtro): edad y sexo,

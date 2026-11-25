@@ -118,3 +118,30 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
   `trabajo`, `contratación`, `contratando`, «ejecutivo de ventas» o «únete» (palabras y frases completas, sin
   mayúsculas ni tildes, también en plural; lista fácil de editar) se marcan **«Reclutamiento»**. **No
   cuentan** en inversión, mensajes ni costo por mensaje de marketing; se muestran aparte con su gasto.
+
+## 2026-11-24 · Redes: datos completos de los leads en pantalla
+
+- **Decisión de Keily:** en Redes sociales, la lista de leads y la ficha del cliente muestran los datos **completos**
+  (nombre, teléfono, correo, asesor, etapa y gestiones), **sin clave ni inicio de sesión**. Empresa: Prospekt no la
+  envía.
+- **Antes de activarlo en producción hay que confirmarlo con Eduardo** (PENDIENTES): las rutas del dashboard están
+  abiertas y el inicio de sesión del portal no verifica usuarios en el servidor.
+- La ruta `/api/marketing/redes/leads` responde con `Cache-Control: no-store` y nunca escribe datos de clientes en
+  los registros (logs) ni en los mensajes de error.
+
+## 2026-11-24 · Redes: rediseño igual al mockup completo
+
+- Versión profesional y compacta (letra 13 px, sin emojis ni íconos de colores en las tarjetas, números con ancho fijo).
+- Todo lo que se puede tocar abre una **ventana de detalle** al centro (X, Esc o clic afuera).
+- Leads de Redes: **exacto** = calificados con origen «PostIAlo Redes Sociales» por país y mes (UTC−6), sin LDTEST;
+  **estimado por publicación** = cada lead una sola vez, a la publicación más reciente de su país en los 7 días
+  anteriores (las del mismo día comparten fila). En El Salvador la marca sale de esa publicación; si no se puede
+  saber, «sin marca». No calificados: solo el total.
+- La meta de costo por mensaje sigue en un solo lugar (`META_COSTO_MENSAJE`, US$ 1.50) y dice «meta por confirmar».
+
+## 2026-11-24 · Redes: costo por lead solo con El Salvador
+
+- **Decisión de Keily:** la pauta es solo de la cuenta USD (El Salvador), así que el **costo por lead = inversión ÷
+  leads de SV** (no de todos). Con el filtro en Guatemala (o RED GT) se muestra **«sin pauta»**. Aplica en Anuncios, en
+  el bloque «Leads de Redes» y en la ventana de detalle.
+- **Cerrados:** Prospekt no distingue ganados de perdidos; la pantalla dice «Cerrados (ganados o perdidos)» (PENDIENTES).

@@ -371,6 +371,44 @@ por la página de cada anuncio) y el rango del **mes elegido en el filtro**, sin
 | Noviembre 2026 (hasta el 24) | 97 | 15 (5) | 15 (2) | 5 (2) | 5 | 4 | martes 20:00–22:00 |
 | Octubre 2026 | 170 | 18 (8) | 15 (6) | 11 (7) | 10 | 5 | domingo 16:00–18:00 |
 
+### 7.5 Rediseño igual al mockup completo · 24/11/2026
+
+Referencia visual y de comportamiento: `Descargas\datos-marketing\plantilla\mockup_redes_completo.html` (fuera del
+repo). Se aplicaron al final de `marketing-v2.css` las mejoras de `redes-mejoras.css` y una capa compacta.
+
+- **Estilo:** letra 13 px, números con ancho fijo, tarjetas y gráficas más bajas, sin emojis ni íconos de colores en
+  las tarjetas. La tarjeta que queda sola en su fila ocupa todo el ancho. Revisado a 1050, 1366 y 1920 px.
+- **Ventana de detalle** (`pantalla/redes/Detalle.jsx`, contenido en `datos/redesDetalle.js`): tarjetas de indicadores,
+  filas de la tabla por país y marca, marcas, publicaciones (Top 5, calendario y tabla), semanas, barras de pauta y
+  presupuestos, plataformas, momentos y días, grupos de edad, campañas y leads. Dentro se puede ir a otro detalle (lista
+  de leads → ficha del cliente) y volver.
+- **Resumen**, en el orden del mockup: tarjetas → tabla de hechas y programadas por país y marca (con **Leads
+  calificados**) → píldoras → **Leads de Redes** (del post al cliente y leads del mes) → contenido. «Programado vs
+  publicado» se oculta si no hay programadas; «Alcance por semana» ocupa todo el ancho.
+- **Anuncios:** presupuestos como barras de costo por mensaje con la línea de la meta; «¿Dónde se vieron?» (Facebook,
+  Instagram, WhatsApp y Otras; clic = ubicaciones); «¿Cuándo nos escriben?» (recomendación calculada, 4 momentos del
+  día, días de la semana, top 3 y mapa por hora plegado); pirámide de edad y sexo (rayado = pocos datos, frase de
+  lectura); tabla de campañas con el **objetivo** (`objective`) y el **texto promocionado** (creatividad o publicación).
+- **Publicaciones:** columna de leads estimados por publicación.
+
+### 7.6 Leads de Redes (Prospekt) · 24/11/2026
+
+`GET /api/marketing/redes/leads` (`server/redes/leads.js`, solo lectura, `PROSPEKT_API_KEY`): calificados con
+origen «PostIAlo Redes Sociales», sin repetidos y sin LDTEST, con nombre, teléfono, correo, asesor, etapa, estado y
+gestiones; y el total de no calificados (`/api/audit/leads-no-calificados`, solo `total`). Caché 10 min.
+
+- Campos de Prospekt revisados (solo nombres): trae `nombre_prospecto`, `telefono`, `email`, `asesor_nombre`,
+  `opportunity_stage`, `status` y `gestiones` (fecha, tipo, etapa, notas, próxima, quién). **No trae empresa**
+  («Prospekt no lo envía»; pedido en PENDIENTES).
+- Conteos al 24/11/2026: **268** leads de Redes (GT 108 · SV 160), 0 con LDTEST; solo 13 con correo válido.
+  Noviembre: **19** calificados (GT 7 · SV 12), 12 en proceso, 7 cerrados, 15 con publicación estimada (2 de SV «sin
+  marca»). Octubre: 38 (GT 18 · SV 20), 21 cerrados. No calificados: 1,548 en total.
+- La estimación por publicación se hace en la pantalla (`datos/redesLeads.js`), con las publicaciones de Meta.
+- **Costo por lead** = inversión de la cuenta USD (El Salvador) ÷ leads de SV; Guatemala dice «sin pauta». Noviembre:
+  US$ 148.82 ÷ 12 = **US$ 12.40** (antes se dividía entre los 19 leads: US$ 7.83). Octubre: US$ 196.15 ÷ 20 = US$ 9.81.
+- **Cerrados (ganados o perdidos):** los 7 de noviembre vienen con status «cerrado» y etapa 6; Prospekt no trae un campo
+  de resultado, así que no se pueden separar ganados y perdidos (PENDIENTES).
+
 ## 8. «Plan del mes» (solo si Marketing tiene un plan)
 
 - Pantallita donde **Marketing carga lo programado** del mes: **fecha, marca, red y título** de cada publicación.
