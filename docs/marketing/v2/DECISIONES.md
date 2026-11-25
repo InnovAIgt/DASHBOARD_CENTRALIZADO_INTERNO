@@ -65,3 +65,83 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
 - **Cuidados que se mantienen:** nunca se muestra el texto original del motivo del rebote (puede traer correos), la
   respuesta no se guarda en la caché de Vercel (`no-store`) y pide no indexarse.
 - **Seguimiento:** informar a Eduardo (PENDIENTES). El inicio de sesión para Marketing (opción B) queda para después.
+
+## 2026-11-24 · Campañas de prueba: solo con corchetes o explícitamente de prueba
+
+- **Decisión de Keily:** la 77, 78 y 79 («2da Campaña Validación – GG/GF/GO – Nov19») **no son pruebas**: se enviaron a la
+  base real. Se muestran siempre, con sus correos por corregir.
+- **Regla nueva** (`esCampanaPrueba` en server/mailing/reglas.js), sin importar mayúsculas ni tildes y también en plural.
+  Se oculta por defecto una campaña solo si su nombre tiene:
+  - **[VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes**, o
+  - la palabra **TEST** o **PRUEBA** sola (explícitamente de prueba, por ejemplo «MARKETING TEST 1»).
+  - «Validación» **sin** corchetes ya no oculta la campaña.
+- **Ocultas con la regla nueva (24/11/2026): 21 de 55:** 80 («[PRUEBA] Webhook dashboard»), 72 («MARKETING TEST 1») y
+  66, 64 a 48 y 45 («[VALIDACIÓN] … Test Entregabilidad»). Se ven con el interruptor «Campañas de prueba».
+- La 70 («DASHBOARD CAMPAIGN OCT 23», 36 destinatarios) **no** queda oculta por la regla, pero su historial no se cargó
+  hasta confirmar con Ismael si fue real (PENDIENTES).
+
+## 2026-11-24 · Leads de Prospekt: cómo se atribuyen a las campañas
+
+- **Decisión de Keily** (MAILING.md, sección 11.1):
+  - **Exacta:** el correo del lead recibió la campaña, enviada antes del lead y **como máximo 30 días antes**. Si hay
+    varias: clic > apertura > la más reciente. **Solo por correo**: no hay fuente de teléfonos de los destinatarios.
+  - **Estimada:** origen «PostIAlo Mailing» sin exacta → la última campaña enviada antes, **dentro de 7 días**.
+  - Varias campañas el mismo día: el lead va al **grupo**, en **una fila aparte** en Comparar campañas, **sin
+    repartirlo** (opción a).
+  - Las campañas de prueba no reciben leads. Cerrado = etapa 6 (por confirmar si es venta ganada).
+- La tarjeta se muestra **aunque hoy dé 0 exactos y 0 estimados** (291 sin campaña): se llena con los leads nuevos.
+- Nunca se muestran el correo ni el teléfono del lead.
+
+## 2026-11-24 · Prospekt guarda la fecha y hora de creación en UTC
+
+- **Confirmado por Keily:** `fecha_creado` y `hora_creado` están en **UTC** (así lo dice la API: «lead creado en
+  UTC»; `fecha_agendada` y `hora_agendada` sí vienen en hora local del país).
+- **Prueba:** los códigos de prospecto son consecutivos y solo cuadran en UTC (un calificado a las 02:08 UTC va antes
+  que el código siguiente, no calificado, a las 04:22 UTC).
+- Se compara en UTC con la hora de envío de Brevo y se muestra en hora de Guatemala. Se deja como está.
+
+## 2026-11-24 · En Mailing solo se cuentan los leads de Mailing
+
+- **Decisión de Keily:** la tarjeta Leads, la sub-pestaña Leads y Comparar muestran por defecto **solo** los leads con
+  campaña asignada (exacta o estimada) o con origen «PostIAlo Mailing» (hoy 6 de 291). Redes, Web, PBX y Manual no se
+  cuentan en Mailing.
+- Interruptor **«Ver leads de todos los orígenes»**, apagado por defecto, para revisión.
+- Nota de la tarjeta: «Leads de correo: X. Solo 29 de 291 leads de Prospekt traen correo» (con los números del día).
+
+## 2026-11-24 · Redes: cuentas publicitarias y reclutamiento aparte
+
+- **Cuentas (Keily):** solo `act_2035747430056013` (USD, «Negocio de Red Intelfon»). El gasto se reparte **por la
+  página del anuncio** (Red Intelfon El Salvador → RED SV; DATA RED → DATA RED). RED GT se muestra «sin pauta en las
+  cuentas que ve el token». El gasto sin página identificada va aparte. La cuenta GTQ (personal, sin anuncios de RED)
+  queda fuera.
+- **Reclutamiento (Keily):** las campañas cuyo nombre tenga `vacante`, `plaza`, `empleo`, `RH`, `reclutamiento`,
+  `trabajo`, `contratación`, `contratando`, «ejecutivo de ventas» o «únete» (palabras y frases completas, sin
+  mayúsculas ni tildes, también en plural; lista fácil de editar) se marcan **«Reclutamiento»**. **No
+  cuentan** en inversión, mensajes ni costo por mensaje de marketing; se muestran aparte con su gasto.
+
+## 2026-11-24 · Redes: datos completos de los leads en pantalla
+
+- **Decisión de Keily:** en Redes sociales, la lista de leads y la ficha del cliente muestran los datos **completos**
+  (nombre, teléfono, correo, asesor, etapa y gestiones), **sin clave ni inicio de sesión**. Empresa: Prospekt no la
+  envía.
+- **Antes de activarlo en producción hay que confirmarlo con Eduardo** (PENDIENTES): las rutas del dashboard están
+  abiertas y el inicio de sesión del portal no verifica usuarios en el servidor.
+- La ruta `/api/marketing/redes/leads` responde con `Cache-Control: no-store` y nunca escribe datos de clientes en
+  los registros (logs) ni en los mensajes de error.
+
+## 2026-11-24 · Redes: rediseño igual al mockup completo
+
+- Versión profesional y compacta (letra 13 px, sin emojis ni íconos de colores en las tarjetas, números con ancho fijo).
+- Todo lo que se puede tocar abre una **ventana de detalle** al centro (X, Esc o clic afuera).
+- Leads de Redes: **exacto** = calificados con origen «PostIAlo Redes Sociales» por país y mes (UTC−6), sin LDTEST;
+  **estimado por publicación** = cada lead una sola vez, a la publicación más reciente de su país en los 7 días
+  anteriores (las del mismo día comparten fila). En El Salvador la marca sale de esa publicación; si no se puede
+  saber, «sin marca». No calificados: solo el total.
+- La meta de costo por mensaje sigue en un solo lugar (`META_COSTO_MENSAJE`, US$ 1.50) y dice «meta por confirmar».
+
+## 2026-11-24 · Redes: costo por lead solo con El Salvador
+
+- **Decisión de Keily:** la pauta es solo de la cuenta USD (El Salvador), así que el **costo por lead = inversión ÷
+  leads de SV** (no de todos). Con el filtro en Guatemala (o RED GT) se muestra **«sin pauta»**. Aplica en Anuncios, en
+  el bloque «Leads de Redes» y en la ventana de detalle.
+- **Cerrados:** Prospekt no distingue ganados de perdidos; la pantalla dice «Cerrados (ganados o perdidos)» (PENDIENTES).

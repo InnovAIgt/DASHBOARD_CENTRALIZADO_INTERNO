@@ -80,10 +80,10 @@ test('cargoFinal: lo elegido a mano gana; sin ninguno, «Sin clasificar»', () =
 
 // --- Sección 7: campañas de prueba ---
 
-test('campañas de prueba: TEST, VALIDACIÓN o PRUEBA, sin importar mayúsculas ni tildes', () => {
-  for (const nombre of ['MARKETING TEST 1', '[VALIDACIÓN] Gerentes - Test Entregabilidad', '2da Campaña Validacion - GG', '[PRUEBA] Webhook dashboard', 'pruebas internas', 'Tests de envío'])
+test('campañas de prueba: [VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes, o TEST / PRUEBA sola; «Validación» sin corchetes es real', () => {
+  for (const nombre of ['MARKETING TEST 1', '[VALIDACIÓN] Gerentes - Entregabilidad', '[ validaciones ]', '[PRUEBA] Webhook dashboard', '[Test] envío', 'pruebas internas', 'Tests de envío', 'Campaña de prueba'])
     assert.equal(esCampanaPrueba(nombre), true, nombre)
-  for (const nombre of ['GERENTE GENERAL NOVIEMBRE', 'TESTIMONIOS DE CLIENTES', 'COMPROBACION', '001-GG-SEGURIDAD-Asunto', ''])
+  for (const nombre of ['2da Campaña Validación - GG - Nov19', 'Validacion de datos', 'GERENTE GENERAL NOVIEMBRE', 'TESTIMONIOS DE CLIENTES', 'COMPROBACION', '001-GG-SEGURIDAD-Asunto', ''])
     assert.equal(esCampanaPrueba(nombre), false, nombre)
 })
 

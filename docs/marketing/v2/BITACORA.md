@@ -2,6 +2,151 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-24 · Vercel: una sola función para Canales de marketing
+
+- El deploy fallaba: el plan Hobby permite máximo 12 funciones y había 19. Las 13 de Mailing, Redes, webhook de Brevo
+  y tarea diaria de Supabase quedan en una sola (api/marketing/canales.js → server/marketingCanales.js), con un rewrite
+  en vercel.json; las URLs no cambian. Reuniones (Flujo de ventas) y los otros dashboards no se tocaron. Quedan 7.
+
+## 2026-11-24 · Redes: costo por lead de El Salvador y cerrados
+
+- Costo por lead = inversión ÷ leads de SV (noviembre US$ 12.40); en Guatemala, «sin pauta». En Anuncios, Leads de
+  Redes y la ventana de detalle.
+- Prospekt no separa ganados de perdidos: «Cerrados (ganados o perdidos)»; pregunta en PENDIENTES.
+
+## 2026-11-24 · Redes: rediseño completo y leads de Prospekt
+
+- Estilo compacto y profesional (mejoras de redes-mejoras.css + capa compacta), ventana de detalle en todo lo que se
+  puede tocar, Resumen en el orden del mockup con Leads de Redes, Anuncios con barras de costo y meta, ¿Dónde se
+  vieron?, ¿Cuándo nos escriben?, pirámide de edad y sexo y campañas con objetivo y texto.
+- Leads de Redes desde Prospekt (exacto por origen, estimado por publicación, ficha del cliente con datos completos
+  por decisión de Keily; confirmar con Eduardo antes de producción). REDES.md 7.5 y 7.6; PENDIENTES actualizado.
+
+## 2026-11-24 · Redes: Anuncios fase 2 con datos reales
+
+- Ruta nueva /api/marketing/redes/anuncios-detalle (por anuncio, sin reclutamiento, mes del filtro): edad y sexo,
+  plataforma y ubicación, horarios (zona de la cuenta America/El_Salvador, UTC−6), segmentaciones, presupuestos y
+  conteo de formularios (4 en noviembre, 5 en octubre).
+- Pantalla sin etiquetas «Ejemplo»; «pocos datos» con menos de 5 mensajes, nunca ganador. Detalle en REDES.md, 7.4.
+
+## 2026-11-24 · Redes, Tarea 2: pantalla conectada a Meta
+
+- Servidor: cuadro de marcas lleno, métricas v25 de cuenta y de publicación, anuncios por página del anuncio,
+  reclutamiento aparte, fechas en UTC−6, caché y errores; prueba de que no se filtran secretos.
+- Pantalla: siempre Meta (error con «Reintentar»), tabla de hechas y programadas por país y marca, «Instagram no
+  permite ver programadas», alcance como suma de alcance diario, vistas y clics en Publicaciones, PDF igual.
+- Con datos reales: 25 publicaciones en noviembre, 0 programadas, inversión de marketing US$ 142.84 y reclutamiento
+  US$ 77.25. Detalle en REDES.md, 7.3. Pendiente nuevo: permiso para comentarios de Facebook.
+
+## 2026-11-24 · Redes: consultas 10 y 11 con el token nuevo
+
+- `ads_posts` sigue con 403. `promotion_status` dice `inactive` en casi todo, también en publicaciones que sí están en
+  anuncios de la cuenta USD: no sirve. No se puede confirmar con el token si RED GT pauta desde otra cuenta.
+
+## 2026-11-24 · Redes: token nuevo con read_insights
+
+- Keily agregó el caso de uso «Administrar todos los aspectos de tu página» y generó un token nuevo (7 permisos).
+  `/me/permissions` confirma read_insights concedido.
+- Las estadísticas de Facebook de página y de publicación ya responden en las 3 páginas (REDES.md, 7.2 y tabla 2.1).
+  Se quita el pendiente de «Facebook vacío».
+
+## 2026-11-24 · Redes: consulta 10 (ads_posts)
+
+- `ads_posts` da error 403 (código 200, falta permiso) en las 3 páginas: no se puede saber con el token si RED GT
+  pauta desde otra cuenta. Queda la pregunta a Marketing en PENDIENTES.
+
+## 2026-11-24 · Redes: consulta 9 y lista de reclutamiento
+
+- El usuario del token tiene ANALYZE en las 3 páginas, pero las estadísticas de Facebook (página y publicación)
+  siguen vacías en RED SV y DATA RED, también con fechas de hace más de 3 días: no es demora; falta revisar
+  read_insights o el token del usuario del sistema.
+- Reclutamiento: se agregan «ejecutivo de ventas», «contratación», «contratando» y «únete» (frase completa).
+
+## 2026-11-24 · Redes: cuentas aprobadas y reclutamiento aparte
+
+- Keily aprueba la propuesta de cuentas (solo la USD, gasto por página del anuncio, RED GT «sin pauta», GTQ fuera).
+- Reclutamiento se separa por palabras en el nombre de la campaña (DECISIONES.md; REDES.md, 7.2).
+- PENDIENTES: de dónde sale la pauta de RED GT (cuenta del negocio GT o cuenta personal que el token no ve).
+
+## 2026-11-24 · Redes: cuentas publicitarias y estadísticas con el token
+
+- Cuenta USD (act_2035747430056013): del «Negocio de Red Intelfon», US$ 1,697.67 en total y US$ 666.55 en 90 días,
+  78 campañas; promociona RED SV (81 anuncios) y DATA RED (2). Ningún anuncio de RED GT. Hay campañas de reclutamiento.
+- Cuenta GTQ (act_1657231285337963): personal, sin anuncios de RED (sin gasto ni campañas): queda fuera.
+- Negocio «RED Intelfon Guatemala»: sin cuentas publicitarias ni páginas; sin error de permiso.
+- Estadísticas v25: Instagram (publicación y cuenta) responde; Facebook (página y publicación) responde vacío.
+- Propuesta de cuentas y detalle en REDES.md, 7.2 (y tabla 2.1 con los nombres de v25); pendientes nuevos.
+
+## 2026-11-24 · Redes, parte (1): qué ve el token de Meta
+
+- Token de usuario (app «Automatizacion RRSS RED»), API v25.0. Siete consultas GET firmadas con appsecret_proof.
+  El primer intento falló (código 190, token mal formado: faltaba la «E» inicial); Keily lo corrigió en .env.local.
+- Ve las 3 páginas (DATA RED, RED SV, RED GT) con sus 3 Instagram, 2 negocios y 2 cuentas publicitarias (USD y GTQ).
+- `scheduled_posts` se puede leer en las 3 páginas (hoy 0 programadas). Las estadísticas de página de prueba
+  responden sin error pero vacías. Detalle en REDES.md, 7.1; pendientes nuevos en PENDIENTES.md. Pantalla sin cambios.
+- Decisión de Keily: por ahora solo la cuenta publicitaria act_2035747430056013 (USD); la GTQ queda fuera hasta que
+  Marketing confirme si es de la empresa.
+
+## 2026-11-24 · Mailing cuenta solo los leads de Mailing
+
+- Pedido de Keily: tarjeta, sub-pestaña Leads y Comparar muestran por defecto solo los leads con campaña asignada o
+  con origen «PostIAlo Mailing» (hoy 6 de 291, todos sin campaña y 2 cerrados). Interruptor «Ver leads de todos los
+  orígenes» apagado por defecto. Nota nueva: «Leads de correo: 6. Solo 29 de 291 leads de Prospekt traen correo».
+  DECISIONES.md y MAILING.md, 11.3.
+
+## 2026-11-24 · Leads de Prospekt en Mailing
+
+- Pedido del ingeniero: apertura, lectura y leads calificados y no calificados de las campañas, también por territorio.
+  Plan aprobado por Keily; reglas de atribución en DECISIONES.md y MAILING.md, sección 11.
+- Parte 1 (servidor): lectura de `/api/external/leads-calificados` con `PROSPEKT_API_KEY` (solo GET), sin repetidos por
+  código; atribución exacta / estimada / sin campaña; cruce asesor ↔ ejecutivo; ruta `GET /api/marketing/mailing/leads`
+  con caché y errores que no detienen Mailing. Nunca devuelve correo ni teléfono.
+- Prueba de lectura (solo conteos, con permiso para leer Prospekt y `mkt_brevo_eventos`): 291 leads únicos, 0 exactos,
+  0 estimados, 291 sin campaña, 186 cerrados. Solo 29 traen correo; los que coinciden se crearon antes de las campañas;
+  los «PostIAlo Mailing» de junio y julio son anteriores a las campañas de esta cuenta. Preguntas a Ismael en PENDIENTES.
+- Keily confirmó que la hora de creación de Prospekt está en UTC (DECISIONES.md).
+- Partes 3 y 4 (pantalla): tarjeta Leads en Resultados generales, columnas Leads / Cerrados / Conversión y grupos en
+  Comparar campañas, «Leads por ejecutivo y territorio» y la sub-pestaña Leads, con los filtros de Mailing.
+  Cruce de asesores con Cumplimiento (solo lectura, con permiso): 110 exactos, 135 posibles y 46 sin cruce.
+- Parte 5: MAILING.md (sección 11), DECISIONES, PENDIENTES, PRODUCCION (`PROSPEKT_API_KEY`), README y OTROS.md (nuevo).
+
+## 2026-11-24 · Historial 77, 78, 79, 71, 68 y 66 cargado y nueva regla de campañas de prueba
+
+- Prueba en seco y carga (con el «sí» de Keily) de los CSV «por contacto»: nuevos 809 de 817 (77), 574 de 581 (78),
+  523 de 529 (79), 313 de 313 (71), 317 de 317 (68) y 350 de 350 (66). Los que se saltaron ya habían llegado por el
+  webhook: la huella evita duplicados entre webhook e historial. Detalle y diferencias con Brevo en MAILING.md, 10.3.
+- La 70 no se cargó (parece prueba interna): se confirma con Ismael (PENDIENTES).
+- Regla de campañas de prueba cambiada (DECISIONES.md): solo [VALIDACIÓN], [TEST] o [PRUEBA] entre corchetes, o TEST /
+  PRUEBA sola. La 77, 78 y 79 ahora se ven siempre, con sus correos por corregir. Ocultas: 21 de 55.
+
+## 2026-11-24 · Redes sociales: partes (2) a (5) y Anuncios, con datos de ejemplo (sin token)
+
+- **(2) Rutas** `/api/marketing/redes/{cuentas,publicaciones,programadas,anuncios}` (server/redes/): solo lectura de Meta,
+  firma appsecret_proof, token de página, errores claros (token vencido, permiso, límite), aviso por cuenta que falla y
+  caché de 30 min. Sin `META_TOKEN` responden «sin_token» y la pantalla usa ejemplo. El cuadro de marcas
+  (server/redes/cuadroMarcas.js) está vacío hasta la parte (1). Probado con respuestas inventadas; no se llamó a Meta.
+- **(3) Resumen y Publicaciones** como el mockup v6 (lo esencial, pedido del ingeniero): 6 tarjetas, «Lo importante del
+  mes», 3 donas que filtran, programado vs publicado por marca, alcance por semana, ¿qué marca va mejor? (vs mismo
+  período del mes anterior), top 5 / no salieron, pauta; calendario, mejor día y tabla ordenable.
+- **(4) Programadas en 3 casos** (datos/redesProgramadas.js). Ejemplo: noviembre = A (plan), octubre = B (Facebook),
+  septiembre = C (sin programadas). El cumplimiento cuenta solo lo programado; lo publicado fuera del plan suma aparte.
+- **(5) PDF** con la misma herramienta de Mailing (Resumen, Publicaciones, Anuncios).
+- **Anuncios (fase 2):** indicadores, presupuestos y tabla con forma real; horarios, edad y sexo, segmentaciones,
+  ubicación y formularios marcados «Ejemplo».
+- **Cómo revisarlo en local:** `npm run dev` → http://localhost:3000 → Marketing → Canales de marketing → Redes
+  sociales. Cambiar el mes (Septiembre / Octubre / Noviembre) para ver los casos C, B y A; tocar las donas (filtran y
+  llevan a Publicaciones), el calendario (marca la fila), los encabezados de la tabla y el botón PDF. En Production la
+  pestaña sigue en «Próximamente».
+
+## 2026-11-24 · Redes sociales: plan v2 (como Mailing)
+
+- REDES.md reescrito por partes: objetivo (fase 1: hechas y programadas por marca y país; leads y lo de Ismael en
+  fase 2), fuentes con las consultas y campos exactos de Meta que se pedirán, qué no da Meta, programadas en 3 casos
+  (Facebook por API, Instagram no existe, «Plan del mes» solo si Marketing tiene plan), cómo se ve «¿Cumplimos lo
+  programado?» en cada caso, moneda por cuenta y tasas calculadas en el dashboard, rutas con errores de Meta y las 6
+  partes. Se conserva lo válido del plan del 23/11 (acceso, permisos, leads).
+- Falta el mockup v4 en `Descargas\datos-marketing\plantilla\` (solo está el v3). Sin código todavía: espera el «sí».
+
 ## 2026-11-23 · Mailing preparado para producción (sin push)
 
 - Redes sociales: en Vercel Production muestra «Próximamente» y en Preview / local la pantalla de ejemplo; se decide

@@ -11,10 +11,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { campanasComparables, diaGuatemala, fechaCorta, MINIMO_ENTREGADOS, MINIMO_ENVIOS, NOMBRE_CARGO, numero, ordenarPor, pct, pocosDatos, porCargo, porCorregirCampana, porcentaje } from '../../datos/calculos.js'
 import { limpiarCampo, textosCampana } from '../../datos/campana.js'
+import { leadsPorCampana } from '../../datos/leads.js'
 import { metricasPorEjecutivo, SIN_IDENTIFICAR, textoPaises } from '../../datos/porEjecutivo.js'
 import { DetalleCampana } from './DetalleCampana.jsx'
 import { DetalleEjecutivo } from './DetalleEjecutivo.jsx'
-import { PorTerritorio } from './Territorio.jsx'
+import { LeadsPorTerritorio, PorTerritorio } from './Territorio.jsx'
 import { Aviso, COLOR_MAILING, COLOR_SEMAFORO, Enfoque, FilaBarra, LeyendaSemaforo, Pct, PildoraEntrega, Tarjeta, TablaOrdenable, TituloCampana } from './piezas.jsx'
 
 const VISIBLES = 10
@@ -221,22 +222,57 @@ const COLUMNAS_DETALLE = [
   { id: 'fecha', label: 'Fecha envío', valor: (c) => diaGuatemala(c.fecha), celda: (c) => <span className="fv2-sin-salto">{fechaCorta(c.fecha)}</span> },
 ]
 
-function Detallada({ lista, verCampana }) {
+/**
+ * Columnas de leads de Prospekt (exactos + estimados de UNA sola campaña; los grupos van en su tabla aparte).
+ * Conversión = leads ÷ clics de Brevo de la campaña. Sin leads: «—» (no es lo mismo que cero si no hay datos).
+ */
+const columnasLeads = (porCampana, hayLeads) => (hayLeads ? [
+  { id: 'leads', label: 'Leads', num: true, valor: (c) => porCampana.get(String(c.id))?.leads ?? 0,
+    celda: (c) => { const g = porCampana.get(String(c.id)); return g ? <span data-tip={`${numero(g.exactas)} exactos + ${numero(g.estimadas)} estimados`}><b>{numero(g.leads)}</b></span> : <span className="fv2-tenue">0</span> } },
+  { id: 'cerrados', label: 'Cerrados', num: true, valor: (c) => porCampana.get(String(c.id))?.cerrados ?? 0, celda: (c) => numero(porCampana.get(String(c.id))?.cerrados ?? 0) },
+  { id: 'conversion', label: 'Conversión', num: true, valor: (c) => porCampana.get(String(c.id))?.conversion ?? -1,
+    celda: (c) => { const g = porCampana.get(String(c.id)); return g?.conversion != null ? <span data-tip={`${numero(g.leads)} leads ÷ ${numero(g.clics)} clics`}>{pct(g.conversion)}</span> : <span className="fv2-tenue">—</span> } },
+] : [])
+
+/** Grupos de campañas enviadas el mismo día con leads estimados: una fila aparte, sin repartirlos. */
+function GruposLeads({ grupos }) {
+  if (!grupos.length) return null
+  const columnas = [
+    { id: 'grupo', label: 'Grupo (mismo día)', celda: (g) => <strong className="mkv2-texto-fuerte">{g.grupo}</strong> },
+    { id: 'leads', label: 'Leads', num: true, celda: (g) => <span data-tip={`${numero(g.exactas)} exactos + ${numero(g.estimadas)} estimados`}><b>{numero(g.leads)}</b></span> },
+    { id: 'cerrados', label: 'Cerrados', num: true, celda: (g) => numero(g.cerrados) },
+    { id: 'clics', label: 'Clics del grupo', num: true, celda: (g) => numero(g.clics) },
+    { id: 'conversion', label: 'Conversión', num: true, celda: (g) => pct(g.conversion) },
+  ]
+  return <>
+    <div className="mkv2-espacio" />
+    <p className="mkv2-nota">Leads estimados de varias campañas enviadas el mismo día: van en su propia fila y no se reparten entre las campañas.</p>
+    <TablaOrdenable columnas={columnas} filas={grupos} clave={(g) => g.clave} vacio="" />
+  </>
+}
+
+function Detallada({ lista, campanas, verCampana, leads }) {
   const [orden, setOrden] = useState({ col: 'fecha', dir: 'desc' })
   const [todas, setTodas] = useState(false)
-  const col = COLUMNAS_DETALLE.find((c) => c.id === orden.col)
+  const listo = leads?.fuente === 'prospekt' && !leads.cargando
+  const porCampana = useMemo(() => leadsPorCampana(listo ? leads.filas : [], campanas ?? lista), [listo, leads, campanas, lista])
+  const grupos = [...porCampana.values()].filter((g) => g.campanas.length > 1)
+  const COLUMNAS = [...COLUMNAS_DETALLE, ...columnasLeads(porCampana, listo)]
+  const col = COLUMNAS.find((c) => c.id === orden.col)
   const filas = col?.valor ? ordenarPor(lista, col.valor, orden.dir) : lista
   const cambiar = (id) => setOrden((o) => ({ col: id, dir: o.col === id && o.dir === 'desc' ? 'asc' : 'desc' }))
-  return <Tarjeta titulo="Comparación detallada" sub="Porcentajes de entrega y rebote sobre envíos; aperturas y clics sobre entregados">
-    <TablaOrdenable columnas={COLUMNAS_DETALLE} filas={todas ? filas : filas.slice(0, VISIBLES)} clave={(c) => c.id} orden={orden} onOrden={cambiar} vacio="Sin datos para comparar."
+  return <Tarjeta titulo="Comparación detallada" sub={`Porcentajes de entrega y rebote sobre envíos; aperturas y clics sobre entregados${listo ? ' · Leads = exactos + estimados de Prospekt; conversión = leads ÷ clics' : ''}`}>
+    {!listo && leads && !leads.cargando && <Aviso icono="info" titulo={leads.mensaje ?? 'Leads no disponibles'} texto="La comparación se muestra sin las columnas de leads." />}
+    <TablaOrdenable columnas={COLUMNAS} filas={todas ? filas : filas.slice(0, VISIBLES)} clave={(c) => c.id} orden={orden} onOrden={cambiar} vacio="Sin datos para comparar."
       onFila={verCampana} tituloFila={(c) => `Ver solo «${textosCampana(c).corto}» en Resultados generales`} />
     {filas.length > VISIBLES && <div className="mkv2-ver-mas">
       <button type="button" className="fv2-pildora" onClick={() => setTodas(!todas)}>{todas ? 'Ver menos' : `Ver todas (${numero(filas.length)})`}</button>
     </div>}
+    <GruposLeads grupos={grupos} />
   </Tarjeta>
 }
 
-export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco, abrir, limpiarFoco, volver, filtrar, filtros }) {
+export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, leads, foco, abrir, limpiarFoco, volver, filtrar, filtros, reintentar }) {
   const verCampana = (c) => { filtrar({ campana: String(c.id) }); volver() }
   const verCorreos = (c) => { filtrar({ campana: String(c.id) }); abrir({ vista: 'detalle', estado: 'todos', titulo: `Correos de ${textosCampana(c).corto}` }) }
   // Detalle de una campaña: sus filas por correo SIN filtro de país (la gráfica «Por campaña» no se separa por país).
@@ -272,7 +308,8 @@ export function CompararCampanas({ campanas, resumen, detalle, detalleTodo, foco
     <Rendimiento key={foco?.metrica ?? 'entrega'} lista={lista} pequenas={pequenas} incluir={incluir} setIncluir={setIncluir} resumen={resumen} metricaInicial={foco?.metrica}
       verCampana={verCampana} verCorreos={verCorreos} filasDe={filasDe} campanaDe={campanaDe} verCartera={verCartera} ejecutivos={ejecutivos} campanasConDetalle={campanasConDetalle} cruce={detalle?.cruce} hayCartera={Array.isArray(detalle?.carteras)} />
     <PorTerritorio filas={filasComercial} carteras={detalle?.carteras ?? null} cruce={detalle?.cruce} filtrar={filtrar} paisFiltro={filtros?.pais ?? ''} verCartera={verCartera} />
+    {leads && <LeadsPorTerritorio leads={leads} filas={leads.filas ?? []} filtrar={filtrar} paisFiltro={filtros?.pais ?? ''} reintentar={reintentar} />}
     <PorCargo campanas={campanas} filtrar={filtrar} />
-    <Detallada lista={lista} verCampana={verCampana} />
+    <Detallada lista={lista} campanas={campanas} verCampana={verCampana} leads={leads} />
   </>
 }

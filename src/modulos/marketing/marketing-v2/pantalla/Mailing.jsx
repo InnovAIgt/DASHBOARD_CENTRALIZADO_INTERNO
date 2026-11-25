@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, RefreshCw, X } from 'lucide-react'
 import { contadoresMailing, fechaCorta, filtrarCampanas, filtrarPorCliente, FILTROS_INICIALES, NOMBRE_CARGO, numero, opcionesFiltros } from '../datos/calculos.js'
 import { textosCampana } from '../datos/campana.js'
+import { esLeadMailing, filtrarLeads } from '../datos/leads.js'
 import { cargarHerramientaPdf, chipsFiltros, construirReporteMailing, MODULOS_PDF_MAILING, nombreArchivoPdf } from '../datos/pdfMailing.js'
 import { useMailingDatos } from '../datos/useMailingDatos.js'
 import { CompararCampanas } from './mailing/Comparar.jsx'
@@ -18,6 +19,7 @@ import { RelacionConClientes } from './mailing/Clientes.jsx'
 import { CorreosPorCorregir, DetallePorCorreo } from './mailing/Correos.jsx'
 import { BarraFiltros, ID_BOTON_PDF, TEXTO_PAIS_INACTIVO } from './mailing/BarraFiltros.jsx'
 import { ResultadosGenerales } from './mailing/Generales.jsx'
+import { LeadsMailing } from './mailing/Leads.jsx'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 
 export const SUBPESTANAS_MAILING = [
@@ -26,6 +28,7 @@ export const SUBPESTANAS_MAILING = [
   { key: 'corregir', label: 'Correos por corregir' },
   { key: 'detalle', label: 'Detalle por correo' },
   { key: 'clientes', label: 'Relación con clientes' },
+  { key: 'leads', label: 'Leads' },
   { key: 'cargos', label: 'Cargo y objetivo' },
 ]
 
@@ -35,6 +38,7 @@ const CONTENIDO = {
   corregir: CorreosPorCorregir,
   detalle: DetallePorCorreo,
   clientes: RelacionConClientes,
+  leads: LeadsMailing,
   cargos: AsignarCargo,
 }
 
@@ -53,14 +57,32 @@ export function Mailing({ sub, onSub }) {
     : datos.detalle), [datos.detalle, filtros.pais, filtros.cliente])
   // Contadores: «Correos por corregir» = direcciones únicas; «Relación con clientes» = filas (correo + campaña).
   const cuentas = useMemo(() => contadoresMailing(detalle?.mostrarCorreos ? detalle.filas : null, filtradas), [detalle, filtradas])
-  const cuenta = { corregir: cuentas.corregir, clientes: cuentas.clientes }
+  const vistaPorCorreo = ['corregir', 'detalle', 'clientes'].includes(actual)
+  // País: solo en las vistas por correo, en Campañas («Por comercial») y en Leads; en las demás se ve desactivado y se conserva.
+  const paisActivo = vistaPorCorreo || actual === 'comparar' || actual === 'leads'
+  // Leads de Prospekt con los mismos filtros. País y Buscar cliente solo donde el país está activo (como en las demás vistas).
+  // Por defecto SOLO los leads de Mailing (con campaña asignada u origen «PostIAlo Mailing»); el interruptor
+  // «Ver leads de todos los orígenes» (apagado) muestra también Redes, Web, PBX y Manual, para revisión.
+  const [todosOrigenes, setTodosOrigenes] = useState(false)
+  const leads = useMemo(() => {
+    const todas = datos.leads?.filas ?? []
+    const deCorreo = todas.filter(esLeadMailing)
+    const f = paisActivo ? filtros : { ...filtros, pais: '', cliente: '' }
+    return {
+      ...datos.leads,
+      filas: filtrarLeads(todosOrigenes ? todas : deCorreo, f, filtradas),
+      total: todas.length,
+      nota: { deCorreo: deCorreo.length, conCorreo: todas.filter((x) => x.tieneCorreo).length, total: todas.length },
+      todosOrigenes,
+      cambiarOrigenes: setTodosOrigenes,
+    }
+  }, [datos.leads, filtros, filtradas, paisActivo, todosOrigenes])
+  const cuenta = { corregir: cuentas.corregir, clientes: cuentas.clientes, leads: datos.leads?.fuente === 'prospekt' ? leads.filas.length : null }
   const tituloCuenta = {
     corregir: cuentas.corregir != null ? `${numero(cuentas.corregir)} direcciones únicas · ${numero(cuentas.casosCorregir)} casos (correo + campaña)` : undefined,
     clientes: cuentas.clientes != null ? `${numero(cuentas.clientes)} filas (correo + campaña)` : undefined,
+    leads: cuenta.leads != null ? `${numero(cuenta.leads)} leads ${todosOrigenes ? 'de todos los orígenes' : 'de Mailing'} con los filtros` : undefined,
   }
-  const vistaPorCorreo = ['corregir', 'detalle', 'clientes'].includes(actual)
-  // País: solo en las vistas por correo y en Campañas («Por comercial»); en las demás se ve desactivado y se conserva.
-  const paisActivo = vistaPorCorreo || actual === 'comparar'
   const porCliente = Boolean(filtros.cliente) && !paisActivo
 
   // Navegación: un clic en una pestaña quita el foco; «abrir» lo pone y cambia de pestaña.
@@ -151,7 +173,7 @@ export function Mailing({ sub, onSub }) {
         texto="Estos totales vienen de Brevo y no se pueden separar por cliente. Mira Correos por corregir, Detalle por correo, Relación con clientes o «Por comercial» en Campañas." />}
       {datos.detalle?.cruce && datos.detalle.cruce !== 'ok' && vistaPorCorreo && <Aviso titulo="Cliente, País y Ejecutivo no disponibles" texto={datos.detalle.avisoCruce} />}
       <Contenido key={`${actual}-${focoActual?.n ?? 0}`} campanas={filtradas} resumen={datos.resumen} errorResumen={datos.errorResumen}
-        detalle={detalle} detalleTodo={datos.detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas}
+        detalle={detalle} detalleTodo={datos.detalle} errorDetalle={datos.errorDetalle} cuentas={cuentas} leads={leads}
         edicionHabilitada={datos.edicionHabilitada} actualizarCampana={datos.actualizarCampana}
         foco={focoActual} abrir={abrir} filtrar={filtrar} filtros={filtros} limpiarFoco={() => setFoco(null)} volver={() => irA('generales')} reintentar={datos.reintentar} />
       {datos.actualizado && <p className="mkv2-nota mkv2-actualizado">

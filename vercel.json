@@ -6,7 +6,7 @@
     "api/sac/*.js": {
       "maxDuration": 60
     },
-    "api/marketing/mailing/*.js": {
+    "api/marketing/canales.js": {
       "maxDuration": 60
     },
     "api/bodega-despachos.js": {
@@ -23,6 +23,10 @@
     {
       "source": "/api/bodega/despachos",
       "destination": "/api/bodega-despachos"
+    },
+    {
+      "source": "/api/marketing/(brevo-webhook|mantener-supabase|mailing/.*|redes/.*)",
+      "destination": "/api/marketing/canales?ruta=$1"
     },
     {
       "source": "/api/(.*)",
