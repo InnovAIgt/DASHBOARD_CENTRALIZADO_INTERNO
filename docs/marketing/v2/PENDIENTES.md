@@ -51,6 +51,8 @@ la fecha.
 | Redes · el cuadro marca → cuentas (server/redes/cuadroMarcas.js) se llena en la parte (1) con la lista que confirme Marketing | Keily / Marketing | Parte (1) | Hecho (24/11/2026): 3 páginas, 3 Instagram y la cuenta USD (REDES.md, 7.3) |
 | Redes · **comentarios de Facebook**: el conteo de comentarios (y `reactions.summary`) pide el permiso `pages_read_user_content`. Hoy las interacciones de Facebook son reacciones + compartidos. Decidir si se agrega ese permiso (es de lectura) al token | Keily | 2026-11-24 | Pendiente |
 | Redes · umbral del semáforo «¿Cumplimos lo programado?» (propuesta: 100 % verde, 90–99 % amarillo, menos de 90 % rojo; REDES.md, sección 4) y meta de costo por mensaje y por clic | Ingeniero | 2026-11-24 | Pendiente |
+| Redes · **PDF en tamaño carta**: la herramienta compartida (public/assets/js/dashboard-pdf.js) descarga siempre en A4 horizontal. Cambiarla a carta afecta también a Mailing y Flujo de ventas: decidir si se cambia para todos o se agrega una opción solo para Redes | Keily | 2026-11-25 | Pendiente |
+| Redes · **leads por campaña en Guatemala**: su cuenta publicitaria (act_2226740844336751) no da permiso de lectura al token; sus leads salen «sin campaña conectada» hasta que un administrador del portafolio GT lo autorice | Keily / admin portafolio GT | 2026-11-25 | Pendiente |
 
 ## Eduardo / TI
 

@@ -4,6 +4,7 @@
 // con «Reintentar» (decisión de Keily, 24/11/2026). Los datos de ejemplo (redesEjemplo.js) quedan SOLO para pruebas.
 import { useCallback, useEffect, useState } from 'react'
 import { respuestaAnuncios, respuestaCuentas, respuestaProgramadas, respuestaPublicaciones } from './redesEjemplo.js'
+import { mesAnteriorDe } from './redes.js'
 
 export const RUTAS_REDES = ['cuentas', 'publicaciones', 'programadas', 'anuncios']
 
@@ -46,27 +47,59 @@ export const estadoVacio = () => ({ ...armarEstado(null, null, null, null), fuen
 /** Solo para PRUEBAS: los datos de ejemplo con la misma forma que las rutas. */
 export const estadoEjemplo = () => armarEstado(respuestaCuentas, respuestaPublicaciones, respuestaProgramadas, respuestaAnuncios)
 
-export function useRedesDatos() {
-  const [estado, setEstado] = useState(() => ({ ...estadoVacio(), cargando: true }))
+/** Nombre de cada consulta para los avisos (si una falla, el aviso dice cuál). */
+export const NOMBRE_RUTA = { cuentas: 'Cuentas (alcance, interacciones y seguidores)', publicaciones: 'Publicaciones', programadas: 'Programadas', anuncios: 'Anuncios' }
+
+/**
+ * Datos del MES ELEGIDO (enero 2026 → mes actual). Cada mes se pide solo cuando se elige; el servidor guarda los meses
+ * cerrados 24 h y el actual 30 min. Cada consulta va por separado: si una falla, `errores[ruta]` dice por qué y el
+ * resto de la pantalla sigue. Si fallan TODAS, `error` (por ejemplo, sin token).
+ */
+export function useRedesDatos(mes) {
+  const [estado, setEstado] = useState(() => ({ ...estadoVacio(), cargando: true, errores: {} }))
   const [vuelta, setVuelta] = useState(0)
   const reintentar = useCallback(() => setVuelta((v) => v + 1), [])
 
   useEffect(() => {
+    if (!mes) return undefined
     const control = new AbortController()
-    setEstado((e) => ({ ...e, cargando: true, error: null }))
-    Promise.all(RUTAS_REDES.map((r) => pedir(r, control.signal)))
-      .then(([c, p, pr, a]) => {
+    setEstado((e) => ({ ...e, cargando: true, error: null, errores: {} }))
+    Promise.allSettled(RUTAS_REDES.map((r) => pedir(r, control.signal, mes)))
+      .then((res) => {
         if (control.signal.aborted) return
-        setEstado(armarEstado(c, p, pr, a))
-      })
-      .catch((err) => {
-        if (control.signal.aborted) return
-        const mensaje = err instanceof TypeError ? TEXTO_SIN_SERVIDOR : err.message || 'No se pudieron leer los datos de Meta.'
-        setEstado((e) => ({ ...e, cargando: false, error: mensaje }))
+        const errores = {}
+        const valores = res.map((x, i) => {
+          if (x.status === 'fulfilled') return x.value
+          errores[RUTAS_REDES[i]] = x.reason instanceof TypeError ? TEXTO_SIN_SERVIDOR : x.reason?.message || 'No se pudieron leer los datos de Meta.'
+          return null
+        })
+        if (valores.every((v) => v === null)) { setEstado({ ...estadoVacio(), cargando: false, error: Object.values(errores)[0], errores }); return }
+        const armado = armarEstado(...valores)
+        setEstado({ ...armado, meses: armado.meses.length ? armado.meses : [mes, mesAnteriorDe(mes)], errores })
       })
     return () => control.abort()
-  }, [vuelta])
+  }, [mes, vuelta])
 
+  return { ...estado, reintentar }
+}
+
+/**
+ * «Año» de Resumen (enero → mes actual): publicaciones y alcance por cuenta y mes, y anuncios por mes. Solo se pide
+ * cuando `activo` (el usuario eligió «Año»); la primera vez tarda, luego sale de la copia del servidor.
+ */
+export function useAnioRedes(hasta, activo) {
+  const [estado, setEstado] = useState({ cargando: false, error: null, anio: null, avisos: [] })
+  const [vuelta, setVuelta] = useState(0)
+  const reintentar = useCallback(() => setVuelta((v) => v + 1), [])
+  useEffect(() => {
+    if (!activo || !hasta) return undefined
+    const control = new AbortController()
+    setEstado((e) => ({ ...e, cargando: true, error: null }))
+    pedir('anio', control.signal, hasta)
+      .then((d) => { if (!control.signal.aborted) setEstado({ cargando: false, error: null, anio: d?.anio ?? null, avisos: d?.avisos ?? [] }) })
+      .catch((err) => { if (!control.signal.aborted) setEstado({ cargando: false, error: err instanceof TypeError ? TEXTO_SIN_SERVIDOR : err.message || 'No se pudo leer el año.', anio: null, avisos: [] }) })
+    return () => control.abort()
+  }, [hasta, activo, vuelta])
   return { ...estado, reintentar }
 }
 

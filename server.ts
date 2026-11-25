@@ -110,8 +110,8 @@ app.all('/api/marketing/redes/leads', async (req, res) => {
 });
 
 // Canales de marketing · Redes sociales (solo lectura de Meta; sin META_TOKEN responde «sin_token» y la pantalla
-// muestra el aviso). En Vercel: api/marketing/redes/{cuentas,publicaciones,programadas,anuncios,anuncios-detalle}.js.
-app.all('/api/marketing/redes/:recurso(cuentas|publicaciones|programadas|anuncios|anuncios-detalle)', async (req, res) => {
+// muestra el aviso). En Vercel: api/marketing/redes/{cuentas,publicaciones,programadas,anuncios,anuncios-detalle,anio} (función canales).
+app.all('/api/marketing/redes/:recurso(cuentas|publicaciones|programadas|anuncios|anuncios-detalle|anio)', async (req, res) => {
   const mes = typeof req.query.mes === 'string' ? req.query.mes : '';
   const resultado = await responderRedes({ recurso: req.params.recurso, method: req.method, query: { mes } });
   for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, valor);

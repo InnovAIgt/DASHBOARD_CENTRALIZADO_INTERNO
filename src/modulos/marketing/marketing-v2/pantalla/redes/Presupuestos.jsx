@@ -7,7 +7,8 @@ import { dinero as dineroDe, MARCAS, PAISES, tituloLimpio } from '../../datos/re
 import {
   comparacionCampana, dineroYMensajes, estadoMeta, lecturaPresupuestos, presupuestoDelMes, recomendacionesCampana, resultadoCampana, resumenPresupuestos, semanasCampana,
 } from '../../datos/presupuestoDetalle.js'
-import { ESTADOS_META, formatoAnuncio, leadsDeAnuncio, textoFechas } from '../../datos/segmentoDetalle.js'
+import { ESTADOS_META, formatoAnuncio, textoFechas } from '../../datos/segmentoDetalle.js'
+import { REGLA_LEADS_CAMPANA, textoLeadsEst } from '../../datos/leadsCampana.js'
 import { CircleDollarSign } from 'lucide-react'
 import { PildoraCosto, TarjetaCompacta } from './piezasRedes.jsx'
 import { textoNormal } from '../../datos/palabrasTalCual.js'
@@ -85,13 +86,14 @@ function ventanaReparto({ pres, moneda, meta, textoDe }) {
 
 /**
  * Ventana de una campaña (objeto «detalle» con cuerpo propio).
- * @param {{c, todas, moneda, meta, leadsDePub, mes, hoy, anterior, textoDe}} p  anterior = costo por mensaje del mes pasado
+ * @param {{c, todas, moneda, meta, leadsEst, mes, hoy, anterior, textoDe}} p  anterior = costo por mensaje del mes pasado;
+ *   leadsEst = leads estimados de la campaña (datos/leadsCampana.js) o null si no hay dato
  */
-export function ventanaCampana({ c, todas, moneda, meta, leadsDePub, mes, hoy, anterior = null, textoDe }) {
+export function ventanaCampana({ c, todas, moneda, meta, leadsEst = null, mes, hoy, anterior = null, textoDe }) {
   const d = (v) => dineroDe(v, moneda)
   const nombre = (x) => nombreConTexto({ texto: textoDe(x), campana: x.campana, objetivo: x.campanaInfo?.objetivo })
   const n = nombre(c)
-  const res = resultadoCampana(c, todas, leadsDePub)
+  const res = resultadoCampana(c, todas, leadsEst)
   const pre = presupuestoDelMes(c, mes, hoy)
   const { semanas, cansancio } = semanasCampana(c)
   const maxG = Math.max(1, ...semanas.map((w) => w.gastado))
@@ -112,7 +114,8 @@ export function ventanaCampana({ c, todas, moneda, meta, leadsDePub, mes, hoy, a
         <div className="mkv2-redes-det-kpi" style={{ '--c': '#18935f' }}><small>Mensajes</small><b>{numero(c.mensajes)}</b><em>{pct(res.pctMensajes)} del mes</em></div>
         <div className="mkv2-redes-det-kpi" style={{ '--c': '#2fb8c4' }}><small>Costo c/u</small><b>{c.pocos ? 'pocos datos' : d(c.costo)}</b>
           <em>{res.difCosto === null || c.pocos ? `promedio ${d(res.promedio)}` : `${Math.round(Math.abs(res.difCosto))} % ${res.difCosto <= 0 ? 'menos' : 'más'} que el promedio`}</em></div>
-        <div className="mkv2-redes-det-kpi" style={{ '--c': '#d6589b' }}><small>Leads (est.)</small><b>{numero(res.leads.length)}</b><em>{res.leads.length ? `${d(res.costoLead)} por lead` : 'sin leads estimados'}</em></div>
+        <div className="mkv2-redes-det-kpi" style={{ '--c': '#d6589b' }} data-tip={REGLA_LEADS_CAMPANA}><small>Leads <em className="mkv2-redes-estimado">estimado</em></small>
+          <b>{textoLeadsEst(res.leadsEst)}</b><em>{res.leadsEst === null ? 'sin dato de Meta por día' : res.costoLead !== null ? `${d(res.costoLead)} por lead` : 'sin leads en sus días activos'}</em></div>
       </div>
     </Seccion>
 
@@ -157,7 +160,7 @@ export function ventanaCampana({ c, todas, moneda, meta, leadsDePub, mes, hoy, a
 
     <Seccion titulo="Anuncios de la campaña">
       <div className="fv2-tabla-caja"><table className="fv2-tabla mkv2-tabla mkv2-sd-anuncios">
-        <thead><tr>{['Anuncio', 'Formato', 'Invertido', 'Mensajes', 'Costo c/u', 'Leads (est.)'].map((h, i) => <th key={h} className={i > 1 ? 'num' : ''}>{h}</th>)}</tr></thead>
+        <thead><tr>{['Anuncio', 'Formato', 'Invertido', 'Mensajes', 'Costo c/u'].map((h, i) => <th key={h} className={i > 1 ? 'num' : ''}>{h}</th>)}</tr></thead>
         <tbody>{anuncios.map((a) => {
           const costo = a.mensajes > 0 ? a.gastado / a.mensajes : null
           const pocos = a.mensajes < MIN_MENSAJES
@@ -166,10 +169,9 @@ export function ventanaCampana({ c, todas, moneda, meta, leadsDePub, mes, hoy, a
             <td className="mkv2-celda-campana"><b className="mkv2-una-linea" data-tip={titulo}>{textoNormal(tituloLimpio(titulo))}</b><small className="mkv2-una-linea mkv2-redes-campana-sub" data-tip={a.nombre}>Anuncio: {a.nombre}</small></td>
             <td>{formatoAnuncio(a)}</td><td className="num">{d(a.gastado)}</td><td className="num">{numero(a.mensajes)}</td>
             <td className="num">{pocos ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${meta && costo !== null ? (costo <= meta ? 'is-verde' : 'is-amarillo') : ''}`}>{d(costo)}</span>}</td>
-            <td className="num mkv2-redes-rosa">{numero(leadsDeAnuncio(a, leadsDePub).length)}</td>
           </tr>
         })}
-        {!anuncios.length && <tr><td colSpan={6} className="fv2-tabla-vacia">Meta no dio los anuncios de esta campaña</td></tr>}</tbody>
+        {!anuncios.length && <tr><td colSpan={5} className="fv2-tabla-vacia">Meta no dio los anuncios de esta campaña</td></tr>}</tbody>
       </table></div>
     </Seccion>
 

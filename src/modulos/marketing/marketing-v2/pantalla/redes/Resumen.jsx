@@ -5,7 +5,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { numero, pct } from '../../datos/calculos.js'
 import {
-  alcancePorMarca, alcancePorSemana, COLOR_RED, dinero, filtrarRedes, FORMATOS, hechasYProgramadas, MARCAS, metricasCuentas, nombreCampana, nombreMes, porRedFormato, REDES,
+  alcancePorMarca, alcancePorSemana, COLOR_RED, dinero, filtrarRedes, FORMATOS, hechasYProgramadas, MARCAS, mesActualGt, metricasCuentas, nombreCampana, nombreMes, porRedFormato, REDES,
   resumenPublicaciones, seguidores, separarReclutamiento, serieSemanal, TEXTO_IG_SIN_PROGRAMADAS, tituloLimpio, totalesAnuncios,
 } from '../../datos/redes.js'
 import { detalleCampana, detalleCostoLead, detalleIndicador, detalleListaLeads, detalleMarca, detallePublicacion } from '../../datos/redesDetalle.js'
@@ -13,6 +13,8 @@ import { costoPorLead, leadsDelMes, leadsDePublicacion, leadsPorMarca, resumenLe
 import { diaDeCorte, loImportante, META_COSTO_MENSAJE, mismoPeriodo, pautaPorCampana, programadoVsPublicado, topPublicaciones, variacion } from '../../datos/redesVista.js'
 import { COLOR_MAILING, COLOR_SEMAFORO, Numero, Tarjeta } from '../mailing/piezas.jsx'
 import { clicDetalle, useDetalle } from './Detalle.jsx'
+import { AnioRedes } from './Anio.jsx'
+import { useAnioRedes } from '../../datos/useRedesDatos.js'
 import { Anillo, BarrasCosto, BarrasProgramado, BarrasSemana, DonaRedes, PildoraImportante, TarjetaRedes } from './piezasRedes.jsx'
 
 const TEXTO_SEMAFORO = { verde: 'Cumplió', amarillo: 'Casi', rojo: 'Bajo' }
@@ -81,7 +83,8 @@ export function TablaHechasProgramadas({ items, marcas, filtros, leads, alAbrirM
         {p.marcas.map((x, i) => <tr key={x.marca} className={`mkv2-redes-clic ${filtros.marca === x.marca ? 'is-marcada' : ''}`} tabIndex={0}
           onClick={() => alAbrirMarca(x.marca)} onKeyDown={(e) => { if (e.key === 'Enter') alAbrirMarca(x.marca) }} data-tip={`${MARCAS[x.marca].nombre} · clic para ver el detalle`}>
           {i === 0 && <th scope="rowgroup" rowSpan={p.marcas.length + (p.marcas.length > 1 ? 1 : 0)}><span className="mkv2-redes-pais">{p.pais}</span>{p.nombre}</th>}
-          <td><span className="mkv2-redes-punto" style={{ background: MARCAS[x.marca].color }} /><b>{MARCAS[x.marca].corto}</b></td>
+          <td><span className="mkv2-redes-punto" style={{ background: MARCAS[x.marca].color }} /><b>{MARCAS[x.marca].corto}</b>
+            {!x.hechas && !x.fbProgramadas && !x.igProgramadas && <small className="mkv2-redes-sin-datos"> Sin datos para este mes</small>}</td>
           {celdas(x)}
           {celdaLeads(p.pais === 'GT' && pm ? pm.gt + (pm.sinMarca.GT ?? 0) : pm?.[x.marca] ?? 0)}
         </tr>)}
@@ -145,10 +148,21 @@ function LeadsDeRedes({ leads, alcance, mensajes, gasto, moneda, abrir, items, f
 export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso, leadsRedes = null }) {
   const abrir = useDetalle()
   const [lista, setLista] = useState('top')
+  // «Mes elegido» o «Año» (enero → mes actual). El año se pide a Meta SOLO cuando se elige esta opción.
+  const [vista, setVista] = useState('mes')
+  const mesActual = mesActualGt()
+  const anio = useAnioRedes(mesActual, vista === 'anio')
+  const selectorVista = <div className="mkv2-tc-vistas mkv2-redes-vista" role="tablist" aria-label="Ver el mes o el año">
+    <button type="button" role="tab" aria-selected={vista === 'mes'} className={vista === 'mes' ? 'is-activo' : ''} onClick={() => setVista('mes')}>{nombreMes(filtros.mes)}</button>
+    <button type="button" role="tab" aria-selected={vista === 'anio'} className={vista === 'anio' ? 'is-activo' : ''} onClick={() => setVista('anio')}>Año {mesActual.slice(0, 4)}</button>
+  </div>
   const f = { ...filtros, formato: '', estado: '' }
   const base = useMemo(() => filtrarRedes(items, f), [items, f.pais, f.marca, f.red, f.mes]) // eslint-disable-line react-hooks/exhaustive-deps
   const corte = diaDeCorte(filtros.mes, datos.hoy)
-  const mesAnt = datos.meses[datos.meses.indexOf(filtros.mes) + 1]
+  // Comparación contra el mes anterior al elegido (en enero, diciembre 2025) solo si Meta dio datos de ese mes.
+  const mesAntPedido = datos.meses[datos.meses.indexOf(filtros.mes) + 1]
+  const mesAnt = mesAntPedido && (items.some((x) => String(x.fecha).startsWith(mesAntPedido)) || datos.anuncios.some((a) => a.mes === mesAntPedido)
+    || datos.cuentas.some((c) => (c.metricas?.[mesAntPedido]?.alcanceDiario ?? 0) > 0)) ? mesAntPedido : null
   const baseAnt = mesAnt ? mismoPeriodo(filtrarRedes(items, { ...f, mes: mesAnt }), corte) : null
   const textoAnt = mesAnt ? (corte ? `vs 1–${corte} ${nombreMes(mesAnt).split(' ')[0].slice(0, 3).toLowerCase()}` : 'vs mes anterior') : ''
   const r = resumenPublicaciones(base)
@@ -196,7 +210,13 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso, leadsR
     leads: leads.delMes.filter((l) => (m === 'gt' ? l.pais === 'GT' : l.marca === m)) }), acciones: [{ texto: filtros.marca === m ? 'Ver todas las marcas' : 'Filtrar por esta marca', alHacer: () => filtrar({ marca: filtros.marca === m ? '' : m }) }] })
   const abrirPub = (p) => abrir(detallePublicacion(p, leadsDePublicacion(leads.delMes, p.id)))
 
+  if (vista === 'anio') {
+    return <>{selectorVista}<AnioRedes anio={anio} leads={leadsRedes?.leads ?? []} leadsListos={listos} filtros={{ ...filtros, mesActual }}
+      alElegirMes={(m) => { filtrar({ mes: m }); setVista('mes') }} /></>
+  }
+
   return <>
+    {selectorVista}
     <div className="mkv2-redes-kpis">
       <TarjetaRedes titulo="Publicaciones" color={conPlan ? colorSem(r.semaforo) : COLOR_MAILING.apertura} serie={serieSemanal(base, filtros.mes)}
         valor={<><Numero n={conPlan ? r.cumplidas : r.publicadas} />{conPlan && r.aFecha > 0 && <small> de {numero(r.aFecha)}</small>}</>}
@@ -284,7 +304,9 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso, leadsR
               <Anillo pct={parte} color={MARCAS[m].color} />
               <span className="mkv2-redes-marca-datos">
                 <span className="mkv2-redes-marca-cabeza"><b>{MARCAS[m].corto}</b><em>{MARCAS[m].pais}</em></span>
-                {s.publicadas === 0
+                {s.publicadas === 0 && !alc
+                  ? <span className="mkv2-redes-marca-sin">Sin datos para este mes</span>
+                  : s.publicadas === 0
                   ? <span className="mkv2-redes-marca-sin">Sin publicaciones este mes<small>alcance de la cuenta: {numero(alc)}</small></span>
                   : <span className="mkv2-redes-marca-cifras">
                     <span><b>{numero(conPlan ? s.cumplidas : s.publicadas)}{conPlan ? `/${numero(s.aFecha)}` : ''}</b><small>publicadas</small></span>

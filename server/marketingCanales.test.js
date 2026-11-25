@@ -16,7 +16,8 @@ function respuesta() {
 }
 
 test('todas las rutas de antes tienen su manejador; reuniones (Flujo de ventas) no pasa por aquí', () => {
-  assert.deepEqual(Object.keys(RUTAS_CANALES).sort(), [...RUTAS_DE_ANTES].sort())
+  // Nueva (25/11/2026): «Año» de Redes, en la misma función (no suma funciones en Vercel).
+  assert.deepEqual(Object.keys(RUTAS_CANALES).sort(), [...RUTAS_DE_ANTES, 'redes/anio'].sort())
   assert.equal(RUTAS_CANALES.reuniones, undefined)
 })
 

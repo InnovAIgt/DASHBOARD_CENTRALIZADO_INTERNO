@@ -4,13 +4,14 @@
 // Respeta los filtros (país, marca, red, mes; formato y estado en Publicaciones). El dinero va por moneda, nunca sumado.
 // Si los datos son de ejemplo, el reporte lo dice arriba.
 import { numero, pct } from './calculos.js'
-import { alcancePorMarca, dinero, ESTADOS, filtrarRedes, FORMATOS, hechasYProgramadas, MARCAS, metricasCuentas, nombreMes, REDES, resumenPublicaciones, seguidores, separarReclutamiento, TEXTO_IG_SIN_PROGRAMADAS, totalesAnuncios } from './redes.js'
+import { alcancePorMarca, dinero, ESTADOS, nombreCampana, filtrarRedes, FORMATOS, hechasYProgramadas, MARCAS, metricasCuentas, nombreMes, REDES, resumenPublicaciones, seguidores, separarReclutamiento, TEXTO_IG_SIN_PROGRAMADAS, totalesAnuncios } from './redes.js'
 import { ordenarPublicaciones, pautaPorCampana, programadoVsPublicado } from './redesVista.js'
+import { CSS_PDF_EXTRA, estimadorLeadsPdf, htmlLeadsRedes, htmlTarjetasAnuncios, leadsDeMarcaPdf, leadsDelReporte, REGLA_LEADS_CAMPANA, textoLeadsEst } from './pdfRedesExtra.js'
 
 export const MODULOS_PDF_REDES = [
-  { id: 'resumen', name: 'Resumen', description: 'Publicaciones, alcance, interacciones, seguidores, programado vs publicado por marca.' },
+  { id: 'resumen', name: 'Resumen', description: 'Publicaciones, alcance, interacciones, seguidores, leads de Redes (embudo y tarjetas), tabla por país y marca con leads.' },
   { id: 'publicaciones', name: 'Publicaciones', description: 'Todas las publicaciones del mes con estado, alcance, interacciones y tasa.' },
-  { id: 'anuncios', name: 'Anuncios', description: 'Campañas con gasto, mensajes y costo por mensaje (por moneda).' },
+  { id: 'anuncios', name: 'Anuncios', description: 'Campañas con gasto, mensajes, costo por mensaje y leads estimados; presupuestos, plataformas y segmentaciones con su lectura.' },
 ]
 const CASO = { A: 'Plan del mes', B: 'Programadas de Facebook (API)', C: 'Sin programadas (solo publicado)' }
 
@@ -31,8 +32,11 @@ export function chipsFiltrosRedes(filtros) {
 
 export const nombreArchivoPdfRedes = (filtros, ahora = new Date()) => `Redes_${filtros.mes || 'mes'}_${filtros.pais || 'GT-SV'}_${ahora.toISOString().slice(0, 10)}.pdf`
 
-/** HTML del reporte. datos = estado de useRedesDatos; items = de armarProgramado; caso = A | B | C. */
-export function construirReporteRedes({ seleccion, datos, items, caso, filtros, origen, ahora = new Date() }) {
+/**
+ * HTML del reporte. datos = estado de useRedesDatos; items = de armarProgramado; caso = A | B | C; leadsRedes = de
+ * useLeadsRedes (solo se usan conteos); detalle = /anuncios-detalle del mes (las 3 tarjetas y los leads por campaña).
+ */
+export function construirReporteRedes({ seleccion, datos, items, caso, filtros, origen, leadsRedes = null, detalle = null, ahora = new Date() }) {
   const f = { ...filtros, formato: '', estado: '' }
   const base = filtrarRedes(items, f)
   const r = resumenPublicaciones(base)
@@ -49,6 +53,8 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
   const fechaEmision = `${ahora.toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Guatemala' })} a las ${ahora.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guatemala' })}`
   const kpi = (lbl, num, sub) => `<div class="period-kpi"><div class="lbl">${esc(lbl)}</div><div class="num">${esc(num)}</div><div class="sub">${esc(sub)}</div></div>`
   const porMoneda = (campo) => t.porMoneda.map((m) => dinero(m[campo], m.moneda)).join(' · ') || '—'
+  const leads = leadsDelReporte(leadsRedes, filtros)
+  const unaMoneda = t.porMoneda.length === 1 ? t.porMoneda[0] : null
 
   const resumen = `<section data-pdf-module="resumen"><h2>1. Resumen · ${esc(nombreMes(filtros.mes))}</h2>
     <div class="period-kpis">
@@ -59,8 +65,10 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
       ${kpi('Inversión', porMoneda('gastado'), `${numero(t.campanas)} campañas${tRec.campanas ? ` · reclutamiento aparte: ${tRec.porMoneda.map((m) => dinero(m.gastado, m.moneda)).join(' · ')}` : ''}`)}
       ${kpi('Mensajes', numero(t.mensajes), `${porMoneda('costoMensaje')} c/u`)}
     </div>
-    ${tabla(['País', 'Marca', 'Facebook hechas', 'Facebook programadas', 'Instagram hechas', 'Instagram programadas', 'Total hechas'],
-      hechasYProgramadas(base, marcas).flatMap((pa) => [...pa.marcas, ...(pa.marcas.length > 1 ? [{ ...pa.total, marca: '' }] : [])].map((x) => `<tr><td>${esc(pa.nombre)}</td><td>${esc(x.marca ? MARCAS[x.marca].corto : `Total ${pa.nombre}`)}</td><td>${numero(x.fbHechas)}</td><td>${numero(x.fbProgramadas)}</td><td>${numero(x.igHechas)}</td><td>${x.igProgramadas === null ? esc(TEXTO_IG_SIN_PROGRAMADAS) : numero(x.igProgramadas)}</td><td>${numero(x.hechas)}</td></tr>`)))}
+    ${tabla(['País', 'Marca', 'Facebook hechas', 'Facebook programadas', 'Instagram hechas', 'Instagram programadas', 'Total hechas', 'Leads calificados'],
+      hechasYProgramadas(base, marcas).flatMap((pa) => [...pa.marcas, ...(pa.marcas.length > 1 ? [{ ...pa.total, marca: '' }] : [])].map((x) => `<tr><td>${esc(pa.nombre)}</td><td>${esc(x.marca ? MARCAS[x.marca].corto : `Total ${pa.nombre}`)}</td><td>${numero(x.fbHechas)}</td><td>${numero(x.fbProgramadas)}</td><td>${numero(x.igHechas)}</td><td>${x.igProgramadas === null ? esc(TEXTO_IG_SIN_PROGRAMADAS) : numero(x.igProgramadas)}</td><td>${numero(x.hechas)}</td><td>${esc(leadsDeMarcaPdf(leads, x.marca, pa.pais, !x.marca, pa.marcas.map((y) => y.marca)))}</td></tr>`)))}
+    <p class="nota">Leads calificados: origen «PostIAlo Redes Sociales» (Prospekt), por país y mes. En El Salvador, la marca sale de la publicación estimada; si no se sabe, «sin marca».</p>
+    ${htmlLeadsRedes({ leads, alcance: mc?.alcanceDiario ?? 0, mensajes: t.mensajes, gasto: unaMoneda?.gastado ?? 0, moneda: unaMoneda?.moneda ?? 'USD', filtros })}
     <p class="nota">Alcance = suma del alcance diario de las cuentas (una persona puede contarse más de una vez). Fechas en hora de Guatemala y El Salvador (UTC−6).</p>
     <p class="nota">¿Cumplimos lo programado? Caso: <b>${esc(CASO[caso] ?? caso)}</b>.${conPlan ? '' : ' Sin semáforo: no hay programadas para comparar.'}</p>
     ${tabla(['Marca', 'País', conPlan ? 'Salieron / programadas' : 'Publicadas', 'Cumplimiento', 'Alcance (suma diaria)', 'Interacciones', 'Tasa'],
@@ -76,9 +84,15 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
       lista.map((p) => `<tr><td>${esc(`${p.fecha.slice(8, 10)}/${p.fecha.slice(5, 7)}`)}</td><td>${esc(MARCAS[p.marca]?.corto ?? p.marca)}</td><td>${esc(REDES[p.red] ?? p.red)}</td><td>${esc(p.titulo)}${p.fueraDePlan && conPlan && p.estado === 'publicada' ? ' <i>(fuera de lo programado)</i>' : ''}</td><td>${esc(FORMATOS[p.formato] ?? p.formato)}</td><td>${esc(ESTADOS[p.estado] ?? p.estado)}</td><td>${p.alcance ? numero(p.alcance) : '—'}</td><td>${p.interacciones ? numero(p.interacciones) : '—'}</td><td>${p.alcance ? esc(pct((p.interacciones / p.alcance) * 100)) : '—'}</td></tr>`))}</section>`
 
   const pauta = pautaPorCampana(anuncios)
+  const estimador = estimadorLeadsPdf(detalle, leadsRedes, filtros.mes)
+  // Montos sin partirse en dos líneas (US$ y el número juntos).
+  const dn = (v, m) => esc(dinero(v, m)).replace(/ /g, '&nbsp;')
+  const leadsCampana = (a) => (estimador.est ? estimador.de(String(a.id).split('-')[1], a.gastado) : null)
   const anunciosHtml = `<section data-pdf-module="anuncios"><h2>3. Anuncios (${numero(pauta.length)} campañas)</h2>
-    ${tabla(['Campaña', 'Marca', 'Moneda', 'Gastado', 'Alcance', 'Clics', 'CPC', 'Mensajes', 'Costo por mensaje'],
-      pauta.map((a) => `<tr><td>${esc(a.campana)}</td><td>${esc(MARCAS[a.marca]?.corto ?? a.marca)}</td><td>${esc(a.moneda)}</td><td>${esc(dinero(a.gastado, a.moneda))}</td><td>${numero(a.alcance)}</td><td>${numero(a.clics)}</td><td>${esc(dinero(a.clics ? a.gastado / a.clics : null, a.moneda))}</td><td>${numero(a.mensajes)}</td><td>${esc(dinero(a.costoMensaje, a.moneda))}</td></tr>`))}
+    ${tabla(['Campaña', 'Marca', 'Moneda', 'Gastado', 'Alcance', 'Clics', 'CPC', 'Mensajes', 'Costo por mensaje', 'Leads (estimado)', 'Costo por lead'],
+      pauta.map((a) => { const n = leadsCampana(a); return `<tr><td>${esc(nombreCampana(a.campana))}</td><td>${esc(MARCAS[a.marca]?.corto ?? a.marca)}</td><td>${esc(a.moneda)}</td><td>${dn(a.gastado, a.moneda)}</td><td>${numero(a.alcance)}</td><td>${numero(a.clics)}</td><td>${dn(a.clics ? a.gastado / a.clics : null, a.moneda)}</td><td>${numero(a.mensajes)}</td><td>${dn(a.costoMensaje, a.moneda)}</td><td>${esc(estimador.est ? textoLeadsEst(n) : '—')}</td><td>${n > 0 ? dn(a.gastado / n, a.moneda) : '—'}</td></tr>` }))}
+    <p class="nota"><span class="x-est">estimado</span> ${esc(REGLA_LEADS_CAMPANA)}${estimador.est?.sinCampanaConectada.GT && (!filtros.pais || filtros.pais === 'GT') ? ` Guatemala: ${numero(estimador.est.sinCampanaConectada.GT)} leads sin campaña conectada.` : ''}</p>
+    ${htmlTarjetasAnuncios({ detalle, filtros, publicaciones: datos.publicaciones })}
     <p class="nota">Tasas calculadas en el dashboard desde los números de Meta: CPC = gasto ÷ clics; costo por mensaje = gasto ÷ mensajes. Cada cuenta publicitaria usa su moneda y no se suman monedas distintas. El gasto se reparte por la página de cada anuncio.${tRec.campanas ? ` Reclutamiento (aparte, no incluido): ${esc(tRec.porMoneda.map((m) => dinero(m.gastado, m.moneda)).join(' · '))} en ${numero(tRec.campanas)} campañas.` : ''}</p></section>`
 
   return `<!DOCTYPE html>
@@ -106,9 +120,10 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
   .period-kpi .sub { font-size: 9px; color: #8b909e; margin-top: 6px; line-height: 1.35; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   th { background: #141821; color: #fff; text-align: left; padding: 8px 10px; font-weight: 700; font-size: 10px; text-transform: uppercase; }
-  td { padding: 7px 10px; border-bottom: 1px solid #e8eaf0; vertical-align: top; overflow-wrap: anywhere; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e8eaf0; vertical-align: top; overflow-wrap: break-word; }
   tr:nth-child(even) td { background: #f3f4f7; }
   thead { display: table-header-group; } tr { page-break-inside: avoid; }
+${CSS_PDF_EXTRA}
 </style></head>
 <body><div class="report-shell">
   <div class="header"><div class="head-left">

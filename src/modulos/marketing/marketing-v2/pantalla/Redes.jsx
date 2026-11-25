@@ -8,10 +8,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { cargarHerramientaPdf } from '../datos/pdfMailing.js'
 import { chipsFiltrosRedes, construirReporteRedes, MODULOS_PDF_REDES, nombreArchivoPdfRedes } from '../datos/pdfRedes.js'
-import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, REDES } from '../datos/redes.js'
+import { ESTADOS, FILTROS_REDES, filtrarRedes, FORMATOS, MARCAS, mesActualGt, mesesDisponibles, REDES } from '../datos/redes.js'
 import { armarProgramado } from '../datos/redesProgramadas.js'
 import { estimarLeads } from '../datos/redesLeads.js'
-import { useLeadsRedes, useRedesDatos } from '../datos/useRedesDatos.js'
+import { NOMBRE_RUTA, useLeadsRedes, useRedesDatos } from '../datos/useRedesDatos.js'
 import { Aviso, useGlobo } from './mailing/piezas.jsx'
 import { AnunciosRedes } from './redes/Anuncios.jsx'
 import { BarraRedes, ID_BOTON_PDF_REDES } from './redes/BarraRedes.jsx'
@@ -26,15 +26,13 @@ export const SUBPESTANAS_REDES = [
 ]
 
 export function Redes() {
-  const datos = useRedesDatos()
   const [sub, setSub] = useState(() => { try { return sessionStorage.getItem('mkv2-redes-sub') || 'resumen' } catch { return 'resumen' } })
   const irA = (k) => { setSub(k); try { sessionStorage.setItem('mkv2-redes-sub', k) } catch { /* solo en memoria */ } }
-  const [filtros, setFiltros] = useState({ ...FILTROS_REDES, mes: datos.meses[0] ?? '' })
+  // Mes: de enero 2026 al actual; por defecto, el actual. Cada mes se pide solo cuando se elige.
+  const [filtros, setFiltros] = useState(() => ({ ...FILTROS_REDES, mes: mesActualGt() }))
   const filtrar = (cambio) => setFiltros((f) => ({ ...f, ...cambio }))
-  // Los meses llegan con los datos de Meta: al llegar, se elige el más reciente si todavía no hay mes.
-  useEffect(() => {
-    if (datos.meses.length && !datos.meses.includes(filtros.mes)) setFiltros((f) => ({ ...f, mes: datos.meses[0] }))
-  }, [datos.meses]) // eslint-disable-line react-hooks/exhaustive-deps
+  const meses = useMemo(() => mesesDisponibles(), [])
+  const datos = useRedesDatos(filtros.mes)
   const globo = useGlobo()
   // Publicaciones del mes con su estado (publicada / no_publicada / programada) y el caso de programadas (A, B o C).
   const programado = useMemo(() => armarProgramado(datos, datos.hoy), [datos])
@@ -57,7 +55,7 @@ export function Redes() {
 
   // ---- PDF: la misma herramienta compartida que Mailing (dashboard-pdf.js); siempre lee los datos y filtros actuales ----
   const datosPdf = useRef(null)
-  datosPdf.current = { datos, items, caso, filtros }
+  datosPdf.current = { datos, items, caso, filtros, leadsRedes }
   const [pdfListo, setPdfListo] = useState(false)
   useEffect(() => {
     if (datos.cargando) return undefined
@@ -69,7 +67,15 @@ export function Redes() {
         buttonId: ID_BOTON_PDF_REDES,
         modules: MODULOS_PDF_REDES,
         getFilterChips: () => chipsFiltrosRedes(datosPdf.current.filtros),
-        buildReport: async (seleccion) => construirReporteRedes({ seleccion, ...datosPdf.current, origen: window.location.origin }),
+        // Anuncios: el detalle del mes (las 3 tarjetas y los leads por campaña) se pide al armar el PDF (sale de la caché
+        // del servidor). Si falla, el PDF sale igual y lo dice. Leads: solo conteos, sin datos de clientes.
+        buildReport: async (seleccion) => {
+          const actual = datosPdf.current
+          const detalle = seleccion.includes('anuncios')
+            ? await fetch(`/api/marketing/redes/anuncios-detalle?mes=${encodeURIComponent(actual.filtros.mes)}`).then((r) => (r.ok ? r.json() : null)).then((d) => d?.detalle?.[0] ?? null).catch(() => null)
+            : null
+          return construirReporteRedes({ seleccion, ...actual, detalle, origen: window.location.origin })
+        },
         filename: () => nombreArchivoPdfRedes(datosPdf.current.filtros),
       })
       setPdfListo(true)
@@ -85,7 +91,7 @@ export function Redes() {
     {datos.fuente === 'ejemplo' && <div className="mkv2-redes-ejemplo" role="note">
       <strong>Datos de ejemplo</strong> · todavía no está conectado a Meta. Las cifras son inventadas y solo muestran cómo se verá la pantalla.
     </div>}
-    <BarraRedes filtros={filtros} cambiar={setFiltros} meses={datos.meses} pdfListo={pdfListo} />
+    <BarraRedes filtros={filtros} cambiar={setFiltros} meses={meses} pdfListo={pdfListo} />
     <nav className="mkv2-subpestanas" role="tablist" aria-label="Secciones de Redes sociales">
       {SUBPESTANAS_REDES.map((p) => <button type="button" key={p.key} role="tab" aria-selected={sub === p.key}
         className={`mkv2-subpestana ${sub === p.key ? 'is-activa' : ''}`} onClick={() => irA(p.key)}>{p.label}
@@ -99,6 +105,7 @@ export function Redes() {
     {datos.cargando && <div className="fv2-vacio"><strong>Cargando datos de Meta…</strong></div>}
     {!datos.cargando && datos.error && <Aviso titulo="No se pudieron leer los datos de Meta" texto={datos.error} onReintentar={datos.reintentar} />}
     {!datos.cargando && !datos.error && <>
+      {Object.entries(datos.errores ?? {}).map(([r, e]) => <Aviso key={r} titulo={`No se pudo leer: ${NOMBRE_RUTA[r] ?? r}`} texto={`${e} El resto de la pantalla sigue con lo que sí cargó.`} onReintentar={datos.reintentar} />)}
       {datos.avisos?.map((a) => <Aviso key={a} titulo="Aviso de Meta" texto={a} />)}
       {sub === 'resumen' && <ResumenRedes datos={datos} items={items} caso={caso} filtros={filtros} filtrar={filtrar} irA={irA} leadsRedes={leadsRedes} />}
       {sub === 'publicaciones' && <PublicacionesRedes datos={datos} items={items} filtros={filtros} leadsRedes={leadsRedes} />}

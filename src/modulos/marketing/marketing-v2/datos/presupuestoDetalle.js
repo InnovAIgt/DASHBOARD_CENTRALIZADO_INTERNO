@@ -4,7 +4,7 @@
 //         campanaInfo: {objetivo, estado, inicio, fin}, conjuntos, anuncios, texto, publicacion, porSemana: [{desde, hasta, gastado, mensajes}] }
 // «Pocos datos» = menos de 5 mensajes: se pliega y nunca se usa para recomendar.
 import { conCosto, MIN_MENSAJES } from './anunciosFase2.js'
-import { formatoAnuncio, leadsDeAnuncio } from './segmentoDetalle.js'
+import { formatoAnuncio } from './segmentoDetalle.js'
 
 const div = (a, b) => (b > 0 ? a / b : null)
 const suma = (lista, k) => lista.reduce((n, x) => n + (Number(x[k]) || 0), 0)
@@ -108,14 +108,16 @@ export function semanasCampana(c) {
   return { semanas, cansancio }
 }
 
-/** Resultado de la campaña: % de la pauta, % de los mensajes, costo vs promedio, leads estimados y costo por lead. */
-export function resultadoCampana(c, todas = [], leadsDePub = () => []) {
+/**
+ * Resultado de la campaña: % de la pauta, % de los mensajes, costo vs promedio, leads estimados y costo por lead.
+ * leadsEst = leads estimados de la campaña (datos/leadsCampana.js: mismo país y día, repartidos por mensajes), o null.
+ */
+export function resultadoCampana(c, todas = [], leadsEst = null) {
   const total = suma(todas, 'gastado')
   const msj = suma(todas, 'mensajes')
   const promedio = div(total, msj)
-  const leads = [...new Map((c.anuncios ?? []).flatMap((a) => leadsDeAnuncio(a, leadsDePub)).map((l) => [l.codigo, l])).values()]
   return { pctInversion: div(c.gastado * 100, total), pctMensajes: div(c.mensajes * 100, msj), promedio,
-    difCosto: c.costo !== null && promedio ? ((c.costo - promedio) / promedio) * 100 : null, leads, costoLead: div(c.gastado, leads.length) }
+    difCosto: c.costo !== null && promedio ? ((c.costo - promedio) / promedio) * 100 : null, leadsEst, costoLead: leadsEst > 0 ? c.gastado / leadsEst : null }
 }
 
 /** Comparación del costo por mensaje: esta, las otras campañas (5+), el promedio, la meta y el mes anterior. */

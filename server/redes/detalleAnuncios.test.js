@@ -75,8 +75,9 @@ test('detalle: el rango no pasa de hoy; la ruta pide solo GET por anuncio y resp
   assert.deepEqual(c.meses, ['2026-11'])
   assert.equal(c.detalle[0].zonaHoraria, 'America/El_Salvador')
   const ins = llamadas.filter((u) => u.pathname.endsWith('/insights'))
-  assert.equal(ins.length, 7)
+  assert.equal(ins.length, 8)
   assert.equal(ins.filter((u) => u.searchParams.get('time_increment') === '7').length, 1, 'por campaña y semana del mes')
+  assert.equal(ins.filter((u) => u.searchParams.get('time_increment') === '1' && u.searchParams.get('level') === 'campaign' && !u.searchParams.get('breakdowns')).length, 1, 'por campaña y día: para repartir los leads')
   assert.equal(ins.filter((u) => u.searchParams.get('level') === 'adset').length, 2, 'por conjunto: resultados y horas del mes')
   assert.equal(ins.filter((u) => u.searchParams.get('level') === 'ad').length, 3, 'edad y sexo, ubicaciones y por anuncio: por anuncio')
   assert.equal(ins.filter((u) => u.searchParams.get('level') === 'campaign' && u.searchParams.get('breakdowns')?.startsWith('hourly')).length, 1, 'horarios: por campaña')
@@ -134,7 +135,7 @@ test('detalle: con Meta colgada, responde antes del límite y marca los recuadro
   const t0 = Date.now()
   const d = await leerDetalle({ cuentaId: '333', mes: '2026-11', hoy: '2026-11-24', llamar: colgada, llamarUno: colgada, op: {}, marcaDe: MARCA, limiteMs: 300 })
   assert.ok(Date.now() - t0 < 1500, `tardó ${Date.now() - t0} ms`)
-  assert.deepEqual(Object.keys(d.errores).sort(), ['edadSexo', 'formularios', 'horas', 'presupuestos', 'segmentos', 'ubicaciones'])
+  assert.deepEqual(Object.keys(d.errores).sort(), ['edadSexo', 'formularios', 'horas', 'leadsCampana', 'presupuestos', 'segmentos', 'ubicaciones'])
 })
 
 test('detalle: cada segmentación trae sus anuncios (nombre, gasto, mensajes) y el texto promocionado del que más gastó', () => {

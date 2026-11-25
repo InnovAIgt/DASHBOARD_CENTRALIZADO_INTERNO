@@ -459,6 +459,60 @@ gestiones; y el total de no calificados (`/api/audit/leads-no-calificados`, solo
 - **Cerrados (ganados o perdidos):** los 7 de noviembre vienen con status «cerrado» y etapa 6; Prospekt no trae un campo
   de resultado, así que no se pueden separar ganados y perdidos (PENDIENTES).
 
+### 7.7 Todos los meses de 2026 · 25/11/2026
+
+- **Filtro de Mes:** lista de enero 2026 al mes actual (por defecto, el actual). Cada mes se pide a Meta solo cuando
+  se elige (`useRedesDatos(mes)`).
+- **Caché por mes** (servidor): meses cerrados 24 h, mes actual 30 min (Anuncios en detalle, igual por consulta). Si
+  hubo avisos o Meta respondió VACÍO, la copia dura 2 min (el 25/11 enero vino vacío sin error y al rato con datos).
+- **Cada consulta por separado:** si una falla (cuentas, publicaciones, programadas o anuncios), solo sale su aviso con
+  «Reintentar» y el resto de la pantalla sigue. Marca sin nada en el mes: «Sin datos para este mes».
+- **Comparación** contra el mes anterior al elegido, solo si Meta dio datos de ese mes (enero → diciembre 2025: sí).
+- **Instagram en meses viejos:** Instagram no filtra /media por fecha (da de la más nueva a la más vieja). Ahora se pide
+  la lista liviana (id y fecha) hasta llegar al mes y las estadísticas solo de las del rango, de a 50 (?ids=). Antes,
+  enero salía sin las de Instagram de RED SV.
+- **«Año 2026» (solo Resumen):** `GET /api/marketing/redes/anio?mes=` (misma función de Vercel): por cuenta y mes,
+  publicaciones (solo id y fecha) y alcance (suma del alcance diario), y anuncios por mes (inversión y mensajes, sin
+  reclutamiento). La parte cerrada del año se guarda 24 h aparte. Leads: Prospekt por mes (por país; en SV no hay marca).
+  Gráfica de barras de una medida a la vez + tabla; clic en un mes = ese mes en Resumen. Solo se pide al elegir «Año».
+- **Tiempos reales (25/11/2026, servidor local recién iniciado; las 5 consultas del mes en paralelo):**
+
+| Mes | Primera vez | Desde caché | Publicaciones | Campañas | Mensajes |
+|---|---|---|---|---|---|
+| Enero 2026 | 12.2 s | 0.03 s | 62 | 4 | 75 |
+| Junio 2026 | 9.4 s | 0.03 s | 40 | 5 | 183 |
+| Noviembre 2026 | 9.7 s | 0.03 s | 25 | 5 | 101 |
+| Año (ene–nov) | 18–21 s | 0.0 s | 596 | — | 1,294 |
+
+  Lo más lento es Anuncios en detalle (9–12 s). Los conteos del mes coinciden con los del año.
+
+### 7.8 Leads estimados por campaña · 25/11/2026
+
+- **Regla (Keily):** cada lead de Redes (Prospekt) se asigna a las campañas del mismo país que tuvieron gasto ese día; si
+  varias corrían a la vez, se reparte según los mensajes de cada una ese día (si ninguna tuvo mensajes, según el gasto).
+  Costo por lead = gastado ÷ leads estimados. Etiqueta «estimado» con la regla en el globo.
+- **Consulta nueva a Meta** (solo GET, con caché): insights por campaña con time_increment=1 (gasto y mensajes día por
+  día), dentro de Anuncios en detalle. Si falla, la columna dice «—» y la nota lo explica.
+- **Dónde:** tabla de campañas (columnas Leads y Costo por lead) y ventana de cada campaña (arriba). Se quitó la columna
+  de leads por anuncio (era otra regla: los de la publicación promocionada).
+- **Guatemala:** su cuenta publicitaria no se puede leer: sus leads salen como «sin campaña conectada» en la nota.
+- **Noviembre 2026:** 20 leads; 13 de SV repartidos entre 2 campañas (7.5 y 5.5); 7 de GT sin campaña conectada; 0 de SV
+  en días sin campaña. **Octubre:** 38 leads; 20 de SV repartidos en 5 campañas; 18 de GT sin campaña conectada.
+- Cálculos en datos/leadsCampana.js (probados).
+
+### 7.9 PDF de Redes con lo nuevo · 25/11/2026
+
+- **Resumen:** tabla por país y marca con la columna «Leads calificados» y el bloque «Leads de Redes» (embudo en escala
+  logarítmica y tarjetas: calificados, cerrados, costo por lead, no calificados).
+- **Anuncios:** tabla de campañas con «Leads (estimado)» y «Costo por lead» (con la regla) y las 3 tarjetas compactas
+  (presupuestos, plataformas y segmentaciones) con su lectura. El detalle del mes se pide al armar el PDF (caché).
+- **Mismo mes y filtros** que la pantalla. **Sin datos de clientes:** solo conteos (prueba que lo verifica con datos
+  inventados; con los datos reales de noviembre: 0 nombres, 0 teléfonos y 0 correos en el PDF).
+- **Tamaño:** la herramienta compartida (public/assets/js/dashboard-pdf.js) descarga en **A4 horizontal** (fijo, sin
+  opción). No se tocó porque la usan también Mailing y Flujo de ventas. El reporte se revisó al ancho de una hoja carta
+  (816 px) y de A4 horizontal: se lee completo; se arreglaron palabras cortadas y montos partidos. Pasar a carta queda
+  en PENDIENTES (decide Keily).
+
 ## 8. «Plan del mes» (solo si Marketing tiene un plan)
 
 - Pantallita donde **Marketing carga lo programado** del mes: **fecha, marca, red y título** de cada publicación.
