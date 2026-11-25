@@ -1,8 +1,8 @@
 // Canales de marketing · pestaña REDES SOCIALES (docs/marketing/v2/REDES.md).
 // Mismo estilo que Mailing (usa la clase mkv2-mailing para el tema negro y las piezas compartidas, sin cambiarlas):
 // barra de filtros, sub-pestañas Resumen · Publicaciones · Anuncios y «Filtrado por».
-// HOY con DATOS DE EJEMPLO (datos/redesEjemplo.js) y aviso visible; con el token de Meta solo cambia la fuente
-// (datos/useRedesDatos.js). Sin leads por ahora.
+// Datos reales de Meta por el servidor (datos/useRedesDatos.js); si fallan, error con «Reintentar». Los datos de
+// ejemplo quedan solo para pruebas. Sin leads por ahora.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { cargarHerramientaPdf } from '../datos/pdfMailing.js'
@@ -28,6 +28,10 @@ export function Redes() {
   const irA = (k) => { setSub(k); try { sessionStorage.setItem('mkv2-redes-sub', k) } catch { /* solo en memoria */ } }
   const [filtros, setFiltros] = useState({ ...FILTROS_REDES, mes: datos.meses[0] ?? '' })
   const filtrar = (cambio) => setFiltros((f) => ({ ...f, ...cambio }))
+  // Los meses llegan con los datos de Meta: al llegar, se elige el más reciente si todavía no hay mes.
+  useEffect(() => {
+    if (datos.meses.length && !datos.meses.includes(filtros.mes)) setFiltros((f) => ({ ...f, mes: datos.meses[0] }))
+  }, [datos.meses]) // eslint-disable-line react-hooks/exhaustive-deps
   const globo = useGlobo()
   // Publicaciones del mes con su estado (publicada / no_publicada / programada) y el caso de programadas (A, B o C).
   const programado = useMemo(() => armarProgramado(datos, datos.hoy), [datos])

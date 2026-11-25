@@ -4,7 +4,7 @@
 // Respeta los filtros (país, marca, red, mes; formato y estado en Publicaciones). El dinero va por moneda, nunca sumado.
 // Si los datos son de ejemplo, el reporte lo dice arriba.
 import { numero, pct } from './calculos.js'
-import { dinero, ESTADOS, filtrarRedes, FORMATOS, MARCAS, nombreMes, REDES, resumenPublicaciones, seguidores, totalesAnuncios } from './redes.js'
+import { alcancePorMarca, dinero, ESTADOS, filtrarRedes, FORMATOS, hechasYProgramadas, MARCAS, metricasCuentas, nombreMes, REDES, resumenPublicaciones, seguidores, separarReclutamiento, TEXTO_IG_SIN_PROGRAMADAS, totalesAnuncios } from './redes.js'
 import { ordenarPublicaciones, pautaPorCampana, programadoVsPublicado } from './redesVista.js'
 
 export const MODULOS_PDF_REDES = [
@@ -39,8 +39,11 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
   const conPlan = caso !== 'C'
   const marcas = Object.keys(MARCAS).filter((m) => (!filtros.pais || MARCAS[m].pais === filtros.pais) && (!filtros.marca || m === filtros.marca))
   const cuentas = filtrarRedes(datos.cuentas, { ...f, mes: '' })
-  const anuncios = filtrarRedes(datos.anuncios, { ...f, red: '' })
+  const { marketing: anuncios, reclutamiento } = separarReclutamiento(filtrarRedes(datos.anuncios, { ...f, red: '' }))
   const t = totalesAnuncios(anuncios)
+  const tRec = totalesAnuncios(reclutamiento)
+  const mc = metricasCuentas(cuentas, filtros.mes)
+  const alcMarca = alcancePorMarca(cuentas, filtros.mes, null, marcas)
   const chips = chipsFiltrosRedes(filtros)
   const modulos = MODULOS_PDF_REDES.filter((m) => seleccion.includes(m.id)).map((m) => m.name).join(' · ')
   const fechaEmision = `${ahora.toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Guatemala' })} a las ${ahora.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guatemala' })}`
@@ -50,18 +53,21 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
   const resumen = `<section data-pdf-module="resumen"><h2>1. Resumen · ${esc(nombreMes(filtros.mes))}</h2>
     <div class="period-kpis">
       ${kpi('Publicaciones', conPlan ? `${numero(r.cumplidas)} de ${numero(r.aFecha)}` : numero(r.publicadas), conPlan ? `${pct(r.cumplimiento)} cumplido · ${numero(r.programadas)} por venir` : 'publicadas · sin programadas')}
-      ${kpi('Alcance', numero(r.alcance), 'personas distintas')}
+      ${kpi('Alcance', mc ? numero(mc.alcanceDiario) : '—', 'suma de alcance diario')}
       ${kpi('Interacciones', numero(r.interacciones), `tasa ${pct(r.tasa)}`)}
       ${kpi('Seguidores', numero(seguidores(cuentas)), `${numero(cuentas.length)} cuentas`)}
-      ${kpi('Inversión', porMoneda('gastado'), `${numero(t.campanas)} campañas`)}
+      ${kpi('Inversión', porMoneda('gastado'), `${numero(t.campanas)} campañas${tRec.campanas ? ` · reclutamiento aparte: ${tRec.porMoneda.map((m) => dinero(m.gastado, m.moneda)).join(' · ')}` : ''}`)}
       ${kpi('Mensajes', numero(t.mensajes), `${porMoneda('costoMensaje')} c/u`)}
     </div>
+    ${tabla(['País', 'Marca', 'Facebook hechas', 'Facebook programadas', 'Instagram hechas', 'Instagram programadas', 'Total hechas'],
+      hechasYProgramadas(base, marcas).flatMap((pa) => [...pa.marcas, ...(pa.marcas.length > 1 ? [{ ...pa.total, marca: '' }] : [])].map((x) => `<tr><td>${esc(pa.nombre)}</td><td>${esc(x.marca ? MARCAS[x.marca].corto : `Total ${pa.nombre}`)}</td><td>${numero(x.fbHechas)}</td><td>${numero(x.fbProgramadas)}</td><td>${numero(x.igHechas)}</td><td>${x.igProgramadas === null ? esc(TEXTO_IG_SIN_PROGRAMADAS) : numero(x.igProgramadas)}</td><td>${numero(x.hechas)}</td></tr>`)))}
+    <p class="nota">Alcance = suma del alcance diario de las cuentas (una persona puede contarse más de una vez). Fechas en hora de Guatemala y El Salvador (UTC−6).</p>
     <p class="nota">¿Cumplimos lo programado? Caso: <b>${esc(CASO[caso] ?? caso)}</b>.${conPlan ? '' : ' Sin semáforo: no hay programadas para comparar.'}</p>
-    ${tabla(['Marca', 'País', conPlan ? 'Salieron / programadas' : 'Publicadas', 'Cumplimiento', 'Alcance', 'Interacciones', 'Tasa'],
+    ${tabla(['Marca', 'País', conPlan ? 'Salieron / programadas' : 'Publicadas', 'Cumplimiento', 'Alcance (suma diaria)', 'Interacciones', 'Tasa'],
       marcas.map((m) => {
         const s = resumenPublicaciones(base.filter((p) => p.marca === m))
         const pv = programadoVsPublicado(base, [m])[0]
-        return `<tr><td>${esc(MARCAS[m].nombre)}</td><td>${esc(MARCAS[m].pais)}</td><td>${conPlan ? `${numero(pv.publicadas)} / ${numero(pv.programadas)}` : numero(s.publicadas)}</td><td>${conPlan ? esc(pct(s.cumplimiento)) : '—'}</td><td>${numero(s.alcance)}</td><td>${numero(s.interacciones)}</td><td>${esc(pct(s.tasa))}</td></tr>`
+        return `<tr><td>${esc(MARCAS[m].nombre)}</td><td>${esc(MARCAS[m].pais)}</td><td>${conPlan ? `${numero(pv.publicadas)} / ${numero(pv.programadas)}` : numero(s.publicadas)}</td><td>${conPlan ? esc(pct(s.cumplimiento)) : '—'}</td><td>${numero(alcMarca[m] ?? 0)}</td><td>${numero(s.interacciones)}</td><td>${esc(pct(s.tasa))}</td></tr>`
       }))}</section>`
 
   const lista = ordenarPublicaciones(filtrarRedes(items, filtros), 'fecha', 'asc')
@@ -73,7 +79,7 @@ export function construirReporteRedes({ seleccion, datos, items, caso, filtros, 
   const anunciosHtml = `<section data-pdf-module="anuncios"><h2>3. Anuncios (${numero(pauta.length)} campañas)</h2>
     ${tabla(['Campaña', 'Marca', 'Moneda', 'Gastado', 'Alcance', 'Clics', 'CPC', 'Mensajes', 'Costo por mensaje'],
       pauta.map((a) => `<tr><td>${esc(a.campana)}</td><td>${esc(MARCAS[a.marca]?.corto ?? a.marca)}</td><td>${esc(a.moneda)}</td><td>${esc(dinero(a.gastado, a.moneda))}</td><td>${numero(a.alcance)}</td><td>${numero(a.clics)}</td><td>${esc(dinero(a.clics ? a.gastado / a.clics : null, a.moneda))}</td><td>${numero(a.mensajes)}</td><td>${esc(dinero(a.costoMensaje, a.moneda))}</td></tr>`))}
-    <p class="nota">Tasas calculadas en el dashboard desde los números de Meta: CPC = gasto ÷ clics; costo por mensaje = gasto ÷ mensajes. Cada cuenta publicitaria usa su moneda y no se suman monedas distintas.</p></section>`
+    <p class="nota">Tasas calculadas en el dashboard desde los números de Meta: CPC = gasto ÷ clics; costo por mensaje = gasto ÷ mensajes. Cada cuenta publicitaria usa su moneda y no se suman monedas distintas. El gasto se reparte por la página de cada anuncio.${tRec.campanas ? ` Reclutamiento (aparte, no incluido): ${esc(tRec.porMoneda.map((m) => dinero(m.gastado, m.moneda)).join(' · '))} en ${numero(tRec.campanas)} campañas.` : ''}</p></section>`
 
   return `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><base href="${esc(`${origen}/`)}"><title>Reporte de Redes sociales - RED Intelfon</title>

@@ -1,8 +1,9 @@
 // Canales de marketing · Redes sociales: cálculos de la pantalla (sin pantalla ni red; se prueban con node --test).
 // Trabajan con la MISMA forma de datos que devolverán las rutas /api/marketing/redes/* (ver REDES.md):
-//   cuentas:        {id, marca, pais, red, nombre, seguidores}
-//   publicaciones:  {id, cuentaId, marca, pais, red, formato, fecha, titulo, estado, alcance, interacciones, enlace}
-//   anuncios:       {id, campana, marca, pais, moneda, presupuesto, gastado, alcance, visualizaciones, clics, mensajes}
+//   cuentas:        {id, marca, pais, red, nombre, seguidores, metricas: {'AAAA-MM': {alcanceDiario, vistas, interacciones, cuentasInteraccion, seguidores}}}
+//   publicaciones:  {id, cuentaId, marca, pais, red, formato, fecha, hora, titulo, estado, alcance, vistas, clics, reacciones, interacciones, enlace}
+//   anuncios:       {id, mes, campana, marca ('' = sin página), pais, moneda, presupuesto, gastado, alcance, visualizaciones, clics, mensajes, reclutamiento}
+// Las fechas ya vienen en hora de Guatemala/El Salvador (UTC−6): el servidor las convierte antes de agrupar.
 // «estado» de una publicación: 'publicada' | 'no_publicada' | 'programada' (lo programado saldrá del «Plan del mes»).
 // Dinero: cada cuenta de anuncios trae su moneda (campo currency de Meta); NUNCA se suman monedas distintas.
 
@@ -12,7 +13,9 @@ export const MARCAS = {
   sv: { nombre: 'RED Intelfon El Salvador', corto: 'RED SV', pais: 'SV', color: '#3f9c85' },
   dr: { nombre: 'DATA RED', corto: 'DATA RED', pais: 'SV', color: '#9085e9' },
 }
+export const PAISES = { GT: 'Guatemala', SV: 'El Salvador' }
 export const REDES = { fb: 'Facebook', ig: 'Instagram' }
+export const TEXTO_IG_SIN_PROGRAMADAS = 'Instagram no permite ver programadas'
 export const COLOR_RED = { fb: '#3987e5', ig: '#d6589b' }
 export const FORMATOS = { foto: 'Foto', video: 'Video', reel: 'Reel', carrusel: 'Carrusel' }
 export const ESTADOS = { publicada: 'Publicada', no_publicada: 'No se publicó', programada: 'Programada (por venir)' }
@@ -91,8 +94,80 @@ export const serieSemanal = (pubs, mes, valor) => alcancePorSemana([], mes).map(
   .filter((p) => p.estado === 'publicada' && String(p.fecha).slice(0, 7) === mes && Number(String(p.fecha).slice(8, 10)) >= s.desde && Number(String(p.fecha).slice(8, 10)) <= s.hasta)
   .reduce((n, p) => n + (valor ? Number(p[valor]) || 0 : 1), 0))
 
+/**
+ * Hechas y programadas por PAÍS y MARCA (lo principal que pidió el ingeniero). Hechas = publicadas; programadas =
+ * pendientes (por venir + las que no salieron). Instagram no da programadas: igProgramadas = null salvo que haya un
+ * «Plan del mes» con Instagram. RED GT = Guatemala; RED SV y DATA RED = El Salvador.
+ * @returns {Array<{pais, nombre, marcas: Array<{marca, fbHechas, fbProgramadas, igHechas, igProgramadas, hechas}>, total}>}
+ */
+export function hechasYProgramadas(items = [], marcas = Object.keys(MARCAS)) {
+  const fila = (lista) => {
+    const n = (red, estados) => lista.filter((p) => p.red === red && estados.includes(p.estado)).length
+    const igPlan = lista.some((p) => p.red === 'ig' && p.estado !== 'publicada')
+    return { fbHechas: n('fb', ['publicada']), fbProgramadas: n('fb', ['programada', 'no_publicada']), igHechas: n('ig', ['publicada']),
+      igProgramadas: igPlan ? n('ig', ['programada', 'no_publicada']) : null, hechas: n('fb', ['publicada']) + n('ig', ['publicada']) }
+  }
+  return Object.keys(PAISES).map((pais) => {
+    const deEste = marcas.filter((m) => MARCAS[m]?.pais === pais)
+    return { pais, nombre: PAISES[pais], marcas: deEste.map((marca) => ({ marca, ...fila(items.filter((p) => p.marca === marca)) })),
+      total: fila(items.filter((p) => deEste.includes(p.marca))) }
+  }).filter((p) => p.marcas.length)
+}
+
 /** Seguidores de las cuentas que pasan los filtros. */
 export const seguidores = (cuentas = []) => cuentas.reduce((n, c) => n + (Number(c.seguidores) || 0), 0)
+
+/**
+ * Métricas de cuenta del mes sumadas (las cuentas ya filtradas). alcanceDiario = suma del alcance de cada día de cada
+ * cuenta: una persona puede contarse más de una vez (Meta no da el alcance único del mes en v25). null si no hay datos.
+ */
+export function metricasCuentas(cuentas = [], mes, corte = null) {
+  const conDatos = cuentas.filter((c) => c.metricas?.[mes])
+  if (!conDatos.length) return null
+  const suma = (k) => conDatos.reduce((n, c) => n + (Number(c.metricas[mes][k]) || 0), 0)
+  return { alcanceDiario: corte ? conDatos.reduce((n, c) => n + alcanceHasta(c, mes, corte), 0) : suma('alcanceDiario'),
+    vistas: suma('vistas'), interacciones: suma('interacciones'), cuentas: conDatos.length }
+}
+
+/** Alcance de una cuenta del día 1 al día «corte» del mes (mismo cálculo: suma del alcance de cada día). */
+function alcanceHasta(cuenta, mes, corte) {
+  const dias = Object.entries(cuenta.alcancePorDia ?? {}).filter(([d]) => d.startsWith(mes) && Number(d.slice(8, 10)) <= corte)
+  return dias.length || !cuenta.metricas?.[mes] ? dias.reduce((n, [, v]) => n + (Number(v) || 0), 0) : Number(cuenta.metricas[mes].alcanceDiario) || 0
+}
+
+/** Alcance por marca (suma de alcance diario de sus cuentas, mismo cálculo que la tarjeta Alcance). */
+export const alcancePorMarca = (cuentas = [], mes, corte = null, marcas = Object.keys(MARCAS)) =>
+  Object.fromEntries(marcas.map((m) => [m, metricasCuentas(cuentas.filter((c) => c.marca === m), mes, corte)?.alcanceDiario ?? 0]))
+
+const MINUSCULAS = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'en', 'y', 'a', 'al', 'con', 'por', 'para', 'tu', 'su',
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'])
+/**
+ * Nombre de campaña para la pantalla: sin el año al inicio («2026 - », «2026 ») y, si viene TODO EN MAYÚSCULAS, en
+ * formato normal (siglas cortas como RH, BF o PTT se quedan en mayúsculas). El nombre original va en el tooltip.
+ */
+export function nombreCampana(nombre) {
+  let t = String(nombre ?? '').trim().replace(/^\d{4}\s*[-–—]?\s*/, '').trim() || String(nombre ?? '').trim()
+  if (/[A-ZÁÉÍÓÚÑ]/.test(t) && !/[a-záéíóúñ]/.test(t)) {
+    t = t.split(/(\s+)/).map((p, i) => {
+      if (/^\s+$/.test(p) || !p) return p
+      const letras = p.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, '')
+      if (letras.length >= 2 && letras.length <= 3 && !MINUSCULAS.has(p.toLowerCase())) return p
+      const l = p.toLowerCase()
+      return i === 0 ? l.charAt(0).toUpperCase() + l.slice(1) : l
+    }).join('')
+  }
+  return t
+}
+
+const EMOJI_BORDE = /^[\s\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}‍️]+|[\s\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}‍️]+$/gu
+/** Título sin emojis al inicio ni al final (los del medio se quedan). */
+export const tituloLimpio = (t) => String(t ?? '').replace(EMOJI_BORDE, '').trim() || String(t ?? '')
+
+/** Separa los anuncios de marketing de los de reclutamiento (estos no cuentan en inversión, mensajes ni costo). */
+export const separarReclutamiento = (anuncios = []) => ({
+  marketing: anuncios.filter((a) => !a.reclutamiento),
+  reclutamiento: anuncios.filter((a) => a.reclutamiento),
+})
 
 /** Costo por clic y por mensaje de un anuncio (en su propia moneda), o null. */
 export const costoPorClic = (a) => (Number(a.clics) > 0 ? Number(a.gastado) / Number(a.clics) : null)
@@ -105,8 +180,10 @@ export const costoPorMensaje = (a) => (Number(a.mensajes) > 0 ? Number(a.gastado
 export function totalesAnuncios(anuncios = []) {
   const suma = (lista, k) => lista.reduce((n, a) => n + (Number(a[k]) || 0), 0)
   const monedas = [...new Set(anuncios.map((a) => a.moneda || 'SIN_MONEDA'))].sort()
+  // Una campaña puede venir en varias filas (una por página): se cuenta una vez por nombre.
+  const campanasDe = (lista) => new Set(lista.map((a) => a.campana ?? a.id)).size
   return {
-    campanas: anuncios.length,
+    campanas: campanasDe(anuncios),
     alcance: suma(anuncios, 'alcance'),
     visualizaciones: suma(anuncios, 'visualizaciones'),
     clics: suma(anuncios, 'clics'),
@@ -116,7 +193,7 @@ export function totalesAnuncios(anuncios = []) {
       const gastado = suma(lista, 'gastado')
       const clics = suma(lista, 'clics')
       const mensajes = suma(lista, 'mensajes')
-      return { moneda, campanas: lista.length, presupuesto: suma(lista, 'presupuesto'), gastado, clics, mensajes,
+      return { moneda, campanas: campanasDe(lista), presupuesto: suma(lista, 'presupuesto'), gastado, clics, mensajes,
         cpc: clics > 0 ? gastado / clics : null, costoMensaje: mensajes > 0 ? gastado / mensajes : null }
     }),
   }

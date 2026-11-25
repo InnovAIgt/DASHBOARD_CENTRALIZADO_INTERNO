@@ -65,11 +65,15 @@ export function semaforoCosto(costo, moneda) {
   return costo <= meta ? 'verde' : costo <= (CERCA_COSTO_MENSAJE[moneda] ?? meta * 1.5) ? 'amarillo' : 'rojo'
 }
 
-/** Campañas con su costo por mensaje y semáforo, de la más barata a la más cara. */
+/** Menos de 5 mensajes = «pocos datos»: sin semáforo, no cuenta en En meta / Cerca / Caras (regla de Keily, 24/11/2026). */
+export const MIN_MENSAJES_PAUTA = 5
+
+/** Campañas con su costo por mensaje y semáforo, de la más barata a la más cara; las de «pocos datos» al final. */
 export const pautaPorCampana = (anuncios = []) => anuncios.map((a) => {
   const costo = costoPorMensaje(a)
-  return { ...a, costoMensaje: costo, semaforo: semaforoCosto(costo, a.moneda) }
-}).sort((a, b) => (a.costoMensaje ?? Infinity) - (b.costoMensaje ?? Infinity))
+  const pocos = (Number(a.mensajes) || 0) < MIN_MENSAJES_PAUTA
+  return { ...a, costoMensaje: costo, pocos, semaforo: pocos ? null : semaforoCosto(costo, a.moneda) }
+}).sort((a, b) => (a.pocos - b.pocos) || (a.costoMensaje ?? Infinity) - (b.costoMensaje ?? Infinity))
 
 /**
  * «Lo importante del mes» (píldoras de una línea), como el mockup v6:
@@ -105,9 +109,10 @@ export function loImportante(items = [], anuncios = [], marcas = Object.keys(MAR
   return out
 }
 
-/** Ordenar la tabla de publicaciones: clave = fecha | marca | alcance | interacciones | tasa. */
+/** Ordenar la tabla de publicaciones: clave = fecha | marca | alcance | vistas | clics | interacciones | tasa. */
 export function ordenarPublicaciones(items = [], clave = 'fecha', dir = 'asc') {
-  const valor = { fecha: (p) => p.fecha, marca: (p) => p.marca, alcance: (p) => p.alcance, interacciones: (p) => p.interacciones,
+  const valor = { fecha: (p) => `${p.fecha} ${String(p.hora ?? 0).padStart(2, '0')}`, marca: (p) => p.marca, alcance: (p) => p.alcance,
+    vistas: (p) => Number(p.vistas) || 0, clics: (p) => (p.clics == null ? -1 : Number(p.clics)), interacciones: (p) => p.interacciones,
     tasa: (p) => (p.alcance ? p.interacciones / p.alcance : -1) }[clave] ?? ((p) => p.fecha)
   const s = dir === 'asc' ? 1 : -1
   return [...items].sort((a, b) => (valor(a) > valor(b) ? 1 : valor(a) < valor(b) ? -1 : 0) * s || a.id.localeCompare(b.id))

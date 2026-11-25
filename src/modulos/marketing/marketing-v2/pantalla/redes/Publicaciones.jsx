@@ -13,8 +13,10 @@ const ICONO_ESTADO = { publicada: '✔ Publicada', no_publicada: '✖ No salió'
 const VISIBLES = 10
 const COLUMNAS = [
   { id: 'fecha', label: 'Fecha' }, { id: 'marca', label: 'Marca' }, { id: 'red', label: 'Red', fija: true }, { id: 'titulo', label: 'Publicación', fija: true },
-  { id: 'estado', label: 'Estado', fija: true }, { id: 'alcance', label: 'Alcance', num: true }, { id: 'interacciones', label: 'Interacciones', num: true }, { id: 'tasa', label: 'Tasa', num: true },
+  { id: 'estado', label: 'Estado', fija: true }, { id: 'alcance', label: 'Alcance', num: true }, { id: 'vistas', label: 'Vistas', num: true },
+  { id: 'clics', label: 'Clics', num: true }, { id: 'interacciones', label: 'Interacciones', num: true }, { id: 'tasa', label: 'Tasa', num: true },
 ]
+const horaTexto = (h) => (h == null ? '' : `${String(h).padStart(2, '0')}:00`)
 
 function Calendario({ items, mes, hoy, marcada, onMarcar }) {
   const c = calendarioMes(items, mes)
@@ -60,10 +62,10 @@ export function PublicacionesRedes({ datos, items, filtros }) {
 
   return <>
     <div className="mkv2-duo mkv2-redes-duo-cal">
-      <Tarjeta titulo="Calendario del mes" sub="Color = marca · borde rojo = no salió · tenue = programada · clic marca la fila">
+      <Tarjeta titulo="Calendario del mes" sub="Hora de Guatemala/El Salvador · color = marca · borde rojo = no salió · tenue = programada · clic marca la fila">
         <Calendario items={lista} mes={filtros.mes} hoy={datos.hoy} marcada={marcada} onMarcar={(id) => setMarcada((m) => (m === id ? null : id))} />
       </Tarjeta>
-      <Tarjeta titulo="Mejor día para publicar" sub="Interacciones promedio de las publicadas · ★ el mejor">
+      <Tarjeta titulo="Mejor día para publicar" sub="Interacciones promedio de las publicadas, por día en hora de Guatemala/El Salvador · ★ el mejor">
         <MejorDia items={paraDias} />
       </Tarjeta>
     </div>
@@ -79,13 +81,15 @@ export function PublicacionesRedes({ datos, items, filtros }) {
           })}</tr></thead>
           <tbody>
             {visibles.map((p) => <tr key={p.id} id={`mkv2-redes-fila-${p.id}`} className={marcada === p.id ? 'is-marcada' : ''}>
-              <td className="fv2-sin-salto">{p.fecha.slice(8, 10)}/{p.fecha.slice(5, 7)}</td>
+              <td className="fv2-sin-salto" data-tip={p.hora != null ? `Hora de Guatemala/El Salvador: ${horaTexto(p.hora)}` : undefined}>{p.fecha.slice(8, 10)}/{p.fecha.slice(5, 7)}</td>
               <td><span className="mkv2-redes-punto" style={{ background: MARCAS[p.marca]?.color }} />{MARCAS[p.marca]?.corto}</td>
               <td><span className={`mkv2-redes-red is-${p.red}`}>{p.red === 'fb' ? 'FB' : 'IG'}</span></td>
               <td className="mkv2-celda-media"><b>{p.titulo}</b> <small className="fv2-tenue">{FORMATOS[p.formato] ?? p.formato}</small>
                 {p.enlace && <a className="mkv2-redes-enlace" href={p.enlace} target="_blank" rel="noopener noreferrer" aria-label="Ver la publicación"><ExternalLink size={12} /></a>}</td>
               <td><span className={`mkv2-redes-est ${ESTADO[p.estado]?.[0] ?? ''}`}>{ESTADO[p.estado]?.[1] ?? p.estado}</span></td>
               <td className="num">{p.alcance ? numero(p.alcance) : '—'}</td>
+              <td className="num">{p.vistas ? numero(p.vistas) : '—'}</td>
+              <td className="num" data-tip={p.red === 'ig' ? 'Instagram no da clics por publicación' : undefined}>{p.clics ? numero(p.clics) : '—'}</td>
               <td className="num">{p.interacciones ? numero(p.interacciones) : '—'}</td>
               <td className="num">{p.alcance ? pct((p.interacciones / p.alcance) * 100) : '—'}</td>
             </tr>)}

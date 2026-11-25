@@ -1,21 +1,24 @@
 // Canales de marketing · Redes sociales: de dónde salen los datos.
-// Siempre se piden a NUESTRO servidor (/api/marketing/redes/…, nunca Meta directo desde el navegador). Si el servidor
-// todavía no tiene token de Meta, responde { fuente: 'sin_token' } y se usan los datos de ejemplo (misma forma), con
-// el aviso «Datos de ejemplo». Si el servidor no responde (por ejemplo, solo el front en local), también ejemplo.
+// SIEMPRE de Meta, a través de NUESTRO servidor (/api/marketing/redes/…; nunca Meta directo desde el navegador; el
+// navegador nunca recibe tokens). Si el servidor no tiene token, no responde o Meta falla, la pantalla muestra el error
+// con «Reintentar» (decisión de Keily, 24/11/2026). Los datos de ejemplo (redesEjemplo.js) quedan SOLO para pruebas.
 import { useCallback, useEffect, useState } from 'react'
 import { respuestaAnuncios, respuestaCuentas, respuestaProgramadas, respuestaPublicaciones } from './redesEjemplo.js'
 
 export const RUTAS_REDES = ['cuentas', 'publicaciones', 'programadas', 'anuncios']
 
-async function pedir(recurso, señal) {
-  const r = await fetch(`/api/marketing/redes/${recurso}`, { headers: { Accept: 'application/json' }, signal: señal })
+export const TEXTO_SIN_TOKEN = 'El servidor todavía no tiene el token de Meta (META_TOKEN). Hay que ponerlo en .env.local o en Vercel.'
+export const TEXTO_SIN_SERVIDOR = 'El servidor de datos no respondió. En local, levante el portal con «npm run dev».'
+
+async function pedir(recurso, señal, mes = '') {
+  const r = await fetch(`/api/marketing/redes/${recurso}${mes ? `?mes=${encodeURIComponent(mes)}` : ''}`, { headers: { Accept: 'application/json' }, signal: señal })
   let datos = null
   try { datos = await r.json() } catch { /* sin JSON */ }
   if (!r.ok) {
-    const e = new Error(datos?.error || `El servidor respondió HTTP ${r.status}.`)
-    e.sinServidor = r.status === 404 && !datos
+    const e = new Error(r.status === 404 && !datos ? TEXTO_SIN_SERVIDOR : datos?.error || `El servidor respondió HTTP ${r.status}.`)
     throw e
   }
+  if (datos?.fuente === 'sin_token') throw new Error(TEXTO_SIN_TOKEN)
   return datos
 }
 
@@ -33,12 +36,18 @@ export const armarEstado = (cuentas, publicaciones, programadas, anuncios) => ({
   programadas: programadas?.programadas ?? [],
   plan: programadas?.plan ?? [],
   anuncios: anuncios?.anuncios ?? [],
+  // Marcas con algún anuncio en las cuentas conectadas, de cualquier mes (null si el servidor no lo dice).
+  marcasConAnuncios: anuncios?.marcasConAnuncios ?? null,
 })
 
+/** Estado vacío mientras carga o si hay error (sin datos inventados). */
+export const estadoVacio = () => ({ ...armarEstado(null, null, null, null), fuente: 'meta' })
+
+/** Solo para PRUEBAS: los datos de ejemplo con la misma forma que las rutas. */
 export const estadoEjemplo = () => armarEstado(respuestaCuentas, respuestaPublicaciones, respuestaProgramadas, respuestaAnuncios)
 
 export function useRedesDatos() {
-  const [estado, setEstado] = useState(() => ({ ...estadoEjemplo(), cargando: true }))
+  const [estado, setEstado] = useState(() => ({ ...estadoVacio(), cargando: true }))
   const [vuelta, setVuelta] = useState(0)
   const reintentar = useCallback(() => setVuelta((v) => v + 1), [])
 
@@ -48,16 +57,38 @@ export function useRedesDatos() {
     Promise.all(RUTAS_REDES.map((r) => pedir(r, control.signal)))
       .then(([c, p, pr, a]) => {
         if (control.signal.aborted) return
-        setEstado(p?.fuente === 'sin_token' ? estadoEjemplo() : armarEstado(c, p, pr, a))
+        setEstado(armarEstado(c, p, pr, a))
       })
       .catch((err) => {
         if (control.signal.aborted) return
-        // Sin servidor (solo el front) o red caída: datos de ejemplo con aviso; con token y error de Meta: el error.
-        if (err.sinServidor || err instanceof TypeError) setEstado(estadoEjemplo())
-        else setEstado((e) => ({ ...e, cargando: false, error: err.message || 'No se pudieron leer los datos de Meta.' }))
+        const mensaje = err instanceof TypeError ? TEXTO_SIN_SERVIDOR : err.message || 'No se pudieron leer los datos de Meta.'
+        setEstado((e) => ({ ...e, cargando: false, error: mensaje }))
       })
     return () => control.abort()
   }, [vuelta])
 
+  return { ...estado, reintentar }
+}
+
+/**
+ * Anuncios fase 2 (edad y sexo, ubicaciones, horarios, segmentaciones, presupuestos y formularios) del MES ELEGIDO en
+ * el filtro. Se pide aparte: si falla, solo esos recuadros muestran el aviso con «Reintentar».
+ */
+export function useDetalleAnuncios(mes, activo = true) {
+  const [estado, setEstado] = useState({ cargando: true, error: null, detalle: null, avisos: [] })
+  const [vuelta, setVuelta] = useState(0)
+  const reintentar = useCallback(() => setVuelta((v) => v + 1), [])
+  useEffect(() => {
+    if (!mes || !activo) return undefined
+    const control = new AbortController()
+    setEstado({ cargando: true, error: null, detalle: null, avisos: [] })
+    pedir('anuncios-detalle', control.signal, mes)
+      .then((d) => { if (!control.signal.aborted) setEstado({ cargando: false, error: null, detalle: d?.detalle?.[0] ?? null, avisos: d?.avisos ?? [] }) })
+      .catch((err) => {
+        if (control.signal.aborted) return
+        setEstado({ cargando: false, error: err instanceof TypeError ? TEXTO_SIN_SERVIDOR : err.message || 'No se pudo leer el detalle de anuncios.', detalle: null, avisos: [] })
+      })
+    return () => control.abort()
+  }, [mes, activo, vuelta])
   return { ...estado, reintentar }
 }

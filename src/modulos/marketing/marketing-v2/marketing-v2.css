@@ -866,6 +866,17 @@
 /* ---------- Redes · mockup v6 (Resumen y Publicaciones) ---------- */
 .mkv2 .mkv2-redes-barra .mkv2-barra-fila { flex-wrap: wrap; }
 .mkv2 .mkv2-redes-punto { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; }
+/* Hechas y programadas por país y marca (Resumen; lo principal que pidió el ingeniero) */
+.mkv2 .mkv2-redes-hechas th[scope="rowgroup"] { text-align: left; vertical-align: top; font-weight: 800; }
+.mkv2 .mkv2-redes-hechas th[scope="colgroup"] { text-align: center; }
+.mkv2 .mkv2-redes-hechas tr.mkv2-redes-subtotal td { font-weight: 800; border-top: 1px solid rgba(255, 255, 255, .15); }
+.mkv2 .mkv2-redes-hechas tr.is-marcada td { background: rgba(57, 135, 229, .12); }
+.mkv2 .mkv2-redes-ig-sin { max-width: 150px; text-align: center; vertical-align: middle; font-size: 11.5px; line-height: 1.4; color: var(--mkv2-suave); background: rgba(214, 88, 155, .06); }
+.mkv2 .mkv2-redes-marca-boton { display: inline-flex; align-items: center; padding: 0; font: inherit; font-weight: 700; color: inherit; background: none; border: 0; cursor: pointer; }
+.mkv2 .mkv2-redes-marca-boton:hover, .mkv2 .mkv2-redes-marca-boton:focus-visible { text-decoration: underline; }
+/* Anuncios fase 2: grupos con menos de 5 mensajes («pocos datos»; nunca ganadores) */
+.mkv2 .mkv2-redes-pocos { display: inline-block; padding: 1px 6px; font-size: 10px; font-weight: 700; color: var(--mkv2-suave); white-space: nowrap; background: rgba(255, 255, 255, .06); border: 1px dashed rgba(255, 255, 255, .2); border-radius: 5px; }
+.mkv2 .is-pocos > b, .mkv2 .is-pocos .mkv2-redes-li-t b { opacity: .6; }
 /* Lo importante del mes: píldoras de una línea */
 .mkv2 .mkv2-redes-importantes { display: flex; flex-wrap: wrap; gap: 8px; }
 .mkv2 .mkv2-redes-importante {
@@ -924,6 +935,34 @@
 .mkv2 .mkv2-redes-pauta { display: grid; margin-top: 8px; }
 .mkv2 .mkv2-redes-pauta-fila { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 8px; align-items: center; padding: 5px 0; font-size: 12px; border-bottom: 1px dashed var(--fv2-borde); }
 .mkv2 .mkv2-redes-pauta-fila:last-child { border-bottom: 0; }
+/* Resumen · fila de abajo (¿Qué marca va mejor?, Top 5, Pauta): misma altura, sin huecos grandes, nada se sale */
+.mkv2 .mkv2-redes-fila-baja { align-items: stretch; }
+.mkv2 .mkv2-redes-baja { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.mkv2 .mkv2-redes-baja > .mkv2-redes-marcas, .mkv2 .mkv2-redes-baja > .mkv2-redes-lista-llena { flex: 1; grid-auto-rows: 1fr; align-content: stretch; }
+.mkv2 .mkv2-redes-baja .mkv2-redes-marca { align-items: center; }
+.mkv2 .mkv2-redes-baja .mkv2-redes-li { align-items: center; min-width: 0; }
+.mkv2 .mkv2-redes-baja .mkv2-redes-li-v { flex: none; padding-left: 4px; white-space: nowrap; }
+.mkv2 .mkv2-redes-baja .mkv2-redes-pauta { flex: 1; max-height: 260px; overflow-y: auto; padding-right: 2px; }
+.mkv2 .mkv2-redes-pauta-fila.is-pocos { opacity: .55; }
+.mkv2 .mkv2-redes-pauta-fila > span:first-child { min-width: 0; }
+.mkv2 .mkv2-una-linea { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mkv2 .mkv2-redes-li-t b.mkv2-dos-lineas, .mkv2 .mkv2-dos-lineas { display: -webkit-box; overflow: hidden; white-space: normal; line-height: 1.3; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.mkv2 .mkv2-redes-marca-sin { display: grid; gap: 2px; font-size: 12px; font-weight: 700; color: var(--mkv2-suave); }
+.mkv2 .mkv2-redes-marca-sin small { font-weight: 500; }
+/* Anuncios · Segmentaciones ganadoras: 3 líneas por fila, nada se sale, pocos datos plegados */
+.mkv2 .mkv2-seg-caja { display: grid; gap: 8px; min-width: 0; }
+.mkv2 .mkv2-seg-lista { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.mkv2 .mkv2-seg { box-sizing: border-box; display: grid; gap: 4px; width: 100%; min-width: 0; padding: 8px 10px; overflow: hidden; background: rgba(255, 255, 255, .025); border: 1px solid var(--fv2-borde); border-radius: 9px; }
+.mkv2 .mkv2-seg.is-pocos { opacity: .6; }
+.mkv2 .mkv2-seg-l1 { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; min-width: 0; font-size: 12.5px; }
+.mkv2 .mkv2-seg-l1 .mkv2-redes-sem, .mkv2 .mkv2-seg-l1 .mkv2-redes-pocos { white-space: nowrap; }
+.mkv2 .mkv2-seg-chips { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; padding-left: 27px; }
+.mkv2 .mkv2-seg-chip { max-width: 100%; padding: 1px 7px; overflow: hidden; font-size: 10.5px; color: var(--mkv2-suave); white-space: nowrap; text-overflow: ellipsis; background: var(--fv2-elevado); border-radius: 99px; }
+.mkv2 .mkv2-seg-intereses, .mkv2 .mkv2-seg-l3 { padding-left: 27px; font-size: 11px; color: var(--fv2-tenue); }
+.mkv2 .mkv2-seg-pocos summary { padding: 4px 2px; font-size: 12px; font-weight: 700; color: var(--mkv2-suave); cursor: pointer; }
+.mkv2 .mkv2-seg-pocos summary small { font-weight: 500; color: var(--fv2-tenue); }
+.mkv2 .mkv2-seg-pocos[open] summary { margin-bottom: 6px; }
+.mkv2 .mkv2-celda-campana { max-width: 280px; }
 .mkv2 .mkv2-redes-pauta-fila b { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .mkv2 .mkv2-redes-pauta-fila small { font-size: 10.5px; color: var(--fv2-tenue); }
 .mkv2 .mkv2-redes-pauta-barra { height: 9px; overflow: hidden; background: rgba(255, 255, 255, .05); border-radius: 99px; }
