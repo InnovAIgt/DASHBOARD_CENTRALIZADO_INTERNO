@@ -38,6 +38,7 @@ la fecha.
 | Redes · **ganados y perdidos**: Prospekt no los distingue (los cerrados vienen con status «cerrado» y etapa 6, sin campo de resultado; `cierre_estimado` vacío). Preguntar si se puede enviar el resultado del cierre. Hoy la pantalla dice «Cerrados (ganados o perdidos)» | Administrador de Prospekt IA | 2026-11-24 | Pendiente |
 | Redes · pedir a Prospekt que envíe la **empresa** del lead (hoy la ficha dice «Prospekt no lo envía») | Administrador de Prospekt IA | 2026-11-24 | Pendiente |
 | Redes · texto promocionado de las campañas: de 24 filas de anuncios (oct–nov), 20 traen el texto en la creatividad y solo 4 encuentran su publicación entre las del mes (las demás promocionan publicaciones más viejas). Si no hay texto, la tabla muestra solo el objetivo | Keily | 2026-11-24 | Para revisar |
+| Otros · la pestaña se quitó (25/11/2026, DECISIONES.md). Retomarla si aparece una fuente con actividad: Analytics de la web, registros del PBX o referidos | Ismael / Marketing | 2026-11-25 | En espera |
 
 ## Ingeniero
 

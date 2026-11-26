@@ -1,6 +1,5 @@
 // Canales de marketing · pantalla principal (menú Marketing → Canales de marketing).
-// Parte 2: solo estructura con 3 pestañas (Mailing, Redes sociales, Otros). Sin datos reales ni
-// inventados y sin llamadas a ninguna API.
+// 2 pestañas: Mailing y Redes sociales. La pestaña «Otros» se quitó el 25/11/2026 (DECISIONES.md).
 // Reutiliza los estilos de Flujo de ventas (flujo-ventas-v2.css, clase fv2) sin modificarlos:
 // si cambian allá, cambian aquí. Lo propio va en marketing-v2.css (prefijo mkv2-).
 // Documentación: docs/marketing/v2/README.md
@@ -19,7 +18,6 @@ const REDES_VISIBLE = typeof __MKT_REDES_VISIBLE__ === 'undefined' ? true : __MK
 const PESTANAS = [
   { key: 'mailing', label: 'Mailing' },
   { key: 'redes', label: 'Redes sociales' },
-  { key: 'otros', label: 'Otros' },
 ]
 
 /** Valor que se recuerda mientras la página esté abierta (sessionStorage; si falla, solo en memoria). */
@@ -47,7 +45,7 @@ export function MarketingV2() {
         <div>
           <div className="fv2-eyebrow">Marketing · Canales de marketing</div>
           <h1 className="fv2-titulo">Canales de marketing</h1>
-          <p className="fv2-subtitulo">Campañas de correo, redes sociales y otros canales · Guatemala y El Salvador</p>
+          <p className="fv2-subtitulo">Campañas de correo y redes sociales · Guatemala y El Salvador</p>
         </div>
       </header>
 
@@ -59,8 +57,6 @@ export function MarketingV2() {
       {pestana === 'mailing' && <Mailing sub={subMailing} onSub={setSubMailing} />}
       {pestana === 'redes' && (REDES_VISIBLE
         ? <Redes />
-        : <AvisoPendiente titulo="Próximamente: Redes sociales" texto="Facebook e Instagram de RED GT, RED SV y DATA RED. Se activa cuando esté conectado a Meta." proximamente />)}
-      {pestana === 'otros' && <AvisoPendiente titulo="Próximamente (PBX, web, etc.)" proximamente />}
-    </div>
+        : <AvisoPendiente titulo="Próximamente: Redes sociales" texto="Facebook e Instagram de RED GT, RED SV y DATA RED. Se activa cuando esté conectado a Meta." proximamente />)}    </div>
   </div>
 }

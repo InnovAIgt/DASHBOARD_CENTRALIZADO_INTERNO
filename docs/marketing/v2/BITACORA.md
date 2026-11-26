@@ -2,6 +2,14 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-25 · Se quitó la pestaña «Otros»
+
+- Canales de marketing queda con 2 pestañas: Mailing y Redes sociales. Se quitó el botón «Otros» y su aviso
+  «Próximamente (PBX, web, etc.)» de `MarketingV2.jsx`; el subtítulo pasa a «Campañas de correo y redes sociales ·
+  Guatemala y El Salvador». Si alguien tenía «Otros» recordada, se abre Mailing.
+- Motivo: 17 leads en 2026 y sin datos de actividad (DECISIONES). Se retoma si aparece una fuente (Analytics, PBX o
+  referidos) (PENDIENTES). OTROS.md se queda como referencia de las APIs de Prospekt. No se tocó la lógica de leads.
+
 ## 2026-11-25 · Redes: cuenta publicitaria de Guatemala integrada
 
 - `act_2226740844336751` (GTQ) junto a la de SV en Anuncios, Presupuestos, Plataformas, Segmentaciones, meses de 2026 y

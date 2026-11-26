@@ -3,6 +3,15 @@
 Decisiones tomadas para el dashboard Canales de marketing, con fecha y quién decidió. Lo más reciente va arriba.
 El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimiento en [PENDIENTES.md](PENDIENTES.md).
 
+## 2026-11-25 · Se quita la pestaña «Otros»
+
+- **Decisión de Keily:** Canales de marketing queda solo con **Mailing** y **Redes sociales**. La pestaña «Otros»
+  (que solo decía «Próximamente») se quita por ahora.
+- **Motivo:** en 2026 solo hubo **17 leads** calificados de orígenes que no son correo ni redes (PBX SV, Voicebot PBX
+  SV, Página Web, contactanos y Lead Manual), y no hay datos de actividad de esos canales.
+- **Cuándo retomarla:** si aparece una fuente con actividad (Analytics de la web, registros del PBX o referidos)
+  (PENDIENTES). OTROS.md queda como referencia de las APIs de Prospekt.
+
 ## 2026-11-25 · Redes: cuenta publicitaria de Guatemala en US$ y costo por lead por país
 
 - **Decisión de Keily:** se integra la cuenta publicitaria de Guatemala (`act_2226740844336751`, en quetzales) junto a
