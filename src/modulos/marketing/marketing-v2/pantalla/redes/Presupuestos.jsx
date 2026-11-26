@@ -110,7 +110,8 @@ export function ventanaCampana({ c, todas, moneda, meta, leadsEst = null, mes, h
   const cuerpo = <div className="mkv2-sd">
     <Seccion titulo="Resultado de la inversión">
       <div className="mkv2-redes-det-kpis mkv2-pres-kpis">
-        <div className="mkv2-redes-det-kpi" style={{ '--c': '#d98b1f' }}><small>Invertido</small><b>{d(c.gastado)}</b><em>{pct(res.pctInversion)} de la pauta</em></div>
+        <div className="mkv2-redes-det-kpi" style={{ '--c': '#d98b1f' }}><small>Invertido</small><b>{d(c.gastado)}</b>
+          <em>{c.monedaOriginal ? <span data-tip="Cuenta de Guatemala en quetzales, pasada a US$ con el tipo de cambio por confirmar">{dineroDe(c.gastadoOriginal, c.monedaOriginal)} · </span> : null}{pct(res.pctInversion)} de la pauta</em></div>
         <div className="mkv2-redes-det-kpi" style={{ '--c': '#18935f' }}><small>Mensajes</small><b>{numero(c.mensajes)}</b><em>{pct(res.pctMensajes)} del mes</em></div>
         <div className="mkv2-redes-det-kpi" style={{ '--c': '#2fb8c4' }}><small>Costo c/u</small><b>{c.pocos ? 'pocos datos' : d(c.costo)}</b>
           <em>{res.difCosto === null || c.pocos ? `promedio ${d(res.promedio)}` : `${Math.round(Math.abs(res.difCosto))} % ${res.difCosto <= 0 ? 'menos' : 'más'} que el promedio`}</em></div>
@@ -167,7 +168,7 @@ export function ventanaCampana({ c, todas, moneda, meta, leadsEst = null, mes, h
           const titulo = a.texto || a.titulo || a.nombre
           return <tr key={a.id}>
             <td className="mkv2-celda-campana"><b className="mkv2-una-linea" data-tip={titulo}>{textoNormal(tituloLimpio(titulo))}</b><small className="mkv2-una-linea mkv2-redes-campana-sub" data-tip={a.nombre}>Anuncio: {a.nombre}</small></td>
-            <td>{formatoAnuncio(a)}</td><td className="num">{d(a.gastado)}</td><td className="num">{numero(a.mensajes)}</td>
+            <td>{formatoAnuncio(a)}</td><td className="num">{d(a.gastado)}{a.monedaOriginal && <small className="mkv2-redes-original">{dineroDe(a.gastadoOriginal, a.monedaOriginal)}</small>}</td><td className="num">{numero(a.mensajes)}</td>
             <td className="num">{pocos ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${meta && costo !== null ? (costo <= meta ? 'is-verde' : 'is-amarillo') : ''}`}>{d(costo)}</span>}</td>
           </tr>
         })}

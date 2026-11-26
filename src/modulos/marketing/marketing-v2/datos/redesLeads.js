@@ -18,14 +18,19 @@ export const TEXTO_CERRADOS = 'Cerrados (ganados o perdidos)'
 export const etiquetaEtapa = (n) => (Number.isInteger(n) ? (n === ETAPA_CERRADO ? 'Etapa 6 · cerrado (ganado o perdido)' : `Etapa ${n}`) : 'Sin etapa')
 
 /**
- * Costo por lead: la pauta es SOLO de la cuenta USD (El Salvador), así que se divide entre los leads de SV. Con el
- * filtro en Guatemala (o RED GT) no hay pauta: «sin pauta».
- * @returns {{sinPauta: boolean, leadsSV: number, costo: number|null}}
+ * Costo por lead POR PAÍS (25/11/2026: conectadas la cuenta de SV y la de GT, todo en US$): el gasto de cada país
+ * (filas de anuncios sin reclutamiento, por la marca de su página) ÷ los leads de ese país. Total = gasto total ÷ leads
+ * totales (con los filtros que ya traen las filas y los leads).
+ * @returns {{porPais: {GT: {gasto, leads, costo}, SV: {gasto, leads, costo}}, gasto: number, leads: number, costo: number|null}}
  */
-export function costoPorLead({ gasto = 0, leads = [], filtros = {} }) {
-  if (filtros.pais === 'GT' || filtros.marca === 'gt') return { sinPauta: true, leadsSV: 0, costo: null }
-  const leadsSV = leads.filter((l) => l.pais === 'SV').length
-  return { sinPauta: false, leadsSV, costo: leadsSV ? gasto / leadsSV : null }
+export function costoPorLead({ anuncios = [], leads = [] }) {
+  const porPais = Object.fromEntries(['GT', 'SV'].map((p) => {
+    const gasto = anuncios.filter((a) => a.pais === p).reduce((n, a) => n + (Number(a.gastado) || 0), 0)
+    const n = leads.filter((l) => l.pais === p).length
+    return [p, { gasto, leads: n, costo: n ? gasto / n : null }]
+  }))
+  const gasto = anuncios.reduce((n, a) => n + (Number(a.gastado) || 0), 0)
+  return { porPais, gasto, leads: leads.length, costo: leads.length ? gasto / leads.length : null }
 }
 
 const MS_GT = 6 * 3600 * 1000

@@ -3,6 +3,16 @@
 Decisiones tomadas para el dashboard Canales de marketing, con fecha y quién decidió. Lo más reciente va arriba.
 El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimiento en [PENDIENTES.md](PENDIENTES.md).
 
+## 2026-11-25 · Redes: cuenta publicitaria de Guatemala en US$ y costo por lead por país
+
+- **Decisión de Keily:** se integra la cuenta publicitaria de Guatemala (`act_2226740844336751`, en quetzales) junto a
+  la de El Salvador. Todo se muestra en **US$**: lo de GT se convierte con `TIPO_CAMBIO_GTQ_USD` (variable de
+  servidor); por defecto **7.64 Q por US$** (referencia Banguat, 4/11/2026), **por confirmar con Isma o Contabilidad**
+  (PENDIENTES). En el detalle se ve también el monto original en Q.
+- **Costo por lead por país:** inversión de cada país ÷ sus leads (reemplaza «costo por lead solo con El Salvador» del
+  24/11/2026: Guatemala ya tiene pauta conectada).
+- Las campañas de reclutamiento de GT van aparte con la misma regla.
+
 ## 2026-11-23 · Guardar cargo y objetivo con clave de Marketing
 
 - **Guardar cargo y objetivo protegido con clave de Marketing (sin inicio de sesión), por decisión de Keily,
@@ -139,7 +149,7 @@ El detalle técnico de cada una está en [MAILING.md](MAILING.md) y su seguimien
   saber, «sin marca». No calificados: solo el total.
 - La meta de costo por mensaje sigue en un solo lugar (`META_COSTO_MENSAJE`, US$ 1.50) y dice «meta por confirmar».
 
-## 2026-11-24 · Redes: costo por lead solo con El Salvador
+## 2026-11-24 · Redes: costo por lead solo con El Salvador (reemplazada el 25/11/2026: ahora es por país)
 
 - **Decisión de Keily:** la pauta es solo de la cuenta USD (El Salvador), así que el **costo por lead = inversión ÷
   leads de SV** (no de todos). Con el filtro en Guatemala (o RED GT) se muestra **«sin pauta»**. Aplica en Anuncios, en

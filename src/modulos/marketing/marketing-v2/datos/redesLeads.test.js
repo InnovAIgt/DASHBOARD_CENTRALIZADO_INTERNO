@@ -40,16 +40,16 @@ test('detalle: publicación, marca, indicador, lista de leads y ficha', () => {
   assert.equal(detalleListaLeads([l]).tabla.filas.length, 1)
 })
 
-test('costo por lead: inversión ÷ leads de SV; Guatemala sin pauta; cerrados dicen «ganados o perdidos»', async () => {
+test('costo por lead por país: gasto de cada país ÷ sus leads; total = gasto ÷ leads; cerrados «ganados o perdidos»', async () => {
   const { costoPorLead, etiquetaEtapa, TEXTO_CERRADOS } = await import('./redesLeads.js')
   const { detalleCostoLead } = await import('./redesDetalle.js')
   const leads = [{ pais: 'SV' }, { pais: 'SV' }, { pais: 'GT' }, { pais: 'GT' }, { pais: 'GT' }]
-  assert.deepEqual(costoPorLead({ gasto: 100, leads, filtros: {} }), { sinPauta: false, leadsSV: 2, costo: 50 }, 'no se divide entre los 5, solo entre los 2 de SV')
-  assert.equal(costoPorLead({ gasto: 100, leads, filtros: { pais: 'GT' } }).sinPauta, true)
-  assert.equal(costoPorLead({ gasto: 100, leads, filtros: { marca: 'gt' } }).sinPauta, true)
-  assert.equal(costoPorLead({ gasto: 100, leads: [], filtros: {} }).costo, null)
-  assert.equal(detalleCostoLead({ gasto: 100, leads, filtros: {} }).titulo, 'Costo por lead · US$ 50.00')
-  assert.equal(detalleCostoLead({ gasto: 100, leads, filtros: { pais: 'GT' } }).titulo, 'Costo por lead · sin pauta')
+  const anuncios = [{ pais: 'SV', gastado: 100 }, { pais: 'GT', gastado: 60 }]
+  const c = costoPorLead({ anuncios, leads })
+  assert.deepEqual([c.porPais.SV.costo, c.porPais.GT.costo, c.costo, c.gasto, c.leads], [50, 20, 32, 160, 5])
+  assert.equal(costoPorLead({ anuncios, leads: [] }).costo, null)
+  assert.equal(detalleCostoLead({ anuncios, leads, filtros: {} }).titulo, 'Costo por lead · US$ 32.00')
+  assert.equal(detalleCostoLead({ anuncios, leads, filtros: { pais: 'GT' } }).bloques[0].filas.length, 1, 'con filtro de país, solo ese país')
   assert.equal(TEXTO_CERRADOS, 'Cerrados (ganados o perdidos)')
   assert.equal(etiquetaEtapa(6), 'Etapa 6 · cerrado (ganado o perdido)')
 })

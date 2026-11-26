@@ -200,8 +200,10 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
   // Leads de Redes del mes (Prospekt, exactos por origen y país) para el costo por lead.
   const listos = leadsRedes?.fuente === 'prospekt'
   const leads = listos ? leadsDelMes(leadsRedes.leads, filtros.mes, { pais: filtros.pais, marca: filtros.marca }) : []
-  // La pauta es solo de la cuenta USD (El Salvador): costo por lead = inversión ÷ leads de SV; en GT, «sin pauta».
-  const cpl = costoPorLead({ gasto: k.gastado, leads, filtros })
+  // Costo por lead por país: gasto de cada país (SV y GT, en US$, sin reclutamiento) ÷ sus leads.
+  const cpl = costoPorLead({ anuncios: campanas, leads })
+  const textoCplPais = ['GT', 'SV'].filter((p) => !filtros.pais || filtros.pais === p)
+    .map((p) => `${p} ${cpl.porPais[p].costo === null ? '—' : d(cpl.porPais[p].costo)}`).join(' · ')
   // Leads ESTIMADOS por campaña: todos los leads del mes (sin filtro de marca) repartidos entre las campañas del mismo
   // país activas ese día, según sus mensajes (datos/leadsCampana.js). Con TODAS las campañas del detalle (sin filtros).
   const presTodas = det.detalle?.presupuestos ?? []
@@ -236,7 +238,7 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
   const sinCuenta = (filtros.marca || filtros.pais) && marcasFiltro.length === 1 && !conAnuncios(marcasFiltro[0]) ? MARCAS[marcasFiltro[0]] : null
   if (!todos.length) return <Tarjeta titulo="Anuncios">
     <p className="mkv2-redes-vacio is-gris">{sinCuenta
-      ? `${sinCuenta.corto} no tiene anuncios en la cuenta publicitaria conectada (USD · El Salvador). Si pauta desde otra cuenta, hay que conectarla.`
+      ? `${sinCuenta.corto} no tiene anuncios en las cuentas publicitarias conectadas (El Salvador en US$ y Guatemala en quetzales). Si pauta desde otra cuenta, hay que conectarla.`
       : 'Sin campañas de marketing en este mes con estos filtros.'}</p>{notaRec}</Tarjeta>
 
   const porCampana = (titulo, campo, formato) => ({ etiqueta: 'Anuncios', titulo,
@@ -253,11 +255,11 @@ export function AnunciosVista({ datos, filtros, det, leadsRedes = null }) {
         ? <TarjetaRedes titulo="Conversiones" color={COLOR_MAILING.duro} valor={numero(k.mensajes + formularios)} sub={`${numero(k.mensajes)} mensajes + ${numero(formularios)} formularios`}
           tip="Mensajes y formularios de Meta (no son ventas). Formularios: solo el conteo de Meta, sin leer su contenido." />
         : <TarjetaRedes titulo="Conversiones" color={COLOR_MAILING.duro} valor={numero(k.mensajes)} sub="mensajes" tip="Conversaciones iniciadas por los anuncios (no son ventas). Sin formularios en el mes." />}
-      <TarjetaRedes titulo="Leads" color={ROSA} valor={listos ? numero(leads.length) : '—'} sub={listos ? <><em className="mkv2-redes-exacto">de Redes</em> {cpl.sinPauta ? 'sin pauta' : `${d(cpl.costo)} c/u (SV)`}</> : <span className="mkv2-redes-por-conectar">por conectar</span>}
-        tip={listos ? `Leads calificados de Redes del mes (Prospekt): ${numero(leads.length)} (SV ${numero(cpl.leadsSV)})
-Costo por lead = inversión de la cuenta USD (El Salvador) ÷ leads de SV; Guatemala no tiene pauta
+      <TarjetaRedes titulo="Leads" color={ROSA} valor={listos ? numero(leads.length) : '—'} sub={listos ? <><em className="mkv2-redes-exacto">de Redes</em> {cpl.costo === null ? 'sin leads' : `${d(cpl.costo)} c/u`}</> : <span className="mkv2-redes-por-conectar">por conectar</span>}
+        tip={listos ? `Leads calificados de Redes del mes (Prospekt): ${numero(leads.length)} (GT ${numero(cpl.porPais.GT.leads)} · SV ${numero(cpl.porPais.SV.leads)})
+Costo por lead por país: ${textoCplPais} (inversión de cada país ÷ sus leads)
 Clic para ver el detalle` : leadsRedes?.error || 'Leads de Prospekt por conectar'}
-        onClick={listos ? () => abrir({ ...detalleCostoLead({ gasto: k.gastado, moneda, leads, filtros }), acciones: [], kpis: [...detalleCostoLead({ gasto: k.gastado, moneda, leads, filtros }).kpis, { t: 'Ver la lista', v: numero(leads.length), c: ROSA, sub: 'leads del mes', ir: detalleListaLeads(leads, 'Leads calificados de Redes', datos.publicaciones) }] }) : undefined} />
+        onClick={listos ? () => abrir({ ...detalleCostoLead({ anuncios: campanas, moneda, leads, filtros }), acciones: [], kpis: [...detalleCostoLead({ anuncios: campanas, moneda, leads, filtros }).kpis, { t: 'Ver la lista', v: numero(leads.length), c: ROSA, sub: 'leads del mes', ir: detalleListaLeads(leads, 'Leads calificados de Redes', datos.publicaciones) }] }) : undefined} />
       <TarjetaRedes titulo="Inversión" color="#5b6b84" valor={d(k.gastado)} sub={`${numero(new Set(campanas.map((c) => c.campana)).size)} campañas`} tip={`Gasto total en ${moneda} (sin reclutamiento) · clic para ver el detalle`} onClick={() => abrir(porCampana(`Inversión · ${d(k.gastado)}`, 'gastado', d))} />
     </div>
 
@@ -295,7 +297,8 @@ ${REGLA_LEADS_CAMPANA}`}>Costo por lead</th></tr></thead>
           return <tr key={a.id} className={`mkv2-redes-clic ${pocos ? 'is-pocos' : ''}`} tabIndex={0} onClick={() => abrirFila(a)} onKeyDown={(e) => { if (e.key === 'Enter') abrirFila(a) }}>
             <td className="mkv2-celda-campana"><b className="mkv2-una-linea" data-tip={nom.tip}>{nom.titulo}</b>
               {nom.sub && <small className="mkv2-una-linea mkv2-redes-campana-sub" data-tip={a.campana}>{nom.sub}</small>}</td>
-            <td>{MARCAS[a.marca]?.corto ?? 'Sin página'}</td><td className="num">{d(a.gastado)}</td>
+            <td>{MARCAS[a.marca]?.corto ?? 'Sin página'}</td><td className="num">{d(a.gastado)}
+              {a.monedaOriginal && <small className="mkv2-redes-original" data-tip="Cuenta de Guatemala en quetzales, pasada a US$ con el tipo de cambio por confirmar">{dinero(a.gastadoOriginal, a.monedaOriginal)}</small>}</td>
             <td className="num">{numero(a.alcance)}</td><td className="num">{numero(a.clics)}</td>
             <td className="num">{d(a.clics ? a.gastado / a.clics : null)}</td><td className="num">{numero(a.mensajes)}</td>
             <td className="num">{pocos ? <span className="mkv2-redes-pocos">pocos datos</span> : <span className={`mkv2-redes-sem ${costo !== null && meta ? (costo <= meta ? 'is-verde' : 'is-amarillo') : ''}`}>{d(costo)}</span>}</td>

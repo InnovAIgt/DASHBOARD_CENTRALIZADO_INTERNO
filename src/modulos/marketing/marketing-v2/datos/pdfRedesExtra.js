@@ -58,14 +58,17 @@ export function leadsDeMarcaPdf(leads, marca, pais, esTotal = false, marcasDelPa
 }
 
 /** Bloque «Leads de Redes»: del post al cliente (embudo, escala logarítmica) y las tarjetas del mes. */
-export function htmlLeadsRedes({ leads, alcance, mensajes, gasto, moneda, filtros }) {
+export function htmlLeadsRedes({ leads, alcance, mensajes, anuncios = [], moneda, filtros }) {
   if (!leads.listos) return '<div class="x-bloque" style="--c:#d6589b"><h3>Leads de Redes</h3><p class="x-sub">Leads de Prospekt por conectar: no se incluyen en este reporte.</p></div>'
   const r = resumenLeadsRedes(leads.delMes)
   const pasos = [['Alcance', 'vieron el contenido · Meta', alcance ?? 0, '#2fb8c4'], ['Mensajes', 'escribieron por la pauta · Meta', mensajes, '#9085e9'],
     ['Leads calificados', 'origen Redes · Prospekt', r.total, '#d6589b'], ['En proceso', 'etapas 2 a 5 · Prospekt', r.enProceso, '#d9a520'],
     [TEXTO_CERRADOS, 'etapa 6 · Prospekt', r.cerrados, '#18935f']]
   const tope = Math.log10(Math.max(...pasos.map((p) => p[2] || 0), 1) + 1)
-  const cpl = costoPorLead({ gasto, leads: leads.delMes, filtros })
+  // Costo por lead por país (SV y GT en US$): inversión de cada país ÷ sus leads.
+  const cpl = costoPorLead({ anuncios, leads: leads.delMes })
+  const porPais = ['GT', 'SV'].filter((p) => !filtros.pais || filtros.pais === p)
+    .map((p) => `${p} ${cpl.porPais[p].costo === null ? '—' : dinero(cpl.porPais[p].costo, moneda)}`).join(' · ')
   const kpi = (lbl, num, sub, c) => `<div class="x-kpi" style="--c:${c}"><div class="lbl">${esc(lbl)}</div><div class="num">${esc(num)}</div><div class="sub">${esc(sub)}</div></div>`
   return `<div class="x-bloque" style="--c:#d6589b"><h3>Leads de Redes</h3><p class="x-sub">Solo origen «PostIAlo Redes Sociales», sin pruebas (LDTEST). Solo conteos.</p>
     <div class="x-duo"><div>${pasos.map(([k, sub, v, c]) => `<div class="x-fila"><span><b>${esc(k)}</b><small>${esc(sub)}</small></span>
@@ -73,7 +76,7 @@ export function htmlLeadsRedes({ leads, alcance, mensajes, gasto, moneda, filtro
       <p class="nota">Barras en escala logarítmica: el alcance es mucho mayor que el resto.</p></div>
     <div class="x-kpis">${kpi('Calificados', numero(r.total), `GT ${numero(r.porPais.GT)} · SV ${numero(r.porPais.SV)}`, '#d6589b')}
       ${kpi(TEXTO_CERRADOS, numero(r.cerrados), r.total ? `${pct((r.cerrados / r.total) * 100)} de los leads` : '—', '#18935f')}
-      ${kpi('Costo por lead', cpl.sinPauta ? 'Sin pauta' : dinero(cpl.costo, moneda), cpl.sinPauta ? 'Guatemala no tiene pauta conectada' : `inversión ÷ ${numero(cpl.leadsSV)} leads de SV`, '#d9a520')}
+      ${kpi('Costo por lead', cpl.costo === null ? 'Sin leads' : dinero(cpl.costo, moneda), `${porPais} · inversión de cada país ÷ sus leads`, '#d9a520')}
       ${kpi('No calificados', leads.noCalificados ? numero(leads.noCalificados.total) : '—', 'total de Prospekt · no dice el canal', '#5b6b84')}</div></div></div>`
 }
 

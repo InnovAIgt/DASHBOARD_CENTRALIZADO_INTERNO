@@ -33,11 +33,10 @@ la fecha.
 | Confirmar si hay anuncios pagados fuera del Business Manager (agencia o cuenta personal) y quién programa las publicaciones y con qué herramienta | Marketing (Erick / Ismael) | Por confirmar | Pendiente |
 | Confirmar la lista de páginas, cuentas de Instagram y cuentas de anuncios que vea el token de Meta (la parte (1) las lista primero) | Marketing, con Keily | Cuando exista el token | En curso: están las 3 páginas y sus 3 Instagram (REDES.md, 7.1). Faltan las cuentas publicitarias (fila siguiente) |
 | Redes · cuentas publicitarias: confirmar **a qué marca va cada cuenta**, si `act_1657231285337963` (GTQ, asignada al usuario, con nombre de persona) **es de la empresa**, y si existe una cuenta publicitaria de **«RED Intelfon Guatemala»** a la que el token no tiene acceso. Mientras tanto se usa solo `act_2035747430056013` (USD, «Negocio de Red Intelfon») | Marketing (Erick / Ismael) | 2026-11-24 | Averiguado con el token (REDES.md, 7.2): la USD es del negocio y promociona RED SV (81 anuncios) y DATA RED (2); la GTQ es personal, sin gasto ni campañas (queda fuera); el negocio GT no tiene cuentas ni páginas. Falta que Keily apruebe la propuesta de 7.2 |
-| Redes · ¿**RED GT** hace pauta pagada en otro lado? El token no ve ningún anuncio de RED GT. Podría venir de la **cuenta publicitaria del negocio «RED Intelfon Guatemala»** que se ve en el Administrador de anuncios (el token no la ve: el negocio le devuelve 0 cuentas) o de la **cuenta personal 1069788172741923**, que este token no ve. Confirmar cuál es y, si es de la empresa, darle acceso de solo lectura al token. Con el token no se pudo averiguar: `ads_posts` da error 403 de permiso en las 3 páginas (también con el token nuevo) y `promotion_status` no distingue lo promocionado (REDES.md, 7.2, consultas 10 y 11) | Marketing (Erick / Ismael) | 2026-11-24 | Pendiente |
+| Redes · ¿**RED GT** hace pauta pagada en otro lado? | Marketing (Erick / Ismael) | 2026-11-24 | Hecho (25/11/2026): la cuenta del negocio «RED Intelfon Guatemala» (`act_2226740844336751`, GTQ) ya se lee con el token y está integrada (REDES.md, 7.10) |
 | Redes · **datos completos de clientes** (nombre, teléfono, correo, gestiones) en la lista de leads y la ficha, sin clave ni login (decisión de Keily, DECISIONES.md). **Confirmar con Eduardo antes de activar en producción** | Keily → Eduardo | 2026-11-24 | Pendiente |
 | Redes · **ganados y perdidos**: Prospekt no los distingue (los cerrados vienen con status «cerrado» y etapa 6, sin campo de resultado; `cierre_estimado` vacío). Preguntar si se puede enviar el resultado del cierre. Hoy la pantalla dice «Cerrados (ganados o perdidos)» | Administrador de Prospekt IA | 2026-11-24 | Pendiente |
 | Redes · pedir a Prospekt que envíe la **empresa** del lead (hoy la ficha dice «Prospekt no lo envía») | Administrador de Prospekt IA | 2026-11-24 | Pendiente |
-| Redes · **leads por campaña** en la tabla de Anuncios (leads del mismo país mientras la campaña estuvo activa, repartidos por mensajes): falta pedir a Meta el gasto día por día de cada campaña. Hoy Anuncios muestra los leads del mes y el costo por lead total | Keily | 2026-11-24 | Por hacer |
 | Redes · texto promocionado de las campañas: de 24 filas de anuncios (oct–nov), 20 traen el texto en la creatividad y solo 4 encuentran su publicación entre las del mes (las demás promocionan publicaciones más viejas). Si no hay texto, la tabla muestra solo el objetivo | Keily | 2026-11-24 | Para revisar |
 
 ## Ingeniero
@@ -52,15 +51,13 @@ la fecha.
 | Redes · **comentarios de Facebook**: el conteo de comentarios (y `reactions.summary`) pide el permiso `pages_read_user_content`. Hoy las interacciones de Facebook son reacciones + compartidos. Decidir si se agrega ese permiso (es de lectura) al token | Keily | 2026-11-24 | Pendiente |
 | Redes · umbral del semáforo «¿Cumplimos lo programado?» (propuesta: 100 % verde, 90–99 % amarillo, menos de 90 % rojo; REDES.md, sección 4) y meta de costo por mensaje y por clic | Ingeniero | 2026-11-24 | Pendiente |
 | Redes · **PDF en tamaño carta**: la herramienta compartida (public/assets/js/dashboard-pdf.js) descarga siempre en A4 horizontal. Cambiarla a carta afecta también a Mailing y Flujo de ventas: decidir si se cambia para todos o se agrega una opción solo para Redes | Keily | 2026-11-25 | Pendiente |
-| Redes · **leads por campaña en Guatemala**: su cuenta publicitaria (act_2226740844336751) no da permiso de lectura al token; sus leads salen «sin campaña conectada» hasta que un administrador del portafolio GT lo autorice | Keily / admin portafolio GT | 2026-11-25 | Pendiente |
+| Redes · **tipo de cambio GTQ → US$** de la pauta de Guatemala: hoy 7.64 Q por US$ (referencia Banguat, 4/11/2026, valor por defecto). Confirmar qué tipo usar (¿fijo, del mes, de Contabilidad?) y ponerlo en Vercel como `TIPO_CAMBIO_GTQ_USD` si cambia | Isma / Contabilidad | 2026-11-25 | Pendiente |
 
 ## Eduardo / TI
 
-Borrador del mensaje para Eduardo (qué se sube, riesgos y qué debe aprobar): PRODUCCION.md, sección 4.
 
 | Pendiente | A quién se le pidió | Fecha | Estado |
 |---|---|---|---|
-| **Aprobar la publicación de Mailing**: merge de `feature/marketing-v2` a `main`, correos visibles sin login (o `MKT_MOSTRAR_CORREOS = no`), rutas abiertas y quién cambia las claves expuestas | Eduardo | Antes del merge | Pendiente: borrador del mensaje listo (PRODUCCION.md, sección 4) |
 | Crear usuario de solo lectura en la base de Cumplimiento de Clientes para el dashboard y cambiar la contraseña principal (estaba en un documento). Hoy el cruce usa `CC_DB_PASSWORD` con candados de solo lectura | Keily / Eduardo | — | Pendiente |
 | Informar a Eduardo que los correos se muestran sin inicio de sesión (DECISIONES.md) | Keily → Eduardo | — | Pendiente |
 | Confirmar si las rutas de totales de Mailing pueden quedar abiertas en producción hasta tener inicio de sesión real | Eduardo | Antes de publicar | Pendiente |
@@ -74,10 +71,9 @@ Borrador del mensaje para Eduardo (qué se sube, riesgos y qué debe aprobar): P
 
 | Pendiente | Quién | Cuándo | Estado |
 |---|---|---|---|
-| Variables de Vercel **Production** (lista completa en PRODUCCION.md, sección 2) | Keily | Antes del merge | En curso: 6 puestas (23/11); faltan `CRON_SECRET` y `PROSPEKT_API_KEY` |
-| Cambiar la dirección del webhook en Brevo a producción (sin bypass) y borrar el código de bypass de Vercel | Keily | Al publicar | Pendiente |
-| Tarea diaria para que el proyecto Supabase Free no se pause | Keily | Al publicar | Código listo (cron en vercel.json, /api/marketing/mantener-supabase); falta `CRON_SECRET` y probarlo en producción (PRODUCCION.md, sección 3) |
-| Quitar de Vercel las 4 variables viejas: `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`, `MARKETING_LOCAL_CSV_DIR` y `MARKETING_DETALLE_CLAVE` | Keily / TI | Al publicar | Pendiente |
+| Borrar el código de bypass de Vercel (Settings → Deployment Protection → Protection Bypass for Automation): el webhook de Brevo ya apunta a producción (confirmado en Brevo, 25/11/2026), así que el bypass ya no hace falta | Keily | Ya se puede | Pendiente |
+| Tarea diaria para que el proyecto Supabase Free no se pause (cron de vercel.json, 6:00 a. m. UTC−6, /api/marketing/mantener-supabase) | Keily | Al publicar | En producción con `CRON_SECRET`: falta confirmar en Vercel → Cron Jobs que corrió bien |
+| Quitar de Vercel las variables viejas: `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID`, `MARKETING_LOCAL_CSV_DIR`, `MARKETING_DETALLE_CLAVE` y `VITE_BREVO_API_KEY`. `origin/main` ya no lee ninguna (25/11/2026; `VITE_BREVO_API_KEY` solo aparece como texto de ayuda y en el Dockerfile, que Vercel no usa) | Keily / TI | Ya se puede | Pendiente |
 | Conflicto vite/esbuild en instalación limpia: Vercel instala con **bun** (hay `bun.lock`), que lo tolera; con `npm` limpio falla (vite 8.3.8 pide esbuild 0.27/0.28 y el portal fija 0.25). `bun.lock` ya incluye `pg` | Keily / Eduardo | Antes de publicar | Pendiente |
 | Renovar la llave de Brevo antes del 2027-11-20 | Keily | 2027-11-01 | Pendiente |
 | **Aviso · token de Meta:** el acceso a datos vence cerca del **22/02/2027**. Renovarlo antes del **15/02/2027** (.env.local y Vercel Preview y Production) o cambiarlo por el token de usuario del sistema del ticket | Keily | 2027-02-15 | Pendiente |

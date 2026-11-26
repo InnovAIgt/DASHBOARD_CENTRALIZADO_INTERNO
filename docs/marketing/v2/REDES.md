@@ -513,6 +513,42 @@ gestiones; y el total de no calificados (`/api/audit/leads-no-calificados`, solo
   (816 px) y de A4 horizontal: se lee completo; se arreglaron palabras cortadas y montos partidos. Pasar a carta queda
   en PENDIENTES (decide Keily).
 
+### 7.10 Cuenta publicitaria de Guatemala integrada · 25/11/2026
+
+- **Cuenta:** `act_2226740844336751` («RED Intelfon Cuenta publicitaria GT», GTQ, America/Guatemala), en el cuadro de
+  RED GT (`server/redes/cuadroMarcas.js`). Solo GET, sin `ads_management`, con el mismo token.
+- **Moneda:** todo lo de GTQ se pasa a US$ al leerlo de Meta (`server/redes/moneda.js`): gasto y presupuestos, en
+  Anuncios, en el detalle (presupuestos, plataformas, segmentaciones, horarios, edad y sexo, por día y por semana) y en
+  el Año. Cada fila guarda su monto original (`gastadoOriginal`, `monedaOriginal`): la tabla de campañas y la ventana
+  de campaña muestran «US$ … · Q …». Tipo de cambio: variable de servidor `TIPO_CAMBIO_GTQ_USD` (quetzales por 1 US$);
+  sin ella, **7.64** (referencia Banguat del 4/11/2026), **por confirmar** con Isma o Contabilidad. El monto en Q se
+  recalcula desde el US$ redondeado (puede diferir unos centavos del de Meta).
+- **Detalle de Anuncios con dos cuentas:** se lee cada cuenta por separado (reintentos y caché por consulta y mes, como
+  antes) y se juntan en un solo detalle en US$ (`juntarDetalles`); cada fila lleva su marca, así que el filtro de país
+  sigue funcionando. Si una consulta de una cuenta falla, solo sus recuadros muestran el error.
+- **Reclutamiento:** la misma regla (`reclutamiento.js`) separa las campañas de reclutamiento de GT.
+- **DATA RED:** la cuenta GT no tiene anuncios de DATA RED (143 anuncios: 139 de la página RED GT y 4 de otra página sin
+  gasto en 2026). Si aparecieran, el gasto va por la página de cada anuncio a la marca correcta.
+- **Leads por campaña:** las campañas de GT tienen país GT: sus leads se reparten con la misma regla que SV (ya no
+  salen «sin campaña conectada»). **Costo por lead por país:** inversión de cada país ÷ sus leads (Resumen, Anuncios,
+  su ventana y el PDF); el total = inversión total ÷ leads totales.
+- **Sin funciones nuevas** (sigue el despachador de `api/marketing/canales.js`).
+
+**GT por mes (comercial, sin reclutamiento; 7.64 Q por US$):**
+
+| Mes | Campañas | Anuncios | Gasto | Mensajes | Reclutamiento aparte |
+|---|---|---|---|---|---|
+| Junio 2026 | 3 | 3 | Q 281.84 · US$ 36.89 | 125 | 1 campaña · US$ 2.81 |
+| Julio 2026 | 2 | 2 | Q 356.13 · US$ 46.62 | 148 | 1 · US$ 5.70 |
+| Agosto 2026 | 4 | 4 | Q 697.26 · US$ 91.27 | 289 | 2 · US$ 4.17 |
+| Septiembre 2026 | 5 | 5 | Q 782.19 · US$ 102.37 | 250 | 3 · US$ 15.24 |
+| Octubre 2026 | 9 | 11 | Q 1,183.98 · US$ 154.98 | 201 | 3 · US$ 25.97 |
+| Noviembre 2026 (al 25) | 3 | 3 | Q 1,130.00 · US$ 147.92 | 242 | 2 · US$ 37.47 |
+
+Antes de junio la cuenta GT no tiene gasto. **Leads por campaña:** noviembre GT 7 de 7 asignados (SV 13 de 13); octubre
+GT 18 de 18 (SV 20 de 20). **Costo por lead** noviembre: GT US$ 21.13 · SV US$ 12.62 · total US$ 15.60; octubre: GT
+US$ 8.61 · SV US$ 9.81 · total US$ 9.24.
+
 ## 8. «Plan del mes» (solo si Marketing tiene un plan)
 
 - Pantallita donde **Marketing carga lo programado** del mes: **fecha, marca, red y título** de cada publicación.
