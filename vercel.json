@@ -11,6 +11,9 @@
     },
     "api/bodega-despachos.js": {
       "maxDuration": 300
+    },
+    "api/ventas/flash.js": {
+      "maxDuration": 60
     }
   },
   "crons": [
@@ -27,6 +30,10 @@
     {
       "source": "/api/marketing/(brevo-webhook|mantener-supabase|mailing/.*|redes/.*)",
       "destination": "/api/marketing/canales?ruta=$1"
+    },
+    {
+      "source": "/api/ventas/(flash-altas|flash-preofertas|tipo-cambio)",
+      "destination": "/api/ventas/flash?ruta=$1"
     },
     {
       "source": "/api/(.*)",
