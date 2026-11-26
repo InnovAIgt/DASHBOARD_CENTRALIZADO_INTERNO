@@ -13,7 +13,7 @@ import { responderDetalle } from './server/mailing/detalle.js';
 import { responderLeads } from './server/mailing/leads.js';
 import { responderRedes } from './server/redes/rutas.js';
 import { responderLeadsRedes } from './server/redes/leads.js';
-import { obtenerPreofertas } from './server/flashPreofertas.js';
+import { responderFlash } from './server/ventasFlash.js';
 
 // Lee primero .env.local (llaves locales, nunca se suben) y luego .env.
 dotenv.config({ path: ['.env.local', '.env'] });
@@ -118,13 +118,12 @@ app.all('/api/marketing/redes/:recurso(cuentas|publicaciones|programadas|anuncio
   res.status(resultado.status).send(resultado.body);
 });
 
-// Ventas · Flash de Altas: proxy seguro para consultar preofertas de Workflow.
-app.all('/api/ventas/flash-preofertas', async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  const resultado = await obtenerPreofertas({ method: req.method });
-  if (resultado.status === 405) res.setHeader('Allow', 'GET');
-  res.status(resultado.status).json(resultado.body);
+// Ventas · Flash de altas: altas de SAN (FLASH_API_KEY), preofertas de Workflow (WORKFLOW_API_KEY) y tipo de cambio.
+// En Vercel las atiende la función única api/ventas/flash.js (docs/ventas-flash-altas/README.md).
+app.all('/api/ventas/:ruta(flash-altas|flash-preofertas|tipo-cambio)', async (req, res) => {
+  const resultado = await responderFlash(req.params.ruta, req);
+  for (const [clave, valor] of Object.entries(resultado.headers)) res.setHeader(clave, String(valor));
+  res.status(resultado.status).send(resultado.body);
 });
 
 app.get('/api/bodega/despachos', async (req, res) => {
