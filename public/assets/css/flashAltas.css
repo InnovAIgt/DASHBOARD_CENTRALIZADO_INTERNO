@@ -155,6 +155,17 @@ html body #kpis .kpi-fila-resto .kpi{display:grid;grid-template-columns:minmax(0
 html body #kpis .kpi-fila-resto .kpi-label{grid-column:1;grid-row:1;align-self:end;font-weight:800 !important}
 html body #kpis .kpi-fila-resto .kpi-sub{grid-column:1;grid-row:2;align-self:start;margin-top:2px !important;font-size:10px !important}
 html body #kpis .kpi-fila-resto .kpi-value{grid-column:2;grid-row:1/3;align-self:center;margin:0 !important;font:900 24px/1.2 var(--std-mono) !important;text-align:right;white-space:nowrap}
+/* La flecha de «ir a la tabla» va en la esquina: el número deja ese espacio libre para no quedar pegado. */
+html body #kpis .kpi-fila-resto .kpi.nav-origen .kpi-value{padding-right:14px}
+/* Ancho disponible (menú del portal abierto o cerrado): cada tarjeta mide su PROPIO ancho (container query).
+   Si es angosta, el número baja debajo de la etiqueta en vez de apretarla («Valor mensual de servicios» ya no se
+   parte en 4 líneas). Con espacio, queda como siempre: etiqueta a la izquierda y número a la derecha. */
+html body #kpis .kpi-fila-resto .kpi{container-type:inline-size}
+@container (max-width: 330px){
+  html body #kpis .kpi-fila-resto .kpi-label{grid-column:1 / -1;grid-row:1;align-self:start}
+  html body #kpis .kpi-fila-resto .kpi-value{grid-column:1 / -1;grid-row:2;margin:6px 0 4px !important;text-align:left;font-size:22px !important}
+  html body #kpis .kpi-fila-resto .kpi-sub{grid-column:1 / -1;grid-row:3}
+}
 /* ---------- podio ---------- */
 .podio{margin-bottom:14px}
 .podio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
