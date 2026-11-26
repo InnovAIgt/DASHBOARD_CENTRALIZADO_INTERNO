@@ -24,7 +24,18 @@ export const tonoPaso = (ratio) => (ratio == null ? 'neutro' : ratio >= LIMITES_
  * Color del círculo de conversión de calificados en las tarjetas de ejecutivos (DECISIONES D14).
  * PROVISIONAL hasta que el ingeniero defina la meta: ≥ 20 % verde · 10–20 % azul · < 10 % amarillo.
  */
-export const LIMITES_CONVERSION = { bajo: 0.1, bueno: 0.2 }
+/**
+ * Color del número «Cumplimiento SLA» del Panel (DECISIONES D25). Para cambiarlo, cambiar SOLO estos límites.
+ * Se compara el % entero que se ve en pantalla (28 %, 75 %…): ≥ verde → verde · ≥ amarillo → amarillo · menos → rojo.
+ */
+export const LIMITES_CUMPLIMIENTO_SLA = { verde: 75, amarillo: 60 }
+export const tonoCumplimientoSla = (ratio) => {
+  if (ratio == null) return 'neutro'
+  const pct = pctEntero(ratio)
+  return pct >= LIMITES_CUMPLIMIENTO_SLA.verde ? 'verde' : pct >= LIMITES_CUMPLIMIENTO_SLA.amarillo ? 'amarillo' : 'rojo'
+}
+
+export const LIMITES_CONVERSION ={ bajo: 0.1, bueno: 0.2 }
 export const tonoConversion = (ratio) => (ratio >= LIMITES_CONVERSION.bueno ? 'verde' : ratio < LIMITES_CONVERSION.bajo ? 'amarillo' : 'azul')
 
 /** Filtros por defecto (paso 4.0): Tipo de lead = Calificado (+ Período = mes actual hasta hoy). */
@@ -516,6 +527,8 @@ export const INDICADORES = {
   unidades: { titulo: 'Unidades vendidas', descripcion: 'Los leads ganados con sus unidades.', filtro: isWon },
   porCierre: { titulo: 'Unidades por cierre', descripcion: 'Los leads ganados con sus unidades (unidades ÷ ganados).', filtro: isWon },
   vencidos: { titulo: 'Seguimientos vencidos', descripcion: 'Leads abiertos cuya próxima gestión ya pasó.', filtro: esVencido },
+  // Rediseño Parte 1: lista de la tarjeta «Cumplimiento SLA». Mismos leads que cuenta resumirSlaEtapas (verdes + amarillos + rojos).
+  slaMedible: { titulo: 'Cumplimiento SLA', descripcion: 'Leads abiertos cuya etapa actual tiene fecha y se mide con el SLA de 2 días hábiles (a tiempo, recién vencida o roja).', filtro: (lead) => ['verde', 'amarillo', 'rojo'].includes(evaluarSlaEtapa(lead)?.estado) },
 }
 
 /** Fecha que se muestra en la lista: la de referencia de la lógica copiada (cierre si es ganado; si no, creación). */

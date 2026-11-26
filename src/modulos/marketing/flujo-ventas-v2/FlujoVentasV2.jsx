@@ -161,7 +161,7 @@ function FlujoVentasV2Contenido() {
 
     {error && <AvisoError mensaje={error} onReintentar={api.reload} />}
     {leads.length > 0 && pestana === 'panel' && <VistaGeneral leads={filtrados} filters={filters} paisFiltro={paisFiltro}
-      leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonteForecast} />}
+      leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonteForecast} onIrForecast={() => setPestana('forecast')} />}
     {leads.length > 0 && pestana === 'informe' && <Informe leads={filtrados} filters={filters} periodo={periodo}
       vistaKey={informeVista} setVistaKey={setInformeVista} busqueda={informeBusqueda} setBusqueda={setInformeBusqueda} />}
     {leads.length > 0 && pestana === 'forecast' && <Forecast leads={filtrados} horizonte={horizonteForecast} onHorizonte={setHorizonteForecast} />}

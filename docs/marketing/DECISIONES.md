@@ -336,3 +336,31 @@ resaltado amarillo del tramo y las leyendas de conversión y SLA; el resto del r
 **Decisión:** retirar el fallback de datos de demostración. El panel solo muestra los leads recibidos
 de Prospekt IA; ante una falla muestra el error y la opción de reintentar, sin sustituirlos por datos
 ficticios.
+
+## D25 · 26/11/2026 · Rediseño del Panel completo, Partes 0 y 1
+
+**Decisión de Keily:** reorganizar el Panel completo sin cambiar cálculos ni reglas. Arriba quedan:
+
+1. **6 números en una fila:** «Leads calificados» (con filtro Calificado) o «Total leads» (con Todos), Ganados,
+   Conversión, Unidades vendidas, Unidades por cierre y **Cumplimiento SLA**. Cada uno lleva su desglose GT · SV
+   (etiquetas de texto, sin banderas). Con el filtro Todos, la Conversión de calificados (D10) va como línea pequeña
+   dentro de la tarjeta Conversión, no como 7.º número.
+2. **Qué atender hoy:** etapas rojas (y cuántos ejecutivos), etapas recién vencidas y oportunidades de forecast.
+3. **Recorrido de las 6 etapas**, que sube desde «Seguimiento de ventas y coaching». El título dice dónde se frenan más,
+   la marca «Aquí se frenan más» va en la línea de ese paso y las líneas dicen «77 % pasa · 12 se quedan». En Cierre
+   se oculta el plazo de 2 días y su semáforo (no aplica) mientras no haya leads abiertos medidos ahí.
+
+**Cumplimiento SLA:** no es un cálculo nuevo; es el de `resumirSlaEtapas` (etapas a tiempo ÷ etapas abiertas con
+fecha). Su color usa la misma escala que el % de paso entre etapas, pero con rojo abajo:
+
+| Cumplimiento (% entero que se ve) | Color |
+|---|---|
+| 75 % o más | Verde |
+| 60 a 74 % | Amarillo |
+| Menos de 60 % | Rojo |
+
+Los límites están en un solo lugar: `LIMITES_CUMPLIMIENTO_SLA` en
+`src/modulos/marketing/flujo-ventas-v2/pantalla/datos.js`.
+
+**Piezas nuevas:** `pantalla/piezas.jsx` y `pantalla/piezas.css` (prefijo `fv2n-`). Son aparte porque Canales de
+marketing reutiliza `comunes.jsx` y `flujo-ventas-v2.css`; así esa pantalla no cambia.

@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react'
 import { classifyFollowUps, formatNumber, isOpen } from '../utils/analytics.js'
 import { evaluarSlaEtapa, prioridadSla, resumirSlaEtapas } from '../utils/sla.js'
 import { Bandera, Vacio } from './comunes.jsx'
-import { embudoEtapas, fichaCoaching, pctEntero, recorridoLeads } from './datos.js'
-import { DetalleAsesor, DetalleEtapa, DetalleLead } from './Ventanas.jsx'
+import { fichaCoaching, pctEntero, recorridoLeads } from './datos.js'
+import { DetalleAsesor, DetalleLead } from './Ventanas.jsx'
 import { PerdidasEquipo, SeguimientoEjecutivo } from './SeguimientoEjecutivo.jsx'
 import { CalendarClock, Check, Eye, Phone, TrendingUp, TriangleAlert } from 'lucide-react'
 import { RecorridoLeads } from './RecorridoLeads.jsx'
@@ -272,7 +272,6 @@ export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos, horizonte }) {
   const [ejecutivoSel, setEjecutivoSel] = useState(null)
   const [asesorDetalle, setAsesorDetalle] = useState(null)
   const [leadSel, setLeadSel] = useState(null)
-  const [etapaSel, setEtapaSel] = useState(null)
   const [modoVista, setModoVista] = useState('jefatura')
   const [equipoSel, setEquipoSel] = useState('Todos')
   const [coachingSel, setCoachingSel] = useState(null)
@@ -299,9 +298,6 @@ export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos, horizonte }) {
   const leadsPerdidas = modoVista === 'ejecutivo' && ejecutivoActivo
     ? leadsVista.filter((lead) => claveEjecutivo({ country: lead.pais, name: lead.asesor }) === ejecutivoActivo)
     : leadsVista
-  const embudoEquipo = useMemo(() => embudoEtapas(leadsVista), [leadsVista])
-  const recorridoEquipo = useMemo(() => recorridoLeads(embudoEquipo), [embudoEquipo])
-  const embudoVentana = useMemo(() => ({ ...embudoEquipo, mayorCaida: recorridoEquipo.frenado?.hasta ?? null }), [embudoEquipo, recorridoEquipo])
   const abrirFicha = (ficha, filtroInicial = null) => setAsesorDetalle({
     name: ficha.name, country: ficha.country, ranking: ficha.ranking, filtroInicial,
   })
@@ -339,10 +335,7 @@ export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos, horizonte }) {
     {modoVista === 'jefatura'
       ? <>
         <AlertasSlaEquipo leads={leadsVista} vendedores={[...fichas, ...sinLeads]} onLead={setLeadSel} />
-        <section className="fv2-coach-panel fv2-coach-panel-equipo">
-          <h3>Recorrido de los leads <small>tiempo, SLA y mejor ejecutivo en cada etapa</small></h3>
-          <RecorridoLeads recorrido={recorridoEquipo} mostrarResumenSla={false} onClickEtapa={setEtapaSel} />
-        </section>
+        {/* Rediseño Parte 1: el «Recorrido de los leads» se movió arriba, al Panel completo (VistaGeneral). */}
         <section className="fv2-coach-coaching-equipo">
           <header><div><h3>Coaching del ejecutivo</h3><p>Compara sus resultados, avance por etapa y acciones de esta semana.</p></div></header>
           {coachingActivo
@@ -364,8 +357,6 @@ export function Ejecutivos({ leads, leadsEquipo, baseEjecutivos, horizonte }) {
     {asesorDetalle && <DetalleAsesor {...asesorDetalle} leads={leadsVista} month={null}
       equipo={{ ratio: equipo.conversion.ratio, embudo: equipo.embudo }}
       onClose={() => setAsesorDetalle(null)} />}
-    {etapaSel && <DetalleEtapa etapa={etapaSel} leads={leadsVista} embudo={embudoVentana}
-      contexto={equipoSel === 'Todos' ? 'filtros activos' : equipoSel} onClose={() => setEtapaSel(null)} />}
   </section>
 
     {/* Igual que "¿Por qué se pierden los leads?" de la Vista 2 del dashboard de leads, para todo el equipo. */}

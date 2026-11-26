@@ -12,10 +12,11 @@ const ICONOS = [UserPlus, CalendarDays, Monitor, Send, Phone, Check]
 // Se redondea lo que muestra la ventana (1 decimal, formatearRatio) para que nunca difieran: 53.8 % → 54 %.
 const pct = (ratio) => `${pctEntero(ratio)} %`
 
+// Rediseño 2026-11: «77 % pasa · 12 se quedan» (mismo dato que antes «−12 · 77 % pasa», escrito más claro).
 function textoTramo(t) {
-  const menos = t.perdieron > 0 ? `−${formatNumber(t.perdieron)} · ` : ''
-  if (t.pocos) return `${menos}pocos datos`
-  return `${menos}${pct(t.ratio)} pasa`
+  const quedan = t.perdieron > 0 ? ` · ${formatNumber(t.perdieron)} ${t.perdieron === 1 ? 'se queda' : 'se quedan'}` : ''
+  if (t.pocos) return `pocos datos${quedan}`
+  return `${pct(t.ratio)} pasa${quedan}`
 }
 
 function tituloTramo(t, etapas) {
@@ -25,11 +26,13 @@ function tituloTramo(t, etapas) {
 }
 
 /** Tramo entre dos etapas. `vertical` = versión para pantallas angostas (va entre una etapa y otra). */
-function Tramo({ t, etapas, frenado, vertical }) {
+function Tramo({ t, etapas, frenado, vertical, marcarFrenado }) {
   const resaltado = frenado && frenado.desde === t.desde
   return <div className={`fv2-rec-tramo is-${t.tono} ${resaltado ? 'is-frenado' : ''} ${vertical ? 'is-vertical' : ''}`} title={tituloTramo(t, etapas)}>
     <span className="fv2-rec-linea" aria-hidden="true" />
     <span className="fv2-rec-etiqueta">{textoTramo(t)}</span>
+    {/* La marca va en la línea (el paso entre las dos etapas), igual que el título del Panel. */}
+    {marcarFrenado && resaltado && <span className="fv2n-frenan">Aquí se frenan más</span>}
   </div>
 }
 
@@ -57,16 +60,20 @@ function Etapa({ e, total, frenado, mostrarMejor, onClick }) {
       <strong className="fv2-rec-numero">{formatNumber(e.llegaron)}</strong>
       <small>{e.stage === 1 ? 'leads entraron' : `${pct(total ? e.llegaron / total : 0)} del total`}</small>
       {pastilla}
-      <span className="fv2-rec-plazo">
-        <b>SLA {sla?.slaDias ?? 2} días hábiles</b>
-        <small>{sla?.promedioDias == null ? 'Sin promedio actual' : `Promedio actual: ${formatNumber(sla.promedioDias)} días`}</small>
-      </span>
-      <span className="fv2-rec-semaforos" aria-label={`SLA: ${sla?.rojos ?? 0} rojos, ${sla?.amarillos ?? 0} amarillos, ${sla?.verdes ?? 0} verdes`}>
-        <span className="is-rojo"><i />{formatNumber(sla?.rojos ?? 0)}</span>
-        <span className="is-amarillo"><i />{formatNumber(sla?.amarillos ?? 0)}</span>
-        <span className="is-verde"><i />{formatNumber(sla?.verdes ?? 0)}</span>
-      </span>
-      {sla?.sinFecha > 0 && <small className="fv2-rec-sin-fecha">{formatNumber(sla.sinFecha)} sin fecha</small>}
+      {/* Rediseño 2026-11: en Cierre no aplica el plazo; se oculta mientras no haya ningún lead abierto medido ahí
+          (si algún día hay alguno, se vuelve a mostrar para no esconder un atraso). */}
+      {(!esCierre || sla?.total > 0) && <>
+        <span className="fv2-rec-plazo">
+          <b>SLA {sla?.slaDias ?? 2} días hábiles</b>
+          <small>{sla?.promedioDias == null ? 'Sin promedio actual' : `Promedio actual: ${formatNumber(sla.promedioDias)} días`}</small>
+        </span>
+        <span className="fv2-rec-semaforos" aria-label={`SLA: ${sla?.rojos ?? 0} rojos, ${sla?.amarillos ?? 0} amarillos, ${sla?.verdes ?? 0} verdes`}>
+          <span className="is-rojo"><i />{formatNumber(sla?.rojos ?? 0)}</span>
+          <span className="is-amarillo"><i />{formatNumber(sla?.amarillos ?? 0)}</span>
+          <span className="is-verde"><i />{formatNumber(sla?.verdes ?? 0)}</span>
+        </span>
+        {sla?.sinFecha > 0 && <small className="fv2-rec-sin-fecha">{formatNumber(sla.sinFecha)} sin fecha</small>}
+      </>}
       {mostrarMejor && (e.mejor
         ? <span className="fv2-rec-mejor" title="Mayor % de paso a la siguiente etapa (mínimo 5 leads); en Cierre, % que se ganó">Mejor: ★ {e.mejor.name} · {pct(e.mejor.ratio)}</span>
         : <span className="fv2-rec-mejor is-pocos">Mejor: pocos datos</span>)}
@@ -86,7 +93,7 @@ function Etapa({ e, total, frenado, mostrarMejor, onClick }) {
  * @param mostrarLeyendas  leyendas de colores y SLA bajo el recorrido
  * @param onClickEtapa  (k) => …; sin él, las etapas no se pueden cliquear
  */
-export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = true, mostrarLeyendas = true, mostrarResumenSla = true, onClickEtapa }) {
+export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = true, mostrarLeyendas = true, mostrarResumenSla = true, marcarFrenado = false, onClickEtapa }) {
   const { etapas, tramos, frenado, entraron, enCamino, cerrados, sla } = recorrido
 
   return <div className="fv2-rec">
@@ -113,12 +120,12 @@ export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = tr
     <div className="fv2-rec-pista">
       {/* Tramos en escritorio: capa encima de la fila de círculos (no reciben clics). */}
       <div className="fv2-rec-tramos" aria-hidden="true">
-        {tramos.map((t) => <div key={t.desde} className="fv2-rec-celda"><Tramo t={t} etapas={etapas} frenado={frenado} /></div>)}
+        {tramos.map((t) => <div key={t.desde} className="fv2-rec-celda"><Tramo t={t} etapas={etapas} frenado={frenado} marcarFrenado={marcarFrenado} /></div>)}
       </div>
       {etapas.map((e, i) => <div key={e.stage} className="fv2-rec-paso">
         <Etapa e={e} total={entraron} frenado={frenado} mostrarMejor={mostrarMejor} onClick={onClickEtapa} />
         {/* Tramo en pantallas angostas: entre una etapa y la siguiente. */}
-        {tramos[i] && <Tramo t={tramos[i]} etapas={etapas} frenado={frenado} vertical />}
+        {tramos[i] && <Tramo t={tramos[i]} etapas={etapas} frenado={frenado} marcarFrenado={marcarFrenado} vertical />}
       </div>)}
     </div>
 
