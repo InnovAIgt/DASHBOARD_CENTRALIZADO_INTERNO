@@ -5,9 +5,11 @@
 import { useMemo, useState } from 'react'
 import { BarChart3, ChevronRight, Table2 } from 'lucide-react'
 import { formatNumber, formatPercent, monthLabel } from '../utils/analytics.js'
-import { Bandera, CODIGO_PAIS, COLORES, formatearRatio, Insignia, Vacio } from './comunes.jsx'
+import { COLORES, formatearRatio, Insignia, Vacio } from './comunes.jsx'
 import { embudoPorMes, mesesResumen, tablaMensualPais, tonoConversionTotal } from './datos.js'
-import { GraficaMensual, Leyenda, seriesMes } from './graficas.jsx'
+import { Leyenda } from './graficas.jsx'
+import { GraficaMeses, seriesBarras, tituloMeses } from './GraficaMeses.jsx'
+import { EncabezadoSeccion, EtiquetaPais } from './piezas.jsx'
 import { Tabla } from './Tablas.jsx'
 
 const VISTAS = [
@@ -100,59 +102,51 @@ function TablaPais({ grupo, calificado, onDato, onMes }) {
   </Tabla>
 }
 
+/**
+ * Rediseño Parte 3 (D27): gráfica de 3 barras con una sola escala (GraficaMeses.jsx), título con la conclusión,
+ * «Tabla por país» con las DOS tablas a la vez y todas sus columnas, y el embudo con 4 tarjetas por fila.
+ */
 export function LeadsPorMes({ leads, calificado, onDato, onMes }) {
   const [vista, setVista] = useState('grafica')
-  const [pais, setPais] = useState('Guatemala')
   const meses = useMemo(() => mesesResumen(leads), [leads])
   const embudo = useMemo(() => embudoPorMes(leads), [leads])
   const tablas = useMemo(() => (vista === 'tabla' ? tablaMensualPais(leads) : []), [leads, vista])
-  const grupo = tablas.find((t) => t.country === pais)
-  const subtitulos = {
-    grafica: `Columnas: ${calificado ? 'leads calificados (filtro)' : 'calificados + no calificados = leads del mes'} · línea: ganados · abajo: unidades vendidas · clic en un mes abre su detalle. Los ganados se ubican por fecha de cierre; el resto, por fecha de creación.`,
-    tabla: 'Resumen mensual por país, con las columnas del dashboard de leads · clic en un mes o un número abre su detalle.',
-  }
+  const explicacion = vista === 'grafica'
+    ? <>Cada mes tiene 3 barras: <b>azul</b> = {calificado ? 'leads calificados' : 'leads del mes (calificados en azul + no calificados en gris)'}, <b>verde</b> = ganados y <b>amarillo</b> = unidades vendidas. Cada lead cuenta en un solo mes: los ganados (y sus unidades), en el mes en que se cerró la venta; los demás, en el mes en que entraron. Pasa el mouse para ver el detalle o haz clic en un mes para abrirlo.</>
+    : 'Resumen mensual de cada país, con las columnas del dashboard de leads. Clic en un mes o en un número abre su detalle.'
 
   return <>
-    <section className="fv2-panel fv2-res-meses">
-      <header className="fv2-panel-cabeza">
-        <div>
-          <div className="fv2-panel-titulo">Leads y unidades por mes</div>
-          <div className="fv2-panel-sub">{subtitulos[vista]}</div>
-        </div>
+    <section className="fv2-panel fv2n-bloque fv2n-meses">
+      <EncabezadoSeccion titulo={tituloMeses(meses)} explicacion={explicacion}>
         <Segmentado opciones={VISTAS} valor={vista} onCambiar={setVista} etiqueta="Vista de leads por mes" />
-      </header>
+      </EncabezadoSeccion>
 
       {!meses.length && <Vacio titulo="Sin meses con datos" texto="Ajusta los filtros para ver la evolución mensual." />}
 
       {meses.length > 0 && vista === 'grafica' && <>
-        <Leyenda items={seriesMes(calificado)} />
-        <GraficaMensual filas={meses} calificado={calificado} onMes={(f) => onMes({ month: f.month, leads: f.leads })} />
+        <Leyenda items={seriesBarras(calificado)} />
+        <GraficaMeses filas={meses} calificado={calificado} onMes={(f) => onMes({ month: f.month, leads: f.leads })} />
       </>}
 
-      {meses.length > 0 && vista === 'tabla' && grupo && <>
-        <div className="fv2-res-tabla-cabeza">
-          <Segmentado etiqueta="País de la tabla mensual" valor={pais} onCambiar={setPais}
-            opciones={tablas.map((t) => ({ key: t.country, label: `${CODIGO_PAIS[t.country]} · ${t.country}` }))} />
-          <span className="fv2-res-nota"><Bandera pais={pais} /> {grupo.months.length} meses · {formatNumber(grupo.summary.total)} leads · {formatNumber(grupo.summary.won)} ganados · {formatearRatio(grupo.summary.conversion)} conversión</span>
-        </div>
-        <TablaPais grupo={grupo} calificado={calificado} onDato={onDato} onMes={onMes} />
-      </>}
+      {meses.length > 0 && vista === 'tabla' && <div className="fv2n-tablas-pais">
+        {tablas.map((grupo) => <div key={grupo.country} className="fv2n-tabla-pais">
+          <div className="fv2n-tabla-pais-cabeza">
+            <b>Resumen mensual · {grupo.country}</b>
+            <span className="fv2-res-nota">{grupo.months.length} {grupo.months.length === 1 ? 'mes' : 'meses'} · {formatNumber(grupo.summary.total)} leads · {formatNumber(grupo.summary.won)} ganados · {formatearRatio(grupo.summary.conversion)} conversión</span>
+            <EtiquetaPais pais={grupo.country} />
+          </div>
+          {/* Todas las columnas, también «No calificados» (con el filtro Calificado sale en 0). */}
+          <TablaPais grupo={grupo} calificado={false} onDato={onDato} onMes={onMes} />
+        </div>)}
+      </div>}
     </section>
 
-    {meses.length > 0 && <section className="fv2-panel fv2-res-embudo-mensual">
-      <header className="fv2-panel-cabeza">
-        <div>
-          <div className="fv2-panel-titulo">Embudo de conversión por mes</div>
-          <div className="fv2-panel-sub">
-            Total general y {meses.length} {meses.length === 1 ? 'mes' : 'meses'} con leads, actualizados con los filtros activos.
-            {calificado ? ' Se compara de calificados a ganados.' : ' Se compara de leads a calificados y ganados.'}
-          </div>
-        </div>
-      </header>
+    {meses.length > 0 && <section className="fv2-panel fv2n-bloque fv2-res-embudo-mensual fv2n-embudo-mes">
+      <EncabezadoSeccion titulo="Embudo de conversión por mes"
+        explicacion={<>Total del período y {meses.length} {meses.length === 1 ? 'mes' : 'meses'} con leads, con los filtros activos.{calificado ? ' Se compara de calificados a ganados.' : ' Se compara de leads a calificados y ganados.'} Clic en una cifra abre su detalle.</>} />
       <div className="fv2-res-embudos">
         {embudo.map((grupoMes) => <TarjetaEmbudo key={grupoMes.key} grupo={grupoMes} calificado={calificado} onDato={onDato} onMes={onMes} />)}
       </div>
-      <p className="fv2-res-nota">Los meses aparecen solo si tienen leads tras aplicar País, Período, Ejecutivo y Tipo de lead. Clic en una cifra abre su detalle.</p>
     </section>}
   </>
 }

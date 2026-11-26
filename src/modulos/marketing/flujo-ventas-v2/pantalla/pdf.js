@@ -46,7 +46,7 @@ export function cargarHerramientaPdf() {
 }
 
 export const MODULOS_PDF = [
-  { id: 'resumen', name: 'Resumen', description: 'Tarjetas por país, indicadores, leads por mes y embudo por etapa.' },
+  { id: 'resumen', name: 'Resumen', description: 'Resultados por país, indicadores, leads por mes y embudo por etapa.' },
   { id: 'ejecutivos', name: 'Ejecutivos', description: 'Ventas, conversión, unidades y seguimientos de cada ejecutivo.' },
   { id: 'informe', name: 'Informe detallado', description: 'Detalle de leads con su etapa, estado y resultado.' },
 ]
@@ -121,7 +121,7 @@ export function seccionesReporte({ leads, summary, baseEjecutivos, informe, filt
     ? meses.map((m) => `<tr><td>${esc(mesLargo(m.month))}</td><td class="c">${formatNumber(m.total)}</td><td class="c">${formatNumber(m.qualified)}</td>${calificado ? '' : `<td class="c">${formatNumber(m.unqualified)}</td>`}<td class="c">${formatNumber(m.won)}</td><td class="c">${esc(formatearRatio(m.conversion))}</td><td class="c">${m.won ? formatNumber(Math.round(m.avgUnits)) : '—'}</td><td class="c">${formatNumber(m.units)}</td></tr>`).join('')
     : `<tr><td colspan="${calificado ? 7 : 8}" class="c">Sin meses con datos</td></tr>`
   const resumen1 = `<section data-pdf-module="resumen">
-  <h2>01 · Resumen — tarjetas por país e indicadores</h2>
+  <h2>01 · Resumen — resultados por país e indicadores</h2>
   <div class="grid2">${paises}</div>
   <h2>Indicadores del período</h2>
   <div class="period-kpis">${kpis}</div>

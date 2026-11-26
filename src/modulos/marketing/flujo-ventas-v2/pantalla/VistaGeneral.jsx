@@ -1,7 +1,7 @@
-// Panel comercial unificado (rediseño 2026-11). Orden de arriba hacia abajo:
-//   1. 6 números (Parte 1) · 2. Qué atender hoy (Parte 1) · 3. Recorrido de las 6 etapas (Parte 1, antes estaba
-//   dentro de «Seguimiento de ventas y coaching») · después, sin cambios todavía: leads por mes, embudo,
-//   comparativa, tarjetas por país, Top 5 y seguimiento (se reordenan en las Partes 2 y 3).
+// Panel comercial unificado (rediseño 2026-11, D25 y D26). Orden de arriba hacia abajo:
+//   1. 6 números · 2. Qué atender hoy · 3. Recorrido de las 6 etapas · 4. Tabla de ejecutivos (Atrasos / Resultados;
+//   junta Top 5, tarjetas SLA, Prioridad del equipo y coaching) · 5. Leads y unidades por mes · 6. Embudo por mes
+//   (D27). La comparativa regional y las tarjetas por país se quitaron, y «¿Por qué se pierden?» pasó a la pestaña Forecast (D27).
 // No hay cálculos nuevos: todos los números salen de funciones que ya existían (summarize/byCountry en
 // resumenLeads, resumirSlaEtapas, buildForecast, embudoEtapas/recorridoLeads). Con filtro "Calificado":
 // una sola conversión; con "Todos": además la Conversión de calificados (D10) como línea pequeña.
@@ -9,18 +9,16 @@
 import { useMemo, useState } from 'react'
 import { buildForecast, formatNumber } from '../utils/analytics.js'
 import { resumirSlaEtapas } from '../utils/sla.js'
-import { Ejecutivos } from './Ejecutivos.jsx'
 import { COLORES, formatearRatio } from './comunes.jsx'
-import { embudoEtapas, fichaCoaching, INDICADORES, pctEntero, recorridoLeads, resumenLeads, soloCalificados, tonoConversionTotal, tonoCumplimientoSla } from './datos.js'
-import { COLOR_TONO, ComparativaRegional, TarjetasPais } from './graficas.jsx'
+import { embudoEtapas, fichaCoaching, pctEntero, recorridoLeads, resumenLeads, soloCalificados, tonoConversionTotal, tonoCumplimientoSla } from './datos.js'
+import { COLOR_TONO } from './graficas.jsx'
 import { LeadsPorMes } from './LeadsPorMes.jsx'
 import { EncabezadoSeccion, FilaNumeros, TarjetaAccion, TarjetaNumero } from './piezas.jsx'
 import { RecorridoLeads } from './RecorridoLeads.jsx'
-import { TopEjecutivos } from './TopEjecutivos.jsx'
+import { ID_TABLA_EJECUTIVOS, TablaEjecutivos } from './TablaEjecutivos.jsx'
 import { DetalleAsesor, DetalleEtapa, DetalleLeads, DetalleMes } from './Ventanas.jsx'
 
-const ID_EQUIPO = 'fv2-panel-seguimiento'
-const irAlEquipo = () => document.getElementById(ID_EQUIPO)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+const irATabla = () => document.getElementById(ID_TABLA_EJECUTIVOS)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 // Color del «Cumplimiento SLA» según tonoCumplimientoSla (límites en datos.js, D25). El rojo es el tono de texto del boceto.
 const COLOR_SLA = { verde: COLORES.verdeClaro, amarillo: '#e6b93a', rojo: '#ff8a99', neutro: undefined }
 const plural = (n, uno, varios) => `${formatNumber(n)} ${n === 1 ? uno : varios}`
@@ -67,7 +65,7 @@ function NumerosPrincipales({ leads, resumen, sla, calificado, onAbrir }) {
 }
 
 /** 2 · Qué atender hoy: lo urgente primero (rojo), luego lo recién vencido (amarillo) y lo que se puede cerrar (verde). */
-function QueAtenderHoy({ sla, forecast, horizonte, onIrForecast }) {
+function QueAtenderHoy({ sla, forecast, horizonte, onIrForecast, irAlEquipo }) {
   const rojos = sla.porEtapa.flatMap((etapa) => etapa.registros).filter(({ sla: s }) => s.estado === 'rojo')
   const ejecutivosRojo = new Set(rojos.map(({ lead }) => `${lead.pais}\u0000${lead.asesor || 'Sin ejecutivo asignado'}`)).size
   return <section className="fv2n-bloque" aria-label="Qué atender hoy">
@@ -99,6 +97,9 @@ export function VistaGeneral({ leads, filters, paisFiltro, leadsEquipo, baseEjec
   const [indicadorSel, setIndicadorSel] = useState(null) // { clave, leads, titulo? }
   const [asesorSel, setAsesorSel] = useState(null)
   const [etapaSel, setEtapaSel] = useState(null)
+  const [vistaEjecutivos, setVistaEjecutivos] = useState('atrasos')
+  // «Ver equipo» / «Ver cuáles»: abre la vista Atrasos de la tabla de ejecutivos y baja hasta ella.
+  const irAlEquipo = () => { setVistaEjecutivos('atrasos'); setTimeout(irATabla, 0) }
   const calificado = soloCalificados(filters)
   const resumen = useMemo(() => resumenLeads(leads), [leads])
   const embudo = useMemo(() => embudoEtapas(leads), [leads])
@@ -116,7 +117,7 @@ export function VistaGeneral({ leads, filters, paisFiltro, leadsEquipo, baseEjec
   return <div className="fv2-vista">
     <NumerosPrincipales leads={leads} resumen={resumen} sla={sla} calificado={calificado} onAbrir={(clave) => abrirDato(clave, leads)} />
 
-    <QueAtenderHoy sla={sla} forecast={forecast} horizonte={horizonte} onIrForecast={onIrForecast} />
+    <QueAtenderHoy sla={sla} forecast={forecast} horizonte={horizonte} onIrForecast={onIrForecast} irAlEquipo={irAlEquipo} />
 
     <section className="fv2-panel fv2n-bloque fv2n-recorrido">
       <EncabezadoSeccion titulo={tituloRecorrido(recorrido)}
@@ -124,21 +125,12 @@ export function VistaGeneral({ leads, filters, paisFiltro, leadsEquipo, baseEjec
       <RecorridoLeads recorrido={recorrido} mostrarResumenSla={false} marcarFrenado onClickEtapa={setEtapaSel} />
     </section>
 
-    <LeadsPorMes leads={leads} calificado={calificado} onDato={abrirDato} onMes={abrirMes} />
-
-    <ComparativaRegional paises={resumen.paises} calificado={calificado} paisFiltro={paisFiltro} onAbrir={(clave, pais) => abrirDato(
-      clave, leads.filter((lead) => lead.pais === pais), `${INDICADORES[clave].titulo} · ${pais}`,
-    )} />
-
-    <TarjetasPais paises={resumen.paises} calificado={calificado} tono={tonoConversionTotal} onAbrir={(clave, pais) => abrirDato(
-      clave, leads.filter((lead) => lead.pais === pais), `${INDICADORES[clave].titulo} · ${pais}`,
-    )} />
-
-    <TopEjecutivos leads={leads} calificado={calificado} onDato={abrirDato}
-      onIrEjecutivos={irAlEquipo}
+    <TablaEjecutivos leads={leads} leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonte} calificado={calificado}
+      vista={vistaEjecutivos} onVista={setVistaEjecutivos} onDato={abrirDato}
       onAsesor={(name, country) => setAsesorSel({ name, country })} />
 
-    <Ejecutivos leads={leads} leadsEquipo={leadsEquipo} baseEjecutivos={baseEjecutivos} horizonte={horizonte} />
+    <LeadsPorMes leads={leads} calificado={calificado} onDato={abrirDato} onMes={abrirMes} />
+
 
     {indicadorSel && <DetalleLeads {...indicadorSel} onClose={() => setIndicadorSel(null)} />}
     {mesSel && <DetalleMes {...mesSel} onClose={() => setMesSel(null)} />}

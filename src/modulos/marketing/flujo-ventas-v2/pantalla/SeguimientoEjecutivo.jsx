@@ -172,6 +172,17 @@ function perdidasPorEjecutivo(perdidos) {
   }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
 }
 
+const MOTIVOS_VISIBLES = 6
+
+function BotonMotivo({ r, i, total, activo, onClick }) {
+  return <button type="button" aria-pressed={activo}
+    className={`fv2-seg-motivo ${i === 0 ? 'is-principal' : ''} ${activo ? 'is-activo' : ''}`} onClick={onClick}>
+    <span className="fv2-seg-motivo-nombre">{i + 1}. {r.label}</span>
+    <span className="fv2-seg-motivo-pista" aria-hidden="true"><i style={{ width: `${(r.count / total) * 100}%` }} /></span>
+    <span className="fv2-seg-motivo-cifra"><b>{formatNumber(r.count)}</b> · {pct(r.count, total)}</span>
+  </button>
+}
+
 export function PerdidasEquipo({ leads, onLead }) {
   const perdidas = useMemo(() => lossBreakdown(leads), [leads])
   const porEjecutivo = useMemo(() => perdidasPorEjecutivo(perdidas.leads), [perdidas])
@@ -205,18 +216,18 @@ export function PerdidasEquipo({ leads, onLead }) {
       <div className="fv2-perd-columnas">
         <section className="fv2-seg-bloque">
           <h5>Ranking de causas <small className="fv2-perd-ayuda">qué parte de las pérdidas explica cada motivo · clic para filtrar</small></h5>
+          {/* Rediseño Parte 5 (D27): las 6 primeras causas a la vista; el resto en «Ver motivos más pequeños». */}
           <div className="fv2-seg-motivos">
-            {byReason.map((r, i) => {
-              const activo = motivoSel === r.reason
-              return <button key={r.reason} type="button" aria-pressed={activo}
-                className={`fv2-seg-motivo ${i === 0 ? 'is-principal' : ''} ${activo ? 'is-activo' : ''}`}
-                onClick={() => elegir(setMotivoSel, activo ? null : r.reason)}>
-                <span className="fv2-seg-motivo-nombre">{i + 1}. {r.label}</span>
-                <span className="fv2-seg-motivo-pista" aria-hidden="true"><i style={{ width: `${(r.count / total) * 100}%` }} /></span>
-                <span className="fv2-seg-motivo-cifra"><b>{formatNumber(r.count)}</b> · {pct(r.count, total)}</span>
-              </button>
-            })}
+            {byReason.slice(0, MOTIVOS_VISIBLES).map((r, i) => <BotonMotivo key={r.reason} r={r} i={i} total={total} activo={motivoSel === r.reason}
+              onClick={() => elegir(setMotivoSel, motivoSel === r.reason ? null : r.reason)} />)}
           </div>
+          {byReason.length > MOTIVOS_VISIBLES && <details className="fv2n-desplegable" open={byReason.slice(MOTIVOS_VISIBLES).some((r) => r.reason === motivoSel) || undefined}>
+            <summary>Ver {byReason.length - MOTIVOS_VISIBLES === 1 ? '1 motivo más pequeño' : `${formatNumber(byReason.length - MOTIVOS_VISIBLES)} motivos más pequeños`}</summary>
+            <div className="fv2-seg-motivos">
+              {byReason.slice(MOTIVOS_VISIBLES).map((r, j) => <BotonMotivo key={r.reason} r={r} i={MOTIVOS_VISIBLES + j} total={total} activo={motivoSel === r.reason}
+                onClick={() => elegir(setMotivoSel, motivoSel === r.reason ? null : r.reason)} />)}
+            </div>
+          </details>}
         </section>
 
         <section className="fv2-seg-bloque">

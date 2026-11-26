@@ -83,6 +83,90 @@
   }
   .fv2-rec-tramo.is-vertical .fv2n-frenan { position: static; display: inline-block; margin-left: 8px; transform: none; }
 
+  /* ---------- Tabla de ejecutivos (Parte 2) ---------- */
+  .fv2n-mono { font-family: var(--fv2-mono); }
+  .fv2n-cifra {
+    display: inline-block; min-width: 24px; padding: 0 8px; border-radius: 99px; text-align: center;
+    font-family: var(--fv2-mono); font-size: 12px; font-weight: 800; line-height: 20px;
+  }
+  .fv2n-cifra.is-rojo { background: var(--fv2n-fondo-rojo); color: var(--fv2n-texto-rojo); }
+  .fv2n-cifra.is-amarillo { background: var(--fv2n-fondo-amarillo); color: var(--fv2n-texto-amarillo); }
+  .fv2n-cifra.is-verde { background: var(--fv2n-fondo-verde); color: var(--fv2n-texto-verde); }
+  /* La tabla de ejecutivos crece con sus renglones (la caja compartida corta a 520 px y escondía a los demás). */
+  .fv2-tabla-caja.fv2n-ejec { max-height: none; overflow-x: auto; overflow-y: visible; }
+  .fv2n-ejec .fv2-tabla td { vertical-align: middle; }
+  .fv2n-ejec-fila { cursor: pointer; }
+  .fv2n-ejec-fila:hover td, .fv2n-ejec-fila.is-abierta td { background: rgba(255, 255, 255, .03); }
+  .fv2n-ejec-nombre {
+    display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none;
+    font-weight: 700; color: var(--fv2-texto); text-align: left; white-space: nowrap;
+  }
+  .fv2n-avatar {
+    display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--fv2n-fondo-azul); color: var(--fv2n-texto-azul); font-size: 11px; font-weight: 800;
+  }
+  .fv2n-ejec-flecha { width: 28px; color: var(--fv2n-texto-azul); text-align: right; }
+  .fv2n-ejec-abierta > td { padding: 0 !important; background: var(--fv2-caja); }
+  .fv2n-ejec-detalle { display: grid; gap: 10px; justify-items: start; padding: 12px 16px 16px 52px; }
+  .fv2n-ejec-detalle > * { justify-self: stretch; }
+  .fv2n-ejec-detalle > .fv2n-boton { justify-self: start; margin-top: 0; }
+  .fv2n-ejec-detalle h4 { margin: 0; font-size: 13px; color: #fff; }
+  .fv2n-ejec-detalle h4 small { margin-left: 6px; font-weight: 500; color: var(--fv2-tenue); }
+  .fv2n-ejec-vacio { margin: 0; font-size: 13px; color: var(--fv2-tenue); }
+  .fv2n-desplegable > summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--fv2n-texto-azul); }
+  .fv2n-desplegable[open] > summary { margin-bottom: 8px; }
+
+  /* Ficha completa (ventana «Ver coaching»): «Mis oportunidades por prioridad» no tenía estilos propios. */
+  .fv2-coach-prioridad { display: grid; gap: 10px; min-width: 0; padding: 13px; border: 1px solid var(--fv2-borde); border-radius: 12px; background: rgba(15, 17, 23, .42); }
+  .fv2-coach-prioridad > header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .fv2-coach-prioridad h4 { margin: 0; color: #fff; font-size: 13px; font-weight: 800; }
+  .fv2-coach-prioridad p { margin: 2px 0 0; color: var(--fv2-tenue); font-size: 11px; }
+  .fv2-coach-prioridad > header > strong { color: var(--fv2-texto); font-family: var(--fv2-mono); font-size: 12px; }
+
+  /* ---------- Leads por mes, tablas por país y embudo (Parte 3) ---------- */
+  .fv2n-meses .fv2n-sec-explicacion { max-width: 980px; }
+  .fv2n-meses .fv2n-sec-explicacion b { color: var(--fv2-texto); }
+  .fv2n-grafica { position: relative; }
+  .fv2n-tablas-pais { display: grid; gap: 16px; }
+  .fv2n-tabla-pais { display: grid; gap: 8px; min-width: 0; }
+  .fv2n-tabla-pais-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .fv2n-tabla-pais-cabeza b { color: #fff; font-size: 14px; }
+  .fv2n-tabla-pais-cabeza .fv2n-pais { margin-left: auto; }
+  /* Barra para bajar si hay muchos meses */
+  .fv2n-tabla-pais .fv2-tabla-caja { max-height: 320px; }
+  /* Embudo: 4 tarjetas por fila y más bajito (mismos datos y colores) */
+  .fv2n-embudo-mes .fv2-res-embudos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 0; }
+  .fv2n-embudo-mes .fv2-res-embudo-tarjeta { gap: 6px; padding: 10px 12px; }
+  .fv2n-embudo-mes .fv2-res-embudo { gap: 1px; }
+  .fv2n-embudo-mes .fv2-res-piso-pista { height: 9px; }
+  .fv2n-embudo-mes .fv2-res-entre { margin: 0; font-size: 10.5px; }
+
+  /* ---------- Detalle de leads (Parte 4) ---------- */
+  .fv2n-informe .fv2-informe-cabeza .fv2n-sec { margin-top: 2px; }
+  .fv2n-informe-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .fv2n-colores { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .fv2n-colores > span { margin-right: 2px; font-size: 12px; font-weight: 700; color: var(--fv2-tenue); }
+  .fv2n-color {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid var(--fv2-borde-fuerte); border-radius: 8px;
+    background: var(--fv2-elevado); font-size: 12px; font-weight: 700; color: var(--fv2-texto);
+  }
+  .fv2n-color i { width: 8px; height: 8px; border-radius: 50%; }
+  .fv2n-color.is-rojo { color: var(--fv2n-texto-rojo); } .fv2n-color.is-rojo i { background: var(--fv2-rojo); }
+  .fv2n-color.is-amarillo { color: var(--fv2n-texto-amarillo); } .fv2n-color.is-amarillo i { background: var(--fv2-amarillo); }
+  .fv2n-color.is-verde { color: var(--fv2n-texto-verde); } .fv2n-color.is-verde i { background: var(--fv2-verde); }
+  .fv2n-color.is-activo { border-color: var(--fv2-texto); background: rgba(255, 255, 255, .08); }
+  .fv2n-boton-columnas { margin-top: 0; }
+  .fv2n-dias { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .fv2n-dias b { min-width: 38px; font-family: var(--fv2-mono); text-align: right; }
+  .fv2n-dias-pista { display: block; width: 80px; height: 6px; overflow: hidden; border-radius: 99px; background: var(--fv2-elevado); }
+  .fv2n-dias-pista i { display: block; height: 100%; border-radius: 99px; background: #7a8094; }
+  .fv2n-dias-pista i.is-rojo { background: var(--fv2-rojo); }
+  .fv2n-dias-pista i.is-amarillo { background: var(--fv2-amarillo); }
+  .fv2n-dias-pista i.is-verde { background: var(--fv2-verde); }
+
+  @media (max-width: 1180px) {
+    .fv2n-embudo-mes .fv2-res-embudos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media (max-width: 1180px) {
     .fv2n-numeros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
@@ -90,4 +174,55 @@
     .fv2n-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fv2n-acciones { grid-template-columns: 1fr; }
   }
+}
+
+/* ---------- Forecast (Parte 5) ---------- */
+:where(.fv2, .fv2-ventana) {
+  .fv2n-texto-rojo { color: var(--fv2n-texto-rojo); }
+  .fv2n-texto-amarillo { color: var(--fv2n-texto-amarillo); }
+  /* Tarjetas de seguimientos: botón con el mismo aspecto que las de «Qué atender hoy» */
+  .fv2n-seg-tarjeta { text-align: left; cursor: pointer; }
+  .fv2n-seg-tarjeta.is-azul { border-left-color: var(--fv2-azul); }
+  .fv2n-seg-tarjeta.is-azul .fv2n-accion-numero { color: var(--fv2n-texto-azul); }
+  .fv2n-seg-tarjeta.is-rojo { background: var(--fv2n-fondo-rojo); }
+  .fv2n-seg-tarjeta.is-activa { outline: 2px solid var(--fv2-borde-fuerte); outline-offset: -2px; }
+  .fv2n-seg-etiqueta { font-size: 12px; font-weight: 800; color: var(--fv2n-texto-suave); }
+  .fv2n-seg-tarjeta.is-rojo .fv2n-seg-etiqueta { color: var(--fv2n-texto-rojo); }
+  .fv2n-seg-tarjeta.is-amarillo .fv2n-seg-etiqueta { color: var(--fv2n-texto-amarillo); }
+  .fv2n-seg-tarjeta.is-azul .fv2n-seg-etiqueta { color: var(--fv2n-texto-azul); }
+  .fv2n-seg-fila > td:first-child { border-left: 3px solid transparent; }
+  .fv2n-seg-fila.is-rojo > td:first-child { border-left-color: var(--fv2-rojo); }
+  .fv2n-seg-fila.is-amarillo > td:first-child { border-left-color: var(--fv2-amarillo); }
+  .fv2n-seg-fila.is-azul > td:first-child { border-left-color: var(--fv2-azul); }
+  .fv2n-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; cursor: help; }
+  .fv2n-tags > span { padding: 1px 8px; border-radius: 6px; background: var(--fv2-elevado); font-size: 12px; color: var(--fv2n-texto-suave); white-space: nowrap; }
+  .fv2n-vacio-forecast {
+    display: grid; justify-items: center; gap: 8px; padding: 22px; border: 1px dashed var(--fv2-borde-fuerte); border-radius: 12px;
+    text-align: center; color: var(--fv2n-texto-suave);
+  }
+  .fv2n-vacio-forecast p { margin: 0; }
+  .fv2n-vacio-forecast > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .fv2n-pipeline-pista { display: flex; flex: 1 1 220px; max-width: 100%; height: 10px; }
+  .fv2n-pipeline-pista::before { content: none; }
+  .fv2n-pipeline-pista { position: relative; }
+  .fv2n-pipeline-pista > i { display: block; height: 100%; min-width: 4px; }
+  .fv2n-pipeline-pista > i:first-child { border-radius: 99px 0 0 99px; }
+  .fv2n-pipeline-pista > i:last-child { border-radius: 0 99px 99px 0; }
+  .fv2n-pipeline-pista > i:only-child { border-radius: 99px; }
+  .fv2n-pipeline-pista > i.is-rojo { background: var(--fv2-rojo); }
+  .fv2n-pipeline-pista > i.is-amarillo { background: var(--fv2-amarillo); }
+  .fv2n-pipeline-pista > i.is-verde { background: var(--fv2-verde); }
+  .fv2n-pipeline-pista > i.is-gris { background: #5b6170; }
+  .fv2n-pipeline-cifras { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 11px; }
+  .fv2n-pipeline-cifras b { color: var(--fv2-texto); font-family: var(--fv2-mono); }
+  .fv2n-pipeline-flecha { color: var(--fv2n-texto-azul); transition: transform .15s; }
+  .fv2n-pipeline-etapa[open] .fv2n-pipeline-flecha { transform: rotate(90deg); }
+}
+/* La pista ocupa un largo proporcional a la etapa con más oportunidades (--ancho). Más específico que .fv2 .fv2-coach-pipeline-etapa. */
+.fv2 .fv2-coach-pipeline-etapa.fv2n-pipeline-etapa > summary { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto 16px; gap: 6px 14px; list-style: none; }
+.fv2 .fv2-coach-pipeline-etapa.fv2n-pipeline-etapa > summary::-webkit-details-marker { display: none; }
+.fv2 .fv2-coach-pipeline-etapa.fv2n-pipeline-etapa > summary strong { flex: none; }
+.fv2 .fv2n-pipeline-etapa .fv2n-pipeline-pista { width: var(--ancho); }
+@media (max-width: 900px) {
+  .fv2 .fv2-coach-pipeline-etapa.fv2n-pipeline-etapa > summary { grid-template-columns: minmax(0, 1fr) 16px; }
 }

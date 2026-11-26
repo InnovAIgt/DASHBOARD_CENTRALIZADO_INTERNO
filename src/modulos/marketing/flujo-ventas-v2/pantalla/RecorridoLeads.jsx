@@ -36,11 +36,12 @@ function Tramo({ t, etapas, frenado, vertical, marcarFrenado }) {
   </div>
 }
 
-function Etapa({ e, total, frenado, mostrarMejor, onClick }) {
+function Etapa({ e, total, frenado, mostrarMejor, marcarFrenado, onClick }) {
   const Icono = ICONOS[e.stage - 1] ?? Check
   const esCierre = e.stage === 6
   const ganados = esCierre ? e.pasaron : 0
-  const resaltada = frenado?.hasta === e.stage
+  // Con la marca en la línea (Panel, D26) la etapa destino ya no se resalta en amarillo.
+  const resaltada = !marcarFrenado && frenado?.hasta === e.stage
   const tono = resaltada ? 'amarillo' : e.llegaron === 0 ? 'vacio' : esCierre && ganados > 0 ? 'verde' : 'azul'
   const esperando = e.hoy > 0 ? `${formatNumber(e.hoy)} esperando aquí` : null
   const sla = e.sla
@@ -123,7 +124,7 @@ export function RecorridoLeads({ recorrido, titulo, subtitulo, mostrarMejor = tr
         {tramos.map((t) => <div key={t.desde} className="fv2-rec-celda"><Tramo t={t} etapas={etapas} frenado={frenado} marcarFrenado={marcarFrenado} /></div>)}
       </div>
       {etapas.map((e, i) => <div key={e.stage} className="fv2-rec-paso">
-        <Etapa e={e} total={entraron} frenado={frenado} mostrarMejor={mostrarMejor} onClick={onClickEtapa} />
+        <Etapa e={e} total={entraron} frenado={frenado} mostrarMejor={mostrarMejor} marcarFrenado={marcarFrenado} onClick={onClickEtapa} />
         {/* Tramo en pantallas angostas: entre una etapa y la siguiente. */}
         {tramos[i] && <Tramo t={tramos[i]} etapas={etapas} frenado={frenado} marcarFrenado={marcarFrenado} vertical />}
       </div>)}

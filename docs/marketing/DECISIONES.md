@@ -364,3 +364,100 @@ Los límites están en un solo lugar: `LIMITES_CUMPLIMIENTO_SLA` en
 
 **Piezas nuevas:** `pantalla/piezas.jsx` y `pantalla/piezas.css` (prefijo `fv2n-`). Son aparte porque Canales de
 marketing reutiliza `comunes.jsx` y `flujo-ventas-v2.css`; así esa pantalla no cambia.
+
+## D26 · 26/11/2026 · Rediseño del Panel completo, Parte 2: tabla de ejecutivos
+
+**Decisión de Keily:** juntar «Top 5 ejecutivos», las 4 tarjetas SLA, «Prioridad del equipo» y el coaching en una sola
+**tabla de ejecutivos**, debajo del Recorrido, con dos vistas:
+
+- **Atrasos (semáforo SLA)**, que se abre primero: un renglón por ejecutivo con Recibidos, Ganados, Conversión, Rojas,
+  Amarillas, A tiempo, Cumple SLA y Seguimientos vencidos. Orden: más rojas, luego más amarillas, luego más
+  seguimientos vencidos y luego nombre. El título dice quién tiene más etapas en rojo. Clic en el renglón: sus etapas en
+  rojo, sus etapas recién vencidas y sus seguimientos vencidos (antes en «Prioridad del equipo») y el botón
+  **«Ver coaching»**.
+- **Resultados:** la tabla por asesor de siempre (agrupada por país), sin quitar columnas.
+
+**Cifras:** en Atrasos, Recibidos = total de leads y Conversión = ganados ÷ total, las mismas de Resultados. Rojas,
+amarillas, a tiempo y Cumple SLA salen de `evaluarSlaEtapa` / la misma cuenta de `resumirSlaEtapas`; Cumple SLA usa los
+colores de D25. Seguimientos vencidos = `classifyFollowUps().overdue`, igual que «Prioridad del equipo». La ficha de
+coaching sigue con su propia «conversión de calificados».
+
+**«Ganados» = «Radicados»:** es exactamente la misma cifra (`isWon`, sumada con `summarize`). En pantalla ya dice
+«Ganados» en todas partes; «Radicados» solo aparece como aclaración en notas y en el PDF («= "Radicados" en el
+dashboard de leads»). Se usa «Ganados».
+
+**Ver coaching:** abre en una ventana la ficha de coaching que ya existía. «Ver ficha completa» muestra la ficha
+completa (antes, la vista «Ejecutivo»). Desde ahí, «Abrir detalle del ejecutivo» abre la ventana del ejecutivo de
+siempre.
+
+**Selector «Equipo» (opción A):** se quitó, junto con el selector «Vista». Ahora el filtro **País** de arriba también
+decide contra quién se compara el coaching: País = Guatemala compara contra el equipo de Guatemala, y Todos, contra los
+dos países. Con «GT + SV» no cambia ninguna cifra. Con un solo país, la ficha muestra lo mismo que antes mostraba
+«Equipo = ese país». El PDF no cambia (nunca usó ese selector). Está en un solo lugar, `filtrosEquipoComparacion` en
+`pantalla/datos.js`.
+
+**Pendiente:** la «vista del jefe» usará equipos por jefe (lista de jefes y sus ejecutivos), no por país. Se agregará
+en `filtrosEquipoComparacion` cuando exista esa lista.
+
+**Recorrido:** en el Panel, la etapa de Cierre ya no se resalta en amarillo, porque la marca «Aquí se frenan más» va
+en la línea. La ventana del ejecutivo conserva el resaltado de su punto débil.
+
+## D27 · 26/11/2026 · Rediseño, Partes 3 a 6: gráfica, Detalle de leads, Forecast y limpieza
+
+Solo cambian el diseño y el orden. Los cálculos, filtros y consultas no cambian, y las cifras se compararon antes y
+después con datos inventados.
+
+**Panel completo (orden final):** 6 números · Qué atender hoy · Recorrido · Tabla de ejecutivos · Leads y unidades
+por mes · Embudo de conversión por mes.
+
+- **Gráfica «Leads y unidades por mes»:** 3 barras por mes, una al lado de la otra, cada una con su número encima:
+  azul = leads calificados, verde = ganados y amarillo = unidades vendidas. Tiene **una sola escala** (se quitaron la
+  escala doble y la línea de ganados). Debajo de cada mes: «Conversión X % · N unidades por cierre». El título dice
+  cuál fue el mejor mes (el de más ganados; si empatan, el de más unidades). Con el filtro «Todos», la barra azul
+  sigue igual que antes (azul calificados + gris no calificados = leads del mes) y la leyenda lo dice. Se mantienen la
+  ventanita al pasar el mouse, el clic en el mes y «Tabla por país». Cada lead cuenta en un solo mes: los ganados, en
+  el mes de cierre; los demás, en el mes en que entraron (regla de siempre).
+- **Tabla por país:** las dos tablas a la vez («Resumen mensual · Guatemala» y «· El Salvador»), con todas sus
+  columnas. «No calificados» se ve siempre y sale en 0 con el filtro Calificado. Cada tabla tiene su barra para
+  bajar.
+- **Embudo por mes:** 4 tarjetas por fila y más bajito, con los mismos datos y colores.
+- **Se quitaron:** la «Comparativa regional» GT vs SV y las tarjetas grandes por país. Sus cifras siguen en los 6
+  números (desglose GT · SV), en la tabla de ejecutivos y en las tablas por país.
+
+**Detalle de leads:**
+
+- El título dice cuántos leads van más de 2 días hábiles tarde en su etapa.
+- Las 7 vistas rápidas se quedan. Además hay botones **Todos · Rojo · Ámbar · A tiempo**, con su cantidad, como
+  filtro extra dentro de la vista elegida. El PDF no usa ese filtro y sigue igual.
+- Por defecto se ven 8 columnas: Cliente, Ejecutivo, País (GT/SV), Etapa, Días en etapa (con barrita), Semáforo,
+  Próxima gestión y Unidades. Las demás se agregan con «Columnas» y ninguna se borró. «Semáforo» es el nombre en
+  pantalla de «SLA de etapa»; el Excel conserva el nombre de siempre.
+- Orden por defecto: primero los más atrasados (rojo → ámbar → a tiempo → sin fecha → cerrado; dentro de cada
+  color, más días primero). Clic en un encabezado ordena por esa columna, como antes.
+- **Excel:** exporta las columnas de siempre (los grupos que antes se veían por defecto) más los grupos que se
+  activen, y las filas que se ven (vista, búsqueda y color). Con el color en «Todos» exporta las mismas filas que
+  antes; solo cambia el orden, que ahora es «primero los más atrasados».
+
+**Semáforo de etapa:** con atraso, la pastilla dice solo cuánto va tarde («Rojo · 13 d tarde»); a tiempo dice
+«Verde · 1 d». Los días en etapa siguen en su columna y al pasar el mouse.
+
+**Ficha de coaching:** la conversión se muestra con un decimal (8.3 %).
+
+**Forecast (orden):**
+
+1. **Gestión de seguimientos:** vencidos, para hoy y próximos (`classifyFollowUps`), con una tabla que pone primero
+   los más atrasados. El último comentario se muestra como etiquetas cortas (rubro · medio de seguimiento · respuesta
+   del cliente) y el texto completo al pasar el mouse.
+2. **Forecast:** 7/15/30/60 días, sus números, el criterio y la tabla. Si no hay casos, en vez de la tabla vacía sale
+   un mensaje con los botones «Probar con 60 días» y «Ver los vencidos». Al final, «Oportunidades abiertas por etapa»
+   como barras de color (rojo / ámbar / a tiempo / sin fecha) con cantidad y promedio de días; clic para ver los
+   leads.
+3. **¿Por qué se pierden los leads?:** salió del Panel. Muestra el motivo principal, las 6 primeras causas, «Ver
+   motivos más pequeños» para el resto, las pérdidas por ejecutivo y el detalle de casos.
+
+**PDF:** solo cambiaron los textos («Tarjetas por país» → «Resultados por país» en la descripción del módulo y en el
+título de su sección). El contenido del PDF se arma con sus propias cuentas de `datos.js` y no dependía de las
+secciones que se quitaron.
+
+**Código que se dejó de usar y se quitó:** la gráfica de columnas con escala doble, las tarjetas por país, la
+comparativa regional, el Top 5 en barras, las tarjetas SLA y «Prioridad del equipo» como bloque aparte.

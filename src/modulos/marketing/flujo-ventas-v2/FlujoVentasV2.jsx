@@ -9,7 +9,7 @@ import { useFilters } from './hooks/useFilters.js'
 import { useLeads } from './hooks/useLeads.js'
 import { summarize } from './utils/analytics.js'
 import { AvisoError, Vacio } from './pantalla/comunes.jsx'
-import { aplicarFiltros, FILTROS_POR_DEFECTO, listaEjecutivos, periodoPorDefecto } from './pantalla/datos.js'
+import { aplicarFiltros, FILTROS_POR_DEFECTO, filtrosEquipoComparacion, listaEjecutivos, periodoPorDefecto } from './pantalla/datos.js'
 import { BarraFiltros } from './pantalla/Filtros.jsx'
 import { Forecast } from './pantalla/Forecast.jsx'
 import { Informe } from './pantalla/Informe.jsx'
@@ -87,9 +87,8 @@ function FlujoVentasV2Contenido() {
 
   const filtrados = useMemo(() => aplicarFiltros(leads, filters, periodo), [leads, filters, periodo])
   const summary = useMemo(() => summarize(filtrados), [filtrados])
-  // El referente de coaching siempre incluye ambos países y ejecutivos, pero conserva
-  // el mismo período y tipo de lead que la selección visible.
-  const filtrosEquipo = useMemo(() => ({ ...filters, filterPais: null, filterEjecutivo: null }), [filters])
+  // Equipo contra el que se compara el coaching (D26): sigue al filtro País; no al de ejecutivo.
+  const filtrosEquipo = useMemo(() => filtrosEquipoComparacion(filters), [filters])
   const leadsEquipo = useMemo(() => aplicarFiltros(leads, filtrosEquipo, periodo), [leads, filtrosEquipo, periodo])
   // Mantiene disponibles los ejecutivos del país aunque no tengan leads en el período actual.
   const baseEjecutivos = useMemo(() => listaEjecutivos(leads, filters), [leads, filters])

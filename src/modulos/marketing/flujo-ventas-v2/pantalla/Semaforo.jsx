@@ -24,10 +24,12 @@ export function SemaforoEtapa({ lead }) {
   if (sla.estado === 'sin_fecha') return <span className="fv2-sla-celda"><span className="fv2-sla-pildora is-sin-fecha">Sin fecha</span></span>
 
   const etiqueta = sla.estado === 'rojo' ? 'Rojo' : sla.estado === 'amarillo' ? 'Amarillo' : 'Verde'
-  const atraso = sla.diasAtraso ? ` · ${formatNumber(sla.diasAtraso)} d tarde` : ''
+  // Rediseño 2026-11: con atraso solo se dice cuánto va tarde («Rojo · 13 d tarde»); los días en etapa siguen en el
+  // texto al pasar el mouse y en su propia columna. A tiempo: «Verde · 1 d» (como antes).
+  const texto = sla.diasAtraso ? `${etiqueta} · ${formatNumber(sla.diasAtraso)} d tarde` : `${etiqueta} · ${formatNumber(sla.diasEnEtapa)} d`
   return <span className="fv2-sla-celda">
     <span className={`fv2-sla-pildora is-${sla.estado}`} title={`${sla.nombreEtapa}: ${sla.diasEnEtapa} días hábiles en etapa; SLA ${SLA_DIAS_HABILES} días`}>
-      {etiqueta} · {formatNumber(sla.diasEnEtapa)} d{atraso}
+      {texto}
     </span>
     {sla.aproximada && <small>aprox.</small>}
   </span>

@@ -773,3 +773,36 @@ abrir un PR para integrarlo.
 `RED_API_KEY no está configurada en el servidor`. El cambio de menú no resuelve esa configuración;
 la v2 no cargará leads hasta que la variable esté asignada al entorno de producción y se
 redepliegue.
+
+---
+
+## Rediseño del Panel, Detalle de leads y Forecast — 26/11/2026 ✅ (falta revisión de Keily)
+
+**Qué se hizo** (solo diseño y orden; ninguna fórmula, filtro ni consulta cambió):
+- **Partes 0 y 1 (commit `09a3f88`):**
+  - piezas de diseño nuevas (`pantalla/piezas.jsx` y `piezas.css`, aparte para no afectar Canales de marketing);
+  - 6 números arriba con desglose GT · SV y «Cumplimiento SLA»;
+  - «Qué atender hoy»;
+  - el Recorrido sube al Panel. **D25.**
+- **Parte 2:**
+  - tabla de ejecutivos con las vistas «Atrasos» y «Resultados»;
+  - «Ver coaching» en ventana;
+  - el filtro País decide el equipo de comparación del coaching, y se quitan los selectores «Equipo» y «Vista».
+    **D26.**
+- **Partes 3 a 6:**
+  - gráfica de 3 barras con una sola escala;
+  - las dos tablas por país a la vez;
+  - embudo de 4 por fila;
+  - se quitan la comparativa regional y las tarjetas por país;
+  - Detalle de leads con título, filtro de color, 8 columnas y orden por atraso;
+  - Forecast con seguimientos, forecast, barras por etapa y pérdidas;
+  - textos del PDF. **D27.**
+
+**Cómo se probó:**
+- Con datos inventados (140 leads de prueba; nunca datos reales) se compararon las cifras antes y después de cada
+  bloque: números de arriba, recorrido, cifras por ejecutivo, fichas de coaching, gráfica por mes, tablas por país,
+  embudo, vistas rápidas, forecast, oportunidades por etapa y pérdidas. Todas salieron iguales.
+- Lint (`tsc`), build y la prueba del semáforo (`utils/sla.test.js`) pasaron.
+- Las capturas de Canales de marketing salieron idénticas antes y después.
+
+**Pendiente:** revisión de Keily y su commit de las Partes 2 a 6.

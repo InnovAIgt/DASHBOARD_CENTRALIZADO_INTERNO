@@ -425,8 +425,20 @@ const agruparPorEjecutivo = (leads) => {
 }
 
 /**
- * Fichas de coaching. EQUIPO = `leadsEquipo` (los dos países, mismo período y tipo de lead; sin
- * filtro de país ni de ejecutivo). Las fichas salen de `leadsFicha` (respetan todos los filtros).
+ * Filtros del EQUIPO contra el que se compara cada ejecutivo en el coaching (DECISIONES D26).
+ * Igual que los filtros activos (País, Período, Tipo de lead…) pero SIN el filtro de ejecutivo: si se elige un
+ * ejecutivo, se compara contra su equipo, no contra sí mismo. País = Guatemala → equipo de Guatemala; Todos → los dos.
+ * (Antes de D26 el equipo ignoraba el País y había un selector «Equipo» aparte.)
+ * PENDIENTE: la «vista del jefe» usará equipos por jefe (lista de jefes y sus ejecutivos). Cuando exista esa
+ * lista, el filtro del jefe se agrega AQUÍ (p. ej. filterEjecutivo = ejecutivos del jefe) y el resto no cambia.
+ */
+export function filtrosEquipoComparacion(filters) {
+  return { ...filters, filterEjecutivo: null }
+}
+
+/**
+ * Fichas de coaching. EQUIPO = `leadsEquipo` (filtrosEquipoComparacion: mismo país, período y tipo de lead;
+ * sin filtro de ejecutivo). Las fichas salen de `leadsFicha` (respetan todos los filtros).
  * `base` = ejecutivos del país/selección (listaEjecutivos) para la franja "Sin leads".
  */
 export function fichaCoaching(leadsFicha, leadsEquipo, base = []) {

@@ -19,14 +19,15 @@ import { BarritasMes } from './graficas.jsx'
 import { RecorridoLeads } from './RecorridoLeads.jsx'
 import { NombreLead, Tabla, TablaLeads } from './Tablas.jsx'
 
-function Ventana({ capa, etiqueta, ancho = 'normal', onCerrar, children }) {
+// Ventana, CabezaVentana y useVentana se exportan para la ventana «Ver coaching» (Ejecutivos.jsx, rediseño Parte 2).
+export function Ventana({ capa, etiqueta, ancho = 'normal', onCerrar, children }) {
   return createPortal(<div className="fv2-ventana" style={{ zIndex: 1000 + capa }} role="presentation">
     <button type="button" className="fv2-ventana-fondo" onClick={onCerrar} aria-label="Cerrar ventana" />
     <section className={`fv2-ventana-caja is-${ancho}`} role="dialog" aria-modal="true" aria-label={etiqueta}>{children}</section>
   </div>, document.body)
 }
 
-function CabezaVentana({ eyebrow, titulo, subtitulo, onCerrar, children }) {
+export function CabezaVentana({ eyebrow, titulo, subtitulo, onCerrar, children }) {
   return <header className="fv2-ventana-cabeza">
     <div className="fv2-ventana-titulos">
       <div className="fv2-eyebrow">{eyebrow}</div>
@@ -47,7 +48,7 @@ function Metrica({ etiqueta, valor, nota, color }) {
 }
 
 /** Bloquea el desplazamiento de la página y cierra con Escape (como las ventanas anteriores). */
-function useVentana(onCerrar, hija, cerrarHija) {
+export function useVentana(onCerrar, hija, cerrarHija) {
   useEffect(() => {
     const alEscape = (event) => {
       if (event.key !== 'Escape') return
