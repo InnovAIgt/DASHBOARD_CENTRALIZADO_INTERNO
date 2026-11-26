@@ -1,6 +1,6 @@
 # Marketing v2 · Dashboard de Marketing
 
-> Dashboard de **Marketing** (Mailing, Redes sociales y Otros). **Flujo de ventas** es otro dashboard y su
+> Dashboard de **Marketing** (Mailing y Redes sociales). **Flujo de ventas** es otro dashboard y su
 > documentación está en [`docs/marketing/README.md`](../README.md).
 
 Estado: **en construcción** en la rama `feature/marketing-v2` (sin publicar). Mailing: las 6 sub-pestañas se abren;
@@ -10,13 +10,16 @@ correo con conteos del webhook (sin datos todavía); Relación con clientes espe
 ## Qué es
 
 Un solo dashboard de Marketing en el portal: menú **Marketing → Canales de marketing** (debajo de Flujo de ventas),
-con 3 pestañas:
+con 2 pestañas:
 
 | Pestaña | Qué muestra | Detalle |
 |---|---|---|
 | **Mailing** | Campañas de correo hechas y programadas: entrega, apertura, clic, lectura y leads, en general y por territorio de cada comercial. | [MAILING.md](MAILING.md) |
 | **Redes sociales** | Publicaciones hechas y programadas por marca y país, con sus leads. | [REDES.md](REDES.md) |
-| **Otros** | Canales que no son correo ni redes. | Por definir |
+
+**Otros** (PBX, web, referidos) **se quitó por ahora** (25/11/2026): en 2026 solo hubo 17 leads de esos orígenes en
+Prospekt y no hay datos de actividad del canal. Se puede retomar si aparece una fuente (Analytics, PBX o referidos).
+Motivo en [DECISIONES.md](DECISIONES.md); lo que se sabe de Prospekt queda en [OTROS.md](OTROS.md).
 
 ## De dónde salen los datos
 
@@ -35,7 +38,7 @@ Paso a producción (variables de Vercel, checklist de pruebas y mensaje para Edu
 
 | Archivo | Para qué |
 |---|---|
-| `src/modulos/marketing/marketing-v2/MarketingV2.jsx` | Pantalla principal: encabezado y pestañas Mailing · Redes sociales · Otros |
+| `src/modulos/marketing/marketing-v2/MarketingV2.jsx` | Pantalla principal: encabezado y pestañas Mailing · Redes sociales |
 | `src/modulos/marketing/marketing-v2/pantalla/Mailing.jsx` | Arma la pestaña Mailing: barra de sub-pestañas, filtros y la sub-pestaña elegida |
 | `src/modulos/marketing/marketing-v2/pantalla/mailing/` | Una pieza por sub-pestaña (`Generales`, `Comparar`, `Correos`, `Clientes`, `Cargos`), los `Filtros` y las `piezas` visuales comunes |
 | `src/modulos/marketing/marketing-v2/datos/useMailingDatos.js` | Pide los datos a nuestras rutas (`/api/marketing/mailing/campanas` y `/resumen`) |
@@ -79,5 +82,5 @@ Se quitaron del portal el 20/11/2026 (commit `9d08356`, ver [BITACORA.md](BITACO
 - [REDES.md](REDES.md) — borrador de la pestaña Redes sociales.
 - [PENDIENTES.md](PENDIENTES.md) — lo que falta, a quién se le pidió y su estado.
 - [DECISIONES.md](DECISIONES.md) — decisiones tomadas, con fecha y quién decidió.
-- [OTROS.md](OTROS.md) — lo que se sabe de las APIs de Prospekt IA (leads calificados y no calificados) y el reparto por canal.
+- [OTROS.md](OTROS.md) — lo que se sabe de las APIs de Prospekt IA (leads calificados y no calificados) y el reparto por canal (referencia; la pestaña Otros se quitó).
 - [sql/](sql/) — SQL de las tablas del proyecto Supabase «Dashboard Canales de marketing» (se corre a mano).

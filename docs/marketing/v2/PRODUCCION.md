@@ -73,7 +73,7 @@ van en el repo ni en la conversación. Preparado el 2026-11-23; **todavía sin p
 - [ ] Cargo y objetivo: con la clave de Marketing, guardar el cargo de una campaña de **prueba** y luego «Volver a lo
       sugerido» → `MKT_CLAVE_EDICION` y escritura en `mkt_campana_cargo` bien.
 - [ ] PDF de Mailing descarga con los filtros puestos.
-- [ ] **Redes sociales dice «Próximamente»** (no la pantalla de ejemplo). «Otros» dice «Próximamente».
+- [ ] **Redes sociales dice «Próximamente»** (no la pantalla de ejemplo). Solo hay 2 pestañas: Mailing y Redes sociales.
 - [ ] El menú se esconde y se asoma con el mouse, y el dashboard se corre sin quedar tapado.
 - [ ] Los demás dashboards abren igual que antes: Ingresos, Facturación, Flujo de ventas, Flash de altas, SAC, Bodega.
 

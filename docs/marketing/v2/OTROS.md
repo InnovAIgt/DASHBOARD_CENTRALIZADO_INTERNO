@@ -1,5 +1,8 @@
 # Otros · APIs de Prospekt IA
 
+> **Nota (25/11/2026):** la pestaña «Otros» de Canales de marketing **se quitó** (DECISIONES.md). Este archivo queda
+> como **referencia de las APIs de Prospekt IA**, que siguen usando Mailing y Redes.
+
 Lo que se sabe de las APIs de Prospekt IA (revisado por Keily el 24/11/2026). Sin datos personales: solo nombres de
 campos, conteos y valores de origen. Cómo se usan en Mailing: [MAILING.md](MAILING.md), sección 11.
 
