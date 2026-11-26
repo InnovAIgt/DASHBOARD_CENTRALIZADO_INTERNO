@@ -37,6 +37,9 @@ van en el repo ni en la conversación. Preparado el 2026-11-23; **todavía sin p
 | `MKT_REDES_VISIBLE` | Opcional. `si` muestra Redes en Production; vacía = «Próximamente» | No ponerla todavía |
 | `PROSPEKT_API_KEY` | Leer los leads calificados de Prospekt IA para Mailing (solo GET, encabezado `X-API-Key`). Aparte de `RED_API_KEY`, aunque pueda tener el mismo valor | **Falta.** Tipo Secret. Sin ella, Mailing funciona y la parte de leads avisa |
 
+**Opcional (Redes):** `TIPO_CAMBIO_GTQ_USD` (quetzales por 1 US$ para la pauta de Guatemala). Si no se pone, se usa 7.64
+(por confirmar con Isma o Contabilidad).
+
 **Ya existen y no cambian:** las de los otros dashboards (`RED_API_KEY`, `SAC_*`, Workflow, SAP, Firebase, etc.).
 
 **Quitar de Vercel** (ya no las lee nadie):

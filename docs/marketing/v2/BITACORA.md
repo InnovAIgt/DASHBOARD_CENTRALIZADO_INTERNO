@@ -2,6 +2,25 @@
 
 Diario del trabajo del dashboard nuevo de Marketing. Lo más reciente va arriba.
 
+## 2026-11-25 · Redes: cuenta publicitaria de Guatemala integrada
+
+- `act_2226740844336751` (GTQ) junto a la de SV en Anuncios, Presupuestos, Plataformas, Segmentaciones, meses de 2026 y
+  Año; todo en US$ con `TIPO_CAMBIO_GTQ_USD` (por defecto 7.64, por confirmar) y el monto original en Q en el detalle.
+  Reclutamiento de GT aparte. Leads de GT repartidos por campaña; costo por lead por país. Sin anuncios de DATA RED en
+  esa cuenta. Gasto comercial GT: junio a noviembre (noviembre: 3 campañas, Q 1,130.00 · US$ 147.92). REDES.md, 7.10.
+- El webhook de Brevo ya apunta a producción (confirmado en Brevo): se quitó de PENDIENTES; el bypass de Vercel ya se
+  puede borrar.
+
+## 2026-11-25 · Pendientes resueltos (revisado contra origin/main)
+
+- Merge a `main` aprobado y hecho: `origin/main` (53306da) ya tiene `api/marketing/canales.js` y el cron de
+  `/api/marketing/mantener-supabase` (0 12 * * *, 6:00 a. m. UTC−6) en vercel.json, y ya no lee
+  `GOOGLE_SERVICE_ACCOUNT_JSON`, `MARKETING_DRIVE_FOLDER_ID` ni `MARKETING_LOCAL_CSV_DIR`.
+- `PROSPEKT_API_KEY` y `CRON_SECRET` puestas en Vercel Production. Revisión de la campaña 80 hecha (el SQL 005 ya se
+  puede correr: hoy tiene 11 eventos).
+- Leads por campaña en Anuncios: hecho (entrada «leads estimados por campaña»).
+- Corrección: el informe anterior se basó en el `main` local desactualizado (a9aebe0).
+
 ## 2026-11-25 · Redes: PDF con leads y tarjetas compactas
 
 - El PDF de Redes incluye el bloque Leads de Redes (embudo y tarjetas), la columna de leads por país y marca, los leads

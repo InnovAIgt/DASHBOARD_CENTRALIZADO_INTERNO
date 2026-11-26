@@ -145,21 +145,20 @@ export function detalleLead(l, publicaciones = []) {
   }
 }
 
-/** Costo por lead: inversión de la cuenta USD (El Salvador) ÷ leads de SV; Guatemala no tiene pauta conectada. */
-export function detalleCostoLead({ gasto = 0, moneda = 'USD', leads = [], filtros = {} }) {
-  const c = costoPorLead({ gasto, leads, filtros })
-  const gt = leads.filter((l) => l.pais === 'GT').length
+/** Costo por lead por país: gasto de cada país (US$, sin reclutamiento) ÷ sus leads; total = gasto total ÷ leads totales. */
+export function detalleCostoLead({ anuncios = [], moneda = 'USD', leads = [], filtros = {} }) {
+  const c = costoPorLead({ anuncios, leads })
+  const paises = [['GT', 'Guatemala'], ['SV', 'El Salvador']].filter(([p]) => !filtros.pais || filtros.pais === p)
   return {
-    etiqueta: 'Leads de Redes', titulo: c.sinPauta ? 'Costo por lead · sin pauta' : `Costo por lead · ${dinero(c.costo, moneda)}`,
-    kpis: c.sinPauta ? [{ t: 'Guatemala', v: 'Sin pauta', c: '#5b6b84', sub: 'no hay anuncios en la cuenta conectada' }] : [
-      { t: 'Inversión', v: dinero(gasto, moneda), c: '#5b6b84', sub: 'cuenta USD · El Salvador' },
-      { t: 'Leads de El Salvador', v: numero(c.leadsSV), c: ROSA },
-      { t: 'Costo por lead', v: dinero(c.costo, moneda), c: '#d98b1f', sub: 'inversión ÷ leads de SV' },
+    etiqueta: 'Leads de Redes', titulo: `Costo por lead · ${c.costo === null ? 'sin leads' : dinero(c.costo, moneda)}`,
+    kpis: [
+      { t: 'Inversión', v: dinero(c.gasto, moneda), c: '#5b6b84', sub: 'sin reclutamiento · cuentas de SV y GT en US$' },
+      { t: 'Leads', v: numero(c.leads), c: ROSA },
+      { t: 'Costo por lead', v: dinero(c.costo, moneda), c: '#d98b1f', sub: 'inversión ÷ leads' },
     ],
-    bloques: [{ t: 'Por país', filas: [
-      { l: 'El Salvador', v: c.sinPauta ? '—' : `${numero(c.leadsSV)} leads · ${dinero(c.costo, moneda)} c/u`, sub: 'con pauta (cuenta USD)' },
-      { l: 'Guatemala', v: `${numero(gt)} leads · sin pauta`, sub: 'RED GT no tiene anuncios en la cuenta conectada' },
-    ] }],
-    nota: 'La pauta es solo de la cuenta USD (El Salvador): por eso el costo por lead se calcula solo con los leads de El Salvador.',
+    bloques: [{ t: 'Por país', filas: paises.map(([p, nombre]) => ({ l: nombre,
+      v: `${numero(c.porPais[p].leads)} leads · ${c.porPais[p].costo === null ? 'sin leads' : `${dinero(c.porPais[p].costo, moneda)} c/u`}`,
+      sub: `inversión ${dinero(c.porPais[p].gasto, moneda)}` })) }],
+    nota: 'Cada país divide su propia inversión entre sus propios leads. La pauta de Guatemala (en quetzales) se pasa a US$ con el tipo de cambio por confirmar (DECISIONES.md).',
   }
 }

@@ -97,7 +97,7 @@ export function TablaHechasProgramadas({ items, marcas, filtros, leads, alAbrirM
 }
 
 /** Bloque «Leads de Redes»: del post al cliente (embudo) y leads del mes. */
-function LeadsDeRedes({ leads, alcance, mensajes, gasto, moneda, abrir, items, filtros }) {
+function LeadsDeRedes({ leads, alcance, mensajes, anuncios, moneda, abrir, items, filtros }) {
   const r = leads.listos ? resumenLeadsRedes(leads.delMes) : null
   const pasos = [
     { k: 'Alcance', sub: 'vieron el contenido', v: alcance ?? 0, c: '#2fb8c4', fuente: 'Meta' },
@@ -108,8 +108,10 @@ function LeadsDeRedes({ leads, alcance, mensajes, gasto, moneda, abrir, items, f
   ]
   // Las barras no van a escala con el alcance: se dibujan en escala logarítmica para que se vean todas.
   const escala = (v) => (v > 0 ? Math.log10(v + 1) / Math.log10(Math.max(...pasos.map((p) => p.v ?? 0), 1) + 1) : 0)
-  // La pauta es solo de la cuenta USD (El Salvador): costo por lead = inversión ÷ leads de SV; en GT, «sin pauta».
-  const cpl = costoPorLead({ gasto, leads: leads.delMes, filtros })
+  // Costo por lead por país: inversión de cada país (SV y GT en US$, sin reclutamiento) ÷ sus leads.
+  const cpl = costoPorLead({ anuncios, leads: leads.delMes })
+  const porPais = ['GT', 'SV'].filter((p) => !filtros.pais || filtros.pais === p)
+    .map((p) => `${p} ${cpl.porPais[p].costo === null ? '—' : dinero(cpl.porPais[p].costo, moneda)}`).join(' · ')
   const abrirPaso = (p) => (p.lista && leads.listos ? abrir(detalleListaLeads(p.lista, p.k, items)) : null)
   return <>
     <h2 className="mkv2-redes-seccion">Leads de Redes</h2>
@@ -134,9 +136,9 @@ function LeadsDeRedes({ leads, alcance, mensajes, gasto, moneda, abrir, items, f
           <div className="mkv2-redes-mini-kpi" style={{ '--c': '#18935f' }}><small>{TEXTO_CERRADOS}</small><b><Leads listos={leads.listos} n={r?.cerrados} motivo={leads.motivo} /></b>
             <span>{r?.total ? `${pct((r.cerrados / r.total) * 100)} de los leads` : ''}</span></div>
           <div className={`mkv2-redes-mini-kpi ${leads.listos ? 'mkv2-redes-clic' : ''}`} style={{ '--c': '#d9a520' }}
-            {...(leads.listos ? clicDetalle(abrir, () => detalleCostoLead({ gasto, moneda, leads: leads.delMes, filtros })) : {})}>
-            <small>Costo por lead</small><b>{!leads.listos ? <Leads listos={false} motivo={leads.motivo} /> : cpl.sinPauta ? 'Sin pauta' : dinero(cpl.costo, moneda)}</b>
-            <span>{cpl.sinPauta ? 'Guatemala no tiene pauta conectada' : `inversión ÷ ${numero(cpl.leadsSV)} leads de SV · GT sin pauta`}</span></div>
+            {...(leads.listos ? clicDetalle(abrir, () => detalleCostoLead({ anuncios, moneda, leads: leads.delMes, filtros })) : {})}>
+            <small>Costo por lead</small><b>{!leads.listos ? <Leads listos={false} motivo={leads.motivo} /> : cpl.costo === null ? 'Sin leads' : dinero(cpl.costo, moneda)}</b>
+            <span>{porPais} · inversión de cada país ÷ sus leads</span></div>
           <div className="mkv2-redes-mini-kpi" style={{ '--c': '#5b6b84' }}><small>No calificados</small><b>{leads.noCalificados ? numero(leads.noCalificados.total) : '—'}</b>
             <span>total de Prospekt · no dice el canal</span></div>
         </div>
@@ -250,7 +252,7 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso, leadsR
         tip="Clic para ver la lista" onClick={() => abrir(detalleListaLeads(leads.delMes, 'Leads calificados de Redes', base))} />}
     </div>
 
-    <LeadsDeRedes leads={leads} alcance={mc?.alcanceDiario} mensajes={t.mensajes} gasto={unaMoneda?.gastado ?? 0} moneda={moneda} abrir={abrir} items={base} filtros={f} />
+    <LeadsDeRedes leads={leads} alcance={mc?.alcanceDiario} mensajes={t.mensajes} anuncios={unaMoneda ? anuncios.filter((a) => a.moneda === unaMoneda.moneda) : anuncios} moneda={moneda} abrir={abrir} items={base} filtros={f} />
 
     <h2 className="mkv2-redes-seccion">Contenido</h2>
     <div className="mkv2-redes-tres">
@@ -345,7 +347,7 @@ export function ResumenRedes({ datos, items, filtros, filtrar, irA, caso, leadsR
               costo: a.costoMensaje, pocos: a.pocos, semaforo: a.semaforo, onClick: () => abrir(detalleCampana(a, { meta: META_COSTO_MENSAJE[a.moneda] })) }))} />
           : <p className="mkv2-redes-vacio is-gris">Sin campañas de marketing en este mes</p>}
         <p className="mkv2-nota">{tRec.campanas > 0 && <>Reclutamiento (aparte): {dineroPorMoneda(tRec.porMoneda, 'gastado')} en {numero(tRec.campanas)} {tRec.campanas === 1 ? 'campaña' : 'campañas'}. </>}
-          {gtSinPauta && 'RED GT: sin pauta en la cuenta conectada.'}</p>
+          {gtSinPauta && 'RED GT: sin pauta en este mes.'}</p>
       </Tarjeta>
     </div>
     <p className="mkv2-nota">Redes: <span style={{ color: COLOR_RED.fb }}>■</span> {REDES.fb} · <span style={{ color: COLOR_RED.ig }}>■</span> {REDES.ig}. Fechas en hora de Guatemala y El Salvador (UTC−6). El alcance del Resumen es la suma del alcance diario de las cuentas (una persona puede contarse más de una vez). Leads: exactos por origen «PostIAlo Redes Sociales»; la publicación de cada lead es estimada.</p>

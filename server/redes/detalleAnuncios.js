@@ -13,6 +13,7 @@
  * Funciones puras + el lector de la ruta; probadas con respuestas inventadas.
  */
 import { esReclutamiento } from './reclutamiento.js'
+import { conOriginal, filasEnUsd, tipoCambio } from './moneda.js'
 import { METRICAS, paginaDelAnuncio, textoDelAnuncio, tituloDe } from './transformar.js'
 
 const ACCIONES_FORMULARIO = ['onsite_conversion.lead_grouped', 'lead']
@@ -277,10 +278,20 @@ export async function leerDetalle({ cuentaId, mes, hoy, llamar, llamarUno, op, m
   const errores = {}
   for (const [consulta, msg] of Object.entries(fallas)) for (const recuadro of RECUADROS[consulta] ?? []) errores[recuadro] ??= msg
   const cuenta = datos.cuenta ?? {}
+  // Moneda: si la cuenta no es en US$ (GT, en quetzales), todo el dinero se pasa a US$ con el tipo de cambio
+  // (server/redes/moneda.js) ANTES de armar el detalle; cada campaña y conjunto guarda también su monto original.
+  const monedaCuenta = String(cuenta.currency ?? '').toUpperCase() || 'USD'
+  const tc = tipoCambio(monedaCuenta, op?.env) ?? 1
+  const usd = (k) => filasEnUsd(datos[k] ?? [], tc)
+  const d = armarDetalle({ ads: datos.ads ?? [], porAnuncio: usd('porAnuncio'), edadSexo: usd('edadSexo'), ubicaciones: usd('ubicaciones'), horas: usd('horas'),
+    porConjunto: usd('porConjunto'), horasConjunto: usd('horasConjunto'), porSemana: usd('porSemana'), porDia: usd('porDia'),
+    conjuntos: usd('conjuntos'), campanas: usd('campanas'), marcaDe, moneda: tc === 1 ? monedaCuenta : 'USD', zonaHoraria: cuenta.timezone_name ?? null })
+  const original = (x) => ({ ...conOriginal(x, monedaCuenta, tc), ...(x.anuncios ? { anuncios: x.anuncios.map((a) => conOriginal(a, monedaCuenta, tc)) } : {}) })
   return {
-    ...armarDetalle({ ads: datos.ads ?? [], porAnuncio: datos.porAnuncio ?? [], edadSexo: datos.edadSexo ?? [], ubicaciones: datos.ubicaciones ?? [], horas: datos.horas ?? [],
-      porConjunto: datos.porConjunto ?? [], horasConjunto: datos.horasConjunto ?? [], porSemana: datos.porSemana ?? [], porDia: datos.porDia ?? [],
-      conjuntos: datos.conjuntos ?? [], campanas: datos.campanas ?? [], marcaDe, moneda: String(cuenta.currency ?? '').toUpperCase() || 'USD', zonaHoraria: cuenta.timezone_name ?? null }),
+    ...d,
+    presupuestos: d.presupuestos.map(original),
+    segmentos: d.segmentos.map(original),
+    cuentas: [{ id: act.replace('/act_', ''), moneda: monedaCuenta, tipoCambio: tc }],
     errores,
     guardados: [...new Set(guardados.flatMap((k) => RECUADROS[k] ?? []))],
     // Sin la lista de anuncios no se sabe la marca de cada fila: todo sale «sin marca» (aviso para la pantalla).

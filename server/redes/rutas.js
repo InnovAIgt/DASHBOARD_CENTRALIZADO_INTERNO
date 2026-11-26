@@ -17,6 +17,7 @@ import { CUADRO_MARCAS, cuadroListo, cuentasDelCuadro, marcaPorCuenta } from './
 import { ErrorMeta, llamarMeta, llamarMetaTodo } from './meta.js'
 import { esReclutamiento } from './reclutamiento.js'
 import { leerDetalle } from './detalleAnuncios.js'
+import { conOriginal, filasEnUsd, tipoCambio } from './moneda.js'
 import { ESTADOS_ANUNCIO, fechaGt } from './transformar.js'
 import { alcancePorDia, anunciosPorPagina, cuentaDashboard, paginaDelAnuncio, METRICAS, mesAnterior, metricasInstagram, metricasPagina, programadasFacebook, publicacionesFacebook, publicacionesInstagram, rangoMes, tramos } from './transformar.js'
 
@@ -142,7 +143,9 @@ const LECTORES = {
     const r = await porCuenta(unicas, async (c) => [await leerDetalle({ cuentaId: c.id, mes, hoy, llamar, llamarUno: llamarMeta, op, marcaDe })])
     // Si un recuadro no cargó, va un aviso (la copia completa dura 2 min; lo que sí cargó queda en la caché de cada consulta).
     const fallidos = [...new Set(r.datos.flatMap((d) => Object.keys(d.errores ?? {})))]
-    return fallidos.length ? { ...r, avisos: [...r.avisos, `Algunos recuadros de Anuncios no cargaron (${fallidos.join(', ')}); se reintenta en unos minutos.`] } : r
+    // Las cuentas (SV en US$ y GT en quetzales, ya pasada a US$) se juntan en UN solo detalle: cada fila lleva su marca.
+    const junto = { ...r, datos: r.datos.length ? [juntarDetalles(r.datos)] : [] }
+    return fallidos.length ? { ...junto, avisos: [...r.avisos, `Algunos recuadros de Anuncios no cargaron (${fallidos.join(', ')}); se reintenta en unos minutos.`] } : junto
   },
 }
 
@@ -170,6 +173,21 @@ export async function mediaInstagram(id, desde, hasta, op, maxPaginas = 40) {
   return salida
 }
 
+/**
+ * Junta el detalle de varias cuentas publicitarias (ya todo en US$) en uno: las listas se suman una tras otra (cada
+ * fila trae su marca, así que el filtro de país sigue funcionando); errores y copias guardadas se unen.
+ */
+export function juntarDetalles(detalles = []) {
+  if (detalles.length === 1) return detalles[0]
+  const LISTAS = ['edadSexo', 'ubicaciones', 'horas', 'segmentos', 'presupuestos', 'formularios', 'cuentas']
+  const salida = { ...detalles[0], moneda: 'USD' }
+  for (const k of LISTAS) salida[k] = detalles.flatMap((d) => d[k] ?? [])
+  salida.errores = Object.assign({}, ...detalles.map((d) => d.errores ?? {}).reverse())
+  salida.guardados = [...new Set(detalles.flatMap((d) => d.guardados ?? []))]
+  salida.sinMarcas = detalles.some((d) => d.sinMarcas)
+  return salida
+}
+
 /** Resultados de anuncios por mes (time_increment mensual) entre dos fechas AAAA-MM-DD, por página del anuncio. */
 async function leerAnuncios(cuentas, since, until, op) {
   const cuadro = op.cuadro ?? CUADRO_MARCAS
@@ -190,7 +208,12 @@ async function leerAnuncios(cuentas, since, until, op) {
         fields: 'ad_id,campaign_id,campaign_name,spend,reach,impressions,clicks,actions' }, op),
     ])
     for (const ad of ads) { const m = marcaDe.get(paginaDelAnuncio(ad)); if (m) marcasConAnuncios.add(m) }
-    return anunciosPorPagina({ insights, ads, campanas, cuentaAds: cuenta, marcaDe, paisDe, esReclutamiento })
+    // GT gasta en quetzales: se pasa a US$ antes de armar las filas (server/redes/moneda.js); cada fila guarda su monto
+    // original para mostrar «Q … · US$ …». Así las dos cuentas se suman en US$.
+    const moneda = String(cuenta.currency ?? '').toUpperCase() || 'USD'
+    const tc = tipoCambio(moneda, op.env) ?? 1
+    return anunciosPorPagina({ insights: filasEnUsd(insights, tc), ads, campanas: filasEnUsd(campanas, tc), cuentaAds: tc === 1 ? cuenta : { ...cuenta, currency: 'USD' }, marcaDe, paisDe, esReclutamiento })
+      .map((x) => conOriginal(x, moneda, tc))
   })
   return { ...r, extra: { marcasConAnuncios: [...marcasConAnuncios].sort() } }
 }

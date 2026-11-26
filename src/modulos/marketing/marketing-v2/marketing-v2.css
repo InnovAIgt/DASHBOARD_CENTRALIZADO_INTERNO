@@ -1540,3 +1540,6 @@
 
 /* Leads por campaña: etiqueta «estimado» (la regla va en el globo). */
 .mkv2 .mkv2-redes-estimado { display: inline-block; margin-left: 4px; padding: 0 6px; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #e27bb5; background: rgba(214, 88, 155, .12); border-radius: 999px; vertical-align: 1px; }
+
+/* Monto original en quetzales (cuenta de Guatemala) debajo del monto en US$. */
+.mkv2 .mkv2-redes-original { display: block; font-size: 10px; font-weight: 500; color: var(--fv2-tenue); }
