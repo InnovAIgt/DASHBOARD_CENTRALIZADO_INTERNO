@@ -345,10 +345,10 @@ export const PortalLayout: React.FC = () => {
     );
   };
 
-  const menuOculto = activePage === 'flujo-ventas-v2' || activePage === 'marketing-v2';
+  const menuOculto = activePage === 'flujo-ventas-v2' || activePage === 'marketing-v2' || activePage === 'flash-altas';
 
   return (
-    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''} ${activePage === 'marketing-v2' ? 'mkv2-menu-empuja' : ''}`}>
+    <div className={`portal-app ${menuOculto ? 'fv2-menu-oculto' : ''} ${menuOculto && menuAsomado ? 'is-menu-asomado' : ''} ${activePage === 'marketing-v2' || activePage === 'flash-altas' ? 'mkv2-menu-empuja' : ''}`}>
       {/* Flujo de ventas v2: franja invisible en el borde izquierdo que hace asomar el menú */}
       {menuOculto && (
         <div
