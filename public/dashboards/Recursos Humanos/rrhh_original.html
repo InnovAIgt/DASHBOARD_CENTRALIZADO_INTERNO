@@ -65,7 +65,7 @@
   white-space:nowrap;
   line-height:1;
 }
-/* ESTILOS PERSONALIZADOS PARA LAS 3 TARJETAS KPI REDISEÑADAS */
+/* ESTILOS PERSONALIZADOS PARA LAS 3 TARJETAS KPI */
 .apx-kpirow-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -78,7 +78,6 @@
     grid-template-columns: 1fr;
   }
 }
-
 .kpi-card-3 {
   background: #151c28;
   border-radius: 12px;
@@ -94,7 +93,7 @@
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Tarjeta 1: Total Solicitudes */
+/* Tarjeta 1: Total de Solicitudes */
 .kpi-card-3.card-total {
   background: linear-gradient(145deg, #182030 0%, #121722 100%);
   border-left: 5px solid #8b909e;
@@ -144,7 +143,7 @@
 /* Divisiones internas para Primer y Segundo Aprobador */
 .kpi-divisions-3 {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
   padding-top: 12px;
@@ -188,6 +187,8 @@
 .val-pendientes { color: #facc15; }
 .val-rechazadas { color: #f87171; }
 .val-rechazadas-1 { color: #fb923c; }
+.val-caducadas-1 { color: #a855f7; }
+.val-caducadas-2 { color: #f472b6; }
 
 table.apx-table .apx-num{text-align:right;font-variant-numeric:tabular-nums}
 .apx-dur-resumen{padding:10px 16px 0}
@@ -208,7 +209,6 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
 
 /* ==========================================
    RANKINGS: 3 COLUMNAS DEL MISMO TAMAÑO
-   QUE LAS TARJETAS KPI SUPERIORES
    ========================================== */
 .apx-rankings-row {
   grid-column: span 12;
@@ -396,6 +396,13 @@ html body .page-header>.std-sync:not(.std-sync-busy){display:none}
 html body .emp-n.emp-off,html body .emp-n.emp-off *:not(.emp-dot){color:#8e95a5 !important;-webkit-text-fill-color:#8e95a5 !important}
 .emp-off{color:#8e95a5}
 .emp-off .emp-dot{background:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.2)}
+/* ==== Caducadas (24 h) y cuenta regresiva ==== */
+.cd-chip{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:#facc15;background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.35);white-space:nowrap;vertical-align:middle}
+.cd-chip.cd-urg{color:#fb923c;background:rgba(251,146,60,.14);border-color:rgba(251,146,60,.45)}
+/* ==== Gráfica de Duraciones (embudo) ==== */
+.dg-seg{cursor:pointer;transition:filter .18s,opacity .18s;outline:0}
+.dg-seg:hover,.dg-seg:focus-visible{filter:brightness(1.18) drop-shadow(0 0 8px var(--dg-c))}
+.dg-txt{pointer-events:none;font-family:inherit}
 </style>
 </head>
 <body class="apx-rh-page">
@@ -462,7 +469,7 @@ html body .emp-n.emp-off,html body .emp-n.emp-off *:not(.emp-dot){color:#8e95a5 
   <div class="tabs" id="rrhhTabs" role="tablist" aria-label="Vistas del dashboard">
     <button type="button" class="tab-btn active" role="tab" id="tabResumen" aria-selected="true" aria-controls="panelResumen">Resumen</button>
     <button type="button" class="tab-btn" role="tab" id="tabInforme" aria-selected="false" aria-controls="panelInforme" tabindex="-1">Informe detallado</button>
-    <button type="button" class="tab-btn" role="tab" id="tabDescansos" aria-selected="false" aria-controls="panelDescansos" tabindex="-1">Acciones</button>
+    <button type="button" class="tab-btn" role="tab" id="tabDuracion" aria-selected="false" aria-controls="panelDuracion" tabindex="-1">Duración</button>
   </div>
      <div class="apx-tabpanel" role="tabpanel" id="panelResumen" aria-labelledby="tabResumen">
     <div class="apx-kpirow-3" id="kpiRow"></div>
@@ -520,13 +527,7 @@ html body .emp-n.emp-off,html body .emp-n.emp-off *:not(.emp-dot){color:#8e95a5 
       </div>
       <div id="chartTipo"></div>
     </div>
-    <div class="card apx-card card-month">
-      <div class="apx-card-head">
-        <div><h2 class="card-title">Acciones por mes</h2><p class="card-caption">Evolución temporal de las solicitudes del período.</p></div>
-        <div class="mes-ctrl"><select id="mesAreaSel" class="mes-sel" aria-label="Filtrar por área"></select><span class="apx-insight" id="insightMes">Tendencia</span></div>
-      </div>
-      <div id="chartMes"></div>
-    </div>
+    <div class="apx-summaryrow" id="summaryRow" style="grid-column:1 / -1"></div>
   </div>
   </div>
   <div class="apx-tabpanel" role="tabpanel" id="panelInforme" aria-labelledby="tabInforme" hidden>
@@ -559,8 +560,19 @@ html body .emp-n.emp-off,html body .emp-n.emp-off *:not(.emp-dot){color:#8e95a5 
     <div id="chartSolicitantes"></div>
   </div>
   </div>
-  <div class="apx-tabpanel" role="tabpanel" id="panelDescansos" aria-labelledby="tabDescansos" hidden>
-    <div class="apx-summaryrow" id="summaryRow"></div>
+  <div class="apx-tabpanel" role="tabpanel" id="panelDuracion" aria-labelledby="tabDuracion" hidden>
+    <div class="apx-summaryrow" id="durKpiRow"></div>
+    <div id="durgGraf"></div>
+    <div class="card apx-table-wrap">
+      <div class="apx-table-header">
+        <h2 class="card-title">Acciones con duración</h2>
+        <span class="apx-mono apx-table-count" id="durgTableCount"></span>
+      </div>
+      <div class="apx-table-tools">
+        <input id="durgTableSearch" class="apx-search apx-table-search" type="search" placeholder="Buscar dentro de estos resultados" aria-label="Buscar dentro de las acciones con duración">
+      </div>
+      <div id="durgTableBody"></div>
+    </div>
   </div>
 </div>
 
@@ -819,6 +831,7 @@ function buildRecordsFromSupabaseRows(dataRows) {
       aprobador: aprobadorNorm,
       estado: normalizeEstado(textOrNull(row.estado), aprobadorNorm),
       fechaSolicitud: (textOrNull(row.fecha_solicitud) || '').slice(0, 10) || null,
+      fechaHora: textOrNull(row.fecha_solicitud),
       justificacion: textOrNull(row.justificacion),
       area: areaFinal(AREA_OVERRIDE_BY_ID[idStr] || SOLICITANTE_AREA_OVERRIDE[solicitante] || AREA_GT_POR_USUARIO[String(solicitante).split('@')[0].toLowerCase()] || areaFor(jefeInmediato)),
       duracion: duracion,
@@ -832,6 +845,51 @@ function buildRecordsFromSupabaseRows(dataRows) {
   });
   return out;
 }
+// ===== Plazo de 24 h para aprobar: pasado ese tiempo la solicitud queda «Caducada» =====
+var PLAZO_APROB_MS = 24 * 60 * 60 * 1000;
+var ESTADO_CAD1 = 'Caducada Primero', ESTADO_CAD2 = 'Caducada Segundo';
+function msIngreso(r) {
+  var t = String(r.fechaHora || r.fechaSolicitud || '').trim();
+  if (!t) return NaN;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return Date.parse(t + 'T00:00:00-06:00');
+  if (!/(Z|[+-]\d{2}:?\d{2})$/.test(t)) t = t.replace(' ', 'T') + '-06:00';
+  return Date.parse(t);
+}
+// Fija r.estado según el reloj: pendiente (con vencimiento) o caducada. Devuelve true si cambió de estado.
+function aplicarCaducidad(r, ahora) {
+  if (r.estadoBase === undefined) r.estadoBase = r.estado;
+  var antes = r.estado, base = r.estadoBase;
+  if (base !== 'Aval Jefe' && base !== 'Pendiente Segundo') { r.venceMs = null; r.estado = base; return antes !== r.estado; }
+  var v = msIngreso(r) + PLAZO_APROB_MS;
+  r.venceMs = isNaN(v) ? null : v;
+  r.estado = (r.venceMs !== null && (ahora || Date.now()) >= r.venceMs) ? (base === 'Aval Jefe' ? ESTADO_CAD1 : ESTADO_CAD2) : base;
+  return antes !== r.estado;
+}
+function fmtCuenta(ms) {
+  var s = Math.max(0, Math.floor(ms / 1000)), p = function(n) { return (n < 10 ? '0' : '') + n; };
+  return p(Math.floor(s / 3600)) + ':' + p(Math.floor(s % 3600 / 60)) + ':' + p(s % 60);
+}
+function cuentaHtml(r) {
+  if (!r || !r.venceMs || (r.estado !== 'Aval Jefe' && r.estado !== 'Pendiente Segundo')) return '';
+  var rest = r.venceMs - Date.now();
+  if (rest <= 0) return '';
+  return '<span class="cd-chip' + (rest < 3600000 ? ' cd-urg' : '') + '" data-vence="' + r.venceMs + '" title="Tiempo que falta para que caduque (24 h desde el ingreso)">⏳ ' + fmtCuenta(rest) + '</span>';
+}
+setInterval(function() {
+  var ahora = Date.now();
+  document.querySelectorAll('[data-vence]').forEach(function(el) {
+    var rest = Number(el.getAttribute('data-vence')) - ahora;
+    if (rest <= 0) return;
+    el.textContent = '⏳ ' + fmtCuenta(rest);
+    el.classList.toggle('cd-urg', rest < 3600000);
+  });
+  if (!ALL_RECORDS.length) return;
+  var cambio = false;
+  ALL_RECORDS.forEach(function(r) {
+    if (r.venceMs && (r.estado === 'Aval Jefe' || r.estado === 'Pendiente Segundo') && ahora >= r.venceMs && aplicarCaducidad(r, ahora)) cambio = true;
+  });
+  if (cambio && typeof render === 'function') { applyActiveScope(); render(); }
+}, 1000);
 function setLoadStatus(text, mode) {
   var el = document.getElementById('loadStatus');
   el.textContent = text;
@@ -894,7 +952,12 @@ async function loadFromSupabase() {
     }
   }
   try {
-var hoyGT = todayIso();
+var hoyGT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Guatemala',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+}).format(new Date());
 
 ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
   return r.fechaSolicitud &&
@@ -902,10 +965,14 @@ ALL_RECORDS = buildRecordsFromSupabaseRows(rows).filter(function(r) {
     r.fechaSolicitud >= '2026-09-01' &&
     r.fechaSolicitud <= hoyGT;
 });
+ALL_RECORDS.forEach(function(r) { aplicarCaducidad(r); });
 
 applyActiveScope();
 
-PERIODO = defaultPeriodo();
+PERIODO = {
+  desde: '2026-09-01',
+  hasta: hoyGT
+};
 
 syncPeriodInputs();
     setLoadStatus(aviso, aviso ? 'error' : 'hidden');
@@ -929,9 +996,11 @@ const STATUS_META = {
   'Pendiente Segundo': { label: 'Pendiente 2.º aprobador', color: '#8b909e' },
   'Rechazo Jefe': { label: 'Rechazada 1.er aprobador', color: '#fb923c' },
   'Rechazo RRHH': { label: 'Rechazada 2.º aprobador', color: '#d95f6e' },
+  'Caducada Primero': { label: 'Caducada 1.er aprobador', color: '#a855f7' },
+  'Caducada Segundo': { label: 'Caducada 2.º aprobador', color: '#f472b6' },
   'Sin estado': { label: 'Sin estado', color: '#8b909e' }
 };
-const STATUS_ORDER = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
+const STATUS_ORDER = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Caducada Primero', 'Caducada Segundo', 'Sin estado'];
 function statusMeta(estado) { return STATUS_META[estado] || STATUS_META['Sin estado']; }
 function shortUser(email) {
   if (!email || email === 'Sin me asigno' || email === 'No especificado' || email === 'Sin asignar') return '—';
@@ -1006,14 +1075,7 @@ function opDe(pais) {
 }
 function pad2(n) { return String(n).padStart(2, '0'); }
 function isoFromDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-function todayIso() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Guatemala',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date());
-}
+function todayIso() { return isoFromDate(new Date()); }
 function isoToDmy(iso) {
   if (!iso) return '';
   var p = iso.split('-');
@@ -1028,8 +1090,8 @@ function parseDmy(txt) {
   return isoFromDate(dt);
 }
 function defaultPeriodo() {
-  var hoy = todayIso();
-  return { desde: hoy.slice(0, 8) + '01', hasta: hoy };
+  var fechas = ALL_RECORDS.map(function(r) { return r.fechaSolicitud; }).filter(Boolean).sort();
+  return { desde: fechas[0] || '2026-09-01', hasta: fechas[fechas.length - 1] || todayIso() };
 }
 function xfLabel(key, value) {
   if (key === 'estado') return value;
@@ -1042,19 +1104,23 @@ var APS_ESTADOS_FILTRO = [
   'Pendientes 1.er aprobador',
   'Aprobadas 1.er aprobador',
   'Rechazadas 1.er aprobador',
+  'Caducadas 1.er aprobador',
   'Pendientes 2.º aprobador',
   'Aprobadas 2.º aprobador',
-  'Rechazadas 2.º aprobador'
+  'Rechazadas 2.º aprobador',
+  'Caducadas 2.º aprobador'
 ];
 function estadosIndicadoresAPS(r) {
   var e = r.estado, lista = [];
   if (e === 'Ingresada' || e === 'Aval Jefe') lista.push('Pendientes 1.er aprobador');
   // Aprobadas 1.er aprobador = las que pasaron al segundo nivel (Aprobacion RRHH, Pendiente Segundo, Rechazo RRHH)
-  if (e === 'Aprobacion RRHH' || e === 'Pendiente Segundo' || e === 'Rechazo RRHH') lista.push('Aprobadas 1.er aprobador');
+  if (e === 'Aprobacion RRHH' || e === 'Pendiente Segundo' || e === 'Rechazo RRHH' || e === 'Caducada Segundo') lista.push('Aprobadas 1.er aprobador');
   if (e === 'Rechazo Jefe') lista.push('Rechazadas 1.er aprobador');
   if (e === 'Pendiente Segundo') lista.push('Pendientes 2.º aprobador');
   if (e === 'Aprobacion RRHH') lista.push('Aprobadas 2.º aprobador');
   if (e === 'Rechazo RRHH') lista.push('Rechazadas 2.º aprobador');
+  if (e === 'Caducada Primero') lista.push('Caducadas 1.er aprobador');
+  if (e === 'Caducada Segundo') lista.push('Caducadas 2.º aprobador');
   return lista;
 }
 function coincideEstadoAPS(r, seleccionados) {
@@ -1145,10 +1211,10 @@ function justifCell(text) {
   var short = text.length > 90 ? text.slice(0, 88) + '…' : text;
   return '<span title="' + escapeHtml(text) + '">' + escapeHtml(short) + '</span>';
 }
-function stampBadge(estado) {
+function stampBadge(estado, r) {
   var meta = statusMeta(estado);
   return '<span class="apx-chip" style="color:' + meta.color + ';border-color:' + meta.color +
-    ';background:' + meta.color + '14">' + meta.label + '</span>';
+    ';background:' + meta.color + '14">' + meta.label + '</span>' + (r ? cuentaHtml(r) : '');
 }
 function fmtNum(n) {
   return (Math.round(n * 10) / 10).toFixed(1);
@@ -1197,13 +1263,17 @@ function indicadoresRrhh(filtered) {
   var aprobadasSegundo = c['Aprobacion RRHH'] || 0;
 
   // Aprobadas del primer aprobador = TODAS las que avanzaron al 2º nivel (Aprobadas + Pendientes 2º + Rechazadas 2º)
-  var aprobadasPrimero = aprobadasSegundo + pendientesSegundo + rechazadasSegundo;
+  var caducadasPrimero = c[ESTADO_CAD1] || 0;
+  var caducadasSegundo = c[ESTADO_CAD2] || 0;
+  var aprobadasPrimero = aprobadasSegundo + pendientesSegundo + rechazadasSegundo + caducadasSegundo;
 
   return {
     total: filtered.length,
     pendientesPrimero: nuevas + enAval,
     aprobadasPrimero: aprobadasPrimero,
     rechazadasPrimero: rechazadasPrimero,
+    caducadasPrimero: caducadasPrimero,
+    caducadasSegundo: caducadasSegundo,
     pendientesSegundo: pendientesSegundo,
     aprobadasSegundo: aprobadasSegundo,
     rechazadasSegundo: rechazadasSegundo,
@@ -1236,6 +1306,8 @@ function renderKpis(filtered) {
   var sAprobadasStr = Number(I.aprobadasSegundo).toLocaleString('es-GT');
   var sPendientesStr = Number(I.pendientesSegundo).toLocaleString('es-GT');
   var sRechazadasStr = Number(I.rechazadasSegundo).toLocaleString('es-GT');
+  var pCaducadasStr = Number(I.caducadasPrimero).toLocaleString('es-GT');
+  var sCaducadasStr = Number(I.caducadasSegundo).toLocaleString('es-GT');
 
   var html = '';
   
@@ -1269,6 +1341,11 @@ function renderKpis(filtered) {
                 '<span class="kpi-div-val val-rechazadas-1">' + pRechazadasStr + '</span>' +
                 '<span class="kpi-div-sub">Por jefe</span>' +
               '</div>' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Caducadas</span>' +
+                '<span class="kpi-div-val val-caducadas-1">' + pCaducadasStr + '</span>' +
+                '<span class="kpi-div-sub">Más de 24 h</span>' +
+              '</div>' +
             '</div>' +
           '</div>';
 
@@ -1293,12 +1370,17 @@ function renderKpis(filtered) {
                 '<span class="kpi-div-val val-rechazadas">' + sRechazadasStr + '</span>' +
                 '<span class="kpi-div-sub">Por RRHH</span>' +
               '</div>' +
+              '<div class="kpi-div-item">' +
+                '<span class="kpi-div-label">Caducadas</span>' +
+                '<span class="kpi-div-val val-caducadas-2">' + sCaducadasStr + '</span>' +
+                '<span class="kpi-div-sub">Más de 24 h</span>' +
+              '</div>' +
             '</div>' +
           '</div>';
 
   document.getElementById('kpiRow').innerHTML = html;
   KPI_ROWS = filtered;
-  var kpiMapa = [['.card-primer', ['p-aprobadas', 'p-pendientes', 'p-rechazadas']], ['.card-segundo', ['s-aprobadas', 's-pendientes', 's-rechazadas']]];
+  var kpiMapa = [['.card-primer', ['p-aprobadas', 'p-pendientes', 'p-rechazadas', 'p-caducadas']], ['.card-segundo', ['s-aprobadas', 's-pendientes', 's-rechazadas', 's-caducadas']]];
   kpiMapa.forEach(function(m) {
     var items = document.querySelectorAll('#kpiRow ' + m[0] + ' .kpi-div-item');
     m[1].forEach(function(k, i) {
@@ -1352,12 +1434,14 @@ document.addEventListener('keydown', function(ev) {
 var KPI_ROWS = [], KPIX_FOCO = null;
 var KPI_DEF = {
   'total': { cejilla: 'Total de solicitudes', titulo: 'Todas las solicitudes', estados: null },
-  'p-aprobadas': { cejilla: 'Primer aprobador', titulo: 'Solicitudes aprobadas', estados: ['Aprobacion RRHH', 'Pendiente Segundo', 'Rechazo RRHH'] },
+  'p-aprobadas': { cejilla: 'Primer aprobador', titulo: 'Solicitudes aprobadas', estados: ['Aprobacion RRHH', 'Pendiente Segundo', 'Rechazo RRHH', 'Caducada Segundo'] },
   'p-pendientes': { cejilla: 'Primer aprobador', titulo: 'Solicitudes pendientes', estados: ['Ingresada', 'Aval Jefe'] },
   'p-rechazadas': { cejilla: 'Primer aprobador', titulo: 'Solicitudes rechazadas', estados: ['Rechazo Jefe'] },
+  'p-caducadas': { cejilla: 'Primer aprobador', titulo: 'Solicitudes caducadas', estados: ['Caducada Primero'] },
   's-aprobadas': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes aprobadas', estados: ['Aprobacion RRHH'] },
   's-pendientes': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes pendientes', estados: ['Pendiente Segundo'] },
-  's-rechazadas': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes rechazadas', estados: ['Rechazo RRHH'] }
+  's-rechazadas': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes rechazadas', estados: ['Rechazo RRHH'] },
+  's-caducadas': { cejilla: 'Segundo aprobador', titulo: 'Solicitudes caducadas', estados: ['Caducada Segundo'] }
 };
 function abrirDetalleKpi(clave) {
   var def = KPI_DEF[clave];
@@ -1365,7 +1449,7 @@ function abrirDetalleKpi(clave) {
   var colAprob = /^[ps]-/.test(clave) ? (clave.charAt(0) === 'p' ? 'Primer aprobador' : 'Segundo aprobador') : null;
   var rows = (def.rows || KPI_ROWS).filter(function(r) { return !def.estados || def.estados.indexOf(r.estado) >= 0; });
   function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
-  rows.sort(function(a, b) { return String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')) || String(nom(a)).localeCompare(String(nom(b)), 'es'); });
+  rows.sort(function(a, b) { return String(b.fechaSolicitud || '').localeCompare(String(a.fechaSolicitud || '')) || String(nom(a)).localeCompare(String(nom(b)), 'es'); });
   var empleados = {};
   rows.forEach(function(r) { empleados[shortUser(r.solicitante)] = 1; });
   var nEmp = Object.keys(empleados).length;
@@ -1389,9 +1473,9 @@ function abrirDetalleKpi(clave) {
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
     return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + empNombreHtml(u, nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
       (colAprob ? '<td>' + (function(v) { return empNombreHtml(v, v); })(clave.charAt(0) === 'p' ? (r.jefeInmediato || '—') : shortUser(r.aprobador)) + '</td>' : '') +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaFila(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaFila(r)) + '</span>' + cuentaHtml(r) + '</td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, colAprob ? 6 : 5);
   }).join('');
-  document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más antigua a la más reciente</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+  document.getElementById('kpixCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más reciente a la más antigua</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
     (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th>' + (colAprob ? '<th>' + colAprob + '</th>' : '') + '<th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en esta categoría.</div>') + '</div>';
   var bg = document.getElementById('kpixBg');
   bg.classList.add('open');
@@ -1445,15 +1529,15 @@ function esPendienteAprobacion(r) { return r.estado === 'Ingresada' || r.estado 
 function descansosPorArea(filtered) {
   var map = {};
   function get(a) { return map[a] || (map[a] = { area: a, n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0, tipos: {}, personas: {} }); }
-  function persona(o, s) { return o.personas[s] || (o.personas[s] = { n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0 }); }
+  function persona(o, s) { return o.personas[s] || (o.personas[s] = { n: 0, horas: 0, dias: 0, pendN: 0, pendHoras: 0, pendDias: 0, extraN: 0, extraHoras: 0, rows: [], pendRows: [], extraRows: [] }); }
   RECORDS.filter(function(r) { return !esSinArea(r.area); }).forEach(function(r) { persona(get(r.area), r.solicitante); });
   filtered.filter(function(r) { return !esSinArea(r.area); }).forEach(function(r) {
-    if (esTiempoExtra(r)) { var e = get(r.area), pe = persona(e, r.solicitante); e.extraN++; e.extraHoras += r.horas || 0; pe.extraN++; pe.extraHoras += r.horas || 0; return; }
+    if (esTiempoExtra(r)) { var e = get(r.area), pe = persona(e, r.solicitante); e.extraN++; e.extraHoras += r.horas || 0; pe.extraN++; pe.extraHoras += r.horas || 0; pe.extraRows.push(r); return; }
     if (!esDescanso(r)) return;
     var o = get(r.area), h = r.horas || 0, d = r.dias || 0, p = persona(o, r.solicitante);
-    o.n++; o.horas += h; o.dias += d; p.n++; p.horas += h; p.dias += d;
+    o.n++; o.horas += h; o.dias += d; p.n++; p.horas += h; p.dias += d; p.rows.push(r);
     var t = o.tipos[r.tipo] || (o.tipos[r.tipo] = { n: 0, horas: 0, dias: 0 }); t.n++; t.horas += h; t.dias += d;
-    if (esPendienteAprobacion(r)) { o.pendN++; o.pendHoras += h; o.pendDias += d; p.pendN++; p.pendHoras += h; p.pendDias += d; }
+    if (esPendienteAprobacion(r)) { o.pendN++; o.pendHoras += h; o.pendDias += d; p.pendN++; p.pendHoras += h; p.pendDias += d; p.pendRows.push(r); }
   });
   return Object.keys(map).map(function(k) { return map[k]; }).sort(function(a, b) { return (b.n - a.n) || a.area.localeCompare(b.area, 'es'); });
 }
@@ -1473,6 +1557,53 @@ function dscAbrirModal(cejilla, titulo, sub, nombre, cuerpo, letra) {
   bg.querySelector('.expx').scrollTop = 0;
   document.getElementById('expxCerrar').focus();
 }
+// ===== Ventanas de Acciones por área: al hacer clic en un trabajador se despliegan sus solicitudes =====
+var TRAB_ATTR = ' class="trab-fila" data-trab="1" tabindex="0" aria-expanded="false"';
+function trabCeldaPersona(v) { return (v && v !== '—' && v !== 'Sin asignar') ? empNombreHtml(v, v) : escapeHtml(v || '—'); }
+function trabSolicitudesHtml(nombre, rows) {
+  rows = (rows || []).slice().sort(function(a, b) {
+    return String(b.fechaSolicitud || '').localeCompare(String(a.fechaSolicitud || '')) || String(b.fechaHora || '').localeCompare(String(a.fechaHora || ''));
+  });
+  if (!rows.length) return '<div class="expx-vacio">Sin solicitudes en este período.</div>';
+  var vistos = {}, leyenda = '';
+  rows.forEach(function(r) {
+    var lab = etiquetaEstadoAPS(r);
+    if (vistos[lab]) return;
+    vistos[lab] = 1;
+    leyenda += '<span><i class="expx-dot" style="background:' + (ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color) + '"></i>' + escapeHtml(lab) + '</span>';
+  });
+  var filas = rows.map(function(r) {
+    var col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
+    var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
+    return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
+      '<td>' + trabCeldaPersona(r.jefeInmediato || '—') + '</td><td>' + trabCeldaPersona(shortUser(r.aprobador)) + '</td>' +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span>' + cuentaHtml(r) + '</td>' +
+      '<td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, 6);
+  }).join('');
+  return '<span class="sol-det-lab" style="margin-bottom:10px">Solicitudes de ' + escapeHtml(nombre) + ' · ' + rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · de la más reciente a la más antigua</span>' +
+    (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+    '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Tipo de solicitud</th><th>Duración</th><th>Jefe inmediato</th><th>Segundo aprobador</th><th>Estado</th><th>Fecha de ingreso</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+}
+function trabDetHtml(nombre, rows, cols) {
+  return '<tr class="trab-det"><td colspan="' + cols + '"><div class="trab-det-box">' + trabSolicitudesHtml(nombre, rows) + '</div></td></tr>';
+}
+function alternarSolicitudesTrabajador(tr) {
+  var abierta = tr.classList.toggle('trab-open');
+  tr.setAttribute('aria-expanded', abierta ? 'true' : 'false');
+  var wrap = tr.closest('.expx-tabla-wrap');
+  if (wrap) wrap.classList.toggle('trab-abierto', !!wrap.querySelector('tr.trab-open'));
+  var det = tr.nextElementSibling;
+  if (abierta && det && det.scrollIntoView) det.scrollIntoView({ block: 'nearest' });
+}
+document.addEventListener('click', function(ev) {
+  var tr = ev.target.closest && ev.target.closest('tr[data-trab]');
+  if (!tr || ev.target.closest('.dsc-lnk, button, a')) return;
+  alternarSolicitudesTrabajador(tr);
+});
+document.addEventListener('keydown', function(ev) {
+  var tr = ev.target;
+  if ((ev.key === 'Enter' || ev.key === ' ') && tr.matches && tr.matches('tr[data-trab]')) { ev.preventDefault(); alternarSolicitudesTrabajador(tr); }
+});
 function abrirDetalleArea(i, usarMes) {
   var vistaMes = !!(usarMes && DESC_MES);
   var o = (vistaMes && DESC_AREAS_VISTA[i]) || DESC_AREAS[i];
@@ -1505,7 +1636,7 @@ function abrirDetalleArea(i, usarMes) {
   var persHtml = '<div class="expx-sec"><h4>Trabajadores del área<small>' + pers.length + '</small></h4>' +
     (pers.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>Trabajador</th><th class="dsc-r">Acciones</th><th class="dsc-r">Horas registradas</th><th class="dsc-r">Días registrados</th></tr></thead><tbody>' +
     pers.map(function(x) {
-      return '<tr><td>' + empNombreHtml(x.u, x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td><td class="dsc-r">' + x.p.n + '</td><td class="dsc-r">' + fmtNum(x.p.horas) + ' h</td><td class="dsc-r">' + fmtNum(x.p.dias) + ' d</td></tr>';
+      return '<tr' + TRAB_ATTR + '><td>' + empNombreHtml(x.u, x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td><td class="dsc-r">' + x.p.n + '</td><td class="dsc-r">' + fmtNum(x.p.horas) + ' h</td><td class="dsc-r">' + fmtNum(x.p.dias) + ' d</td></tr>' + trabDetHtml(x.nombre, x.p.rows, 4);
     }).join('') + '</tbody></table></div>' : '<div class="expx-vacio">Sin trabajadores registrados.</div>') + '</div>';
   dscAbrirModal('Detalle del área', o.area, (vistaMes ? dscMesLargo(DESC_MES) + ' · ' : '') + o.n + (o.n === 1 ? ' acción' : ' acciones') + ' · ' + pers.length + (pers.length === 1 ? ' trabajador' : ' trabajadores'),
     JEFES_AREA[o.area] ? 'Jefe del área: ' + JEFES_AREA[o.area] : '', kpis + tiposHtml + persHtml, o.area.charAt(0));
@@ -1529,13 +1660,14 @@ function abrirDetalleMetrica(key) {
   });
   filas.sort(function(a, b) { return (b.v - a.v) || a.nombre.localeCompare(b.nombre, 'es'); });
   var total = filas.reduce(function(s, x) { return s + x.v; }, 0);
+  var filasDe = function(p) { return key === 'pend' ? p.pendRows : key === 'extra' ? p.extraRows : key === 'horas' ? p.rows.filter(function(r) { return (r.horas || 0) > 0; }) : key === 'dias' ? p.rows.filter(function(r) { return (r.dias || 0) > 0; }) : p.rows; };
   var cuerpo = '<div class="expx-sec"><h4>Detalle por trabajador<small>' + filas.length + (filas.length === 1 ? ' trabajador' : ' trabajadores') + '</small></h4>' +
     (filas.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>Trabajador</th><th>Área</th><th class="dsc-r">' + m.t + '</th>' +
     m.cols.map(function(c) { return '<th class="dsc-r">' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' +
     filas.map(function(x) {
-      return '<tr><td>' + empNombreHtml(x.u, x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td>' +
+      return '<tr' + TRAB_ATTR + '><td>' + empNombreHtml(x.u, x.nombre) + (x.nombre !== x.u ? ' <span class="expx-mono" style="opacity:.6">' + escapeHtml(x.u) + '</span>' : '') + '</td>' +
         '<td><button type="button" class="dsc-lnk" data-dsc-open-area="' + x.ai + '">' + escapeHtml(x.area) + '</button></td><td class="dsc-r">' + m.fmt(x.v) + '</td>' +
-        m.cols.map(function(c) { return '<td class="dsc-r">' + c[1](x.p) + '</td>'; }).join('') + '</tr>';
+        m.cols.map(function(c) { return '<td class="dsc-r">' + c[1](x.p) + '</td>'; }).join('') + '</tr>' + trabDetHtml(x.nombre, filasDe(x.p), 3 + m.cols.length);
     }).join('') + '<tr class="dsc-tot"><td>Total</td><td></td><td class="dsc-r">' + m.fmt(total) + '</td>' + m.cols.map(function() { return '<td></td>'; }).join('') + '</tr></tbody></table></div>'
     : '<div class="expx-vacio">Sin datos en el período filtrado.</div>') + '</div>' +
     (key === 'extra' ? '<p class="expx-sub" style="margin:0">El tiempo extra se toma de las acciones «' + escapeHtml(DUR_TIPO_NO_AUSENCIA) + '».</p>' : '');
@@ -1587,8 +1719,7 @@ function renderSummaryCards(filtered) {
     return '<div class="dsc-g" style="min-width:' + minG + 'px"><div class="dsc-bars">' + barras + '</div><span class="dsc-glab">' + escapeHtml(o.area) + '</span></div>';
   }).join('');
 
-  el.style.gridTemplateColumns = 'minmax(0, 1fr)';
-  el.innerHTML =
+  var kpiCardHtml =
     '<div class="card apx-summary-card dsc-sec">' +
       '<h2 class="card-title">Acciones por área</h2>' +
       '<p class="card-caption">Haz clic en cualquier tarjeta para ver el detalle de cada área en el período filtrado.</p>' +
@@ -1599,7 +1730,21 @@ function renderSummaryCards(filtered) {
         kpi('pend', 'Pendientes de aprobar', tot.pendN, 'acciones', '<strong>' + dscHD(tot.pendHoras, tot.pendDias) + '</strong> por resolver') +
         kpi('extra', 'Tiempo extra', tot.extraN ? fmtNum(tot.extraHoras) : '—', tot.extraN ? 'horas' : '', '<strong>' + tot.extraN + (tot.extraN === 1 ? ' solicitud' : ' solicitudes') + '</strong> pre-aprobadas') +
       '</div>' +
-    '</div>' +
+    '</div>';
+  var kRow = document.getElementById('durKpiRow');
+  if (kRow) {
+    kRow.style.gridTemplateColumns = 'minmax(0, 1fr)';
+    kRow.innerHTML = kpiCardHtml;
+    if (!kRow.dataset.dscBound) {
+      kRow.dataset.dscBound = '1';
+      kRow.addEventListener('click', function(ev) {
+        var met = ev.target.closest('[data-dsc-metric]');
+        if (met) { EXPX_FOCO = met; abrirDetalleMetrica(met.getAttribute('data-dsc-metric')); }
+      });
+    }
+  }
+  el.style.gridTemplateColumns = 'minmax(0, 1fr)';
+  el.innerHTML =
     '<div class="card apx-summary-card dsc-sec">' +
       '<div class="apx-card-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><h2 class="card-title">Tipos de acción por área</h2>' +
       '<p class="card-caption">Haz clic en cualquier barra para ver el detalle del área.</p></div>' + mesSelHtml + '</div>' +
@@ -1636,7 +1781,7 @@ function renderSummaryCards(filtered) {
 
 var ESTADO_COLOR_GRAFICA = {
   'Ingresada': '#facc15', 'Aval Jefe': '#facc15', 'Pendiente Segundo': '#8b909e', 'Aprobacion RRHH': '#7fb0f0',
-  'Rechazo Jefe': '#fb923c', 'Rechazo RRHH': '#d95f6e', 'Sin estado': '#8b909e'
+  'Rechazo Jefe': '#fb923c', 'Rechazo RRHH': '#d95f6e', 'Caducada Primero': '#a855f7', 'Caducada Segundo': '#f472b6', 'Sin estado': '#8b909e'
 };
 function renderDonut(filtered) {
   var counts = conteoEstados(filtered);
@@ -1646,12 +1791,12 @@ function renderDonut(filtered) {
     data.push({ name: 'Pendiente 1.er aprobador', value: sumIngAval, color: '#facc15', estados: ['Ingresada', 'Aval Jefe'] });
   }
   // Aprobadas por el 1.er aprobador = las que avanzaron al segundo nivel (se solapa con las filas del 2.º aprobador)
-  var estadosAprobada1 = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
+  var estadosAprobada1 = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH', 'Caducada Segundo'];
   var sumAprobada1 = estadosAprobada1.reduce(function(s, e) { return s + (counts[e] || 0); }, 0);
   if (sumAprobada1 > 0) {
     data.push({ name: 'Aprobada 1.er aprobador', value: sumAprobada1, color: '#4ade80', estados: estadosAprobada1, extra: true });
   }
-  var otherStatuses = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
+  var otherStatuses = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Caducada Primero', 'Caducada Segundo', 'Sin estado'];
   otherStatuses.forEach(function(s) {
     if (counts[s]) {
       data.push({ name: statusMeta(s).label, value: counts[s], color: ESTADO_COLOR_GRAFICA[s] || statusMeta(s).color, estados: [s] });
@@ -1698,8 +1843,8 @@ function unirPendientes1(c) {
 }
 // Vista del 1.er aprobador: pendiente / aprobada (la que avanzó al segundo nivel) / rechazada
 var COLOR_APROBADA_1 = '#4ade80';
-var ESTADOS_SEGUNDO_NIVEL = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
-var ORDEN_VISTA_PRIMERO = ['Aval Jefe', 'Aprobada1', 'Rechazo Jefe'];
+var ESTADOS_SEGUNDO_NIVEL = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH', 'Caducada Segundo'];
+var ORDEN_VISTA_PRIMERO = ['Aval Jefe', 'Aprobada1', 'Rechazo Jefe', 'Caducada Primero'];
 function estadoVistaPrimero(r) {
   if (r.estado === 'Ingresada' || r.estado === 'Aval Jefe') return 'Aval Jefe';
   if (ESTADOS_SEGUNDO_NIVEL.indexOf(r.estado) !== -1) return 'Aprobada1';
@@ -1718,7 +1863,7 @@ function leyendaPrimeroHtml(estTot) {
   }).join('');
   return '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px">' + guia + '</div>';
 }
-var ESTADOS_ORDEN_GRAFICA = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'];
+var ESTADOS_ORDEN_GRAFICA = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Caducada Primero', 'Caducada Segundo', 'Sin estado'];
 function leyendaEstadosHtml(estTot) {
   var guia = [
     { label: 'Pendiente 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Aval Jefe'], on: estTot['Ingresada'] || estTot['Aval Jefe'] },
@@ -1726,6 +1871,8 @@ function leyendaEstadosHtml(estTot) {
     { label: 'Aprobada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Aprobacion RRHH'], on: estTot['Aprobacion RRHH'] },
     { label: 'Rechazada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'], on: estTot['Rechazo Jefe'] },
     { label: 'Rechazada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo RRHH'], on: estTot['Rechazo RRHH'] },
+    { label: 'Caducada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Caducada Primero'], on: estTot['Caducada Primero'] },
+    { label: 'Caducada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Caducada Segundo'], on: estTot['Caducada Segundo'] },
     { label: 'Sin estado', color: ESTADO_COLOR_GRAFICA['Sin estado'], on: estTot['Sin estado'] }
   ].filter(function(g){ return g.on; }).map(function(g) {
     return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + g.color + '"></span>' + g.label + '</span>';
@@ -1915,8 +2062,8 @@ function nombreCompletoEmpleado(usuario) {
 }
 var EMP_TXT_ACTIVO = 'Empleado Activo';
 var EMP_TXT_INACTIVO = 'Empleado Inactivo';
-var EMP_ACTIVOS = ['aayala','sconde','kaescobar','sfigueroa','edlopez','fespinal','ohernandez','asolis','ecandray','mchicas','rapineda','acano','cemartinez','cche','jcifuentes','kreyna','kmazariego','kmazariegos','jflores','rfuentes','tcastillo','jrustrian','mdcastillo','rballadares','wortega','afhernandez','caguilar','dcmonge','dmorataya','dbolaines','gherrera','ieportillo','mpalacios','jmira','ksoriano','lngonzalez','memartinez','mfsandoval','nmarroquin','rarias'];
-var EMP_INACTIVOS = ['lcanas','icanas','alondono','bsantos','enflores','hamejia','paguilar','gmolina'];
+var EMP_ACTIVOS = ['aayala','sconde','kaescobar','sfigueroa','edlopez','fespinal','paguilar','ohernandez','asolis','ecandray','mchicas','rapineda','acano','cemartinez','cche','jcifuentes','kreyna','kmazariego','kmazariegos','jflores','rfuentes','tcastillo','jrustrian','mdcastillo','rballadares','wortega','afhernandez','caguilar','dcmonge','dmorataya','dbolaines','gherrera','ieportillo','mpalacios','jmira','ksoriano','lngonzalez','memartinez','mfsandoval','nmarroquin','rarias'];
+var EMP_INACTIVOS = ['lcanas','icanas','alondono','bsantos','enflores','hamejia','gmolina'];
 var EMP_IDX = null;
 function empIndice() {
   if (EMP_IDX) return EMP_IDX;
@@ -2005,6 +2152,8 @@ function abrirExpedienteSolicitante(ev, idx) {
     { label: 'Aprobada 2.º aprobador', n: aprobadas, color: ESTADO_COLOR_GRAFICA['Aprobacion RRHH'] },
     { label: 'Rechazada 1.er aprobador', n: estCount['Rechazo Jefe'] || 0, color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'] },
     { label: 'Rechazada 2.º aprobador', n: estCount['Rechazo RRHH'] || 0, color: ESTADO_COLOR_GRAFICA['Rechazo RRHH'] },
+    { label: 'Caducada 1.er aprobador', n: estCount['Caducada Primero'] || 0, color: ESTADO_COLOR_GRAFICA['Caducada Primero'] },
+    { label: 'Caducada 2.º aprobador', n: estCount['Caducada Segundo'] || 0, color: ESTADO_COLOR_GRAFICA['Caducada Segundo'] },
     { label: 'Sin estado', n: estCount['Sin estado'] || 0, color: ESTADO_COLOR_GRAFICA['Sin estado'] }
   ].filter(function(g){ return g.n; });
   var estadoHtml = '<div class="expx-sec"><h4>Estado de sus solicitudes</h4><div class="expx-estado">' +
@@ -2017,7 +2166,7 @@ function abrirExpedienteSolicitante(ev, idx) {
     }).join('') + '</div></div>';
 
   var ordenadas = rows.slice().sort(function(a, b) {
-    return String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')) || String(a.id).localeCompare(String(b.id));
+    return String(b.fechaSolicitud || '').localeCompare(String(a.fechaSolicitud || '')) || String(b.id).localeCompare(String(a.id));
   });
   var filas = ordenadas.map(function(r) {
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
@@ -2025,11 +2174,11 @@ function abrirExpedienteSolicitante(ev, idx) {
     var estadoColor = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
     var rowBg = estadoColor + '1a'; // 10% opacity
     return '<tr' + SOL_ATTR + ' style="background:' + rowBg + '"><td class="expx-mono">' + escapeHtml(r.id) + '</td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + estadoColor + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td>' +
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + estadoColor + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span>' + cuentaHtml(r) + '</td>' +
       '<td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
       '<td class="expx-just" title="' + escapeHtml(r.justificacion || '') + '">' + escapeHtml(just) + '</td></tr>' + msgSolicitudHtml(r, 6);
   }).join('');
-  var tablaHtml = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más antigua a la más reciente</small></h4>' +
+  var tablaHtml = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más reciente a la más antigua</small></h4>' +
     (rows.length ? '<div class="expx-tabla-wrap"><table class="expx-tabla"><thead><tr><th>ID</th><th>Tipo</th><th>Duración</th><th>Estado</th><th>Fecha</th><th>Justificación</th></tr></thead><tbody>' + filas + '</tbody></table></div>'
       : '<div class="expx-vacio">Sin solicitudes en el periodo filtrado.</div>') + '</div>';
 
@@ -2064,6 +2213,8 @@ function renderSolicitantesChart(filtered) {
     { label: 'Aprobada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Aprobacion RRHH'], on: estTot['Aprobacion RRHH'] },
     { label: 'Rechazada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo Jefe'], on: estTot['Rechazo Jefe'] },
     { label: 'Rechazada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Rechazo RRHH'], on: estTot['Rechazo RRHH'] },
+    { label: 'Caducada 1.er aprobador', color: ESTADO_COLOR_GRAFICA['Caducada Primero'], on: estTot['Caducada Primero'] },
+    { label: 'Caducada 2.º aprobador', color: ESTADO_COLOR_GRAFICA['Caducada Segundo'], on: estTot['Caducada Segundo'] },
     { label: 'Sin estado', color: ESTADO_COLOR_GRAFICA['Sin estado'], on: estTot['Sin estado'] }
   ].filter(function(g){ return g.on; }).map(function(g) {
     return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#fff"><span class="apx-dot" style="background:' + g.color + '"></span>' + g.label + '</span>';
@@ -2073,7 +2224,7 @@ function renderSolicitantesChart(filtered) {
     var pct = (d.count/max*100).toFixed(1);
     var name = shortUser(d.value);
     var estCount = unirPendientes1(conteoEstados(filtered.filter(function(r){ return r.solicitante === d.value; })));
-    var estOrden = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Sin estado'].filter(function(e){ return estCount[e]; });
+    var estOrden = ['Ingresada', 'Aval Jefe', 'Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo Jefe', 'Rechazo RRHH', 'Caducada Primero', 'Caducada Segundo', 'Sin estado'].filter(function(e){ return estCount[e]; });
     var accS = 0;
     var nums = estOrden.map(function(e) {
       var wS = estCount[e] / d.count * 100, cS = accS + wS / 2; accS += wS;
@@ -2137,16 +2288,16 @@ function renderMonthChart(filtered) {
     el.addEventListener('keydown', function(ev) { var t = ev.target; if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-mes')) { ev.preventDefault(); MES_FOCO = t; abrirRegistrosMes(t.getAttribute('data-mes')); } });
   }
 }
-function abrirRegistrosMes(ym) {
-  var rows = MES_ROWS.filter(function(r) { return yearMonth(r.fechaSolicitud) === ym; });
+function abrirRegistrosMes(ym, rowsExt, subExt) {
+  var rows = (rowsExt || MES_ROWS).filter(function(r) { return yearMonth(r.fechaSolicitud) === ym; });
   function nom(r) { var u = shortUser(r.solicitante); return nombreCompletoEmpleado(u) || u; }
-  rows.sort(function(a, b) { return String(a.fechaSolicitud || '').localeCompare(String(b.fechaSolicitud || '')) || String(nom(a)).localeCompare(String(nom(b)), 'es'); });
+  rows.sort(function(a, b) { return String(b.fechaSolicitud || '').localeCompare(String(a.fechaSolicitud || '')) || String(nom(a)).localeCompare(String(nom(b)), 'es'); });
   var empleados = {};
   rows.forEach(function(r) { empleados[shortUser(r.solicitante)] = 1; });
   var nEmp = Object.keys(empleados).length, mes = fmtMonthLabel(ym);
   document.getElementById('mesxAvatar').textContent = mes.charAt(0).toUpperCase();
   document.getElementById('mesxTitulo').textContent = mes;
-  document.getElementById('mesxSub').textContent = rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · ' + nEmp + (nEmp === 1 ? ' empleado' : ' empleados') + ' · ' + (MES_AREA || 'Todas las áreas');
+  document.getElementById('mesxSub').textContent = rows.length + (rows.length === 1 ? ' solicitud' : ' solicitudes') + ' · ' + nEmp + (nEmp === 1 ? ' empleado' : ' empleados') + ' · ' + (subExt || MES_AREA || 'Todas las áreas');
   var vistos = {}, leyenda = '';
   rows.forEach(function(r) {
     var lab = etiquetaEstadoAPS(r);
@@ -2158,9 +2309,9 @@ function abrirRegistrosMes(ym) {
     var u = shortUser(r.solicitante), col = ESTADO_COLOR_GRAFICA[r.estado] || statusMeta(r.estado).color;
     var dur = r.horasDb !== null ? horasPantalla(r) + ' h' : (r.diasTxt !== null ? r.diasTxt + ' días' : '—');
     return '<tr class="mesx-fila"' + SOL_ATTR + ' style="background:' + col + '26;box-shadow:inset 3px 0 0 ' + col + '"><td>' + empNombreHtml(u, nombreCompletoEmpleado(u) || u) + ' <span class="expx-mono">' + escapeHtml(u) + '</span></td><td>' + escapeHtml(r.tipo) + '</td><td>' + escapeHtml(dur) + '</td>' +
-      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span></td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, 5);
+      '<td><span class="expx-pill"><i class="expx-dot" style="background:' + col + '"></i>' + escapeHtml(etiquetaEstadoAPS(r)) + '</span>' + cuentaHtml(r) + '</td><td class="expx-mono">' + fmtDate(r.fechaSolicitud) + '</td></tr>' + msgSolicitudHtml(r, 5);
   }).join('');
-  document.getElementById('mesxCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más antigua a la más reciente</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
+  document.getElementById('mesxCuerpo').innerHTML = '<div class="expx-sec"><h4>Registro de solicitudes<small>de la más reciente a la más antigua</small></h4>' + (leyenda ? '<div class="mesx-leyenda">' + leyenda + '</div>' : '') +
     (rows.length ? '<div class="expx-tabla-wrap" style="max-height:none"><table class="expx-tabla"><thead><tr><th>Empleado</th><th>Tipo de solicitud</th><th>Duración</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '<div class="expx-vacio">Sin solicitudes en este mes.</div>') + '</div>';
   var bg = document.getElementById('mesxBg');
   bg.classList.add('open');
@@ -2228,7 +2379,7 @@ function renderTable(filtered) {
       '<td class="apx-num">' + horasPantalla(r) + '</td><td class="apx-num">' + escapeHtml(diasPantalla(r)) + '</td>' +
       '<td>' + escapeHtml(r.pais) + '</td>' +
       '<td class="apx-mono">' + empNombreHtml(r.solicitante, r.solicitante) + '</td><td>' + empNombreHtml(r.jefeInmediato || '—', r.jefeInmediato || '—') + '</td>' +
-      '<td class="apx-mono">' + empNombreHtml(shortUser(r.aprobador), shortUser(r.aprobador)) + '</td><td>' + stampBadge(r.estado) + '</td>' +
+      '<td class="apx-mono">' + empNombreHtml(shortUser(r.aprobador), shortUser(r.aprobador)) + '</td><td>' + stampBadge(r.estado, r) + '</td>' +
       '<td class="apx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
       '<td class="apx-justif">' + justifCell(r.justificacion) + '</td></tr>';
   }).join('');
@@ -2472,7 +2623,8 @@ async function exportarExcelEstandar(cfg){
 var XL_ESTADO_RRHH = {
   'Aprobacion RRHH': 'positivo',
   'Ingresada': 'proceso', 'Aval Jefe': 'proceso', 'Pendiente Segundo': 'proceso',
-  'Rechazo Jefe': 'negativo', 'Rechazo RRHH': 'negativo'
+  'Rechazo Jefe': 'negativo', 'Rechazo RRHH': 'negativo',
+  'Caducada Primero': 'negativo', 'Caducada Segundo': 'negativo'
 };
 var XL_ESTADO_POR_ETIQUETA = {};
 Object.keys(STATUS_META).forEach(function(k) {
@@ -2750,7 +2902,9 @@ function pdfConfig(marcados){
       { lbl:'Rechazadas 1.er aprobador', num:rrhhPdfNum(I.rechazadasPrimero), acento:'#fb923c', sub:'Rechazo jefe' },
       { lbl:'Pendientes 2.º aprobador', num:rrhhPdfNum(I.pendientesSegundo), acento:'#8b909e', sub:'Campo aprobador sin asignar' },
       { lbl:'Aprobadas 2.º aprobador', num:rrhhPdfNum(I.aprobadasSegundo), acento:'#4f8fd8', sub:'Aprobación RRHH' },
-      { lbl:'Rechazadas 2.º aprobador', num:rrhhPdfNum(I.rechazadasSegundo), acento:'#be3651', sub:'Rechazo RRHH' }
+      { lbl:'Rechazadas 2.º aprobador', num:rrhhPdfNum(I.rechazadasSegundo), acento:'#be3651', sub:'Rechazo RRHH' },
+      { lbl:'Caducadas 1.er aprobador', num:rrhhPdfNum(I.caducadasPrimero), acento:'#a855f7', sub:'Sin respuesta en 24 h' },
+      { lbl:'Caducadas 2.º aprobador', num:rrhhPdfNum(I.caducadasSegundo), acento:'#f472b6', sub:'Sin respuesta en 24 h' }
     ] : [],
     secciones:[graficas, permisos, area, detalle].filter(Boolean)
   };
@@ -2905,7 +3059,120 @@ document.addEventListener('keydown', function(e){
   else if(!e.shiftKey && document.activeElement === ultimo){ e.preventDefault(); primero.focus(); }
 });
 
-var TABS = ['Resumen', 'Informe', 'Descansos'];
+// ═══ Pestaña Duración: gráfica de área por mes + lista de acciones con duración ═══
+var DURG_KEY = 'horas', DURG_BASE = [], DURG_TABLA = [];
+var DURG_DEF = {
+  n:     { t: 'Total de acciones',     color: '#4f8fd8', sel: function(r) { return esDescanso(r); },                                   val: function() { return 1; },                fmt: function(v) { return String(v); } },
+  horas: { t: 'Horas registradas',     color: '#2f8f76', sel: function(r) { return esDescanso(r) && (r.horas || 0) > 0; },               val: function(r) { return r.horas || 0; },    fmt: function(v) { return fmtNum(v) + ' h'; } },
+  dias:  { t: 'Días registrados',      color: '#c59600', sel: function(r) { return esDescanso(r) && (r.dias || 0) > 0; },                val: function(r) { return r.dias || 0; },     fmt: function(v) { return fmtNum(v) + ' d'; } },
+  pend:  { t: 'Pendientes de aprobar', color: '#c43c50', sel: function(r) { return esDescanso(r) && esPendienteAprobacion(r); },         val: function() { return 1; },                fmt: function(v) { return String(v); } },
+  extra: { t: 'Tiempo extra',          color: '#9e2a4b', sel: function(r) { return esTiempoExtra(r); },                                  val: function(r) { return r.horas || 0; },    fmt: function(v) { return fmtNum(v) + ' h'; } }
+};
+// Acciones que no se muestran en la lista de Duración (adelantos de salario y similares)
+var DURG_EXCLUIR = /(adelanto|anticipo)s?\s+(de\s+|del\s+)?(salario|sueldo|quincena|pago|aguinaldo|bono|nomina|planilla)|prestamo/;
+function durgEsAdelanto(r) { return DURG_EXCLUIR.test(normTxt((r.tipo || '') + ' ' + (r.justificacion || ''))); }
+function durgFilas(key) {
+  var d = DURG_DEF[key];
+  return DURG_BASE.filter(function(r) { return !esSinArea(r.area) && d.sel(r); });
+}
+function renderDuracion(filtered) {
+  DURG_BASE = filtered;
+  renderDurgGrafica();
+  renderDurgTabla();
+}
+function renderDurgGrafica() {
+  var cont = document.getElementById('durgGraf');
+  if (!cont) return;
+  var d = DURG_DEF[DURG_KEY], color = d.color;
+  var filas = durgFilas(DURG_KEY), sums = {};
+  filas.forEach(function(r) { var ym = yearMonth(r.fechaSolicitud); if (ym) sums[ym] = (sums[ym] || 0) + d.val(r); });
+  var keys = Object.keys(sums).sort();
+  var data = keys.map(function(k) { return { key: k, name: fmtMonthLabel(k), v: sums[k] }; });
+  var peak = data.slice().sort(function(a, b) { return b.v - a.v; })[0];
+  var opciones = Object.keys(DURG_DEF).map(function(k) {
+    return '<option value="' + k + '"' + (k === DURG_KEY ? ' selected' : '') + '>' + escapeHtml(DURG_DEF[k].t) + '</option>';
+  }).join('');
+  var chart;
+  if (!data.length) {
+    chart = '<div class="apx-empty">Sin datos</div>';
+  } else {
+    var W = 1100, stageH = 84, gapY = 8, padT = 10, cx = 620, maxW = 800;
+    var rawMax = Math.max.apply(null, data.map(function(p) { return p.v; }).concat([0])) || 1;
+    var suma = data.reduce(function(t, p) { return t + p.v; }, 0) || 1;
+    var H = padT * 2 + data.length * stageH + (data.length - 1) * gapY;
+    var anchos = data.map(function(p) { return Math.max(p.v / rawMax * maxW, 44); });
+    chart = '<div class="apx-linechart-wrap"><svg class="apx-linechart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + escapeHtml(d.t) + ' por mes">' +
+      data.map(function(p, i) {
+        var top = anchos[i];
+        var bot = (i < data.length - 1 && anchos[i + 1] <= top) ? anchos[i + 1] : top * 0.88;
+        var y0 = padT + i * (stageH + gapY), y1 = y0 + stageH;
+        var pts = (cx - top / 2) + ',' + y0 + ' ' + (cx + top / 2) + ',' + y0 + ' ' + (cx + bot / 2) + ',' + y1 + ' ' + (cx - bot / 2) + ',' + y1;
+        var op = Math.max(0.55, 0.95 - i * 0.1).toFixed(2);
+        var pct = (p.v / suma * 100).toFixed(1).replace(/\.0$/, '') + '%';
+        return '<polygon class="dg-seg gx-dot" style="--gx-i:' + i + ';--dg-c:' + color + ';fill:' + color + ';fill-opacity:' + op + '" points="' + pts + '" data-durg-mes="' + p.key + '" tabindex="0" role="button" aria-label="Ver acciones de ' + escapeHtml(p.name) + '"><title>Ver acciones de ' + escapeHtml(p.name) + ': ' + escapeHtml(d.fmt(p.v)) + '</title></polygon>' +
+          '<text class="apx-line-label dg-txt" x="' + (cx - maxW / 2 - 18) + '" y="' + (y0 + stageH / 2 + 4) + '" text-anchor="end">' + escapeHtml(p.name) + '</text>' +
+          '<text class="apx-line-value dg-txt" x="' + cx + '" y="' + (y0 + stageH / 2 + 6) + '" text-anchor="middle" style="font-size:20px;font-weight:800;fill:#fff">' + escapeHtml(d.fmt(p.v)) + '</text>' +
+          '<text class="apx-line-label dg-txt" x="' + (cx + maxW / 2 + 18) + '" y="' + (y0 + stageH / 2 + 4) + '" text-anchor="start">' + pct + '</text>';
+      }).join('') + '</svg></div>';
+  }
+  cont.innerHTML = '<div class="card apx-summary-card dsc-sec">' +
+    '<div class="apx-card-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><h2 class="card-title">Gráfica de Duraciones</h2>' +
+    '<p class="card-caption">Elige el dato de las tarjetas para ver su embudo mes a mes. Haz clic en un nivel para ver sus acciones.</p></div>' +
+    '<div class="mes-ctrl"><select id="durgSel" class="mes-sel" aria-label="Dato a graficar">' + opciones + '</select><span class="apx-insight">' + (peak ? 'Pico: ' + escapeHtml(peak.name) + ' · ' + escapeHtml(d.fmt(peak.v)) : 'Tendencia') + '</span></div></div>' +
+    chart + '</div>';
+  if (!cont.dataset.durgBound) {
+    cont.dataset.durgBound = '1';
+    cont.addEventListener('change', function(ev) {
+      if (ev.target && ev.target.id === 'durgSel') {
+        DURG_KEY = ev.target.value;
+        renderDurgGrafica();
+        var s = document.getElementById('durgSel');
+        if (s) s.focus();
+      }
+    });
+    var abrir = function(t) {
+      var ym = t.getAttribute('data-durg-mes');
+      MES_FOCO = t;
+      abrirRegistrosMes(ym, durgFilas(DURG_KEY).filter(function(r) { return yearMonth(r.fechaSolicitud) === ym; }), DURG_DEF[DURG_KEY].t);
+    };
+    cont.addEventListener('click', function(ev) { var t = ev.target.closest('[data-durg-mes]'); if (t) abrir(t); });
+    cont.addEventListener('keydown', function(ev) {
+      var t = ev.target;
+      if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-durg-mes')) { ev.preventDefault(); abrir(t); }
+    });
+  }
+}
+// Lista: igual a «Detalle de solicitudes» del Informe detallado, solo con las acciones que traen duración
+function renderDurgTabla() {
+  var base = DURG_BASE.filter(function(r) { return durTiene(r) && !durgEsAdelanto(r); });
+  var input = document.getElementById('durgTableSearch');
+  input.placeholder = base.length === 1 ? 'Buscar dentro de este resultado' : 'Buscar dentro de estos ' + base.length + ' resultados';
+  var qRaw = input.value.trim(), q = normTxt(qRaw);
+  var visibles = q ? base.filter(function(r) { return tableHaystack(r).indexOf(q) !== -1; }) : base;
+  document.getElementById('durgTableCount').textContent = q ? visibles.length + ' de ' + base.length + ' con duración' : base.length + ' con duración';
+  var wrap = document.getElementById('durgTableBody');
+  if (!visibles.length) {
+    wrap.innerHTML = q && base.length
+      ? '<div class="apx-empty"><div class="apx-empty-title">Sin coincidencias</div>Ninguna de las ' + base.length + ' acciones con duración contiene «' + escapeHtml(qRaw) + '».</div>'
+      : '<div class="apx-empty"><div class="apx-empty-title">Sin duración</div>Ninguna de las acciones filtradas tiene horas ni días.</div>';
+    return;
+  }
+  var rows = visibles.map(function(r) {
+    return '<tr><td class="apx-mono">' + r.id + '</td><td>' + escapeHtml(r.tipo) + durMarcas(r) + '</td>' +
+      '<td class="apx-num">' + horasPantalla(r) + '</td><td class="apx-num">' + escapeHtml(diasPantalla(r)) + '</td>' +
+      '<td>' + escapeHtml(r.pais) + '</td>' +
+      '<td class="apx-mono">' + empNombreHtml(r.solicitante, r.solicitante) + '</td><td>' + empNombreHtml(r.jefeInmediato || '—', r.jefeInmediato || '—') + '</td>' +
+      '<td class="apx-mono">' + empNombreHtml(shortUser(r.aprobador), shortUser(r.aprobador)) + '</td><td>' + stampBadge(r.estado, r) + '</td>' +
+      '<td class="apx-mono">' + fmtDate(r.fechaSolicitud) + '</td>' +
+      '<td class="apx-justif">' + justifCell(r.justificacion) + '</td></tr>';
+  }).join('');
+  wrap.innerHTML = '<div class="apx-table-scroll"><table class="apx-table"><thead><tr>' +
+    '<th>ID</th><th>Tipo</th><th class="apx-num">Horas</th><th class="apx-num">Días</th><th>País</th><th>Solicitante</th><th>Jefe inmediato</th><th>Aprobador</th><th>Estado</th><th>Fecha solicitud</th><th>Justificación</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+document.getElementById('durgTableSearch').addEventListener('input', function() { renderDurgTabla(); });
+
+var TABS = ['Resumen', 'Informe', 'Duracion'];
 function setTab(which) {
   TABS.forEach(function(n) {
     var on = n === which;
@@ -2930,6 +3197,7 @@ function resetFilterState() {
   XF_DEFS.forEach(function(d) { XF_STATE[d.key].sel = null; });
   document.getElementById('fSearch').value = '';
   document.getElementById('fTableSearch').value = '';
+  document.getElementById('durgTableSearch').value = '';
   document.getElementById('fSoloDuracion').checked = false;
   syncPeriodInputs();
 }
@@ -2985,6 +3253,7 @@ function render() {
 
   renderKpis(filtered);
   renderSummaryCards(filtered);
+  renderDuracion(filtered);
   renderDonut(filtered);
 
   // Las solicitudes sin aprobador se cuentan con su jefe inmediato hasta que tengan aprobador
@@ -2993,7 +3262,7 @@ function render() {
   var APROBADOR_DE_JEFE = { 'Eduardo Méndez': 'emendez' };
   var cuentaDeAprobador = {};
   // Solo cuentan solicitudes que ya están en el segundo nivel: pendiente, aprobada o rechazada por el 2.º aprobador
-  var ESTADOS_SEGUNDO = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH'];
+  var ESTADOS_SEGUNDO = ['Pendiente Segundo', 'Aprobacion RRHH', 'Rechazo RRHH', 'Caducada Segundo'];
   var filtradoSegundo = filtered.filter(function(r) { return ESTADOS_SEGUNDO.indexOf(r.estado) !== -1; });
   filtradoSegundo.forEach(function(r) { if (!segundoSinAsignar(r)) cuentaDeAprobador[shortUser(r.aprobador).toLowerCase()] = r.aprobador; });
   filtradoSegundo.forEach(function(r) {
@@ -3024,7 +3293,6 @@ function render() {
   if (tipoData.length) document.getElementById('insightTipo').textContent = tipoData[0].name + ' · ' + tipoData[0].count;
 
   renderSolicitantesChart(filtered);
-  renderMonthChart(filtered);
   renderTable(filtered);
   document.getElementById('btnReset').disabled = !hasActiveFilters();
 }
@@ -3300,7 +3568,7 @@ document.getElementById('btnExportCsv').addEventListener('click', function() {
 document.getElementById('btnExportXlsx').addEventListener('click', exportXlsx);
 document.getElementById('tabResumen').addEventListener('click', function() { setTab('Resumen'); });
 document.getElementById('tabInforme').addEventListener('click', function() { setTab('Informe'); });
-document.getElementById('tabDescansos').addEventListener('click', function() { setTab('Descansos'); });
+document.getElementById('tabDuracion').addEventListener('click', function() { setTab('Duracion'); });
 document.getElementById('rrhhTabs').addEventListener('keydown', function(e) {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   var actual = TABS.findIndex(function(n) { return document.getElementById('tab' + n).getAttribute('aria-selected') === 'true'; });
@@ -3317,5 +3585,23 @@ syncPeriodInputs();
 renderFilterControls();
 </script>
 <link rel="stylesheet" href="../../assets/css/estandar.css?v=20261021tokens">
+<style>
+/* ===== Acciones por área: solicitudes desplegables de cada trabajador ===== */
+.expx-tabla tr[data-trab]{cursor:pointer}
+.expx-tabla tr[data-trab] td:first-child::before{content:'\25B8';display:inline-block;width:14px;margin-right:2px;font-size:10px;color:rgba(255,255,255,.55);transition:transform .15s}
+.expx-tabla tr[data-trab].trab-open td:first-child::before{transform:rotate(90deg)}
+.expx-tabla tr[data-trab]:focus-visible{outline:2px solid #7fb0f0;outline-offset:-2px}
+.expx-tabla tr.trab-det{display:none}
+.expx-tabla tr.trab-open + tr.trab-det{display:table-row}
+.expx-tabla tbody tr.trab-det > td,.expx-tabla tbody tr.trab-det:hover > td{padding:0;background:rgba(0,0,0,.3)}
+.expx-tabla-wrap.trab-abierto{max-height:none}
+.trab-det-box{width:0;min-width:100%;box-sizing:border-box;padding:12px 14px 14px 22px;border-left:3px solid rgba(127,176,240,.45)}
+.trab-det-box .expx-tabla td,.trab-det-box .expx-tabla th{padding:8px 10px}
+.trab-det-box .expx-tabla tbody tr:not(:hover) td{background:transparent}
+.trab-det-box .expx-tabla tbody tr.sol-det td{background:rgba(0,0,0,.3)}
+/* ===== Ventanas emergentes: mismo fondo oscuro en todas ===== */
+#mesxBg .expx,#kpixBg .expx,#expxBg .expx{background:linear-gradient(145deg,#131720 0%,#0d1018 100%) !important;border-color:rgba(255,255,255,.1) !important}
+#mesxBg .expx-cab,#kpixBg .expx-cab,#expxBg .expx-cab{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent) !important;border-bottom-color:rgba(255,255,255,.08) !important}
+</style>
 </body>
 </html>
